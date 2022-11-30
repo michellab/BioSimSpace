@@ -26,17 +26,25 @@ Functionality for parameterising molecules.
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
 
-__all__ = ["parameterise",
-           "ff03",
-           "ff99",
-           "ff99SB",
-           "ff99SBildn",
-           "ff14SB",
-           "gaff",
-           "gaff2",
-           "forceFields",
-           "amberForceFields",
-           "openForceFields"]
+# A list of functions that will be exposed to the user. This list will be
+# dynamically updated with the names of additional functions for the
+# supported AMBER and Open Force Field models determined at import time.
+__all__ = ["parameterise", "forceFields", "amberForceFields",
+           "amberProteinForceFields", "openForceFields"]
+
+# A dictionary mapping AMBER protein force field names to their pdb2gmx
+# compatibility. Note that the names specified below will be used for the
+# parameterisation functions, so they should be suitably formatted. Once we
+# have CMAP support we should be able to determine the available force fields
+# by scanning the AmberTools installation directory, as we do for those from
+# OpenFF.
+_amber_protein_forcefields = {
+        "ff03"          : True,
+        "ff99"          : True,
+        "ff99SB"        : False,
+        "ff99SBildn"    : False,
+        "ff14SB"        : False
+}
 
 from .. import _amber_home, _gmx_exe, _gmx_path, _isVerbose
 
@@ -51,9 +59,9 @@ from .._Utils import _try_import, _have_imported
 from .. import _Utils
 
 from ._process import Process as _Process
-from . import Protocol as _Protocol
+from . import _Protocol
 
-def parameterise(molecule, forcefield, water_model=None, work_dir=None, property_map={}, **kwargs):
+def parameterise(molecule, forcefield, work_dir=None, property_map={}, **kwargs):
     """Parameterise a molecule using a specified force field.
 
        Parameters
@@ -97,13 +105,17 @@ def parameterise(molecule, forcefield, water_model=None, work_dir=None, property
 
     return _forcefield_dict[forcefield](molecule, work_dir=work_dir, property_map=property_map, **kwargs)
 
-def ff99(molecule, tolerance=1.2, max_distance=_Length(6, "A"),
-         water_model=None, leap_commands=None, bonds=None,
-         work_dir=None, property_map={}):
-    """Parameterise using the ff99 force field.
+def _parameterise_amber_protein(forcefield, molecule, tolerance=1.2,
+        max_distance=_Length(6, "A"), water_model=None,
+        leap_commands=None, bonds=None, work_dir=None,
+        property_map={}, **kwargs):
+    """Parameterise using the named AMBER protein force field.
 
        Parameters
        ----------
+
+       forcefield : str
+           The name of the AMBER force field.
 
        molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, str
            The molecule to parameterise, either as a Molecule object or SMILES
@@ -149,326 +161,49 @@ def ff99(molecule, tolerance=1.2, max_distance=_Length(6, "A"),
            The parameterised molecule.
     """
 
-    if _amber_home is None and (_gmx_exe is None or _gmx_path is None):
-        raise _MissingSoftwareError("'BioSimSpace.Parameters.ff99' is not supported. "
-                                    "Please install AmberTools (http://ambermd.org) or "
-                                    "GROMACS (http://www.gromacs.org).")
+    if not isinstance(forcefield, str):
+        raise TypeError("'forcefield' must be of type 'str'.")
 
-    # Validate arguments.
-    _validate(molecule=molecule, tolerance=tolerance, max_distance=max_distance,
-        water_model=water_model, check_ions=True, leap_commands=leap_commands,
-        bonds=bonds, property_map=property_map)
+    if forcefield not in _amber_protein_forcefields.keys():
+        raise ValueError(f"Unsupported AMBER forcefield '{forcefield}' "
+                         f"options are {', '.join(_amber_protein_forcefields.keys())}.")
 
-    # Create a default protocol.
-    protocol = _Protocol.FF99(tolerance=tolerance,
-                              water_model=water_model,
-                              max_distance=max_distance,
-                              leap_commands=leap_commands,
-                              bonds=bonds,
-                              property_map=property_map)
-
-    # Run the parameterisation protocol in the background and return
-    # a handle to the thread.
-    return _Process(molecule, protocol, work_dir=work_dir, auto_start=True)
-
-def ff99SB(molecule, tolerance=1.2, max_distance=_Length(6, "A"),
-           water_model=None, leap_commands=None, bonds=None,
-           work_dir=None, property_map={}):
-    """Parameterise using the ff99SB force field.
-
-       Parameters
-       ----------
-
-       molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, str
-           The molecule to parameterise, either as a Molecule object or SMILES
-           string.
-
-       tolerance : float
-           The tolerance used when searching for disulphide bonds. Atoms will
-           be considered to be bonded if they are a distance of less than
-           tolerance times the sum of the equilibrium bond radii apart.
-
-       max_distance : :class:`Length <BioSimSpace.Types.Length>`
-           The maximum distance between atoms when searching for disulphide
-           bonds.
-
-       water_model : str
-           The water model used to parameterise any structural ions.
-           Run 'BioSimSpace.Solvent.waterModels()' to see the supported
-           water models. This is ignored if ions are not present.
-
-       leap_commands : [str]
-           An optional list of extra commands for the LEaP program. These
-           will be added after any default commands and can be used to, e.g.,
-           load additional parameter files. When this option is set, we can no
-           longer fall back on GROMACS's pdb2gmx.
-
-       bonds : ((class:`Atom <BioSimSpace._SireWrappers.Atom>`, class:`Atom <BioSimSpace._SireWrappers.Atom>`))
-           An optional tuple of atom pairs to specify additional atoms that
-           should be bonded. This is useful when the PDB CONECT record is
-           incomplete.
-
-       work_dir : str
-           The working directory for the process.
-
-       property_map : dict
-           A dictionary that maps system "properties" to their user defined
-           values. This allows the user to refer to properties with their
-           own naming scheme, e.g. { "charge" : "my-charge" }
-
-       Returns
-       -------
-
-       molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
-           The parameterised molecule.
-    """
-
-    if _amber_home is None and (_gmx_exe is None or _gmx_path is None):
-        raise _MissingSoftwareError("'BioSimSpace.Parameters.ff99SB' is not supported. "
-                                    "Please install AmberTools (http://ambermd.org) "
-                                    "or GROMACS (http://www.gromacs.org).")
-
-    # Validate arguments.
-    _validate(molecule=molecule, tolerance=tolerance, max_distance=max_distance,
-        water_model=water_model, check_ions=True, leap_commands=leap_commands,
-        bonds=bonds, property_map=property_map)
-
-    # Create a default protocol.
-    protocol = _Protocol.FF99SB(tolerance=tolerance,
-                                max_distance=max_distance,
-                                water_model=water_model,
-                                leap_commands=leap_commands,
-                                bonds=bonds,
-                                property_map=property_map)
-
-    # Run the parameterisation protocol in the background and return
-    # a handle to the thread.
-    return _Process(molecule, protocol, work_dir=work_dir, auto_start=True)
-
-def ff99SBildn(molecule, tolerance=1.2, max_distance=_Length(6, "A"),
-               water_model=None, leap_commands=None, bonds=None,
-               work_dir=None, property_map={}):
-    """Parameterise using the ff99SBildn force field.
-
-       Parameters
-       ----------
-
-       molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, str
-           The molecule to parameterise, either as a Molecule object or SMILES
-           string.
-
-       tolerance : float
-           The tolerance used when searching for disulphide bonds. Atoms will
-           be considered to be bonded if they are a distance of less than
-           tolerance times the sum of the equilibrium bond radii apart.
-
-       max_distance : :class:`Length <BioSimSpace.Types.Length>`
-           The maximum distance between atoms when searching for disulphide
-           bonds.
-
-       water_model : str
-           The water model used to parameterise any structural ions.
-           Run 'BioSimSpace.Solvent.waterModels()' to see the supported
-           water models. This is ignored if ions are not present.
-
-       leap_commands : [str]
-           An optional list of extra commands for the LEaP program. These
-           will be added after any default commands and can be used to, e.g.,
-           load additional parameter files. When this option is set, we can no
-           longer fall back on GROMACS's pdb2gmx.
-
-       bonds : ((class:`Atom <BioSimSpace._SireWrappers.Atom>`, class:`Atom <BioSimSpace._SireWrappers.Atom>`))
-           An optional tuple of atom pairs to specify additional atoms that
-           should be bonded. This is useful when the PDB CONECT record is
-           incomplete.
-
-       work_dir : str
-           The working directory for the process.
-
-       property_map : dict
-           A dictionary that maps system "properties" to their user defined
-           values. This allows the user to refer to properties with their
-           own naming scheme, e.g. { "charge" : "my-charge" }
-
-       Returns
-       -------
-
-       molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
-           The parameterised molecule.
-    """
-
-    if _amber_home is None and (_gmx_exe is None or _gmx_path is None):
-        raise _MissingSoftwareError("'BioSimSpace.Parameters.ff99SBildn' is not supported. "
-                                    "Please install AmberTools (http://ambermd.org) "
-                                    "or GROMACS (http://www.gromacs.org).")
-
-    # Validate arguments.
-    _validate(molecule=molecule, tolerance=tolerance, max_distance=max_distance,
-        water_model=water_model, check_ions=True, leap_commands=leap_commands,
-        bonds=bonds, property_map=property_map)
-
-    # Create a default protocol.
-    protocol = _Protocol.FF99SBILDN(tolerance=tolerance,
-                                    max_distance=max_distance,
-                                    water_model=water_model,
-                                    leap_commands=leap_commands,
-                                    bonds=bonds,
-                                    property_map=property_map)
-
-    # Run the parameterisation protocol in the background and return
-    # a handle to the thread.
-    return _Process(molecule, protocol, work_dir=work_dir, auto_start=True)
-
-def ff03(molecule, tolerance=1.2, max_distance=_Length(6, "A"),
-         water_model=None, leap_commands=None, bonds=None,
-         work_dir=None, property_map={}):
-    """Parameterise using the ff03 force field.
-
-       Parameters
-       ----------
-
-       molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, str
-           The molecule to parameterise, either as a Molecule object or SMILES
-           string.
-
-       tolerance : float
-           The tolerance used when searching for disulphide bonds. Atoms will
-           be considered to be bonded if they are a distance of less than
-           tolerance times the sum of the equilibrium bond radii apart.
-
-       max_distance : :class:`Length <BioSimSpace.Types.Length>`
-           The maximum distance between atoms when searching for disulphide
-           bonds.
-
-       water_model : str
-           The water model used to parameterise any structural ions.
-           Run 'BioSimSpace.Solvent.waterModels()' to see the supported
-           water models. This is ignored if ions are not present.
-
-       leap_commands : [str]
-           An optional list of extra commands for the LEaP program. These
-           will be added after any default commands and can be used to, e.g.,
-           load additional parameter files. When this option is set, we can no
-           longer fall back on GROMACS's pdb2gmx.
-
-       bonds : ((class:`Atom <BioSimSpace._SireWrappers.Atom>`, class:`Atom <BioSimSpace._SireWrappers.Atom>`))
-           An optional tuple of atom pairs to specify additional atoms that
-           should be bonded. This is useful when the PDB CONECT record is
-           incomplete.
-
-       work_dir : str
-           The working directory for the process.
-
-       property_map : dict
-           A dictionary that maps system "properties" to their user defined
-           values. This allows the user to refer to properties with their
-           own naming scheme, e.g. { "charge" : "my-charge" }
-
-       Returns
-       -------
-
-       molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
-           The parameterised molecule.
-    """
-
-    if _amber_home is None and (_gmx_exe is None or _gmx_path is None):
-        raise _MissingSoftwareError("'BioSimSpace.Parameters.ff03' is not supported. "
-                                    "Please install AmberTools (http://ambermd.org) "
-                                    "or GROMACS (http://www.gromacs.org).")
-
-    # Validate arguments.
-    _validate(molecule=molecule, tolerance=tolerance, max_distance=max_distance,
-        water_model=water_model, check_ions=True, leap_commands=leap_commands,
-        bonds=bonds, property_map=property_map)
-
-    # Create a default protocol.
-    protocol = _Protocol.FF03(tolerance=tolerance,
-                              max_distance=max_distance,
-                              water_model=water_model,
-                              leap_commands=leap_commands,
-                              bonds=bonds,
-                              property_map=property_map)
-
-    # Run the parameterisation protocol in the background and return
-    # a handle to the thread.
-    return _Process(molecule, protocol, work_dir=work_dir, auto_start=True)
-
-def ff14SB(molecule, tolerance=1.2, max_distance=_Length(6, "A"),
-           water_model=None, leap_commands=None, bonds=None,
-           work_dir=None, property_map={}):
-    """Parameterise using the ff14SB force field.
-
-       Parameters
-       ----------
-
-       molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, str
-           The molecule to parameterise, either as a Molecule object or SMILES
-           string.
-
-       tolerance : float
-           The tolerance used when searching for disulphide bonds. Atoms will
-           be considered to be bonded if they are a distance of less than
-           tolerance times the sum of the equilibrium bond radii apart.
-
-       max_distance : :class:`Length <BioSimSpace.Types.Length>`
-           The maximum distance between atoms when searching for disulphide
-           bonds.
-
-       water_model : str
-           The water model used to parameterise any structural ions.
-           Run 'BioSimSpace.Solvent.waterModels()' to see the supported
-           water models. This is ignored if ions are not present.
-
-       leap_commands : [str]
-           An optional list of extra commands for the LEaP program. These
-           will be added after any default commands and can be used to, e.g.,
-           load additional parameter files. When this option is set, we can no
-           longer fall back on GROMACS's pdb2gmx.
-
-       bonds : ((class:`Atom <BioSimSpace._SireWrappers.Atom>`, class:`Atom <BioSimSpace._SireWrappers.Atom>`))
-           An optional tuple of atom pairs to specify additional atoms that
-           should be bonded. This is useful when the PDB CONECT record is
-           incomplete.
-
-       work_dir : str
-           The working directory for the process.
-
-       property_map : dict
-           A dictionary that maps system "properties" to their user defined
-           values. This allows the user to refer to properties with their
-           own naming scheme, e.g. { "charge" : "my-charge" }
-
-       Returns
-       -------
-
-       molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
-           The parameterised molecule.
-    """
+    # Extract the pdb2gmx support flag.
+    is_pdb2gmx = _amber_protein_forcefields[forcefield]
 
     if _amber_home is None:
-        raise _MissingSoftwareError("'BioSimSpace.Parameters.ff14SB' is not supported. "
-                                    "Please install AmberTools (http://ambermd.org) "
-                                    "or GROMACS (http://www.gromacs.org).")
+        if is_pdb2gmx and (_gmx_exe is None or _gmx_path is None):
+            raise _MissingSoftwareError("'BioSimSpace.Parameters.ff99' is not supported. "
+                                        "Please install AmberTools (http://ambermd.org) or "
+                                        "GROMACS (http://www.gromacs.org).")
+        else:
+            raise _MissingSoftwareError("'BioSimSpace.Parameters.ff99' is not supported. "
+                                        "Please install AmberTools (http://ambermd.org).")
 
     # Validate arguments.
     _validate(molecule=molecule, tolerance=tolerance, max_distance=max_distance,
         water_model=water_model, check_ions=True, leap_commands=leap_commands,
         bonds=bonds, property_map=property_map)
 
-    # Create a default protocol.
-    protocol = _Protocol.FF14SB(tolerance=tolerance,
-                                max_distance=max_distance,
-                                water_model=water_model,
-                                leap_commands=leap_commands,
-                                bonds=bonds,
-                                property_map=property_map)
+    # Create the protocol.
+    protocol = _Protocol.AmberProtein(
+            forcefield=forcefield,
+            pdb2gmx=is_pdb2gmx,
+            tolerance=tolerance,
+            water_model=water_model,
+            max_distance=max_distance,
+            leap_commands=leap_commands,
+            bonds=bonds,
+            property_map=property_map
+    )
 
     # Run the parameterisation protocol in the background and return
     # a handle to the thread.
     return _Process(molecule, protocol, work_dir=work_dir, auto_start=True)
 
-def gaff(molecule, work_dir=None, net_charge=None, charge_method="BCC", property_map={}):
-    """Parameterise using the gaff force field.
+def gaff(molecule, work_dir=None, net_charge=None, charge_method="BCC",
+        property_map={}, **kwargs):
+    """Parameterise using the GAFF force field.
 
        Parameters
        ----------
@@ -522,16 +257,20 @@ def gaff(molecule, work_dir=None, net_charge=None, charge_method="BCC", property
             raise TypeError("'net_charge' must be of type 'int', or `BioSimSpace.Types.Charge'")
 
     # Create a default protocol.
-    protocol = _Protocol.GAFF(net_charge=net_charge,
-                              charge_method=charge_method,
-                              property_map=property_map)
+    protocol = _Protocol.GAFF(
+            version=1,
+            net_charge=net_charge,
+            charge_method=charge_method,
+            property_map=property_map
+    )
 
     # Run the parameterisation protocol in the background and return
     # a handle to the thread.
     return _Process(molecule, protocol, work_dir=work_dir, auto_start=True)
 
-def gaff2(molecule, work_dir=None, net_charge=None, charge_method="BCC", property_map={}):
-    """Parameterise using the gaff force field.
+def gaff2(molecule, work_dir=None, net_charge=None, charge_method="BCC",
+          property_map={}, **kwargs):
+    """Parameterise using the GAFF2 force field.
 
        Parameters
        ----------
@@ -588,15 +327,19 @@ def gaff2(molecule, work_dir=None, net_charge=None, charge_method="BCC", propert
             raise ValueError("'net_charge' must be integer valued.")
 
     # Create a default protocol.
-    protocol = _Protocol.GAFF2(net_charge=net_charge,
-                               charge_method=charge_method,
-                               property_map=property_map)
+    protocol = _Protocol.GAFF(
+        version=2,
+        net_charge=net_charge,
+        charge_method=charge_method,
+        property_map=property_map
+    )
 
     # Run the parameterisation protocol in the background and return
     # a handle to the thread.
     return _Process(molecule, protocol, work_dir=work_dir, auto_start=True)
 
-def _parameterise_openff(molecule, forcefield, work_dir=None, property_map={}):
+def _parameterise_openff(molecule, forcefield, work_dir=None,
+                         property_map={}, **kwargs):
     """Parameterise a molecule using a force field from the Open Force Field
        Initiative.
 
@@ -706,119 +449,6 @@ def _parameterise_openff(molecule, forcefield, work_dir=None, property_map={}):
     # a handle to the thread.
     return _Process(molecule, protocol, work_dir=work_dir, auto_start=True)
 
-# Create a list of the force field names.
-# This needs to come after all of the force field functions.
-_forcefields = []           # List of force fields (actual names).
-_amber_forcefields = []     # List of the supported AMBER force fields.
-_forcefields_lower = []     # List of lower case names.
-_forcefield_dict = {}       # Mapping between lower case names and functions.
-import sys as _sys
-_namespace = _sys.modules[__name__]
-for _var in dir():
-    if _var[0] != "_" and _var[0].upper() != "P":
-        _forcefields.append(_var)
-        _amber_forcefields.append(_var)
-        _forcefields_lower.append(_var.lower())
-        _forcefield_dict[_var.lower()] = getattr(_namespace, _var)
-
-# Wrapper function to dynamically generate functions with a given name.
-# Here "name" refers to the name of a supported force field from the Open
-# Force Field Initiative. The force field name has been "tidied" so that
-# it conforms to sensible function naming standards, i.e. "-" and "."
-# characters replaced by underscores.
-def _make_function(name):
-    def _function(molecule, work_dir=None, property_map={}):
-        """Parameterise a molecule using the named force field from the
-           Open Force Field initiative.
-
-           Parameters
-           ----------
-
-           molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, str
-               The molecule to parameterise, either as a Molecule object or SMILES
-               string.
-
-           work_dir : str
-               The working directory for the process.
-
-           property_map : dict
-               A dictionary that maps system "properties" to their user defined
-               values. This allows the user to refer to properties with their
-               own naming scheme, e.g. { "charge" : "my-charge" }
-
-           Returns
-           -------
-
-           molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
-               The parameterised molecule.
-        """
-        return _parameterise_openff(molecule, name, work_dir, property_map)
-    return _function
-
-# Dynamically create functions for all available force fields from the Open
-# Force Field Initiative.
-_openforcefields = _try_import("openforcefields")
-
-if _have_imported(_openforcefields):
-    from glob import glob as _glob
-    import os as _os
-    _openff_dirs = _openforcefields.get_forcefield_dirs_paths()
-    _open_forcefields = []
-    # Loop over all force field directories.
-    for _dir in _openff_dirs:
-        # Glob all offxml files in the directory.
-        _ff_list = _glob(f"{_dir}" + "/*.offxml")
-        for _ff in _ff_list:
-            # Get the force field name (base name minus extension).
-            _base = _os.path.basename(_ff)
-            _ff = _os.path.splitext(_base)[0]
-
-            # Only include unconstrained force-fields since we need to go via
-            # an intermediate ParmEd conversion. This means ParmEd must receive
-            # bond parameters. We can then choose to constrain later, if required.
-            # See, e.g: https://github.com/openforcefield/openff-toolkit/issues/603
-
-            if "unconstrained" in _ff:
-                # Append to the list of available force fields.
-                _forcefields.append(_ff)
-                _open_forcefields.append(_ff)
-
-                # Create a sane function name, i.e. replace "-" and "."
-                # characters with "_".
-                _func_name = _ff.replace("-", "_")
-                _func_name = _func_name.replace(".", "_")
-
-                # Generate the function and bind it to the namespace.
-                _function = _make_function(_ff)
-                setattr(_namespace, _func_name, _function)
-
-                # Expose the function to the user.
-                __all__.append(_func_name)
-
-                # Convert force field name to lower case and map to its function.
-                _forcefields_lower.append(_ff.lower())
-                _forcefield_dict[_ff.lower()] = getattr(_namespace, _func_name)
-
-    # Clean up redundant attributes.
-    del _base
-    del _dir
-    del _ff
-    del _ff_list
-    del _function
-    del _func_name
-    del _glob
-    del _make_function
-    del _openff_dirs
-    del _os
-    del _namespace
-    del _sys
-    del _var
-elif _isVerbose():
-    print("openforcefields not available as this module cannot be loaded.")
-
-del _openforcefields
-
-
 def forceFields():
     """Return a list of the supported force fields.
 
@@ -837,9 +467,20 @@ def amberForceFields():
        -------
 
        force_fields : [str]
-           A list of the supported force fields.
+           A list of the supported AMBER force fields.
     """
-    return _amber_forcefields
+    return list(_amber_protein_forcefields.keys()) + ["gaff", "gaff2"]
+
+def amberProteinForceFields():
+    """Return a list of the supported AMBER protein force fields.
+
+       Returns
+       -------
+
+       force_fields : [str]
+           A list of the supported AMBER protein force fields.
+    """
+    return list(_amber_protein_forcefields.keys())
 
 def openForceFields():
     """Return a list of the supported force fields from the Open Force Field
@@ -849,7 +490,7 @@ def openForceFields():
        -------
 
        force_fields : [str]
-           A list of the supported force fields.
+           A list of the supported force fields from the Open Force Field Initiative.
     """
     return _open_forcefields
 
@@ -1111,3 +752,195 @@ def _validate(molecule=None, tolerance=None, max_distance=None,
     if property_map is not None:
         if not isinstance(property_map, dict):
             raise TypeError("'property_map' must be of type 'dict'")
+
+# Wrapper function to dynamically generate functions with a given name.
+# Here "name" refers to the name of a supported AMBER protein force field.
+import sys as _sys
+_namespace = _sys.modules[__name__]
+def _make_amber_protein_function(name):
+    def _function(molecule, tolerance=1.2, max_distance=_Length(6, "A"),
+            water_model=None, leap_commands=None, bonds=None,
+            work_dir=None, property_map={}):
+        """Parameterise a molecule using the named AMBER force field.
+
+           Parameters
+           ----------
+
+           forcefield : str
+               The name of the AMBER force field.
+
+           molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, str
+               The molecule to parameterise, either as a Molecule object or SMILES
+               string.
+
+           tolerance : float
+               The tolerance used when searching for disulphide bonds. Atoms will
+               be considered to be bonded if they are a distance of less than
+               tolerance times the sum of the equilibrium bond radii apart.
+
+           max_distance : :class:`Length <BioSimSpace.Types.Length>`
+               The maximum distance between atoms when searching for disulphide
+               bonds.
+
+           water_model : str
+               The water model used to parameterise any structural ions.
+               Run 'BioSimSpace.Solvent.waterModels()' to see the supported
+               water models. This is ignored if ions are not present.
+
+           leap_commands : [str]
+               An optional list of extra commands for the LEaP program. These
+               will be added after any default commands and can be used to, e.g.,
+               load additional parameter files. When this option is set, we can no
+               longer fall back on GROMACS's pdb2gmx.
+
+           bonds : ((class:`Atom <BioSimSpace._SireWrappers.Atom>`, class:`Atom <BioSimSpace._SireWrappers.Atom>`))
+               An optional tuple of atom pairs to specify additional atoms that
+               should be bonded. This is useful when the PDB CONECT record is
+               incomplete.
+
+           work_dir : str
+                The working directory for the process.
+
+           property_map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+               own naming scheme, e.g. { "charge" : "my-charge" }
+
+           Returns
+           -------
+
+           molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+               The parameterised molecule.
+        """
+        return _parameterise_amber_protein(
+                name,
+                molecule,
+                tolerance=tolerance,
+                max_distance=max_distance,
+                water_model=water_model,
+                leap_commands=leap_commands,
+                bonds=bonds,
+                work_dir=work_dir,
+                property_map=property_map
+        )
+    return _function
+
+# Wrapper function to dynamically generate functions with a given name.
+# Here "name" refers to the name of a supported force field from the Open
+# Force Field Initiative. The force field name has been "tidied" so that
+# it conforms to sensible function naming standards, i.e. "-" and "."
+# characters replaced by underscores.
+def _make_openff_function(name):
+    def _function(molecule, work_dir=None, property_map={}):
+        """Parameterise a molecule using the named force field from the
+           Open Force Field initiative.
+
+           Parameters
+           ----------
+
+           molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, str
+               The molecule to parameterise, either as a Molecule object or SMILES
+               string.
+
+           work_dir : str
+               The working directory for the process.
+
+           property_map : dict
+               A dictionary that maps system "properties" to their user defined
+               values. This allows the user to refer to properties with their
+               own naming scheme, e.g. { "charge" : "my-charge" }
+
+           Returns
+           -------
+
+           molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+               The parameterised molecule.
+        """
+        return _parameterise_openff(molecule, name, work_dir, property_map)
+    return _function
+
+# Dynamically create functions for all of the supported AMBER protein force fields.
+for _ff in _amber_protein_forcefields.keys():
+    # Generate the function and bind it to the namespace.
+    _function = _make_amber_protein_function(_ff)
+    setattr(_namespace, _ff, _function)
+
+    # Expose the function to the user.
+    __all__.append(_ff)
+
+# Expose the two GAFF functions.
+__all__.append("gaff")
+__all__.append("gaff2")
+
+# Create a list of the force field names (to date.)
+# This needs to come after all of the force field functions.
+_forcefields = []           # List of force fields (actual names).
+_forcefields_lower = []     # List of lower case names.
+_forcefield_dict = {}       # Mapping between lower case names and functions.
+for _ff in list(_amber_protein_forcefields.keys()) + ["gaff", "gaff2"]:
+    _forcefields.append(_ff)
+    _forcefields_lower.append(_ff.lower())
+    _forcefield_dict[_ff.lower()] = getattr(_namespace, _ff)
+
+# Dynamically create functions for all available force fields from the Open
+# Force Field Initiative.
+_openforcefields = _try_import("openforcefields")
+
+if _have_imported(_openforcefields):
+    from glob import glob as _glob
+    import os as _os
+    _openff_dirs = _openforcefields.get_forcefield_dirs_paths()
+    _open_forcefields = []
+    # Loop over all force field directories.
+    for _dir in _openff_dirs:
+        # Glob all offxml files in the directory.
+        _ff_list = _glob(f"{_dir}" + "/*.offxml")
+        for _ff in _ff_list:
+            # Get the force field name (base name minus extension).
+            _base = _os.path.basename(_ff)
+            _ff = _os.path.splitext(_base)[0]
+
+            # Only include unconstrained force-fields since we need to go via
+            # an intermediate ParmEd conversion. This means ParmEd must receive
+            # bond parameters. We can then choose to constrain later, if required.
+            # See, e.g: https://github.com/openforcefield/openff-toolkit/issues/603
+
+            if "unconstrained" in _ff:
+                # Append to the list of available force fields.
+                _forcefields.append(_ff)
+                _open_forcefields.append(_ff)
+
+                # Create a sane function name, i.e. replace "-" and "."
+                # characters with "_".
+                _func_name = _ff.replace("-", "_")
+                _func_name = _func_name.replace(".", "_")
+
+                # Generate the function and bind it to the namespace.
+                _function = _make_openff_function(_ff)
+                setattr(_namespace, _func_name, _function)
+
+                # Expose the function to the user.
+                __all__.append(_func_name)
+
+                # Convert force field name to lower case and map to its function.
+                _forcefields_lower.append(_ff.lower())
+                _forcefield_dict[_ff.lower()] = getattr(_namespace, _func_name)
+
+    # Clean up redundant attributes.
+    del _base
+    del _dir
+    del _ff_list
+    del _function
+    del _func_name
+    del _glob
+    del _make_openff_function
+    del _openff_dirs
+    del _os
+elif _isVerbose():
+    print("openforcefields not available as this module cannot be loaded.")
+
+# Clean up redundant attributes.
+del _ff
+del _namespace
+del _openforcefields
+del _sys
