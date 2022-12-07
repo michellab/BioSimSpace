@@ -277,9 +277,9 @@ class OpenMM(_process.Process):
             self.addToConfig(    "                             nonbondedCutoff=1*nanometer,")
             self.addToConfig(    "                             constraints=HBonds)")
 
-            # Set the integrator. (We use a zero-temperature Langevin integrator.)
+            # Set the integrator. (Use zero-temperature as this is just a dummy step.)
             self.addToConfig("\n# Define the integrator.")
-            self.addToConfig("integrator = LangevinIntegrator(0*kelvin,")
+            self.addToConfig("integrator = LangevinMiddleIntegrator(0*kelvin,")
             self.addToConfig("                                1/picosecond,")
             self.addToConfig("                                0.002*picoseconds)")
 
@@ -389,7 +389,7 @@ class OpenMM(_process.Process):
 
             # Set the integrator.
             self.addToConfig( "\n# Define the integrator.")
-            self.addToConfig(f"integrator = LangevinIntegrator({temperature}*kelvin,")
+            self.addToConfig(f"integrator = LangevinMiddleIntegrator({temperature}*kelvin,")
             self.addToConfig( "                                1/picosecond,")
             self.addToConfig(f"                                {timestep}*picoseconds)")
             if self._is_seeded:
@@ -526,7 +526,7 @@ class OpenMM(_process.Process):
 
             # Set the integrator.
             self.addToConfig( "\n# Define the integrator.")
-            self.addToConfig(f"integrator = LangevinIntegrator({temperature}*kelvin,")
+            self.addToConfig(f"integrator = LangevinMiddleIntegrator({temperature}*kelvin,")
             self.addToConfig( "                                1/picosecond,")
             self.addToConfig(f"                                {timestep}*picoseconds)")
             if self._is_seeded:
@@ -832,7 +832,7 @@ class OpenMM(_process.Process):
 
             # Set the integrator.
             self.addToConfig( "\n# Define the integrator.")
-            self.addToConfig(f"integrator = LangevinIntegrator({temperature}*kelvin,")
+            self.addToConfig(f"integrator = LangevinMiddleIntegrator({temperature}*kelvin,")
             self.addToConfig( "                                1/picosecond,")
             self.addToConfig(f"                                {timestep}*picoseconds)")
             if self._is_seeded:
