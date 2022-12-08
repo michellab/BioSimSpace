@@ -186,7 +186,7 @@ class Bond(_SireWrapper):
            Returns
            -------
 
-           length : Length
+           length : :class:`Length <BioSimSpace.Types.Length>`
                 The length of the bond
         """
         from ..Types import Length as _Length
@@ -200,7 +200,7 @@ class Bond(_SireWrapper):
            Returns
            -------
 
-           energy : Energy
+           energy : :class:`Energy <BioSimSpace.Types.Energy>`
                 The energy of the bond
         """
         from ..Types import Energy as _Energy
