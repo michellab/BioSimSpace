@@ -338,7 +338,7 @@ def gaff2(molecule, work_dir=None, net_charge=None, charge_method="BCC",
     # a handle to the thread.
     return _Process(molecule, protocol, work_dir=work_dir, auto_start=True)
 
-def _parameterise_openff(molecule, forcefield, work_dir=None,
+def _parameterise_openff(forcefield, molecule, work_dir=None,
                          property_map={}, **kwargs):
     """Parameterise a molecule using a force field from the Open Force Field
        Initiative.
@@ -346,13 +346,13 @@ def _parameterise_openff(molecule, forcefield, work_dir=None,
        Parameters
        ----------
 
-       molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, str
-           The molecule to parameterise, either as a Molecule object or SMILES
-           string.
-
        forcefield : str
            The force field. Run BioSimSpace.Parameters.openForceFields() to get a
            list of the supported force fields.
+
+       molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, str
+           The molecule to parameterise, either as a Molecule object or SMILES
+           string.
 
        work_dir : str
            The working directory for the process.
@@ -755,6 +755,9 @@ def _validate(molecule=None, tolerance=None, max_distance=None,
 
 # Wrapper function to dynamically generate functions with a given name.
 # Here "name" refers to the name of a supported AMBER protein force field.
+# We could do this with functools.partial and functions.update_wrapper, but
+# this approach preserves correct documentation for the partial function,
+# both within the Python console, or via Sphinx.
 import sys as _sys
 _namespace = _sys.modules[__name__]
 def _make_amber_protein_function(name):
@@ -765,9 +768,6 @@ def _make_amber_protein_function(name):
 
            Parameters
            ----------
-
-           forcefield : str
-               The name of the AMBER force field.
 
            molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, str
                The molecule to parameterise, either as a Molecule object or SMILES
@@ -856,13 +856,15 @@ def _make_openff_function(name):
            molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
                The parameterised molecule.
         """
-        return _parameterise_openff(molecule, name, work_dir, property_map)
+        return _parameterise_openff(name, molecule, work_dir, property_map)
     return _function
 
 # Dynamically create functions for all of the supported AMBER protein force fields.
 for _ff in _amber_protein_forcefields.keys():
     # Generate the function and bind it to the namespace.
     _function = _make_amber_protein_function(_ff)
+    _function.__name__ = _ff
+    _function.__qualname = _ff
     setattr(_namespace, _ff, _function)
 
     # Expose the function to the user.
@@ -917,6 +919,8 @@ if _have_imported(_openforcefields):
 
                 # Generate the function and bind it to the namespace.
                 _function = _make_openff_function(_ff)
+                _function.__name__ = _func_name
+                _function.__qualname = _func_name
                 setattr(_namespace, _func_name, _function)
 
                 # Expose the function to the user.
@@ -930,7 +934,6 @@ if _have_imported(_openforcefields):
     del _base
     del _dir
     del _ff_list
-    del _function
     del _func_name
     del _glob
     del _make_openff_function
@@ -941,6 +944,7 @@ elif _isVerbose():
 
 # Clean up redundant attributes.
 del _ff
+del _function
 del _namespace
 del _openforcefields
 del _sys
