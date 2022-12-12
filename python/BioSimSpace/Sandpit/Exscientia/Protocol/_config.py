@@ -4,7 +4,7 @@ import warnings as _warnings
 from sire import units as _SireUnits
 
 from .. import Protocol as _Protocol
-from ..Align._squash import _squash, _squashed_atom_mapping, _amber_mask_from_indices
+from ..Align._squash import _amber_mask_from_indices, _squashed_atom_mapping
 from .._Exceptions import IncompatibleError as _IncompatibleError
 
 
@@ -228,11 +228,13 @@ class ConfigFactory:
 
                 # Convert to a squashed representation, if needed
                 if isinstance(self.protocol, _Protocol._FreeEnergyMixin):
-                    atom_mapping0 = _squashed_atom_mapping(self.system, is_lambda1=False)
+                    atom_mapping0 = _squashed_atom_mapping(
+                        self.system, is_lambda1=False
+                    )
                     atom_mapping1 = _squashed_atom_mapping(self.system, is_lambda1=True)
                     atom_idxs = sorted(
-                        {atom_mapping0[x] for x in atom_idxs if x in atom_mapping0} |
-                        {atom_mapping1[x] for x in atom_idxs if x in atom_mapping1}
+                        {atom_mapping0[x] for x in atom_idxs if x in atom_mapping0}
+                        | {atom_mapping1[x] for x in atom_idxs if x in atom_mapping1}
                     )
 
                 # Don't add restraints if there are no atoms to restrain.
