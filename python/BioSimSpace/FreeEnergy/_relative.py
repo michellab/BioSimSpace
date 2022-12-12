@@ -737,7 +737,7 @@ class Relative():
         return(df)
 
     @staticmethod
-    def analyse(work_dir, estimator='MBAR', method="alchemlyb"):
+    def analyse(work_dir, estimator='MBAR', method="alchemlyb", **kwargs):
         """Analyse existing free-energy data from a simulation working directory.
 
            Parameters
@@ -815,7 +815,7 @@ class Relative():
         return Relative.analyse(self._work_dir, self._estimator)
 
     @staticmethod
-    def _preprocessing_extracted_data(data):
+    def _preprocessing_extracted_data(data, **kwargs):
         """_summary_
 
         Parameters
@@ -860,7 +860,7 @@ class Relative():
         return processed_data
 
     @staticmethod
-    def _analyse_mbar(files, temperatures, lambdas, engine):
+    def _analyse_mbar(files, temperatures, lambdas, engine, **kwargs):
         """Analyse existing free-energy data using MBAR and the alchemlyb library.
 
            Parameters
@@ -908,7 +908,7 @@ class Relative():
 
         # Preprocess the data.
         try:
-            processed_u_nk = Relative._preprocessing_extracted_data(u_nk)
+            processed_u_nk = Relative._preprocessing_extracted_data(u_nk, **kwargs)
         except:
             _warnings.warn("Could not preprocess the data.")
             processed_u_nk = u_nk
@@ -939,7 +939,7 @@ class Relative():
         return (data, overlap)
 
     @staticmethod
-    def _analyse_ti(files, temperatures, lambdas, engine):
+    def _analyse_ti(files, temperatures, lambdas, engine, **kwargs):
         """Analyse existing free-energy data using TI and the alchemlyb library.
 
            Parameters
@@ -987,7 +987,7 @@ class Relative():
 
         # Preprocess the data.
         try:
-            processed_dhdl = Relative._preprocessing_extracted_data(dhdl)
+            processed_dhdl = Relative._preprocessing_extracted_data(dhdl, **kwargs)
         except:
             _warnings.warn("Could not preprocess the data.")
             processed_dhdl = dhdl
@@ -1016,7 +1016,7 @@ class Relative():
         return (data, ti)
 
     @staticmethod
-    def _analyse_amber(work_dir=None, estimator=None, method="alchemlyb"):
+    def _analyse_amber(work_dir=None, estimator=None, method="alchemlyb", **kwargs):
         """Analyse the AMBER free energy data.
 
            Parameters
@@ -1076,16 +1076,16 @@ class Relative():
 
         if estimator == 'MBAR':
             data, overlap = Relative._analyse_mbar(
-                files, temperatures, lambdas, "AMBER")
+                files, temperatures, lambdas, "AMBER", **kwargs)
 
         if estimator == 'TI':
             data, overlap = Relative._analyse_ti(
-                files, temperatures, lambdas, "AMBER")
+                files, temperatures, lambdas, "AMBER", **kwargs)
 
         return (data, overlap)
 
     @staticmethod
-    def _analyse_gromacs(work_dir=None, estimator=None, method="alchemlyb"):
+    def _analyse_gromacs(work_dir=None, estimator=None, method="alchemlyb", **kwargs):
         """Analyse the GROMACS free energy data.
 
            Parameters
@@ -1154,11 +1154,11 @@ class Relative():
 
             if estimator == 'MBAR':
                 data, overlap = Relative._analyse_mbar(
-                    files, temperatures, lambdas, "GROMACS")
+                    files, temperatures, lambdas, "GROMACS", **kwargs)
 
             if estimator == 'TI':
                 data, overlap = Relative._analyse_ti(
-                    files, temperatures, lambdas, "GROMACS")
+                    files, temperatures, lambdas, "GROMACS", **kwargs)
 
             return (data, overlap)
 
@@ -1233,7 +1233,7 @@ class Relative():
             return (data, None)
 
     @staticmethod
-    def _analyse_somd(work_dir=None, estimator=None, method="alchemlyb"):
+    def _analyse_somd(work_dir=None, estimator=None, method="alchemlyb", **kwargs):
         """Analyse the SOMD free energy data.
 
            Parameters
@@ -1297,11 +1297,11 @@ class Relative():
 
             if estimator == 'MBAR':
                 data, overlap = Relative._analyse_mbar(
-                    files, temperatures, lambdas, "SOMD")
+                    files, temperatures, lambdas, "SOMD", **kwargs)
 
             if estimator == 'TI':
                 data, overlap = Relative._analyse_ti(
-                    files, temperatures, lambdas, "SOMD")
+                    files, temperatures, lambdas, "SOMD", **kwargs)
 
         elif method == "native":
 
