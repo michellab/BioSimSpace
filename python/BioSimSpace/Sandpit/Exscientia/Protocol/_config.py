@@ -450,16 +450,9 @@ class ConfigFactory:
             if isinstance(self.protocol, _Protocol.Equilibration):
                 if self.protocol.isConstantTemp():
                     temp = "%.2f" % self.protocol.getStartTemperature().kelvin().value()
-                    protocol_dict["ref-t"] = temp
-                    # Only regenerate the velocity when we are starting from em
-                    if not self.protocol.isRestart():
-                        protocol_dict["gen-vel"] = "yes"
-                        protocol_dict["gen-temp"] = temp
                 else:
                     # still need a reference temperature for each group, even when heating/cooling
-                    protocol_dict["ref-t"] = (
-                        "%.2f" % self.protocol.getEndTemperature().kelvin().value()
-                    )
+                    temp = "%.2f" % self.protocol.getEndTemperature().kelvin().value()
                     # Work out the final time of the simulation.
                     timestep = self.protocol.getTimeStep().picoseconds().value()
                     end_time = _math.floor(timestep * self._steps)
@@ -478,9 +471,13 @@ class ConfigFactory:
                         self.protocol.getEndTemperature().kelvin().value(),
                     )
             else:
-                protocol_dict["ref-t"] = (
-                    "%.2f" % self.protocol.getTemperature().kelvin().value()
-                )
+                temp = "%.2f" % self.protocol.getTemperature().kelvin().value()
+            protocol_dict["ref-t"] = temp
+
+            # Regenerate the velocity if this is not a restart
+            if not self.protocol.isRestart():
+                protocol_dict["gen-vel"] = "yes"
+                protocol_dict["gen-temp"] = temp
 
         # Free energies.
         if isinstance(self.protocol, _Protocol._FreeEnergyMixin):
