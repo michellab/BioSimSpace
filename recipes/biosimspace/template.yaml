@@ -33,7 +33,7 @@ test:
   source_files:
     - test
   commands:
-    - pytest -vvv --import-mode=importlib test
+    - pytest -vvv --color=yes --import-mode=importlib test
 
 about:
   home: https://biosimspace.org

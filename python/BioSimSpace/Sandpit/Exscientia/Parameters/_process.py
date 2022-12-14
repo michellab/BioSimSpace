@@ -57,7 +57,7 @@ from .. import _isVerbose
 from .._Exceptions import ParameterisationError as _ParameterisationError
 from .._SireWrappers import Molecule as _Molecule
 
-from . import Protocol as _Protocol
+from . import _Protocol
 
 if _is_notebook:
     from IPython.display import FileLink as _FileLink
