@@ -78,6 +78,7 @@ class Gromacs(_process.Process):
         seed=None,
         extra_options=None,
         extra_lines=None,
+        reference_system=None,
         property_map={},
         restraint=None,
         ignore_warnings=False,
@@ -112,6 +113,11 @@ class Gromacs(_process.Process):
 
         extra_lines : list
             A list of extra lines to be put at the end of the script.
+
+        reference_system : :class:`System <BioSimSpace._SireWrappers.System>` or None
+            An optional system to use as a source of reference coordinates, if applicable.
+            It is assumed that this system has the same topology as "system". If this is
+            None, then "system" is used as a reference.
 
         property_map : dict
             A dictionary that maps system "properties" to their user defined
@@ -200,6 +206,10 @@ class Gromacs(_process.Process):
         # Set the path for the GROMACS configuration file.
         self._config_file = "%s/%s.mdp" % (self._work_dir, name)
 
+        # Set the reference system
+        self._ref_file = f"{self._work_dir}/{name}_ref.gro"
+        self._ref_system = reference_system
+
         # Create the list of input files.
         self._input_files = [self._config_file, self._gro_file, self._top_file]
 
@@ -226,15 +236,58 @@ class Gromacs(_process.Process):
         """Setup the input files and working directory ready for simulation."""
 
         # Create the input files...
+        self._write_system(
+            self._system, coord_file=self._gro_file, topol_file=self._top_file
+        )
 
+        # Create the reference file
+        if self._ref_system is not None and self._protocol.getRestraint() is not None:
+            self._write_system(self._ref_system, coord_file=self._ref_file)
+        else:
+            _shutil.copy(self._gro_file, self._ref_file)
+
+        # Create the binary input file name.
+        self._tpr_file = "%s/%s.tpr" % (self._work_dir, self._name)
+        self._input_files.append(self._tpr_file)
+
+        # Generate the GROMACS configuration file.
+        # Skip if the user has passed a custom config.
+        if isinstance(self._protocol, _Protocol.Custom):
+            self.setConfig(self._protocol.getConfig())
+        else:
+            self._generate_config()
+        self.writeConfig(self._config_file)
+
+        # Generate the dictionary of command-line arguments.
+        self._generate_args()
+
+        # Return the list of input files.
+        return self._input_files
+
+    def _write_system(self, system, coord_file=None, topol_file=None):
+        """Validates an input system and makes some internal modifications to it,
+           if needed, before writing it out to a coordinate and/or a topology file.
+
+           Parameters
+           ----------
+
+           system : :class:`System <BioSimSpace._SireWrappers.System>`
+               The molecular system.
+
+           coord_file : str or None
+               The coordinate file to which to write out the system.
+
+           topol_file : str or None
+               The topology file to which to write out the system.
+        """
         # Create a copy of the system.
-        system = self._system.copy()
+        system = system.copy()
 
         if isinstance(self._protocol, _Protocol._FreeEnergyMixin):
             # Check that the system contains a perturbable molecule.
             if (
-                self._system.nPerturbableMolecules() == 0
-                and system.nDecoupledMolecules() == 0
+                    system.nPerturbableMolecules() == 0
+                    and system.nDecoupledMolecules() == 0
             ):
                 raise ValueError(
                     "'BioSimSpace.Protocol.FreeEnergy' requires a "
@@ -257,47 +310,10 @@ class Gromacs(_process.Process):
         # Convert the water model topology so that it matches the GROMACS naming convention.
         system._set_water_topology("GROMACS")
 
-        # GRO87 file.
-        gro = _SireIO.Gro87(system._sire_object, self._property_map)
-        gro.writeToFile(self._gro_file)
-
-        # TOP file.
-        top = _SireIO.GroTop(system._sire_object, self._property_map)
-        top.writeToFile(self._top_file)
-        # Write the restraint to the topology file
-        if self._restraint:
-            with open(self._top_file, "a") as f:
-                f.write("\n")
-                f.write(self._restraint.toString(engine="GROMACS"))
-
-        # Create the binary input file name.
-        self._tpr_file = "%s/%s.tpr" % (self._work_dir, self._name)
-        self._input_files.append(self._tpr_file)
-
-        # Generate the GROMACS configuration file.
-        # Skip if the user has passed a custom config.
-        if isinstance(self._protocol, _Protocol.Custom):
-            self.setConfig(self._protocol.getConfig())
-        else:
-            self._generate_config()
-        self.writeConfig(self._config_file)
-
-        # Generate the dictionary of command-line arguments.
-        self._generate_args()
-
-        # Return the list of input files.
-        return self._input_files
-
-    def _generate_config(self):
-        """Generate GROMACS configuration file strings."""
-
-        # Clear the existing configuration list.
-        self._config = []
-
         # Check whether the system contains periodic box information.
-        # For now, well not attempt to generate a box if the system property
+        # For now, we'll not attempt to generate a box if the system property
         # is missing. If no box is present, we'll assume a non-periodic simulation.
-        if "space" in self._system._sire_object.propertyKeys():
+        if "space" in system._sire_object.propertyKeys():
             has_box = True
         else:
             _warnings.warn("No simulation box found. Assuming gas phase simulation.")
@@ -305,21 +321,32 @@ class Gromacs(_process.Process):
 
         # Deal with PBC.
         if not has_box or not self._has_water:
-            # Create a copy of the system.
-            system = self._system.copy()
-
-            # Convert the water model topology so that it matches the GROMACS naming convention.
-            system._set_water_topology("GROMACS")
-
             # Create a 999.9 nm periodic box and apply to the system.
             space = _SireVol.PeriodicBox(_SireMaths.Vector(9999, 9999, 9999))
             system._sire_object.setProperty(
                 self._property_map.get("space", "space"), space
             )
 
-            # Re-write the GRO file.
+        # GRO87 file.
+        if coord_file is not None:
             gro = _SireIO.Gro87(system._sire_object, self._property_map)
-            gro.writeToFile(self._gro_file)
+            gro.writeToFile(coord_file)
+
+        # TOP file.
+        if topol_file is not None:
+            top = _SireIO.GroTop(system._sire_object, self._property_map)
+            top.writeToFile(topol_file)
+            # Write the restraint to the topology file
+            if self._restraint:
+                with open(topol_file, "a") as f:
+                    f.write("\n")
+                    f.write(self._restraint.toString(engine="GROMACS"))
+
+    def _generate_config(self):
+        """Generate GROMACS configuration file strings."""
+
+        # Clear the existing configuration list.
+        self._config = []
 
         config_options = {}
         if not isinstance(self._protocol, _Protocol.Minimisation):
@@ -426,7 +453,7 @@ class Gromacs(_process.Process):
                 mdp_out,
                 self._gro_file,
                 self._top_file,
-                self._gro_file,
+                self._ref_file,
                 self._checkpoint_file,
                 self._tpr_file,
             )
@@ -437,7 +464,7 @@ class Gromacs(_process.Process):
                 mdp_out,
                 self._gro_file,
                 self._top_file,
-                self._gro_file,
+                self._ref_file,
                 self._tpr_file,
             )
 

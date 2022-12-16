@@ -154,7 +154,7 @@ class Amber(_process.Process):
 
     def __init__(self, system, protocol, exe=None, name="amber",
             work_dir=None, seed=None, extra_options=None, extra_lines=None,
-            property_map={}):
+            reference_system=None, property_map={}):
         """Constructor.
 
            Parameters
@@ -183,6 +183,11 @@ class Amber(_process.Process):
 
            extra_lines : list
                A list of extra lines to be put at the end of the script.
+
+           reference_system : :class:`System <BioSimSpace._SireWrappers.System>` or None
+               An optional system to use as a source of reference coordinates, if applicable.
+               It is assumed that this system has the same topology as "system". If this is
+               None, then "system" is used as a reference.
 
            property_map : dict
                A dictionary that maps system "properties" to their user defined
@@ -243,6 +248,10 @@ class Amber(_process.Process):
         # Set the path for the AMBER configuration file.
         self._config_file = "%s/%s.cfg" % (self._work_dir, name)
 
+        # Set the reference system
+        self._ref_file = f"{self._work_dir}/{name}_ref.rst7"
+        self._ref_system = reference_system
+
         # Create the list of input files.
         self._input_files = [self._config_file, self._rst_file, self._top_file]
 
@@ -253,44 +262,15 @@ class Amber(_process.Process):
         """Setup the input files and working directory ready for simulation."""
 
         # Create the input files...
+        self._squashed_system, self._mapping = self._write_system(
+            self._system, coord_file=self._rst_file, topol_file=self._top_file
+        )
 
-        # Create a copy of the system.
-        system = self._system.copy()
-
-        # Convert the water model topology so that it matches the AMBER naming convention.
-        system._set_water_topology("AMBER", self._property_map)
-
-        # Check for perturbable molecules and convert to the chosen end state.
-        if isinstance(self._protocol, _Protocol._FreeEnergyMixin):
-            # Represent the perturbed system in an AMBER-friendly format.
-            system, mapping = _squash(system)
+        # Create the reference file
+        if self._ref_system is not None and self._protocol.getRestraint() is not None:
+            self._write_system(self._ref_system, coord_file=self._ref_file)
         else:
-            system = self._checkPerturbable(system)
-            mapping = {_SireMol.MolIdx(x): _SireMol.MolIdx(x) for x in range(0, system.nMolecules())}
-        self._squashed_system, self._mapping = system, mapping
-
-        # RST file (coordinates).
-        try:
-            rst = _SireIO.AmberRst7(system._sire_object, self._property_map)
-            rst.writeToFile(self._rst_file)
-        except Exception as e:
-            msg = "Failed to write system to 'RST7' format."
-            if _isVerbose():
-                raise IOError(msg) from e
-            else:
-                raise IOError(msg) from None
-
-        # PRM file (topology).
-        try:
-            prm = _SireIO.AmberPrm(system._sire_object, self._property_map)
-            prm.writeToFile(self._top_file)
-
-        except Exception as e:
-            msg = "Failed to write system to 'PRM7' format."
-            if _isVerbose():
-                raise IOError(msg) from e
-            else:
-                raise IOError(msg) from None
+            _shutil.copy(self._rst_file, self._ref_file)
 
         # Generate the AMBER configuration file.
         # Skip if the user has passed a custom config.
@@ -305,6 +285,71 @@ class Amber(_process.Process):
 
         # Return the list of input files.
         return self._input_files
+
+    def _write_system(self, system, coord_file=None, topol_file=None):
+        """Validates an input system and makes some internal modifications to it,
+           if needed, before writing it out to a coordinate and/or a topology file.
+
+           Parameters
+           ----------
+
+           system : :class:`System <BioSimSpace._SireWrappers.System>`
+               The molecular system.
+
+           coord_file : str or None
+               The coordinate file to which to write out the system.
+
+           topol_file : str or None
+               The topology file to which to write out the system.
+
+           Returns
+           -------
+
+           system : BioSimSpace._SireWrappers.System
+                The system used for writing out the topologies.
+
+           mapping : dict(Sire.Mol.MolIdx, Sire.Mol.MolIdx)
+                The corresponding molecule-to-molecule mapping.
+        """
+        # Create a copy of the system.
+        system = system.copy()
+
+        # Convert the water model topology so that it matches the AMBER naming convention.
+        system._set_water_topology("AMBER", self._property_map)
+
+        # Check for perturbable molecules and convert to the chosen end state.
+        if isinstance(self._protocol, _Protocol._FreeEnergyMixin):
+            # Represent the perturbed system in an AMBER-friendly format.
+            system, mapping = _squash(system)
+        else:
+            system = self._checkPerturbable(system)
+            mapping = {_SireMol.MolIdx(x): _SireMol.MolIdx(x) for x in range(0, system.nMolecules())}
+
+        # RST file (coordinates).
+        if coord_file is not None:
+            try:
+                rst = _SireIO.AmberRst7(system._sire_object, self._property_map)
+                rst.writeToFile(coord_file)
+            except Exception as e:
+                msg = "Failed to write system to 'RST7' format."
+                if _isVerbose():
+                    raise IOError(msg) from e
+                else:
+                    raise IOError(msg) from None
+
+        # PRM file (topology).
+        if topol_file is not None:
+            try:
+                prm = _SireIO.AmberPrm(system._sire_object, self._property_map)
+                prm.writeToFile(self._top_file)
+            except Exception as e:
+                msg = "Failed to write system to 'PRM7' format."
+                if _isVerbose():
+                    raise IOError(msg) from e
+                else:
+                    raise IOError(msg) from None
+
+        return system, mapping
 
     def _generate_config(self):
         """Generate AMBER configuration file strings."""
@@ -467,7 +512,7 @@ class Amber(_process.Process):
             # Append a reference file if this a restrained simulation.
             if isinstance(self._protocol, _Protocol._PositionRestraintMixin):
                 if self._protocol.getRestraint() is not None:
-                    self.setArg("-ref", "%s.rst7" % self._name)
+                    self.setArg("-ref", "%s_ref.rst7" % self._name)
 
             # Append a trajectory file if this anything other than a minimisation.
             if not isinstance(self._protocol, _Protocol.Minimisation):

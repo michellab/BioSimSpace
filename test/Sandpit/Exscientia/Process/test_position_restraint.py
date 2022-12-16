@@ -1,12 +1,13 @@
 import itertools
-import pytest
+import os
+from difflib import unified_diff
 
 import pandas as pd
+import pytest
 
 import BioSimSpace.Sandpit.Exscientia as BSS
-from BioSimSpace.Sandpit.Exscientia.Units.Length import angstrom
 from BioSimSpace.Sandpit.Exscientia.Units.Energy import kj_per_mol
-
+from BioSimSpace.Sandpit.Exscientia.Units.Length import angstrom
 
 # Make sure GROMSCS is installed.
 has_gromacs = BSS._gmx_exe is not None
@@ -18,6 +19,13 @@ def system():
     mol0 = BSS.Parameters.parameterise("c1ccccc1C", ff).getMolecule()
     mol1 = BSS.Parameters.parameterise("c1ccccc1", ff).getMolecule()
     return BSS.Align.merge(mol0, mol1).toSystem()
+
+
+@pytest.fixture
+def ref_system(system):
+    mol = system[0]
+    mol.translate(3 * [BSS.Units.Length.nanometer * 1])
+    return mol.toSystem()
 
 
 @pytest.fixture
@@ -85,16 +93,37 @@ def protocol(request, restraint, free_energy, minimisation, equilibration, produ
 
 
 @pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
-def test_gromacs(protocol, system, tmp_path):
-    BSS.Process.Gromacs(system, protocol, work_dir=str(tmp_path), ignore_warnings=True)
+def test_gromacs(protocol, system, ref_system, tmp_path):
+    proc = BSS.Process.Gromacs(
+        system, protocol, reference_system=ref_system, work_dir=str(tmp_path), ignore_warnings=True
+    )
+
+    # We have the restraints
     assert (tmp_path / "posre_0001.itp").is_file()
     with open(tmp_path / "gromacs.top", "r") as f:
         assert "posre_0001.itp" in f.read()
 
+    # We have generated a separate restraint reference
+    assert os.path.exists(proc._ref_file)
+    contents_ref, contents_gro = open(proc._ref_file).readlines(), open(proc._gro_file).readlines()
+    diff = list(unified_diff(contents_ref, contents_gro))
+    assert len(diff)
 
-def test_amber(protocol, system, tmp_path):
-    BSS.Process.Amber(system, protocol, work_dir=str(tmp_path))
+
+def test_amber(protocol, system, ref_system, tmp_path):
+    proc = BSS.Process.Amber(system, protocol, reference_system=ref_system, work_dir=str(tmp_path))
+
+    # We have the restraints
     with open(tmp_path / "amber.cfg", "r") as f:
         cfg = f.read()
         assert "restraint_wt" in cfg
         assert "restraintmask" in cfg
+
+    # We have generated a separate restraint reference
+    assert os.path.exists(proc._ref_file)
+    contents_ref, contents_rst = open(proc._ref_file).readlines(), open(proc._rst_file).readlines()
+    diff = list(unified_diff(contents_ref, contents_rst))
+    assert len(diff)
+
+    # We are pointing the reference to the correct file
+    assert f"{proc._work_dir}/{proc.getArgs()['-ref']}" == proc._ref_file
