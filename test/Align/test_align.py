@@ -1,5 +1,5 @@
 from sire.legacy.MM import InternalFF, IntraCLJFF, IntraFF
-from sire.legacy.Mol import AtomIdx, PartialMolecule
+from sire.legacy.Mol import AtomIdx, Element, PartialMolecule
 
 import BioSimSpace as BSS
 
@@ -364,24 +364,35 @@ def test_hydrogen_mass_repartitioning():
     # Create the merged molecule.
     merged = BSS.Align.merge(m0, m1, mapping, allow_ring_breaking=True)
 
+    # Create a dummy element.
+    dummy = Element("Xx")
+
+    # Get the elements in either end state.
+    elements0 = merged._sire_object.property("element0").toVector()
+    elements1 = merged._sire_object.property("element1").toVector()
+
     # Work out the initial mass of the system.
     initial_mass0 = 0
-    for mass in merged._sire_object.property("mass0").toVector():
-        initial_mass0 += mass.value()
+    for idx, mass in enumerate(merged._sire_object.property("mass0").toVector()):
+        if elements0[idx] != dummy:
+            initial_mass0 += mass.value()
     initial_mass1 = 0
-    for mass in merged._sire_object.property("mass1").toVector():
-        initial_mass1 += mass.value()
+    for idx, mass in enumerate(merged._sire_object.property("mass1").toVector()):
+        if elements1[idx] != dummy:
+            initial_mass1 += mass.value()
 
     # Repartition the hydrogen mass.
     merged.repartitionHydrogenMass()
 
     # Work out the final mass of the system.
     final_mass0 = 0
-    for mass in merged._sire_object.property("mass0").toVector():
-        final_mass0 += mass.value()
+    for idx, mass in enumerate(merged._sire_object.property("mass0").toVector()):
+        if elements0[idx] != dummy:
+            final_mass0 += mass.value()
     final_mass1 = 0
-    for mass in merged._sire_object.property("mass1").toVector():
-        final_mass1 += mass.value()
+    for idx, mass in enumerate(merged._sire_object.property("mass1").toVector()):
+        if elements1[idx] != dummy:
+            final_mass1 += mass.value()
 
     # Assert the the masses are approximately the same.
     assert final_mass0 == pytest.approx(initial_mass0)
