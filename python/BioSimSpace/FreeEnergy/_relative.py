@@ -1582,7 +1582,7 @@ class Relative():
            Parameters
            ----------
 
-           overlap : [ [ float, float, ... ] ], numpy.matrix
+           overlap : [ [ float, float, ... ] ], numpy.ndarray
                The overlap matrix. This gives the overlap between lambda windows.
 
            estimator : str
@@ -1595,7 +1595,7 @@ class Relative():
                 True if the overlap is okay, False if any off-diagonals are less than 0.03.
 
         """
-        if not isinstance(overlap, _np.matrix):
+        if not isinstance(overlap, _np.ndarray):
             raise TypeError("'overlap' must be of type 'numpy.matrix'.")
 
         # estimator must be MBAR for overlap matrix or TI for dhdl plot.
