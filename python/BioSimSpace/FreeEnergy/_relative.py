@@ -31,7 +31,7 @@ __all__ = ["Relative", "getData"]
 from collections import OrderedDict as _OrderedDict
 from glob import glob as _glob
 from logging import warning
-from alchemlyb.estimators import AutoMBAR as _AutoMBAR
+from alchemlyb.estimators import MBAR as _MBAR
 from alchemlyb.estimators import TI as _TI
 from alchemlyb.parsing.amber import extract_dHdl as _amber_extract_dHdl
 from alchemlyb.parsing.amber import extract_u_nk as _amber_extract_u_nk
@@ -915,7 +915,7 @@ class Relative():
             processed_u_nk = u_nk
 
         try:
-            mbar = _AutoMBAR().fit(processed_u_nk)
+            mbar = _MBAR().fit(processed_u_nk)
         except:
             raise _AnalysisError("MBAR free-energy analysis failed!")
 
@@ -1555,7 +1555,7 @@ class Relative():
            Parameters
            ----------
 
-           overlap_dhdl : numpy.matrix or alchemlyb.estimators.ti_.TI
+           overlap_dhdl : numpy.ndarray or alchemlyb.estimators.ti_.TI
                For MBAR, this is the overlap matrix for the overlap between each lambda window.
                For TI, this the dHdl gradients from the alchemlyb analysis.
 
@@ -1589,7 +1589,7 @@ class Relative():
             raise ValueError("'estimator' must be 'MBAR' or 'TI'. If 'None, data type will be inferred.")
 
         if estimator is None:
-            if isinstance(overlap_dhdl, _np.matrix):
+            if isinstance(overlap_dhdl, _np.ndarray):
                 estimator = "MBAR"
             elif isinstance(overlap_dhdl, _alchemlyb.estimators.ti_.TI):
                 estimator = "TI"
@@ -1606,8 +1606,8 @@ class Relative():
                 file_name = "dHdl_TI"
 
         if estimator == "MBAR":
-            if not isinstance(overlap_dhdl, _np.matrix):
-                        raise TypeError("'overlap' must be of type 'numpy.matrix' for 'MBAR'.\
+            if not isinstance(overlap_dhdl, _np.ndarray):
+                        raise TypeError("'overlap' must be of type 'numpy.ndarray' for 'MBAR'.\
                             This is obtained from running analysis using estimator='MBAR'.")
 
             # use the alchemlyb functionality to plot the overlap matrix
