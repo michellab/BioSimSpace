@@ -750,8 +750,8 @@ class Relative():
            estimator : str
                The estimator ('MBAR' or 'TI') used. Default is MBAR.
 
-           estimator : str
-               The estimator ('MBAR' or 'TI') used. Default is MBAR.
+           method : str
+               The estimator ('alchemlyb' or 'native') used. Default is alchemlyb.
 
            Returns
            -------
