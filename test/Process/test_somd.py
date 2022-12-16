@@ -37,6 +37,23 @@ def test_production(system):
     # Run the process and check that it finishes without error.
     assert run_process(system, protocol)
 
+def test_free_energy():
+    """Test a free energy perturbation protocol."""
+
+    # Load the perturbable system.
+    system = BSS.IO.readPerturbableSystem(
+            "test/input/morphs/perturbable_system0.prm7",
+            "test/input/morphs/perturbable_system0.rst7",
+            "test/input/morphs/perturbable_system1.prm7",
+            "test/input/morphs/perturbable_system1.rst7")
+
+    # Create a short FEP protocol.
+    protocol = BSS.Protocol.FreeEnergy(runtime=0.1*BSS.Units.Time.picosecond,
+                                       report_interval=50, restart_interval=50)
+
+    # Run the process and check that it finishes without error.
+    assert run_process(system[0].toSystem(), protocol)
+
 def test_pert_file():
     """Test the perturbation file writer."""
 

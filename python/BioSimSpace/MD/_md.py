@@ -223,9 +223,8 @@ def _find_md_engines(system, protocol, engine="AUTO", gpu_support=False):
 
     return found_engines, found_exes
 
-def run(system, protocol, engine="AUTO", gpu_support=False, auto_start=True,
-        name="md", work_dir=None, seed=None, property_map={},
-        ignore_warnings=False, show_errors=True):
+def run(system, protocol, engine="auto", gpu_support=False, auto_start=True,
+        name="md", work_dir=None, seed=None, property_map={}, **kwargs):
     """Auto-configure and run a molecular dynamics process.
 
        Parameters
@@ -262,15 +261,8 @@ def run(system, protocol, engine="AUTO", gpu_support=False, auto_start=True,
            values. This allows the user to refer to properties with their
            own naming scheme, e.g. { "charge" : "my-charge" }
 
-       ignore_warnings : bool
-           Whether to ignore warnings when generating the binary run file.
-           This option is specific to GROMACS and will be ignored when a
-           different molecular dynamics engine is chosen.
-
-       show_errors : bool
-           Whether to show warning/error messages when generating the binary
-           run file. This option is specific to GROMACS and will be ignored
-           when a different molecular dynamics engine is chosen.
+       kwargs : dict
+           A dictionary of optional keyword arguments neeeded by the engine.
 
        Returns
        -------
@@ -323,12 +315,6 @@ def run(system, protocol, engine="AUTO", gpu_support=False, auto_start=True,
     if not isinstance(property_map, dict):
         raise TypeError("'property_map' must be of type 'dict'")
 
-    if not isinstance(ignore_warnings, bool):
-        raise ValueError("'ignore_warnings' must be of type 'bool.")
-
-    if not isinstance(show_errors, bool):
-        raise ValueError("'show_errors' must be of type 'bool.")
-
     # Find a molecular dynamics engine and executable.
     engines, exes = _find_md_engines(system, protocol, md_engine, gpu_support)
 
@@ -340,18 +326,17 @@ def run(system, protocol, engine="AUTO", gpu_support=False, auto_start=True,
             # AMBER.
             if engine == "AMBER":
                 process = _Process.Amber(system, protocol, exe=exe, name=name,
-                    work_dir=work_dir, seed=seed, property_map=property_map)
+                    work_dir=work_dir, seed=seed, property_map=property_map, **kwargs)
 
             # GROMACS.
             elif engine == "GROMACS":
                 process = _Process.Gromacs(system, protocol, exe=exe, name=name,
-                    work_dir=work_dir, seed=seed, property_map=property_map,
-                    ignore_warnings=ignore_warnings, show_errors=show_errors)
+                    work_dir=work_dir, seed=seed, property_map=property_map, **kwargs)
 
             # NAMD.
             elif engine == "NAMD":
                 process = _Process.Namd(system, protocol, exe=exe, name=name,
-                    work_dir=work_dir, seed=seed, property_map=property_map)
+                    work_dir=work_dir, seed=seed, property_map=property_map, **kwargs)
 
             # OPENMM.
             elif engine == "OPENMM":
@@ -361,7 +346,8 @@ def run(system, protocol, engine="AUTO", gpu_support=False, auto_start=True,
                     platform = "CPU"
                 # Don't pass the executable name through so that this works on Windows too.
                 process = _Process.OpenMM(system, protocol, exe=None, name=name,
-                    work_dir=work_dir, seed=seed, property_map=property_map, platform=platform)
+                    work_dir=work_dir, seed=seed, property_map=property_map, platform=platform,
+                    **kwargs)
 
             # SOMD.
             elif engine == "SOMD":
@@ -371,7 +357,8 @@ def run(system, protocol, engine="AUTO", gpu_support=False, auto_start=True,
                     platform = "CPU"
                 # Don't pass the executable name through so that this works on Windows too.
                 process = _Process.Somd(system, protocol, exe=None, name=name,
-                    work_dir=work_dir, seed=seed, property_map=property_map, platform=platform)
+                    work_dir=work_dir, seed=seed, property_map=property_map, platform=platform,
+                    **kwargs)
 
             # Start the process.
             if auto_start:

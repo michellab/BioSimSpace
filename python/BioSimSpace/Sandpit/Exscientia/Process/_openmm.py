@@ -277,9 +277,9 @@ class OpenMM(_process.Process):
             self.addToConfig(    "                             nonbondedCutoff=1*nanometer,")
             self.addToConfig(    "                             constraints=HBonds)")
 
-            # Set the integrator. (We use a zero-temperature Langevin integrator.)
+            # Set the integrator. (Use zero-temperature as this is just a dummy step.)
             self.addToConfig("\n# Define the integrator.")
-            self.addToConfig("integrator = LangevinIntegrator(0*kelvin,")
+            self.addToConfig("integrator = LangevinMiddleIntegrator(0*kelvin,")
             self.addToConfig("                                1/picosecond,")
             self.addToConfig("                                0.002*picoseconds)")
 
@@ -287,27 +287,24 @@ class OpenMM(_process.Process):
             self._add_config_platform()
 
             # Set up the simulation object.
-            self.addToConfig("\n# Initialise and configure the simulation object.")
-            self.addToConfig("simulation = Simulation(prmtop.topology,")
-            self.addToConfig("                        system,")
-            self.addToConfig("                        integrator,")
-            self.addToConfig("                        platform,")
-            self.addToConfig("                        properties)")
-            self.addToConfig("simulation.context.setPositions(inpcrd.positions)")
-            self.addToConfig("if inpcrd.boxVectors is not None:")
-            self.addToConfig("    simulation.context.setPeriodicBoxVectors(*inpcrd.boxVectors)")
-            self.addToConfig("simulation.minimizeEnergy()")
+            self.addToConfig( "\n# Initialise and configure the simulation object.")
+            self.addToConfig( "simulation = Simulation(prmtop.topology,")
+            self.addToConfig( "                        system,")
+            self.addToConfig( "                        integrator,")
+            self.addToConfig( "                        platform,")
+            self.addToConfig( "                        properties)")
+            self.addToConfig( "simulation.context.setPositions(inpcrd.positions)")
+            self.addToConfig( "if inpcrd.boxVectors is not None:")
+            self.addToConfig( "    simulation.context.setPeriodicBoxVectors(*inpcrd.boxVectors)")
+            self.addToConfig(f"simulation.minimizeEnergy({self._protocol.getSteps()})")
 
             # Add the reporters.
             self.addToConfig("\n# Add reporters.")
-            if self._protocol.getSteps() < 100:
-                self._add_config_reporters(state_interval=1, traj_interval=1)
-            else:
-                self._add_config_reporters(state_interval=100, traj_interval=100)
+            self._add_config_reporters(state_interval=1, traj_interval=1)
 
             # Now run the simulation.
-            self.addToConfig("\n# Run the simulation.")
-            self.addToConfig(f"simulation.step({self._protocol.getSteps()})")
+            self.addToConfig("\n# Run a single simulation step to allow us to get the system and energy.")
+            self.addToConfig(f"simulation.step(1)")
 
         elif isinstance(self._protocol, _Protocol.Equilibration):
             # Write the OpenMM import statements and monkey-patches.
@@ -392,7 +389,7 @@ class OpenMM(_process.Process):
 
             # Set the integrator.
             self.addToConfig( "\n# Define the integrator.")
-            self.addToConfig(f"integrator = LangevinIntegrator({temperature}*kelvin,")
+            self.addToConfig(f"integrator = LangevinMiddleIntegrator({temperature}*kelvin,")
             self.addToConfig( "                                1/picosecond,")
             self.addToConfig(f"                                {timestep}*picoseconds)")
             if self._is_seeded:
@@ -529,7 +526,7 @@ class OpenMM(_process.Process):
 
             # Set the integrator.
             self.addToConfig( "\n# Define the integrator.")
-            self.addToConfig(f"integrator = LangevinIntegrator({temperature}*kelvin,")
+            self.addToConfig(f"integrator = LangevinMiddleIntegrator({temperature}*kelvin,")
             self.addToConfig( "                                1/picosecond,")
             self.addToConfig(f"                                {timestep}*picoseconds)")
             if self._is_seeded:
@@ -835,7 +832,7 @@ class OpenMM(_process.Process):
 
             # Set the integrator.
             self.addToConfig( "\n# Define the integrator.")
-            self.addToConfig(f"integrator = LangevinIntegrator({temperature}*kelvin,")
+            self.addToConfig(f"integrator = LangevinMiddleIntegrator({temperature}*kelvin,")
             self.addToConfig( "                                1/picosecond,")
             self.addToConfig(f"                                {timestep}*picoseconds)")
             if self._is_seeded:
@@ -1794,16 +1791,26 @@ class OpenMM(_process.Process):
 		# Append to a trajectory file every 500 steps.
         self.addToConfig(f"simulation.reporters.append(DCDReporter('{self._name}.dcd', {traj_interval}, append={is_restart}))")
 
+        # Disable specific state information for minimisation protocols.
+        if isinstance(self._protocol, _Protocol.Minimisation):
+            is_step = False
+            is_time = False
+            is_temperature = False
+        else:
+            is_step = True
+            is_time = True
+            is_temperature = True
+
 		# Write state information to file every 100 steps.
         self.addToConfig(f"log_file = open('{self._name}.log', 'a')")
         self.addToConfig(f"simulation.reporters.append(StateDataReporter(log_file,")
         self.addToConfig(f"                                              {state_interval},")
-        self.addToConfig( "                                              step=True,")
-        self.addToConfig( "                                              time=True,")
+        self.addToConfig(f"                                              step={is_step},")
+        self.addToConfig(f"                                              time={is_time},")
         self.addToConfig( "                                              potentialEnergy=True,")
         self.addToConfig( "                                              kineticEnergy=True,")
         self.addToConfig( "                                              totalEnergy=True,")
-        self.addToConfig( "                                              temperature=True,")
+        self.addToConfig(f"                                              temperature={is_temperature},")
         self.addToConfig( "                                              volume=True,")
         self.addToConfig( "                                              totalSteps=True,")
         self.addToConfig( "                                              speed=True,")
