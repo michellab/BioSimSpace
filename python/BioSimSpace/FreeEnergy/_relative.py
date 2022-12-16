@@ -750,8 +750,8 @@ class Relative():
            estimator : str
                The estimator ('MBAR' or 'TI') used. Default is MBAR.
 
-           estimator : str
-               The estimator ('MBAR' or 'TI') used. Default is MBAR.
+           method : str
+               The estimator ('alchemlyb' or 'native') used. Default is alchemlyb.
 
            Returns
            -------
@@ -783,7 +783,7 @@ class Relative():
         for engine, (func, mask) in function_glob_dict.items():
             data = _glob(work_dir + mask)
             if data and engine == "AMBER":
-                if method is not "alchemlyb":
+                if method != "alchemlyb":
                     raise _AnalysisError(f"{engine} requires alchemlyb.")
             if data and engine == "SOMD" and estimator == "TI" and method == "native":
                 raise _AnalysisError(f"{engine} with {method} cannot do {estimator}.")
@@ -1060,7 +1060,7 @@ class Relative():
             with open(file) as f:
                 for line in f.readlines():
                     if not found_temperature:
-                        match = _re.search("temp0=([\d.]+)", line)
+                        match = _re.search(r"temp0=([\d.]+)", line)
                         if match is not None:
                             temperatures += [float(match.group(1))]
                             found_temperature = True
