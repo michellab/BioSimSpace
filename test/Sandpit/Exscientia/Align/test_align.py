@@ -384,16 +384,34 @@ def test_hydrogen_mass_repartitioning():
     # Repartition the hydrogen mass.
     merged.repartitionHydrogenMass()
 
+    # Lists to store the mass of dummy atoms in the two end states.
+    dummy_masses0 = []
+    dummy_masses1 = []
+
+    # Extract the modified end state masses.
+    masses0 = merged._sire_object.property("mass0").toVector()
+    masses1 = merged._sire_object.property("mass1").toVector()
+
     # Work out the final mass of the system.
     final_mass0 = 0
-    for idx, mass in enumerate(merged._sire_object.property("mass0").toVector()):
+    for idx, mass in enumerate(masses0):
         if elements0[idx] != dummy:
             final_mass0 += mass.value()
+        else:
+            dummy_masses0.append((idx, mass))
     final_mass1 = 0
-    for idx, mass in enumerate(merged._sire_object.property("mass1").toVector()):
+    for idx, mass in enumerate(masses1):
         if elements1[idx] != dummy:
             final_mass1 += mass.value()
+        else:
+            dummy_masses1.append((idx, mass))
 
     # Assert the the masses are approximately the same.
     assert final_mass0 == pytest.approx(initial_mass0)
     assert final_mass1 == pytest.approx(initial_mass1)
+
+    # Assert that the dummy atom masses are the same in both end states.
+    for idx, mass0 in dummy_masses0:
+        assert mass0 == masses1[idx]
+    for idx, mass1 in dummy_masses1:
+        assert mass1 == masses0[idx]
