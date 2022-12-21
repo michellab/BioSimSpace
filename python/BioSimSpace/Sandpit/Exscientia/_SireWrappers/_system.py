@@ -817,7 +817,7 @@ class System(_SireWrapper):
            molecules : [:class:`Molecule <BioSimSpace._SireWrappers.Molecule>`]
                A list of decoupled molecules.
         """
-        return _Molecules(self._sire_object.search("property decouple").toGroup())
+        return _Molecules(self._sire_object.search("molecules with property decouple").toGroup())
 
     def nDecoupledMolecules(self):
         """Return the number of decoupled molecules in the system.
