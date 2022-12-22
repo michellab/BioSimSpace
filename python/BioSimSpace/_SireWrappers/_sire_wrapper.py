@@ -238,8 +238,8 @@ class SireWrapper():
         """
         aabox = self._getAABox(property_map)
 
-        box_min = [x for x in aabox.minCoords()]
-        box_max = [x for x in aabox.maxCoords()]
+        box_min = [x.value()*_Units.Length.angstrom for x in aabox.minCoords()]
+        box_max = [x.value()*_Units.Length.angstrom for x in aabox.maxCoords()]
 
         return box_min, box_max
 
