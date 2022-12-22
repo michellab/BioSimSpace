@@ -653,7 +653,8 @@ def _solvate(molecule, box, angles, shell, model, num_point,
         box_center = triclinic_box.cellMatrix()*_Vector(0.5, 0.5, 0.5)
 
         # Work out the offset between the molecule and box centers.
-        shift = [_Length(box_center[x]-center[x], "Angstrom") for x in range(0, 3)]
+        shift = [_Length(box_center[x].value()-center[x].value(),
+                 "Angstrom") for x in range(0, 3)]
 
         # Center the solute in the box.
         molecule.translate(shift)
