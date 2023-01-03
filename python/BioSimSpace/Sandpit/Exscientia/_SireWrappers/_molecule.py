@@ -1350,6 +1350,16 @@ class Molecule(_SireWrapper):
 
         # Handle perturbable molecules separately.
         if self.isPerturbable():
+            # Search for dummies in both end states.
+            try:
+                dummies0 = self.search("element Xx", property_map={"element" : "element0"})
+            except:
+                dummies0 = []
+            try:
+                dummies1 = self.search("element Xx", property_map={"element" : "element1"})
+            except:
+                dummies1 = []
+
             # Repartition masses for the lambda=0 state.
             pmap = { "mass"         : "mass0",
                      "element"      : "element0",
@@ -1365,6 +1375,22 @@ class Molecule(_SireWrapper):
                    }
             self._sire_object = _SireIO.repartitionHydrogenMass(
                     self._sire_object, factor, water_options[water], pmap)
+
+            # Now replace atom dummy atom masses with the reparitioned mass
+            # from the opposite end state.
+
+            edit_mol = self._sire_object.edit()
+
+            for dummy in dummies0:
+                idx = dummy._sire_object.index()
+                mass1 = self._sire_object.atom(idx).property("mass1")
+                edit_mol = edit_mol.atom(idx).setProperty("mass0", mass1).molecule()
+            for dummy in dummies1:
+                idx = dummy._sire_object.index()
+                mass0 = self._sire_object.atom(idx).property("mass0")
+                edit_mol = edit_mol.atom(idx).setProperty("mass1", mass0).molecule()
+
+            self._sire_object = edit_mol.commit()
 
         else:
             self._sire_object = _SireIO.repartitionHydrogenMass(

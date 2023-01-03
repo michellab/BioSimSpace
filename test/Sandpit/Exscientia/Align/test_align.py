@@ -1,5 +1,5 @@
 from sire.legacy.MM import InternalFF, IntraCLJFF, IntraFF
-from sire.legacy.Mol import AtomIdx, PartialMolecule
+from sire.legacy.Mol import AtomIdx, Element, PartialMolecule
 
 import BioSimSpace.Sandpit.Exscientia as BSS
 
@@ -7,8 +7,8 @@ import pytest
 
 def test_flex_align():
     # Load the ligands.
-    s0 = BSS.IO.readMolecules(BSS.IO.glob("test/input/ligands/ligand01*"))
-    s1 = BSS.IO.readMolecules(BSS.IO.glob("test/input/ligands/ligand02*"))
+    s0 = BSS.IO.readMolecules(BSS.IO.glob("test/Sandpit/Exscientia/input/ligands/ligand01*"))
+    s1 = BSS.IO.readMolecules(BSS.IO.glob("test/Sandpit/Exscientia/input/ligands/ligand02*"))
 
     # Extract the molecules.
     m0 = s0.getMolecules()[0]
@@ -32,8 +32,8 @@ def test_flex_align():
                                       {1 : 0}])
 def test_prematch(prematch):
     # Load the ligands.
-    s0 = BSS.IO.readMolecules(BSS.IO.glob("test/input/ligands/ligand01*"))
-    s1 = BSS.IO.readMolecules(BSS.IO.glob("test/input/ligands/ligand02*"))
+    s0 = BSS.IO.readMolecules(BSS.IO.glob("test/Sandpit/Exscientia/input/ligands/ligand01*"))
+    s1 = BSS.IO.readMolecules(BSS.IO.glob("test/Sandpit/Exscientia/input/ligands/ligand02*"))
 
     # Extract the molecules.
     m0 = s0.getMolecules()[0]
@@ -54,8 +54,8 @@ def test_prematch(prematch):
                                       { 1 : -1}])
 def test_invalid_prematch(prematch):
     # Load the ligands.
-    s0 = BSS.IO.readMolecules(BSS.IO.glob("test/input/ligands/ligand01*"))
-    s1 = BSS.IO.readMolecules(BSS.IO.glob("test/input/ligands/ligand02*"))
+    s0 = BSS.IO.readMolecules(BSS.IO.glob("test/Sandpit/Exscientia/input/ligands/ligand01*"))
+    s1 = BSS.IO.readMolecules(BSS.IO.glob("test/Sandpit/Exscientia/input/ligands/ligand02*"))
 
     # Extract the molecules.
     m0 = s0.getMolecules()[0]
@@ -68,8 +68,8 @@ def test_invalid_prematch(prematch):
 
 def test_merge():
     # Load the ligands.
-    s0 = BSS.IO.readMolecules(BSS.IO.glob("test/input/ligands/ligand31*"))
-    s1 = BSS.IO.readMolecules(BSS.IO.glob("test/input/ligands/ligand38*"))
+    s0 = BSS.IO.readMolecules(BSS.IO.glob("test/Sandpit/Exscientia/input/ligands/ligand31*"))
+    s1 = BSS.IO.readMolecules(BSS.IO.glob("test/Sandpit/Exscientia/input/ligands/ligand38*"))
 
     # Extract the molecules.
     m0 = s0.getMolecules()[0]
@@ -197,8 +197,8 @@ def test_merge():
 @pytest.mark.xfail(reason="Mapping generated with latest RDKit which requires sanitization no longer triggers the exception")
 def test_ring_breaking_three_membered():
     # Load the ligands.
-    s0 = BSS.IO.readMolecules(BSS.IO.glob("test/input/ligands/CAT-13a*"))
-    s1 = BSS.IO.readMolecules(BSS.IO.glob("test/input/ligands/CAT-17g*"))
+    s0 = BSS.IO.readMolecules(BSS.IO.glob("test/Sandpit/Exscientia/input/ligands/CAT-13a*"))
+    s1 = BSS.IO.readMolecules(BSS.IO.glob("test/Sandpit/Exscientia/input/ligands/CAT-17g*"))
 
     # Extract the molecules.
     m0 = s0.getMolecules()[0]
@@ -220,8 +220,8 @@ def test_ring_breaking_three_membered():
 @pytest.mark.xfail(reason="Mapping generated with latest RDKit which requires sanitization no longer triggers the exception")
 def test_ring_breaking_five_membered():
     # Load the ligands.
-    s0 = BSS.IO.readMolecules(BSS.IO.glob("test/input/ligands/ligand31*"))
-    s1 = BSS.IO.readMolecules(BSS.IO.glob("test/input/ligands/ligand04*"))
+    s0 = BSS.IO.readMolecules(BSS.IO.glob("test/Sandpit/Exscientia/input/ligands/ligand31*"))
+    s1 = BSS.IO.readMolecules(BSS.IO.glob("test/Sandpit/Exscientia/input/ligands/ligand04*"))
 
     # Extract the molecules.
     m0 = s0.getMolecules()[0]
@@ -243,8 +243,8 @@ def test_ring_breaking_five_membered():
 @pytest.mark.xfail(reason="Mapping generated with latest RDKit which requires sanitization no longer triggers the exception")
 def test_ring_breaking_six_membered():
     # Load the ligands.
-    s0 = BSS.IO.readMolecules(BSS.IO.glob("test/input/ligands/ligand31*"))
-    s1 = BSS.IO.readMolecules(BSS.IO.glob("test/input/ligands/ligand38*"))
+    s0 = BSS.IO.readMolecules(BSS.IO.glob("test/Sandpit/Exscientia/input/ligands/ligand31*"))
+    s1 = BSS.IO.readMolecules(BSS.IO.glob("test/Sandpit/Exscientia/input/ligands/ligand38*"))
 
     # Extract the molecules.
     m0 = s0.getMolecules()[0]
@@ -269,8 +269,8 @@ def test_ring_breaking_six_membered():
                         )
 def test_ring_size_change(ligands):
     # Load the ligands.
-    s0 = BSS.IO.readMolecules(BSS.IO.glob("test/input/ligands/%s.*" % ligands[0]))
-    s1 = BSS.IO.readMolecules(BSS.IO.glob("test/input/ligands/%s.*" % ligands[1]))
+    s0 = BSS.IO.readMolecules(BSS.IO.glob("test/Sandpit/Exscientia/input/ligands/%s.*" % ligands[0]))
+    s1 = BSS.IO.readMolecules(BSS.IO.glob("test/Sandpit/Exscientia/input/ligands/%s.*" % ligands[1]))
 
     # Extract the molecules.
     m0 = s0.getMolecules()[0]
@@ -333,8 +333,8 @@ def test_ring_size_change(ligands):
                                                 10: 17})])
 def test_grow_whole_ring(ligands, mapping):
     # Load the ligands.
-    s0 = BSS.IO.readMolecules(BSS.IO.glob(f"test/input/ligands/{ligands[0]}*"))
-    s1 = BSS.IO.readMolecules(BSS.IO.glob(f"test/input/ligands/{ligands[1]}*"))
+    s0 = BSS.IO.readMolecules(BSS.IO.glob(f"test/Sandpit/Exscientia/input/ligands/{ligands[0]}*"))
+    s1 = BSS.IO.readMolecules(BSS.IO.glob(f"test/Sandpit/Exscientia/input/ligands/{ligands[1]}*"))
 
     # Extract the molecules.
     m0 = s0.getMolecules()[0]
@@ -348,8 +348,8 @@ def test_grow_whole_ring(ligands, mapping):
 
 def test_hydrogen_mass_repartitioning():
     # Load the ligands.
-    s0 = BSS.IO.readMolecules(BSS.IO.glob("test/input/ligands/ligand31*"))
-    s1 = BSS.IO.readMolecules(BSS.IO.glob("test/input/ligands/ligand38*"))
+    s0 = BSS.IO.readMolecules(BSS.IO.glob("test/Sandpit/Exscientia/input/ligands/ligand31*"))
+    s1 = BSS.IO.readMolecules(BSS.IO.glob("test/Sandpit/Exscientia/input/ligands/ligand38*"))
 
     # Extract the molecules.
     m0 = s0.getMolecules()[0]
@@ -364,25 +364,54 @@ def test_hydrogen_mass_repartitioning():
     # Create the merged molecule.
     merged = BSS.Align.merge(m0, m1, mapping, allow_ring_breaking=True)
 
+    # Create a dummy element.
+    dummy = Element("Xx")
+
+    # Get the elements in either end state.
+    elements0 = merged._sire_object.property("element0").toVector()
+    elements1 = merged._sire_object.property("element1").toVector()
+
     # Work out the initial mass of the system.
     initial_mass0 = 0
-    for mass in merged._sire_object.property("mass0").toVector():
-        initial_mass0 += mass.value()
+    for idx, mass in enumerate(merged._sire_object.property("mass0").toVector()):
+        if elements0[idx] != dummy:
+            initial_mass0 += mass.value()
     initial_mass1 = 0
-    for mass in merged._sire_object.property("mass1").toVector():
-        initial_mass1 += mass.value()
+    for idx, mass in enumerate(merged._sire_object.property("mass1").toVector()):
+        if elements1[idx] != dummy:
+            initial_mass1 += mass.value()
 
     # Repartition the hydrogen mass.
     merged.repartitionHydrogenMass()
 
+    # Lists to store the mass of dummy atoms in the two end states.
+    dummy_masses0 = []
+    dummy_masses1 = []
+
+    # Extract the modified end state masses.
+    masses0 = merged._sire_object.property("mass0").toVector()
+    masses1 = merged._sire_object.property("mass1").toVector()
+
     # Work out the final mass of the system.
     final_mass0 = 0
-    for mass in merged._sire_object.property("mass0").toVector():
-        final_mass0 += mass.value()
+    for idx, mass in enumerate(masses0):
+        if elements0[idx] != dummy:
+            final_mass0 += mass.value()
+        else:
+            dummy_masses0.append((idx, mass))
     final_mass1 = 0
-    for mass in merged._sire_object.property("mass1").toVector():
-        final_mass1 += mass.value()
+    for idx, mass in enumerate(masses1):
+        if elements1[idx] != dummy:
+            final_mass1 += mass.value()
+        else:
+            dummy_masses1.append((idx, mass))
 
     # Assert the the masses are approximately the same.
     assert final_mass0 == pytest.approx(initial_mass0)
     assert final_mass1 == pytest.approx(initial_mass1)
+
+    # Assert that the dummy atom masses are the same in both end states.
+    for idx, mass0 in dummy_masses0:
+        assert mass0 == masses1[idx]
+    for idx, mass1 in dummy_masses1:
+        assert mass1 == masses0[idx]
