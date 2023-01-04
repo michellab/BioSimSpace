@@ -143,8 +143,7 @@ def _parameterise_amber_protein(forcefield, molecule, tolerance=1.2,
 
        bonds : ((class:`Atom <BioSimSpace._SireWrappers.Atom>`, class:`Atom <BioSimSpace._SireWrappers.Atom>`))
            An optional tuple of atom pairs to specify additional atoms that
-           should be bonded. This is useful when the PDB CONECT record is
-           incomplete.
+           should be bonded.
 
        work_dir : str
            The working directory for the process.
@@ -677,8 +676,7 @@ def _validate(molecule=None, tolerance=None, max_distance=None,
 
     bonds : ((class:`Atom <BioSimSpace._SireWrappers.Atom>`, class:`Atom <BioSimSpace._SireWrappers.Atom>`))
         An optional tuple of atom pairs to specify additional atoms that
-        should be bonded. This is useful when the PDB CONECT record is
-        incomplete.
+        should be bonded.
 
     work_dir : str
         The working directory for the process.
@@ -795,8 +793,7 @@ def _make_amber_protein_function(name):
 
            bonds : ((class:`Atom <BioSimSpace._SireWrappers.Atom>`, class:`Atom <BioSimSpace._SireWrappers.Atom>`))
                An optional tuple of atom pairs to specify additional atoms that
-               should be bonded. This is useful when the PDB CONECT record is
-               incomplete.
+               should be bonded.
 
            work_dir : str
                 The working directory for the process.
