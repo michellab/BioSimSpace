@@ -62,19 +62,31 @@ class Type():
             value = args[0]
             unit = args[1]
 
-            if hasattr(value, "to_default"):
-                value = value.to_default()
+            # Check for a GeneralUnit value.
+            if isinstance(value, _SireUnits.GeneralUnit):
+                # Try to convert the Sire GeneralUnit to an object of this type.
+                temp = self._from_sire_unit(args[0])
 
-            # Check that the value is valid.
-            if type(value) is int:
-                self._value = float(value)
-            elif isinstance(value, float):
-                self._value = value
+                # Validate the unit.
+                self._unit = self._validate_unit(unit)
+
+                # Convert to the desired unit.
+                self._value = temp._convert_to(self._unit).value()
+
             else:
-                raise TypeError("'value' must be of type 'int' or 'float'")
+                if hasattr(value, "to_default"):
+                    value = value.to_default()
 
-            # Check that the unit is supported.
-            self._unit = self._validate_unit(unit)
+                # Check that the value is valid.
+                if type(value) is int:
+                    self._value = float(value)
+                elif isinstance(value, float):
+                    self._value = value
+                else:
+                    raise TypeError("'value' must be of type 'int' or 'float'")
+
+                # Check that the unit is supported.
+                self._unit = self._validate_unit(unit)
 
         elif len(args) == 1:
             # The user has passed a Sire Unit object.
