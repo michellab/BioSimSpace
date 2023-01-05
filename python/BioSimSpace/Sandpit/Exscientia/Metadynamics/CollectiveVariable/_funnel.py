@@ -866,7 +866,7 @@ def makeFunnel(system, protein=None, ligand=None, alpha_carbon_name="CA", proper
     x = binding_site.x().angstroms().value()
     y = binding_site.y().angstroms().value()
     z = binding_site.z().angstroms().value()
-    string = f"atoms within 10 of {x},{y},{z} and atomname {alpha_carbon_name}"
+    string = f"(atoms within 10 of {x},{y},{z}) and atomname {alpha_carbon_name}"
 
     # Perform the search.
     try:
@@ -900,7 +900,7 @@ def makeFunnel(system, protein=None, ligand=None, alpha_carbon_name="CA", proper
     x = into_the_protein.x()
     y = into_the_protein.y()
     z = into_the_protein.z()
-    string = f"atoms within 7 of {x},{y},{z} and atomname {alpha_carbon_name}"
+    string = f"(atoms within 7 of {x},{y},{z}) and atomname {alpha_carbon_name}"
 
     # Perform the search.
     try:
