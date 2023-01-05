@@ -243,7 +243,7 @@ class Vector():
            x : float
                The x component of the vector.
         """
-        return self._sire_object.x()
+        return self._sire_object.x().value()
 
     def y(self):
         """Return the y component of the vector.
@@ -254,7 +254,7 @@ class Vector():
            y : float
                The y component of the vector.
         """
-        return self._sire_object.y()
+        return self._sire_object.y().value()
 
     def z(self):
         """Return the z component of the vector.
@@ -265,7 +265,7 @@ class Vector():
            z : float
                The z component of the vector.
         """
-        return self._sire_object.z()
+        return self._sire_object.z().value()
 
     def magnitude(self):
         """Return the magnitude of the vector.
@@ -305,4 +305,4 @@ class Vector():
            vector : :class: `Vector <BioSimSpace.Types.Vector>`
                A BioSimSpace Vector object.
         """
-        return Vector(vector.x(), vector.y(), vector.z())
+        return Vector(vector.x().value(), vector.y().value(), vector.z().value())

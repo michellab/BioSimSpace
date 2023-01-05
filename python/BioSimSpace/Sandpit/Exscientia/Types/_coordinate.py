@@ -145,8 +145,7 @@ class Coordinate():
 
         # Only support multiplication by float.
         if isinstance(other, float):
-            # Return a new vector multiplied by other.
-            return self._from_sire_vector(other * self._vector)
+            return self.fromVector(other * self._vector, _Length(1, "A"))
 
         else:
             raise TypeError("unsupported operand type(s) for *: '%s' and '%s'"
@@ -167,13 +166,11 @@ class Coordinate():
 
         # Float division.
         if isinstance(other, float):
-            # Return a new vector divided by other.
-            return self._from_sire_vector(self._vector / other)
+            return self.fromVector(self._vector / other, _Length(1, "A"))
 
         else:
             raise TypeError("unsupported operand type(s) for /: '%s' and '%s'"
                 % (self.__class__.__qualname__, other.__class__.__qualname__))
-
 
     def x(self):
         """Return the x component of the coordinate.
@@ -257,6 +254,6 @@ class Coordinate():
                A BioSimSpace Coordinate object.
         """
         # Create a new Coordinate using the x, y, z components.
-        return Coordinate(_Length(vector.x(), "A"),
-                          _Length(vector.y(), "A"),
-                          _Length(vector.z(), "A"))
+        return Coordinate(_Length(vector.x().value(), "A"),
+                          _Length(vector.y().value(), "A"),
+                          _Length(vector.z().value(), "A"))
