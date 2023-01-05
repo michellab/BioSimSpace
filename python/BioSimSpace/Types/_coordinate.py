@@ -95,7 +95,7 @@ class Coordinate():
                The sum of the two coordinates.
         """
         if isinstance(other, Coordinate):
-            return self._from_sire_vector(self._vector + other._vector)
+            return self.fromVector(self._vector + other._vector, _Length(1, "A"))
 
         elif isinstance(other, _Length):
             vector = self._vector + _Vector(other.angstroms().value(),
@@ -124,7 +124,7 @@ class Coordinate():
                The difference of the two coordinates.
         """
         if isinstance(other, Coordinate):
-            return self._from_sire_vector(self._vector - other._vector)
+            return self.fromVector(self._vector - other._vector, _Length(1, "A"))
 
         elif isinstance(other, _Length):
             vector = self._vector - _Vector(other.angstroms().value(),
