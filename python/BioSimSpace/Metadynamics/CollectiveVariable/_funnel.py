@@ -751,7 +751,7 @@ def makeFunnel(system, protein=None, ligand=None, alpha_carbon_name="CA", proper
         raise _IncompatibleError("The system contains no simulation box property!")
 
     # Store the space.
-    space = system._sire_object.property("space")
+    space = system._sire_object.property(space_prop)
 
     # The following is adapted from funnel_maker.py by Dominykas Lukauskis.
 
