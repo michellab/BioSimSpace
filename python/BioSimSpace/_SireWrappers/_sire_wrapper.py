@@ -281,13 +281,13 @@ class SireWrapper():
         if self._is_perturbable:
             prop = "coordinates0"
 
-        # Residues need to be converted to molecules to have a
-        # coordinates property.
+        # Residues now have a coordinates property, but this is returned as a
+        # Python list.
         try:
-            c = self._sire_object.property(prop)
+            c = self._sire_object.property(prop).toVector()
         except:
             try:
-                c = self.toMolecule()._sire_object.property(prop)
+                c = self._sire_object.property(prop)
             except Exception as e:
                 msg = "Cannot compute axis-aligned bounding box " + \
                       "since the object has no 'coordinates' property."
@@ -299,7 +299,7 @@ class SireWrapper():
 
         # We have a vector of coordinates. (Multiple atoms)
         if self._is_multi_atom:
-            coord.extend(c.toVector())
+            coord.extend(c)
         # Convert to a list.
         else:
             coord = [c]
