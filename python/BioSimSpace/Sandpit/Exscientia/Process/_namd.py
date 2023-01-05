@@ -273,29 +273,30 @@ class Namd(_process.Process):
             # Periodic box.
             try:
                 box_size = self._system._sire_object.property(prop).dimensions()
-                v0 = _Vector(box_size.x(), 0, 0)
-                v1 = _Vector(0, box_size.y(), 0)
-                v2 = _Vector(0, 0, box_size.z())
+                v0 = _Vector(box_size.x().value(), 0, 0)
+                v1 = _Vector(0, box_size.y().value(), 0)
+                v2 = _Vector(0, 0, box_size.z().value())
 
             # TriclinicBox.
             except:
-                v0 = self._system._sire_object.property(prop).vector0()
-                v1 = self._system._sire_object.property(prop).vector1()
-                v2 = self._system._sire_object.property(prop).vector2()
+                box = self._system._sire_object.property(prop)
+                v0 = box.vector0()
+                v1 = box.vector1()
+                v2 = box.vector2()
 
             # Work out the minimum box size.
             box_size = min(v0.magnitude(), v1.magnitude(), v2.magnitude())
 
             # Convert vectors to tuples.
-            v0 = tuple(v0)
-            v1 = tuple(v1)
-            v2 = tuple(v2)
+            v0 = tuple(x.value() for x in v0)
+            v1 = tuple(x.value() for x in v1)
+            v2 = tuple(x.value() for x in v2)
 
             # Since the box is translationally invariant, we set the cell
             # origin to be the average of the atomic coordinates. This
-            # ensures a consistent wrapping for coordinates in the  NAMD
+            # ensures a consistent wrapping for coordinates in the NAMD
             # output files.
-            origin = tuple(self._system._getAABox().center())
+            origin = tuple(x.value() for x in self._system._getAABox().center())
 
         # No box information. Assume this is a gas phase simulation.
         else:
