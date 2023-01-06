@@ -42,7 +42,7 @@ from sire.legacy import Mol as _SireMol
 from sire.legacy.Maths import Vector as _Vector
 from sire.legacy.Vol import TriclinicBox as _TriclinicBox
 
-from sire.units import degree as _degree
+from sire.legacy.Units import degree as _degree
 
 from .. import _gmx_exe, _gmx_path
 from .. import _isVerbose

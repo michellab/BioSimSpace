@@ -73,8 +73,7 @@ with _warnings.catch_warnings():
 from sire.legacy import Base as _SireBase
 from sire.legacy import Maths as _SireMaths
 from sire.legacy import Mol as _SireMol
-
-from sire import units as _SireUnits
+from sire.legacy import Units as _SireUnits
 
 from .. import _is_notebook, _isVerbose
 from .._Exceptions import AlignmentError as _AlignmentError

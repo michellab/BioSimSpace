@@ -30,7 +30,7 @@ __all__ = ["Type"]
 
 import re as _re
 
-from sire import units as _SireUnits
+from sire.legacy import Units as _SireUnits
 
 
 class Type:

@@ -28,7 +28,7 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["GeneralUnit"]
 
-from sire.units import GeneralUnit as _GeneralUnit
+from sire.legacy.Units import GeneralUnit as _GeneralUnit
 
 from ._base_units import *
 from ._type import Type as _Type

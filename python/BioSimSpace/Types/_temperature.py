@@ -28,7 +28,7 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Temperature"]
 
-from sire import units as _SireUnits
+from sire.legacy import Units as _SireUnits
 
 from ._type import Type as _Type
 
