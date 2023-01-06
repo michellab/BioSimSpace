@@ -65,7 +65,10 @@ jobs:
         if: github.event_name == 'pull_request'
 #
       - name: Setup Conda
-        run: mamba install -y -c conda-forge boa anaconda-client packaging=21 pip-requirements-parser
+        run: mamba install -y -c conda-forge boa anaconda-client packaging=21 pip-requirements-parser pytest-black
+#
+      - name: Check formatting
+        run: PYTHONPATH=${{ github.workspace }}/BioSimSpace/python python -m pytest -svvv --color=yes --black ${{ github.workspace }}/BioSimSpace/python
 #
       - name: Update Conda recipe
         run: python ${{ github.workspace }}/BioSimSpace/actions/update_recipe.py
