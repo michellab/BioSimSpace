@@ -35,13 +35,14 @@ import os as _os
 # Adapted from: http://ralsina.me/weblog/posts/BB963.html
 @_contextmanager
 def cd(work_dir):
-    """Execute the context in the directory "work_dir"
+    """
+    Execute the context in the directory "work_dir"
 
-       Parameters
-       ----------
+    Parameters
+    ----------
 
-       work_dir : str
-           The working directory for the context.
+    work_dir : str
+        The working directory for the context.
     """
 
     # Validate the input.

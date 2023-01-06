@@ -29,22 +29,24 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Protocol"]
 
-class Protocol():
+
+class Protocol:
     """A base class for parameterisation protocols."""
 
     def __init__(self, forcefield, property_map={}):
-        """Constructor.
+        """
+        Constructor.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           forcefield : str
-               The name of the force field.
+        forcefield : str
+            The name of the force field.
 
-           property_map : dict
-               A dictionary that maps system "properties" to their user defined
-               values. This allows the user to refer to properties with their
-               own naming scheme, e.g. { "charge" : "my-charge" }
+        property_map : dict
+            A dictionary that maps system "properties" to their user defined
+            values. This allows the user to refer to properties with their
+            own naming scheme, e.g. { "charge" : "my-charge" }
         """
 
         # Don't allow user to create an instance of this base class.

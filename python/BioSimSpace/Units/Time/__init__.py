@@ -26,8 +26,16 @@ Time units.
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
 
-__all__ = ["day", "hour", "minute", "second", "millisecond",
-           "nanosecond", "picosecond", "femtosecond"]
+__all__ = [
+    "day",
+    "hour",
+    "minute",
+    "second",
+    "millisecond",
+    "nanosecond",
+    "picosecond",
+    "femtosecond",
+]
 
 from ...Types import Time as _Time
 

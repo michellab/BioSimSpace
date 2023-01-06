@@ -28,13 +28,15 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["engines"]
 
+
 def engines():
-    """List the supported metadynamics engines.
+    """
+    List the supported metadynamics engines.
 
-       Returns
-       -------
+    Returns
+    -------
 
-       engines : [str]
-           The list of supported engines.
+    engines : [str]
+        The list of supported engines.
     """
     return ["Amber", "Gromacs", "OpenMM", "auto"]

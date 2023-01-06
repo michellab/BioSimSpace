@@ -30,37 +30,39 @@ __all__ = ["Bound"]
 
 from ..Types._type import Type as _Type
 
-class Bound():
+
+class Bound:
     def __init__(self, value, force_constant=100.0, exponent=2.0, epsilon=1.0):
-        """Constructor.
+        """
+        Constructor.
 
-           Set a bound on the value of a collective variable along with the
-           parameters used to define the bias potential.
+        Set a bound on the value of a collective variable along with the
+        parameters used to define the bias potential.
 
-           The expression for the bias is:
+        The expression for the bias is:
 
-           .. math::
+        .. math::
 
-               k ((x - a)/s)^e
+            k ((x - a)/s)^e
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           value : int, float, :class:`Type <BioSimSpace.Types>`
-               The value of the bound. Use 'int' or 'float' for dimensionless
-               collective variables.
+        value : int, float, :class:`Type <BioSimSpace.Types>`
+            The value of the bound. Use 'int' or 'float' for dimensionless
+            collective variables.
 
-           force_constant : float
-               The force constant (k) for the bias potential. Note that the
-               units of the force constant aren't specified, i.e. the value
-               takes the units of the collective variable to which it is later
-               applied.
+        force_constant : float
+            The force constant (k) for the bias potential. Note that the
+            units of the force constant aren't specified, i.e. the value
+            takes the units of the collective variable to which it is later
+            applied.
 
-           exponent : float
-               The exponent (e) for the bias potential.
+        exponent : float
+            The exponent (e) for the bias potential.
 
-           epsilon : float
-               The rescaling factor (s) for the bias potential.
+        epsilon : float
+            The rescaling factor (s) for the bias potential.
         """
 
         self.setValue(value)
@@ -70,45 +72,52 @@ class Bound():
 
     def __str__(self):
         """Return a human readable string representation of the object."""
-        return "<BioSimSpace.Metadynamics.Bound: value=%s, force_constant=%s, exponent=%s, epsilon=%s>" \
+        return (
+            "<BioSimSpace.Metadynamics.Bound: value=%s, force_constant=%s, exponent=%s, epsilon=%s>"
             % (self._value, self._force_constant, self._exponent, self._epsilon)
+        )
 
     def __repr__(self):
         """Return a human readable string representation of the object."""
         return self.__str__()
 
     def setValue(self, value):
-        """Set the value of the bound.
+        """
+        Set the value of the bound.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           value : int, float, :class:`Type <BioSimSpace.Types>`
-               The value of the bound.
+        value : int, float, :class:`Type <BioSimSpace.Types>`
+            The value of the bound.
         """
         if not isinstance(value, (float, _Type)) and not type(value) is int:
-            raise TypeError("'value' must be of type 'int', 'float', or 'BioSimSpace.Types._type.Type'")
+            raise TypeError(
+                "'value' must be of type 'int', 'float', or 'BioSimSpace.Types._type.Type'"
+            )
         self._value = value
 
     def getValue(self):
-        """Get the value of the bound.
+        """
+        Get the value of the bound.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           value : int, float, :class:`Type <BioSimSpace.Types>`
-               The value of the bound.
+        value : int, float, :class:`Type <BioSimSpace.Types>`
+            The value of the bound.
         """
         return self._value
 
     def setForceConstant(self, force_constant):
-        """Set the force constant (k) for the bias potential.
+        """
+        Set the force constant (k) for the bias potential.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           force_constant : float
-               The force constant for the bias potential.
+        force_constant : float
+            The force constant for the bias potential.
         """
         try:
             self._force_constant = float(force_constant)
@@ -116,24 +125,26 @@ class Bound():
             raise TypeError("'force_constant' must be of type 'float'")
 
     def getForceConstant(self):
-        """Get the force constant (k) for the bias potential.
+        """
+        Get the force constant (k) for the bias potential.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           force_constant : float
-               The force constant for the bias potential.
+        force_constant : float
+            The force constant for the bias potential.
         """
         return self._force_constant
 
     def setExponent(self, exponent):
-        """Set the exponent (e) for the bias potential.
+        """
+        Set the exponent (e) for the bias potential.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           exponent : float
-               The exponent for the bias potential.
+        exponent : float
+            The exponent for the bias potential.
         """
         try:
             self._exponent = float(exponent)
@@ -141,24 +152,26 @@ class Bound():
             raise TypeError("'exponent' must be of type 'float'")
 
     def getExponent(self):
-        """Get the exponent (e) for the bias potential.
+        """
+        Get the exponent (e) for the bias potential.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           exponent : float
-               The exponent for the bias potential.
+        exponent : float
+            The exponent for the bias potential.
         """
         return self._exponent
 
     def setEpsilon(self, epsilon):
-        """Set the rescaling factor (s) for the bias potential.
+        """
+        Set the rescaling factor (s) for the bias potential.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           epsilon : float
-               The rescaling factor for the bias potential.
+        epsilon : float
+            The rescaling factor for the bias potential.
         """
         try:
             self._epsilon = float(epsilon)
@@ -166,12 +179,13 @@ class Bound():
             raise TypeError("'epsilon' must be of type 'float'")
 
     def getEpsilon(self):
-        """Get the rescaling factor (s) for the bias potential.
+        """
+        Get the rescaling factor (s) for the bias potential.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           epsilon : float
-               The rescaling factor for the bias potential.
+        epsilon : float
+            The rescaling factor for the bias potential.
         """
         return self._epsilon

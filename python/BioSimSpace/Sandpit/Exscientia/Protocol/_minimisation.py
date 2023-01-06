@@ -32,17 +32,19 @@ import warnings as _warnings
 
 from ._protocol import Protocol as _Protocol
 
+
 class Minimisation(_Protocol):
     """A class for storing minimisation protocols."""
 
     def __init__(self, steps=10000):
-        """Constructor.
+        """
+        Constructor.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           steps : int
-               The maximum number of steps to perform.
+        steps : int
+            The maximum number of steps to perform.
         """
 
         # Call the base class constructor.
@@ -66,30 +68,34 @@ class Minimisation(_Protocol):
             return "BioSimSpace.Protocol.Minimisation(steps=%d)" % self._steps
 
     def getSteps(self):
-        """Return the maximum number of steps.
+        """
+        Return the maximum number of steps.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           steps : int
-               The maximum number of minimisation steps.
+        steps : int
+            The maximum number of minimisation steps.
         """
         return self._steps
 
     def setSteps(self, steps):
-        """Set the maximum number of steps.
+        """
+        Set the maximum number of steps.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           steps : int
-               The maximum number of minimisation steps.
+        steps : int
+            The maximum number of minimisation steps.
         """
         if not type(steps) is int:
             raise TypeError("'steps' must be of type 'int'")
 
         if steps <= 0:
-            _warnings.warn("Number of steps must be greater than zero. Using default (10000).")
+            _warnings.warn(
+                "Number of steps must be greater than zero. Using default (10000)."
+            )
             self._steps = 10000
 
         else:

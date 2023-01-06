@@ -26,8 +26,7 @@ Length units.
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
 
-__all__ = ["meter", "centimeter", "millimeter",
-           "nanometer", "angstrom", "picometer"]
+__all__ = ["meter", "centimeter", "millimeter", "nanometer", "angstrom", "picometer"]
 
 from ...Types import Length as _Length
 

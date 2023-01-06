@@ -32,23 +32,25 @@ from sire.legacy.Maths import Vector as _Vector
 
 from ._angle import Angle as _Angle
 
-class Vector():
+
+class Vector:
     """A three-vector."""
 
     def __init__(self, x, y, z):
-        """Constructor.
+        """
+        Constructor.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           x : float
-               The x component of the vector.
+        x : float
+            The x component of the vector.
 
-           y : float
-               The y component of the vector.
+        y : float
+            The y component of the vector.
 
-           z : float
-               The z component of the vector.
+        z : float
+            The z component of the vector.
         """
 
         try:
@@ -86,49 +88,56 @@ class Vector():
         return Vector(-self.x(), -self.y(), -self.z())
 
     def __add__(self, other):
-        """Addition operator.
+        """
+        Addition operator.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           other : :class: `Vector <BioSimSpace.Types.Vector>`
-               Another vector.
+        other : :class: `Vector <BioSimSpace.Types.Vector>`
+            Another vector.
 
-           Return
-           ------
+        Return
+        ------
 
-           result : :class: `Vector <BioSimSpace.Types.Vector>`
-               The sum of the two vectors.
+        result : :class: `Vector <BioSimSpace.Types.Vector>`
+            The sum of the two vectors.
         """
         if not isinstance(other, Vector):
-            raise TypeError("unsupported operand type(s) for +: '%s' and '%s'"
-                % (self.__class__.__qualname__, other.__class__.__qualname__))
+            raise TypeError(
+                "unsupported operand type(s) for +: '%s' and '%s'"
+                % (self.__class__.__qualname__, other.__class__.__qualname__)
+            )
 
         return self._from_sire_vector(self._sire_object + other._sire_object)
 
     def __sub__(self, other):
-        """Subtraction operator.
+        """
+        Subtraction operator.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           other : :class: `Vector <BioSimSpace.Types.Vector>`
-               Another vector.
+        other : :class: `Vector <BioSimSpace.Types.Vector>`
+            Another vector.
 
-           Return
-           ------
+        Return
+        ------
 
-           result : :class: `Vector <BioSimSpace.Types.Vector>`
-               The difference of the two vectors.
+        result : :class: `Vector <BioSimSpace.Types.Vector>`
+            The difference of the two vectors.
         """
         if not isinstance(other, Vector):
-            raise TypeError("unsupported operand type(s) for -: '%s' and '%s'"
-                % (self.__class__.__qualname__, other.__class__.__qualname__))
+            raise TypeError(
+                "unsupported operand type(s) for -: '%s' and '%s'"
+                % (self.__class__.__qualname__, other.__class__.__qualname__)
+            )
 
         return self._from_sire_vector(self._sire_object - other._sire_object)
 
     def __mul__(self, other):
-        """Multiplication operator."""
+        """
+        Multiplication operator."""
 
         # Convert int to float.
         if type(other) is int:
@@ -140,8 +149,10 @@ class Vector():
             return self._from_sire_vector(other * self._sire_object)
 
         else:
-            raise TypeError("unsupported operand type(s) for *: '%s' and '%s'"
-                % (self.__class__.__qualname__, other.__class__.__qualname__))
+            raise TypeError(
+                "unsupported operand type(s) for *: '%s' and '%s'"
+                % (self.__class__.__qualname__, other.__class__.__qualname__)
+            )
 
     def __rmul__(self, other):
         """Multiplication operator."""
@@ -162,23 +173,26 @@ class Vector():
             return self._from_sire_vector(self._sire_object / other)
 
         else:
-            raise TypeError("unsupported operand type(s) for /: '%s' and '%s'"
-                % (self.__class__.__qualname__, other.__class__.__qualname__))
+            raise TypeError(
+                "unsupported operand type(s) for /: '%s' and '%s'"
+                % (self.__class__.__qualname__, other.__class__.__qualname__)
+            )
 
     def dot(self, other):
-        """Return the dot (scalar) product with the other vector.
+        """
+        Return the dot (scalar) product with the other vector.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           other : :class: `Vector <BioSimSpace.Types.Vector>`
-               Another vector.
+        other : :class: `Vector <BioSimSpace.Types.Vector>`
+            Another vector.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           result : float
-               The scalar product.
+        result : float
+            The scalar product.
         """
         if not isinstance(other, Vector):
             raise TypeError("'other' must be of type 'BioSimSpace.Types.Vector'")
@@ -186,44 +200,46 @@ class Vector():
         return self._sire_object.dot(self._sire_object, other._sire_object)
 
     def cross(self, other):
-        """Return the cross product with the other vector.
+        """
+        Return the cross product with the other vector.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           other : :class: `Vector <BioSimSpace.Types.Vector>`
-               Another vector.
+        other : :class: `Vector <BioSimSpace.Types.Vector>`
+            Another vector.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           result : :class: `Vector <BioSimSpace.Types.Vector>`
-               The cross product.
+        result : :class: `Vector <BioSimSpace.Types.Vector>`
+            The cross product.
         """
         if not isinstance(other, Vector):
             raise TypeError("'other' must be of type 'BioSimSpace.Types.Vector'")
 
-        x = self.y()*other.z() - self.z()*other.y()
-        y = self.z()*other.x() - self.x()*other.z()
-        z = self.x()*other.y() - self.y()*other.x()
+        x = self.y() * other.z() - self.z() * other.y()
+        y = self.z() * other.x() - self.x() * other.z()
+        z = self.x() * other.y() - self.y() * other.x()
 
         # Create a new Vector using the x, y, z components.
         return Vector(x, y, z)
 
     def angle(self, other):
-        """Return the angle between this and the other vector.
+        """
+        Return the angle between this and the other vector.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           other : :class: `Vector <BioSimSpace.Types.Vector>`
-               Another vector.
+        other : :class: `Vector <BioSimSpace.Types.Vector>`
+            Another vector.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           angle : :class: `Angle <BioSimSpace.Types.Angle>`
-               The angle between the two vectors.
+        angle : :class: `Angle <BioSimSpace.Types.Angle>`
+            The angle between the two vectors.
         """
         if not isinstance(other, Vector):
             raise TypeError("'other' must be of type 'BioSimSpace.Types.Vector'")
@@ -235,74 +251,80 @@ class Vector():
         return _Angle(angle.value(), "DEGREES").radians()
 
     def x(self):
-        """Return the x component of the vector.
+        """
+        Return the x component of the vector.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           x : float
-               The x component of the vector.
+        x : float
+            The x component of the vector.
         """
         return self._sire_object.x().value()
 
     def y(self):
-        """Return the y component of the vector.
+        """
+        Return the y component of the vector.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           y : float
-               The y component of the vector.
+        y : float
+            The y component of the vector.
         """
         return self._sire_object.y().value()
 
     def z(self):
-        """Return the z component of the vector.
+        """
+        Return the z component of the vector.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           z : float
-               The z component of the vector.
+        z : float
+            The z component of the vector.
         """
         return self._sire_object.z().value()
 
     def magnitude(self):
-        """Return the magnitude of the vector.
+        """
+        Return the magnitude of the vector.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           length : float
-               The magnitude of the vector.
+        length : float
+            The magnitude of the vector.
         """
         return self._sire_object.magnitude()
 
     def normalise(self):
-        """Normalise the vector.
-
-           Returns
-           -------
-
-           vector : :class: `Vector <BioSimSpace.Types.Vector>`
-               The normalised vector.
         """
-        return  self._from_sire_vector(self._sire_object.normalise())
+        Normalise the vector.
+
+        Returns
+        -------
+
+        vector : :class: `Vector <BioSimSpace.Types.Vector>`
+            The normalised vector.
+        """
+        return self._from_sire_vector(self._sire_object.normalise())
 
     @staticmethod
     def _from_sire_vector(vector):
-        """Create a vector from a Sire.Maths.Vector object.
+        """
+        Create a vector from a Sire.Maths.Vector object.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           vector : Sire.Maths.Vector
-               The Sire Vector object.
+        vector : Sire.Maths.Vector
+            The Sire Vector object.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           vector : :class: `Vector <BioSimSpace.Types.Vector>`
-               A BioSimSpace Vector object.
+        vector : :class: `Vector <BioSimSpace.Types.Vector>`
+            A BioSimSpace Vector object.
         """
         return Vector(vector.x().value(), vector.y().value(), vector.z().value())

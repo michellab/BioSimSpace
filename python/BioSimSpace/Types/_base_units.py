@@ -22,9 +22,7 @@
 # The set of supported base units. General unit based types can be created
 # by combining these, e.g. via multiplication or division.
 
-__all__ = ["_base_units",
-           "_base_dimensions",
-           "_sire_units_locals"]
+__all__ = ["_base_units", "_base_dimensions", "_sire_units_locals"]
 
 from ._angle import *
 from ._area import *
@@ -37,6 +35,7 @@ from ._time import *
 from ._volume import *
 
 import sys as _sys
+
 _namespace = _sys.modules[__name__]
 
 # Create the list of base unit types.

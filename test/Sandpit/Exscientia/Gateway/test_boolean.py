@@ -4,11 +4,13 @@ import pytest
 
 # Tests for Boolean requirements.
 
+
 def test_no_arguments():
     """Test that calling constructor with no arguments will raise a ValueError."""
 
     with pytest.raises(ValueError):
         b = Boolean()
+
 
 @pytest.mark.parametrize("value", [True, False])
 def test_value(value):
@@ -31,7 +33,8 @@ def test_value(value):
     assert b.isMulti() == False
     assert b.getArgType() == bool
 
-@pytest.mark.parametrize('default', [True, False])
+
+@pytest.mark.parametrize("default", [True, False])
 def test_default(default):
     """Test that default value is set correctly."""
 
@@ -43,7 +46,8 @@ def test_default(default):
     # Make sure that the argument is now optional.
     assert b.isOptional() is True
 
-@pytest.mark.parametrize("value", [5, 'True', 5.7, 'string', [2, 3, 4]])
+
+@pytest.mark.parametrize("value", [5, "True", 5.7, "string", [2, 3, 4]])
 def test_bad_value(value):
     """Test that TypeError is raised when "value" is not a boolean."""
 
@@ -51,12 +55,14 @@ def test_bad_value(value):
     with pytest.raises(TypeError):
         b.setValue(value)
 
-@pytest.mark.parametrize('default', [5, 'False', 5.7, 'string', [2, 3, 4]])
+
+@pytest.mark.parametrize("default", [5, "False", 5.7, "string", [2, 3, 4]])
 def test_bad_defaul(default):
     """Test that TypeError is raised when the default is the wrong type."""
 
     with pytest.raises(TypeError):
         b = Boolean(help="Help!", default=default)
+
 
 @pytest.mark.parametrize("help", [5, 5.7, True, [5, 7, -4]])
 def test_bad_help(help):

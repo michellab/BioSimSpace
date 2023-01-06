@@ -15,10 +15,12 @@ if BSS._amber_home is not None:
 else:
     has_amber = False
 
+
 @pytest.fixture
 def system(scope="session"):
     """Re-use the same molecuar system for each test."""
     return BSS.IO.readMolecules("test/Sandpit/Exscientia/input/amber/ala/*")
+
 
 @pytest.mark.skipif(has_amber is False, reason="Requires AMBER to be installed.")
 def test_minimise(system):
@@ -30,6 +32,7 @@ def test_minimise(system):
     # Run the process and check that it finishes without error.
     assert run_process(system, protocol)
 
+
 @pytest.mark.skipif(has_amber is False, reason="Requires AMBER to be installed.")
 def test_equilibrate(system):
     """Test an equilibration protocol."""
@@ -40,29 +43,36 @@ def test_equilibrate(system):
     # Run the process and check that it finishes without error.
     assert run_process(system, protocol)
 
+
 @pytest.mark.skipif(has_amber is False, reason="Requires AMBER to be installed.")
 def test_heat(system):
     """Test a heating protocol."""
 
     # Create a short heating protocol.
-    protocol = BSS.Protocol.Equilibration(runtime=BSS.Types.Time(0.001, "nanoseconds"),
-                                          temperature_start=BSS.Types.Temperature(0, "kelvin"),
-                                          temperature_end=BSS.Types.Temperature(300, "kelvin"))
+    protocol = BSS.Protocol.Equilibration(
+        runtime=BSS.Types.Time(0.001, "nanoseconds"),
+        temperature_start=BSS.Types.Temperature(0, "kelvin"),
+        temperature_end=BSS.Types.Temperature(300, "kelvin"),
+    )
 
     # Run the process and check that it finishes without error.
     assert run_process(system, protocol)
+
 
 @pytest.mark.skipif(has_amber is False, reason="Requires AMBER to be installed.")
 def test_cool(system):
     """Test a cooling protocol."""
 
     # Create a short heating protocol.
-    protocol = BSS.Protocol.Equilibration(runtime=BSS.Types.Time(0.001, "nanoseconds"),
-                                          temperature_start=BSS.Types.Temperature(300, "kelvin"),
-                                          temperature_end=BSS.Types.Temperature(0, "kelvin"))
+    protocol = BSS.Protocol.Equilibration(
+        runtime=BSS.Types.Time(0.001, "nanoseconds"),
+        temperature_start=BSS.Types.Temperature(300, "kelvin"),
+        temperature_end=BSS.Types.Temperature(0, "kelvin"),
+    )
 
     # Run the process and check that it finishes without error.
     assert run_process(system, protocol)
+
 
 @pytest.mark.skipif(has_amber is False, reason="Requires AMBER to be installed.")
 def test_production(system):
@@ -73,6 +83,7 @@ def test_production(system):
 
     # Run the process and check that it finishes without error.
     assert run_process(system, protocol)
+
 
 @pytest.mark.skipif(has_amber is False, reason="Requires AMBER to be installed.")
 def test_args(system):
@@ -90,12 +101,12 @@ def test_args(system):
 
     # Now add some arguments. Firstly one-by-one, using a mixture of
     # arguments and flags.
-    process.setArg("-a", "A")   # Regular argument.
-    process.setArg("-b", "B")   # Regular argument.
+    process.setArg("-a", "A")  # Regular argument.
+    process.setArg("-b", "B")  # Regular argument.
     process.setArg("-c", True)  # Boolean flag.
-    process.setArg("-d", "D")   # Regular argument.
+    process.setArg("-d", "D")  # Regular argument.
     process.setArg("-e", True)  # Boolean flag.
-    process.setArg("-f", 6)     # Argument value is an integer.
+    process.setArg("-f", 6)  # Argument value is an integer.
 
     # Get the arguments and the string representation.
     args = process.getArgs()
@@ -165,9 +176,9 @@ def test_args(system):
     assert arg_string == "-a A -b B -e -f 6 -g -h H -k K"
 
     # Now test insertion of additional arguments.
-    process.insertArg("-x", "X", 0)    # Insert at beginning.
-    process.insertArg("-y", True, 4)   # Insert at middle.
-    process.insertArg("-z", "Z", 11)   # Insert at end.
+    process.insertArg("-x", "X", 0)  # Insert at beginning.
+    process.insertArg("-y", True, 4)  # Insert at middle.
+    process.insertArg("-z", "Z", 11)  # Insert at end.
 
     # Get the updated arguments and the string representation.
     args = process.getArgs()
@@ -180,6 +191,7 @@ def test_args(system):
     # Make sure the new string is correct.
     assert len(arg_string_list) == 17
     assert arg_string == "-x X -a A -b B -y -e -f 6 -g -h H -k K -z Z"
+
 
 def run_process(system, protocol):
     """Helper function to run various simulation protocols."""

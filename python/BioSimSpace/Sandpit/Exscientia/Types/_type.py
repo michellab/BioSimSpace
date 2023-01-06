@@ -32,25 +32,28 @@ import re as _re
 
 from sire import units as _SireUnits
 
-class Type():
+
+class Type:
     """A base class for custom types."""
+
     def __init__(self, *args):
-        """Constructor.
+        """
+        Constructor.
 
-           ``*args`` can be a value and unit, or a string representation
-           of the type.
+        ``*args`` can be a value and unit, or a string representation
+        of the type.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           value : float
-               The value.
+        value : float
+            The value.
 
-           unit : str
-               The unit.
+        unit : str
+            The unit.
 
-           string : str
-               A string representation of the type.
+        string : str
+            A string representation of the type.
         """
 
         # Don't allow user to create an instance of this base class.
@@ -90,9 +93,10 @@ class Type():
 
         elif len(args) == 1:
             # The user has passed a Sire Unit object.
-            if isinstance(args[0], (_SireUnits.GeneralUnit,
-                                    _SireUnits.Celsius,
-                                    _SireUnits.Fahrenheit)):
+            if isinstance(
+                args[0],
+                (_SireUnits.GeneralUnit, _SireUnits.Celsius, _SireUnits.Fahrenheit),
+            ):
                 # Try to convert the Sire GeneralUnit to an object of this type.
                 temp = self._from_sire_unit(args[0])
                 self._value = temp._value
@@ -108,13 +112,17 @@ class Type():
                 self._unit = obj._unit
 
             else:
-                raise TypeError("__init__() missing positional argument(s): "
-                                "'string' or 'sire.units.GeneralUnit'")
+                raise TypeError(
+                    "__init__() missing positional argument(s): "
+                    "'string' or 'sire.units.GeneralUnit'"
+                )
 
         # No arguments.
         else:
-            raise TypeError("__init__() missing positional argument(s): 'value' and 'unit', "
-                            "or 'string' or 'sire.units.GeneralUnit'")
+            raise TypeError(
+                "__init__() missing positional argument(s): 'value' and 'unit', "
+                "or 'string' or 'sire.units.GeneralUnit'"
+            )
 
         # Set the documentation string.
         self.__doc__ = self._doc_strings[self._unit]
@@ -160,8 +168,10 @@ class Type():
             return self + temp
 
         else:
-            raise TypeError("unsupported operand type(s) for +: '%s' and '%s'"
-                % (self.__class__.__qualname__, other.__class__.__qualname__))
+            raise TypeError(
+                "unsupported operand type(s) for +: '%s' and '%s'"
+                % (self.__class__.__qualname__, other.__class__.__qualname__)
+            )
 
     def __sub__(self, other):
         """Subtraction operator."""
@@ -185,8 +195,10 @@ class Type():
             return self - temp
 
         else:
-            raise TypeError("unsupported operand type(s) for -: '%s' and '%s'"
-                % (self.__class__.__qualname__, other.__class__.__qualname__))
+            raise TypeError(
+                "unsupported operand type(s) for -: '%s' and '%s'"
+                % (self.__class__.__qualname__, other.__class__.__qualname__)
+            )
 
     def __mul__(self, other):
         """Multiplication operator."""
@@ -213,11 +225,14 @@ class Type():
         # Multiplication by another type.
         elif isinstance(other, Type):
             from ._general_unit import GeneralUnit as _GeneralUnit
+
             return _GeneralUnit(self._to_sire_unit() * other._to_sire_unit())
 
         else:
-            raise TypeError("unsupported operand type(s) for *: '%s' and '%s'"
-                % (self.__class__.__qualname__, other.__class__.__qualname__))
+            raise TypeError(
+                "unsupported operand type(s) for *: '%s' and '%s'"
+                % (self.__class__.__qualname__, other.__class__.__qualname__)
+            )
 
     def __rmul__(self, other):
         """Multiplication operator."""
@@ -232,10 +247,11 @@ class Type():
             raise ValueError("We can only raise to the power of integer values.")
 
         from ._general_unit import GeneralUnit as _GeneralUnit
+
         default_unit = self._to_default_unit()
-        mag = default_unit.value()**other
+        mag = default_unit.value() ** other
         unit = default_unit.unit().lower()
-        pow_to_mul = "*".join(abs(other)*[unit])
+        pow_to_mul = "*".join(abs(other) * [unit])
         if other > 0:
             return _GeneralUnit(f"{mag}*{pow_to_mul}")
         else:
@@ -263,6 +279,7 @@ class Type():
         # Division by another type.
         elif isinstance(other, Type):
             from ._general_unit import GeneralUnit as _GeneralUnit
+
             return _GeneralUnit(self._to_sire_unit() / other._to_sire_unit())
 
         # Division by a string.
@@ -271,8 +288,10 @@ class Type():
             return self / obj
 
         else:
-            raise TypeError("unsupported operand type(s) for /: '%s' and '%s'"
-                % (self.__class__.__qualname__, other.__class__.__qualname__))
+            raise TypeError(
+                "unsupported operand type(s) for /: '%s' and '%s'"
+                % (self.__class__.__qualname__, other.__class__.__qualname__)
+            )
 
     def __rtruediv__(self, other):
         """Reverse division operator."""
@@ -284,6 +303,7 @@ class Type():
         # Float division.
         if isinstance(other, float):
             from ._general_unit import GeneralUnit as _GeneralUnit
+
             return _GeneralUnit(other / self._to_sire_unit())
 
         # Division by another object of the same type.
@@ -293,6 +313,7 @@ class Type():
         # Division by another type.
         elif isinstance(other, Type):
             from ._general_unit import GeneralUnit as _GeneralUnit
+
             return _GeneralUnit(other._to_sire_unit() / self._to_sire_unit())
 
         # Division by a string.
@@ -301,8 +322,10 @@ class Type():
             return obj / self
 
         else:
-            raise TypeError("unsupported operand type(s) for /: '%s' and '%s'"
-                % (other.__class__.__qualname__, self.__class__.__qualname__))
+            raise TypeError(
+                "unsupported operand type(s) for /: '%s' and '%s'"
+                % (other.__class__.__qualname__, self.__class__.__qualname__)
+            )
 
     def __lt__(self, other):
         """Less than operator."""
@@ -313,11 +336,16 @@ class Type():
 
         # Compare with a string.
         elif isinstance(other, str):
-            return self._to_default_unit().value() < self._from_string(other)._to_default_unit().value()
+            return (
+                self._to_default_unit().value()
+                < self._from_string(other)._to_default_unit().value()
+            )
 
         else:
-            raise TypeError("unorderable types: '%s' < '%s'"
-                % (self.__class__.__qualname__, other.__class__.__qualname__))
+            raise TypeError(
+                "unorderable types: '%s' < '%s'"
+                % (self.__class__.__qualname__, other.__class__.__qualname__)
+            )
 
     def __le__(self, other):
         """Less than or equal to operator."""
@@ -328,11 +356,16 @@ class Type():
 
         # Compare with a string.
         elif isinstance(other, str):
-            return self._to_default_unit().value() <= self._from_string(other)._to_default_unit().value()
+            return (
+                self._to_default_unit().value()
+                <= self._from_string(other)._to_default_unit().value()
+            )
 
         else:
-            raise TypeError("unorderable types: '%s' <= '%s'"
-                % (self.__class__.__qualname__, other.__class__.__qualname__))
+            raise TypeError(
+                "unorderable types: '%s' <= '%s'"
+                % (self.__class__.__qualname__, other.__class__.__qualname__)
+            )
 
     def __eq__(self, other):
         """Equals to operator."""
@@ -343,7 +376,10 @@ class Type():
 
         # Compare with a string.
         elif isinstance(other, str):
-            return self._to_default_unit().value() == self._from_string(other)._to_default_unit().value()
+            return (
+                self._to_default_unit().value()
+                == self._from_string(other)._to_default_unit().value()
+            )
 
         else:
             return False
@@ -357,7 +393,10 @@ class Type():
 
         # Compare with a string.
         elif isinstance(other, str):
-            return self._to_default_unit().value() != self._from_string(other)._to_default_unit().value()
+            return (
+                self._to_default_unit().value()
+                != self._from_string(other)._to_default_unit().value()
+            )
 
         else:
             return True
@@ -371,11 +410,16 @@ class Type():
 
         # Compare with a string.
         elif isinstance(other, str):
-            return self._to_default_unit().value() >= self._from_string(other)._to_default_unit().value()
+            return (
+                self._to_default_unit().value()
+                >= self._from_string(other)._to_default_unit().value()
+            )
 
         else:
-            raise TypeError("unorderable types: '%s' >= '%s'"
-                % (self.__class__.__qualname__, other.__class__.__qualname__))
+            raise TypeError(
+                "unorderable types: '%s' >= '%s'"
+                % (self.__class__.__qualname__, other.__class__.__qualname__)
+            )
 
     def __gt__(self, other):
         """Greater than operator."""
@@ -386,144 +430,160 @@ class Type():
 
         # Compare with a string.
         elif isinstance(other, str):
-            return self._to_default_unit().value() > self._from_string(other)._to_default_unit().value()
+            return (
+                self._to_default_unit().value()
+                > self._from_string(other)._to_default_unit().value()
+            )
 
         else:
-            raise TypeError("unorderable types: '%s' > '%s'"
-                % (self.__class__.__qualname__, other.__class__.__qualname__))
+            raise TypeError(
+                "unorderable types: '%s' > '%s'"
+                % (self.__class__.__qualname__, other.__class__.__qualname__)
+            )
 
     def value(self):
-        """Return the value.
+        """
+        Return the value.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           value : float
-               The value of the type.
+        value : float
+            The value of the type.
         """
         return self._value
 
     def unit(self):
-        """Return the unit.
+        """
+        Return the unit.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           unit : str
-               The unit of the type.
+        unit : str
+            The unit of the type.
         """
         return self._unit
 
     @classmethod
     def dimensions(cls):
-        """Return the dimensions of this type. This is a tuple
-           containing the power in each dimension.
+        """
+        Return the dimensions of this type. This is a tuple
+        containing the power in each dimension.
 
-           Returns : (int, int, int, int, int, int)
-               The power in each dimension: 'angle', 'charge', 'length',
-               'mass', 'quantity', 'temperature', and 'time'.
+        Returns : (int, int, int, int, int, int)
+            The power in each dimension: 'angle', 'charge', 'length',
+            'mass', 'quantity', 'temperature', and 'time'.
         """
         return cls._dimensions
 
     @classmethod
     def angle(cls):
-        """Return the power in the 'angle' dimension.
+        """
+        Return the power in the 'angle' dimension.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           angle : int
-               The power in the 'angle' dimension.
+        angle : int
+            The power in the 'angle' dimension.
         """
         return cls._dimensions[0]
 
     @classmethod
     def charge(cls):
-        """Return the power in the 'charge' dimension.
+        """
+        Return the power in the 'charge' dimension.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           charge : int
-               The power in the 'charge' dimension.
+        charge : int
+            The power in the 'charge' dimension.
         """
         return cls._dimensions[1]
 
     @classmethod
     def length(cls):
-        """Return the power in the 'length' dimension.
+        """
+        Return the power in the 'length' dimension.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           length : int
-               The power in the 'length' dimension.
+        length : int
+            The power in the 'length' dimension.
         """
         return cls._dimensions[2]
 
     @classmethod
     def mass(cls):
-        """Return the power in the 'mass' dimension.
+        """
+        Return the power in the 'mass' dimension.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           mass : int
-               The power in the 'mass' dimension.
+        mass : int
+            The power in the 'mass' dimension.
         """
         return cls._dimensions[3]
 
     @classmethod
     def quantity(cls):
-        """Return the power in the 'quantity' dimension.
+        """
+        Return the power in the 'quantity' dimension.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           quantity : int
-               The power in the 'quantity' dimension.
+        quantity : int
+            The power in the 'quantity' dimension.
         """
         return cls._dimensions[4]
 
     @classmethod
     def temperature(cls):
-        """Return the power in the 'temperature' dimension.
+        """
+        Return the power in the 'temperature' dimension.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           temperature : int
-               The power in the 'temperature' dimension.
+        temperature : int
+            The power in the 'temperature' dimension.
         """
         return cls._dimensions[5]
 
     @classmethod
     def time(cls):
-        """Return the power in the 'time' dimension.
+        """
+        Return the power in the 'time' dimension.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           time : int
-               The power the 'time' dimension.
+        time : int
+            The power the 'time' dimension.
         """
         return cls._dimensions[6]
 
     @classmethod
     def _from_string(cls, string):
-        """Convert a string to an object of the same type.
+        """
+        Convert a string to an object of the same type.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           string : str
-               The string to interpret.
+        string : str
+            The string to interpret.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           type : :class:`Type <BioSimSpace.Types>`
-               The type object.
+        type : :class:`Type <BioSimSpace.Types>`
+            The type object.
         """
 
         if string == "==SUPPRESS==":
@@ -544,8 +604,9 @@ class Type():
 
                 # No matches, raise an error.
                 if match is None:
-                    raise ValueError("Could not interpret '%s' as '%s'"
-                        % (string_copy, cls.__name__))
+                    raise ValueError(
+                        "Could not interpret '%s' as '%s'" % (string_copy, cls.__name__)
+                    )
 
             # Extract the value and unit.
             value, unit = match.groups()
@@ -560,39 +621,42 @@ class Type():
             raise TypeError("'string' must be of type 'str'")
 
     def _to_sire_unit(self):
-        """Return the internal Sire Unit object to which this type corresponds.
+        """
+        Return the internal Sire Unit object to which this type corresponds.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           sire_unit : sire.units.GeneralUnit
-               The internal Sire Unit object that is being wrapped.
+        sire_unit : sire.units.GeneralUnit
+            The internal Sire Unit object that is being wrapped.
         """
         return self._value * self._supported_units[self._unit]
 
     @classmethod
     def _from_sire_unit(cls, sire_unit):
-        """Convert from a Sire GeneralUnit object.
+        """
+        Convert from a Sire GeneralUnit object.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           sire_unit : sire.units.GeneralUnit
-               A Sire GeneralUnit object.
+        sire_unit : sire.units.GeneralUnit
+            A Sire GeneralUnit object.
         """
 
         if not isinstance(sire_unit, _SireUnits.GeneralUnit):
             raise TypeError("'sire_unit' must be of type 'sire.units.GeneralUnit'")
 
         # Create a mask for the dimensions of the object.
-        dimensions = (sire_unit.ANGLE(),
-                      sire_unit.CHARGE(),
-                      sire_unit.LENGTH(),
-                      sire_unit.MASS(),
-                      sire_unit.QUANTITY(),
-                      sire_unit.TEMPERATURE(),
-                      sire_unit.TIME()
-                     )
+        dimensions = (
+            sire_unit.ANGLE(),
+            sire_unit.CHARGE(),
+            sire_unit.LENGTH(),
+            sire_unit.MASS(),
+            sire_unit.QUANTITY(),
+            sire_unit.TEMPERATURE(),
+            sire_unit.TIME(),
+        )
 
         # Make sure that this isn't zero.
         if hasattr(sire_unit, "is_zero"):
@@ -601,8 +665,10 @@ class Type():
 
         # Make sure the dimensions match.
         if dimensions != cls._dimensions:
-            raise ValueError(f"The dimensions of the passed 'sire_unit' {sire_unit} are incompatible with "
-                             f"'{cls.__name__}'")
+            raise ValueError(
+                f"The dimensions of the passed 'sire_unit' {sire_unit} are incompatible with "
+                f"'{cls.__name__}'"
+            )
 
         # Get the value in the default Sire unit for this type.
         value = sire_unit.to(cls._supported_units[cls._default_unit])

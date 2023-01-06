@@ -33,17 +33,19 @@ import os as _os
 
 from ._protocol import Protocol as _Protocol
 
+
 class Custom(_Protocol):
     """A class for storing custom protocols."""
 
     def __init__(self, config):
-        """Constructor.
+        """
+        Constructor.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           config : str, [ str ]
-               The custom protocol configuration.
+        config : str, [ str ]
+            The custom protocol configuration.
         """
 
         # Call the base class constructor.
@@ -61,24 +63,26 @@ class Custom(_Protocol):
         return "<BioSimSpace.Protocol.Custom>"
 
     def getConfig(self):
-        """Return the custom configuration.
+        """
+        Return the custom configuration.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           config : [ str ]
-               Return the list of configuration strings.
+        config : [ str ]
+            Return the list of configuration strings.
         """
         return self._config.copy()
 
     def setConfig(self, config):
-        """Set the custom configuration.
-        
-           Parameters
-           ----------
+        """
+        Set the custom configuration.
 
-           config : str, [ str ]
-               A config file, or list of configuration strings.
+        Parameters
+        ----------
+
+        config : str, [ str ]
+            A config file, or list of configuration strings.
         """
         # Check that the passed configuration is a list of strings.
         if _is_list_of_strings(config):
@@ -96,6 +100,7 @@ class Custom(_Protocol):
                     self._config.append(line.rstrip())
         else:
             raise ValueError("'config' must be a list of strings, or a file path.")
+
 
 def _is_list_of_strings(lst):
     """Check whether the passed argument is a list of strings."""

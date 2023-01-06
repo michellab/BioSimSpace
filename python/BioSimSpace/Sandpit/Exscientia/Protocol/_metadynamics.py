@@ -39,57 +39,60 @@ from ._protocol import Protocol as _Protocol
 # Store the collective variable base type.
 _colvar_type = _CollectiveVariable._collective_variable.CollectiveVariable
 
+
 class Metadynamics(_Protocol):
     """A class for storing metadynamics protocols."""
 
-    def __init__(self,
-                 collective_variable,
-                 timestep=_Types.Time(2, "femtosecond"),
-                 runtime=_Types.Time(1, "nanosecond"),
-                 temperature=_Types.Temperature(300, "kelvin"),
-                 pressure=_Types.Pressure(1, "atmosphere"),
-                 hill_height=_Types.Energy(1, "kj per mol"),
-                 hill_frequency=1000,
-                 report_interval=1000,
-                 restart_interval=1000,
-                 bias_factor=None
-                ):
-        """Constructor.
+    def __init__(
+        self,
+        collective_variable,
+        timestep=_Types.Time(2, "femtosecond"),
+        runtime=_Types.Time(1, "nanosecond"),
+        temperature=_Types.Temperature(300, "kelvin"),
+        pressure=_Types.Pressure(1, "atmosphere"),
+        hill_height=_Types.Energy(1, "kj per mol"),
+        hill_frequency=1000,
+        report_interval=1000,
+        restart_interval=1000,
+        bias_factor=None,
+    ):
+        """
+        Constructor.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           collective_variable : :class:`CollectiveVariable <BioSimSpace.Metadynamics.CollectiveVariable>`, \
-                                [:class:`CollectiveVariable <BioSimSpace.Metadynamics.CollectiveVariable>`]
-               The collective variable (or variables) for the simulation.
+        collective_variable : :class:`CollectiveVariable <BioSimSpace.Metadynamics.CollectiveVariable>`, \
+                             [:class:`CollectiveVariable <BioSimSpace.Metadynamics.CollectiveVariable>`]
+            The collective variable (or variables) for the simulation.
 
-           timestep : :class:`Time <BioSimSpace.Types.Time>`
-               The integration timestep.
+        timestep : :class:`Time <BioSimSpace.Types.Time>`
+            The integration timestep.
 
-           runtime : :class:`Time <BioSimSpace.Types.Time>`
-               The running time.
+        runtime : :class:`Time <BioSimSpace.Types.Time>`
+            The running time.
 
-           temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
-               The temperature.
+        temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
+            The temperature.
 
-           pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
-               The pressure. Pass pressure=None to use the NVT ensemble.
+        pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
+            The pressure. Pass pressure=None to use the NVT ensemble.
 
-           hill_height : :class:`Energy <BioSimSpace.Types.Energy>`
-               The height of the Gaussian hills.
+        hill_height : :class:`Energy <BioSimSpace.Types.Energy>`
+            The height of the Gaussian hills.
 
-           hill_frequency : int
-               The frequency at which hills are deposited.
+        hill_frequency : int
+            The frequency at which hills are deposited.
 
-           report_interval : int
-               The frequency at which statistics are recorded. (In integration steps.)
+        report_interval : int
+            The frequency at which statistics are recorded. (In integration steps.)
 
-           restart_interval : int
-               The frequency at which restart configurations and trajectory
-               frames are saved. (In integration steps.)
+        restart_interval : int
+            The frequency at which restart configurations and trajectory
+            frames are saved. (In integration steps.)
 
-           bias_factor : float
-               The bias factor for well tempered metadynamics.
+        bias_factor : float
+            The bias factor for well tempered metadynamics.
         """
 
         # Call the base class constructor.
@@ -162,25 +165,27 @@ class Metadynamics(_Protocol):
         return self.__str__()
 
     def getCollectiveVariable(self):
-        """Return the collective variable (or variables).
+        """
+        Return the collective variable (or variables).
 
-           Returns
-           -------
+        Returns
+        -------
 
-           collective_variable : [:class:`CollectiveVariable <BioSimSpace.Metadynamics.CollectiveVariable>`]
-               The collective variable (or variables) for the simulation.
+        collective_variable : [:class:`CollectiveVariable <BioSimSpace.Metadynamics.CollectiveVariable>`]
+            The collective variable (or variables) for the simulation.
         """
         return self._collective_variable.copy()
 
     def setCollectiveVariable(self, collective_variable):
-        """Set the collective variable (or variables).
+        """
+        Set the collective variable (or variables).
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           collective_variable : :class:`CollectiveVariable <BioSimSpace.Metadynamics.CollectiveVariable>`, \
-                                [:class:`CollectiveVariable <BioSimSpace.Metadynamics.CollectiveVariable>`]
-               The collective variable (or variables) for the simulation.
+        collective_variable : :class:`CollectiveVariable <BioSimSpace.Metadynamics.CollectiveVariable>`, \
+                             [:class:`CollectiveVariable <BioSimSpace.Metadynamics.CollectiveVariable>`]
+            The collective variable (or variables) for the simulation.
         """
 
         # A single collective variable.
@@ -190,12 +195,16 @@ class Metadynamics(_Protocol):
 
         if isinstance(collective_variable, (list, tuple)):
             if not all(isinstance(x, _colvar_type) for x in collective_variable):
-                raise TypeError("'collective_variable' must all be of type "
-                                "'BioSimSpace.Metadynamics.CollectiveVariable'")
+                raise TypeError(
+                    "'collective_variable' must all be of type "
+                    "'BioSimSpace.Metadynamics.CollectiveVariable'"
+                )
         else:
-            raise TypeError("'collective_variable' must be of type "
-                            "'BioSimSpace.Metadynamics.CollectiveVariable' "
-                            "or a list of 'BioSimSpace.Metadynamics.CollectiveVariable' types.")
+            raise TypeError(
+                "'collective_variable' must be of type "
+                "'BioSimSpace.Metadynamics.CollectiveVariable' "
+                "or a list of 'BioSimSpace.Metadynamics.CollectiveVariable' types."
+            )
 
         # Make sure all of the collective variables are consistent. If any have
         # a grid set, then so must all other variables.
@@ -207,8 +216,10 @@ class Metadynamics(_Protocol):
                 num_grid += 1
 
         if num_grid > 0 and num_grid != len(collective_variable):
-            raise ValueError("If a 'grid' is desired, then all collective "
-                             "variables must define one.")
+            raise ValueError(
+                "If a 'grid' is desired, then all collective "
+                "variables must define one."
+            )
 
         self._collective_variable = collective_variable
 
@@ -218,24 +229,26 @@ class Metadynamics(_Protocol):
             self.setHillHeight(self._hill_height)
 
     def getTimeStep(self):
-        """Return the time step.
+        """
+        Return the time step.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           timestep : :class:`Time <BioSimSpace.Types.Time>`
-               The integration time step.
+        timestep : :class:`Time <BioSimSpace.Types.Time>`
+            The integration time step.
         """
         return self._timestep
 
     def setTimeStep(self, timestep):
-        """Set the time step.
+        """
+        Set the time step.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           timestep : :class:`Time <BioSimSpace.Types.Time>`
-               The integration time step.
+        timestep : :class:`Time <BioSimSpace.Types.Time>`
+            The integration time step.
         """
         if isinstance(timestep, _Types.Time):
             self._timestep = timestep
@@ -243,24 +256,26 @@ class Metadynamics(_Protocol):
             raise TypeError("'timestep' must be of type 'BioSimSpace.Types.Time'")
 
     def getRunTime(self):
-        """Return the running time.
+        """
+        Return the running time.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           runtime : :class:`Time <BioSimSpace.Types.Time>`
-               The simulation run time.
+        runtime : :class:`Time <BioSimSpace.Types.Time>`
+            The simulation run time.
         """
         return self._runtime
 
     def setRunTime(self, runtime):
-        """Set the running time.
+        """
+        Set the running time.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           runtime : :class:`Time <BioSimSpace.Types.Time>`
-               The simulation run time.
+        runtime : :class:`Time <BioSimSpace.Types.Time>`
+            The simulation run time.
         """
         if isinstance(runtime, _Types.Time):
             self._runtime = runtime
@@ -268,49 +283,55 @@ class Metadynamics(_Protocol):
             raise TypeError("'runtime' must be of type 'BioSimSpace.Types.Time'")
 
     def getTemperature(self):
-        """Return temperature.
+        """
+        Return temperature.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
-               The simulation temperature.
+        temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
+            The simulation temperature.
         """
         return self._temperature
 
     def setTemperature(self, temperature):
-        """Set the temperature.
+        """
+        Set the temperature.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
-               The simulation temperature.
+        temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
+            The simulation temperature.
         """
         if isinstance(temperature, _Types.Temperature):
             self._temperature = temperature
         else:
-            raise TypeError("'temperature' must be of type 'BioSimSpace.Types.Temperature'")
+            raise TypeError(
+                "'temperature' must be of type 'BioSimSpace.Types.Temperature'"
+            )
 
     def getPressure(self):
-        """Return the pressure.
+        """
+        Return the pressure.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
-               The pressure.
+        pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
+            The pressure.
         """
         return self._pressure
 
     def setPressure(self, pressure):
-        """Set the pressure.
+        """
+        Set the pressure.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
-               The pressure.
+        pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
+            The pressure.
         """
         if isinstance(pressure, _Types.Pressure):
             self._pressure = pressure
@@ -318,24 +339,26 @@ class Metadynamics(_Protocol):
             raise TypeError("'pressure' must be of type 'BioSimSpace.Types.Pressure'")
 
     def getHillHeight(self):
-        """Return the height of the Gaussian hills.
+        """
+        Return the height of the Gaussian hills.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           hill_width : :class:`Energy <BioSimSpace.Types.Energy>`
-               The height of the Gaussian hills.
+        hill_width : :class:`Energy <BioSimSpace.Types.Energy>`
+            The height of the Gaussian hills.
         """
         return self._hill_height
 
     def setHillHeight(self, hill_height):
-        """Set the height of the Gaussian hills.
+        """
+        Set the height of the Gaussian hills.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           hill_height : :class:`Energy <BioSimSpace.Types.Energy>`
-               The hill height.
+        hill_height : :class:`Energy <BioSimSpace.Types.Energy>`
+            The hill height.
         """
 
         if not isinstance(hill_height, _Types.Energy):
@@ -348,24 +371,26 @@ class Metadynamics(_Protocol):
         self._hill_height = hill_height.kj_per_mol()
 
     def getHillFrequency(self):
-        """Return the frequency at which Gaussian hills are deposited.
+        """
+        Return the frequency at which Gaussian hills are deposited.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           hill_frequency : int
-               The frequency at which hills are deposited.
+        hill_frequency : int
+            The frequency at which hills are deposited.
         """
         return self._hill_frequency
 
     def setHillFrequency(self, hill_frequency):
-        """Set the frequency at which Gaussian hills are deposited.
+        """
+        Set the frequency at which Gaussian hills are deposited.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           hill_frequency : int
-               The frequency at which hills are deposited.
+        hill_frequency : int
+            The frequency at which hills are deposited.
         """
 
         try:
@@ -379,25 +404,27 @@ class Metadynamics(_Protocol):
         self._hill_frequency = hill_frequency
 
     def getBiasFactor(self):
-        """Return the bias factor for well tempered metadynamics.
+        """
+        Return the bias factor for well tempered metadynamics.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           bias_factor : float
-               The bias factor for well tempered metadynamics.
+        bias_factor : float
+            The bias factor for well tempered metadynamics.
         """
         return self._bias_factor
 
     def setBiasFactor(self, bias_factor=None):
-        """Set the bias factor for well tempered metadynamics.
-           Call with no arguments to clear the bias factor.
+        """
+        Set the bias factor for well tempered metadynamics.
+        Call with no arguments to clear the bias factor.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           bias_factor : float
-               The bias factor for well tempered metadynamics.
+        bias_factor : float
+            The bias factor for well tempered metadynamics.
         """
 
         if bias_factor is None:
@@ -420,24 +447,26 @@ class Metadynamics(_Protocol):
         self._bias_factor = bias_factor
 
     def getReportInterval(self):
-        """Return the interval between reporting statistics. (In integration steps.)
+        """
+        Return the interval between reporting statistics. (In integration steps.)
 
-           Returns
-           -------
+        Returns
+        -------
 
-           report_interval : int
-               The number of integration steps between reporting statistics.
+        report_interval : int
+            The number of integration steps between reporting statistics.
         """
         return self._report_interval
 
     def setReportInterval(self, report_interval):
-        """Set the interval at which statistics are reported. (In integration steps.)
+        """
+        Set the interval at which statistics are reported. (In integration steps.)
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           report_interval : int
-               The number of integration steps between reporting statistics.
+        report_interval : int
+            The number of integration steps between reporting statistics.
         """
         if not type(report_interval) is int:
             raise TypeError("'report_interval' must be of type 'int'")
@@ -449,28 +478,30 @@ class Metadynamics(_Protocol):
         self._report_interval = report_interval
 
     def getRestartInterval(self):
-        """Return the interval between saving restart confiugrations, and/or
-           trajectory frames. (In integration steps.)
+        """
+        Return the interval between saving restart confiugrations, and/or
+        trajectory frames. (In integration steps.)
 
-           Returns
-           -------
+        Returns
+        -------
 
-           restart_interval : int
-               The number of integration steps between saving restart
-               configurations and/or trajectory frames.
+        restart_interval : int
+            The number of integration steps between saving restart
+            configurations and/or trajectory frames.
         """
         return self._restart_interval
 
     def setRestartInterval(self, restart_interval):
-        """Set the interval between saving restart confiugrations, and/or
-           trajectory frames. (In integration steps.)
+        """
+        Set the interval between saving restart confiugrations, and/or
+        trajectory frames. (In integration steps.)
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           restart_interval : int
-               The number of integration steps between saving restart
-               configurations and/or trajectory frames.
+        restart_interval : int
+            The number of integration steps between saving restart
+            configurations and/or trajectory frames.
         """
         if not type(restart_interval) is int:
             raise TypeError("'restart_interval' must be of type 'int'")

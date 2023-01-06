@@ -4,14 +4,25 @@ import pytest
 
 # Tests for FileSet requirements.
 
+
 def test_no_arguments():
     """Test that calling constructor with no arguments will raise a ValueError."""
 
     with pytest.raises(ValueError):
         f = FileSet()
 
-@pytest.mark.parametrize("value", [["test/input/amber/ala/ala.crd", "test/input/amber/ala/ala.top"],
-    ["test/input/namd/alanin/alanin.pdb", "test/input/namd/alanin/alanin.psf", "test/input/namd/alanin/alanin.params"]])
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        ["test/input/amber/ala/ala.crd", "test/input/amber/ala/ala.top"],
+        [
+            "test/input/namd/alanin/alanin.pdb",
+            "test/input/namd/alanin/alanin.psf",
+            "test/input/namd/alanin/alanin.params",
+        ],
+    ],
+)
 def test_value(value):
     """Test whether object is initialised correctly and value is set."""
 
@@ -28,6 +39,7 @@ def test_value(value):
     assert f.isMulti() == True
     assert f.getArgType() == str
 
+
 @pytest.mark.parametrize("value", [[1.5, 7, True], [33.0, False]])
 def test_bad_value(value):
     """Check that TypeError is raised when "value" is the wrong type."""
@@ -35,6 +47,7 @@ def test_bad_value(value):
     f = FileSet(help="Help!")
     with pytest.raises(TypeError):
         f.setValue(value)
+
 
 def test_missing_files():
     """Check that IOError is raised when a file doesn't exist."""
@@ -48,6 +61,7 @@ def test_missing_files():
     with pytest.raises(IOError):
         f = FileSet(help="Help!")
         f.setValue(["test/input/amber/ala/ala.crd", "missing2.txt"])
+
 
 @pytest.mark.parametrize("optional", [True, False])
 def test_optional(optional):

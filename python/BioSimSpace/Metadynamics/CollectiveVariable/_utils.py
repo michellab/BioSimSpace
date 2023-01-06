@@ -35,6 +35,7 @@ from ._torsion import *
 # Create a list of the supported collective variables.
 _colvars = []
 import sys as _sys
+
 _namespace = _sys.modules[__name__]
 for _var in dir():
     if _var[0] != "_" and _var[0] != _var[0].lower():
@@ -43,13 +44,15 @@ del _namespace
 del _sys
 del _var
 
+
 def list():
-    """Return a list of the supported collective variables.
+    """
+    Return a list of the supported collective variables.
 
-       Returns
-       -------
+    Returns
+    -------
 
-       colvars : [str]
-          A list of the supported collective variables.
+    colvars : [str]
+       A list of the supported collective variables.
     """
     return _colvars

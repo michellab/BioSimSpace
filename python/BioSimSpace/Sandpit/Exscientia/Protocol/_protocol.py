@@ -28,7 +28,8 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Protocol"]
 
-class Protocol():
+
+class Protocol:
     """A base class for holding simulation protocols."""
 
     def __init__(self):
@@ -42,13 +43,14 @@ class Protocol():
         self._is_customised = False
 
     def _setCustomised(self, is_customised):
-        """Internal function to flag whether a protocol has been customised.
+        """
+        Internal function to flag whether a protocol has been customised.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           is_customised : bool
-               Whether the protocol has been customised.
+        is_customised : bool
+            Whether the protocol has been customised.
         """
         if not isinstance(is_customised, bool):
             raise TypeError("'is_customised' must be of type 'bool'.")

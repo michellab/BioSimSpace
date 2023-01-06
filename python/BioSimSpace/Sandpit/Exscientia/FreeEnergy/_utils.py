@@ -28,14 +28,16 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["engines"]
 
+
 def engines():
-    """List the supported molecular dynamics engines for running free-energy
-       perturbation simulations.
+    """
+    List the supported molecular dynamics engines for running free-energy
+    perturbation simulations.
 
-       Returns
-       -------
+    Returns
+    -------
 
-       engines : [str]
-           The list of supported engines.
+    engines : [str]
+        The list of supported engines.
     """
     return ["AMBER", "SOMD", "GROMACS"]

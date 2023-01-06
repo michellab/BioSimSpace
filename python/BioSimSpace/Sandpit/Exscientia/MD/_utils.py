@@ -28,14 +28,17 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["engines"]
 
+
 def engines():
-    """List the supported molecular dynamics engines.
+    """
+    List the supported molecular dynamics engines.
 
-       Returns
-       -------
+    Returns
+    -------
 
-       engines : [str]
-           The list of supported engines.
+    engines : [str]
+        The list of supported engines.
     """
     from ..Process import engines as _engines
+
     return _engines() + ["AUTO"]

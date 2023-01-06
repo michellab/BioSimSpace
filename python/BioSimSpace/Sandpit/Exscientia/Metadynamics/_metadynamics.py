@@ -35,52 +35,64 @@ from .. import Protocol as _Protocol
 # Import common objects from BioSimSpace.MD._md
 from ..MD._md import _file_extensions, _md_engines, _find_md_engines
 
-def run(system, protocol, engine="auto", gpu_support=False, auto_start=True,
-        name="metamd", work_dir=None, seed=None, property_map={}, **kwargs):
-    """Auto-configure and run a metadynamics process.
 
-       Parameters
-       ----------
+def run(
+    system,
+    protocol,
+    engine="auto",
+    gpu_support=False,
+    auto_start=True,
+    name="metamd",
+    work_dir=None,
+    seed=None,
+    property_map={},
+    **kwargs,
+):
+    """
+    Auto-configure and run a metadynamics process.
 
-       system : :class:`System <BioSimSpace._SireWrappers.System>`
-           The molecular system.
+    Parameters
+    ----------
 
-       protocol : :class:`Protocol <BioSimSpace.Protocol.Metadynamics>`
-           The metadynamics protocol.
+    system : :class:`System <BioSimSpace._SireWrappers.System>`
+        The molecular system.
 
-       engine : str
-           The molecular dynamics engine to use. If "auto", then a matching
-           engine will automatically be chosen. Supported engines can be
-           found using 'BioSimSpace.Metadynamics.engines()'.
+    protocol : :class:`Protocol <BioSimSpace.Protocol.Metadynamics>`
+        The metadynamics protocol.
 
-       gpu_support : bool
-           Whether to choose an engine with GPU support.
+    engine : str
+        The molecular dynamics engine to use. If "auto", then a matching
+        engine will automatically be chosen. Supported engines can be
+        found using 'BioSimSpace.Metadynamics.engines()'.
 
-       auto_start : bool
-           Whether to start the process automatically.
+    gpu_support : bool
+        Whether to choose an engine with GPU support.
 
-       name : str
-           The name of the process.
+    auto_start : bool
+        Whether to start the process automatically.
 
-       work_dir : str
-           The working directory for the process.
+    name : str
+        The name of the process.
 
-       seed : int
-           A random number seed.
+    work_dir : str
+        The working directory for the process.
 
-       property_map : dict
-           A dictionary that maps system "properties" to their user defined
-           values. This allows the user to refer to properties with their
-           own naming scheme, e.g. { "charge" : "my-charge" }
+    seed : int
+        A random number seed.
 
-       kwargs : dict
-           A dictionary of optional keyword arguments neeeded by the engine.
+    property_map : dict
+        A dictionary that maps system "properties" to their user defined
+        values. This allows the user to refer to properties with their
+        own naming scheme, e.g. { "charge" : "my-charge" }
 
-       Returns
-       -------
+    kwargs : dict
+        A dictionary of optional keyword arguments neeeded by the engine.
 
-       process : :class:`Process <BioSimSpace.Process>`
-           A process to run the molecular dynamics protocol.
+    Returns
+    -------
+
+    process : :class:`Process <BioSimSpace.Process>`
+        A process to run the molecular dynamics protocol.
     """
 
     # Check that the system is valid.
@@ -89,7 +101,9 @@ def run(system, protocol, engine="auto", gpu_support=False, auto_start=True,
 
     # Check that the protocol is valid.
     if not isinstance(protocol, _Protocol.Metadynamics):
-        raise TypeError("'protocol' must be of type 'BioSimSpace.Protocol.Metadynamics'")
+        raise TypeError(
+            "'protocol' must be of type 'BioSimSpace.Protocol.Metadynamics'"
+        )
 
     # Validate optional arguments.
 
@@ -127,13 +141,29 @@ def run(system, protocol, engine="auto", gpu_support=False, auto_start=True,
         try:
             # AMBER.
             if engine == "AMBER":
-                process = _Process.Amber(system, protocol, exe=exe, name=name,
-                    work_dir=work_dir, seed=seed, property_map=property_map, **kwargs)
+                process = _Process.Amber(
+                    system,
+                    protocol,
+                    exe=exe,
+                    name=name,
+                    work_dir=work_dir,
+                    seed=seed,
+                    property_map=property_map,
+                    **kwargs,
+                )
 
             # GROMACS.
             elif engine == "GROMACS":
-                process = _Process.Gromacs(system, protocol, exe=exe, name=name,
-                    work_dir=work_dir, seed=seed, property_map=property_map, **kwargs)
+                process = _Process.Gromacs(
+                    system,
+                    protocol,
+                    exe=exe,
+                    name=name,
+                    work_dir=work_dir,
+                    seed=seed,
+                    property_map=property_map,
+                    **kwargs,
+                )
 
             # OPENMM.
             elif engine == "OPENMM":
@@ -142,9 +172,17 @@ def run(system, protocol, engine="auto", gpu_support=False, auto_start=True,
                 else:
                     platform = "CPU"
                 # Don't pass the executable name through so that this works on Windows too.
-                process = _Process.OpenMM(system, protocol, exe=None, name=name,
-                    work_dir=work_dir, seed=seed, property_map=property_map, platform=platform,
-                    **kwargs)
+                process = _Process.OpenMM(
+                    system,
+                    protocol,
+                    exe=None,
+                    name=name,
+                    work_dir=work_dir,
+                    seed=seed,
+                    property_map=property_map,
+                    platform=platform,
+                    **kwargs,
+                )
 
             # Start the process.
             if auto_start:
@@ -157,6 +195,10 @@ def run(system, protocol, engine="auto", gpu_support=False, auto_start=True,
 
     # If we got here, then we couldn't create a process.
     if md_engine == "AUTO":
-        raise Exception(f"Unable to create a process using any supported engine: {engines}")
+        raise Exception(
+            f"Unable to create a process using any supported engine: {engines}"
+        )
     else:
-        raise Exception(f"Unable to create a process using the chosen engine: {md_engine}")
+        raise Exception(
+            f"Unable to create a process using the chosen engine: {md_engine}"
+        )

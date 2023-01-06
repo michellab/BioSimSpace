@@ -22,4 +22,3 @@
 """
 A sandpit for experimental BioSimSpace features.
 """
-

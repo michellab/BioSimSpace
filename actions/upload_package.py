@@ -1,4 +1,3 @@
-
 import os
 import sys
 import glob
@@ -42,8 +41,10 @@ packages = " ".join(packages)
 
 def run_cmd(cmd):
     import subprocess
+
     p = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE)
     return str(p.stdout.read().decode("utf-8")).lstrip().rstrip()
+
 
 gitdir = os.path.join(srcdir, ".git")
 
@@ -59,7 +60,9 @@ else:
     label = "--label dev"
 
 # Upload the packages to the michellab channel on Anaconda Cloud.
-cmd = f"anaconda --token {conda_token} upload --user michellab {label} --force {packages}"
+cmd = (
+    f"anaconda --token {conda_token} upload --user michellab {label} --force {packages}"
+)
 
 print(f"\nUpload command:\n\n{cmd}\n")
 

@@ -36,10 +36,11 @@ from ._minimisation import *
 from ._production import *
 from ._steering import *
 
-_protocols = []         # List of protocols (actual name).
-_protocols_lower = []   # List of lower case names.
-_protocol_dict = {}     # Mapping between upper case name and class.
+_protocols = []  # List of protocols (actual name).
+_protocols_lower = []  # List of lower case names.
+_protocol_dict = {}  # Mapping between upper case name and class.
 import sys as _sys
+
 _namespace = _sys.modules[__name__]
 for _var in dir():
     if _var[0] != "_" and _var != "Custom":
@@ -50,37 +51,44 @@ del _namespace
 del _sys
 del _var
 
+
 def protocols():
-    """Return a list of the supported Molecular Dynamics protocols.
+    """
+    Return a list of the supported Molecular Dynamics protocols.
 
-       Returns
-       -------
+    Returns
+    -------
 
-       protocols : [str]
-          A list of the supported Molecular Dynamics protocols.
+    protocols : [str]
+       A list of the supported Molecular Dynamics protocols.
     """
     return _protocols
 
+
 def createProtocol(protocol):
-    """Create a default simulation protocol.
+    """
+    Create a default simulation protocol.
 
-       Parameters
-       ----------
+    Parameters
+    ----------
 
-       protocol : str
-           The name of the simulation protocol.
+    protocol : str
+        The name of the simulation protocol.
 
-       Returns
-       --------
+    Returns
+    --------
 
-       protocol : :class:`Protocol <BioSimSpace.Protocol>`
-           The chosen simulation protocol.
+    protocol : :class:`Protocol <BioSimSpace.Protocol>`
+        The chosen simulation protocol.
     """
 
     # Strip whitespace and convert to lower case.
     _protocol = protocol.replace(" ", "").lower()
 
     if _protocol not in _protocols_lower:
-        raise KeyError("Unsupported protocol '%s', supported protocols are %s" % (protocol, _protocols))
+        raise KeyError(
+            "Unsupported protocol '%s', supported protocols are %s"
+            % (protocol, _protocols)
+        )
 
     return _protocol_dict[_protocol]()

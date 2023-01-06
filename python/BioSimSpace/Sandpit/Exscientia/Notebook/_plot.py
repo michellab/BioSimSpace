@@ -46,6 +46,7 @@ if _display is not None:
     try:
         import matplotlib.pyplot as _plt
         import matplotlib.colors as _colors
+
         _has_matplotlib = True
     except ImportError:
         _has_matplotlib = False
@@ -54,13 +55,14 @@ else:
         try:
             import matplotlib.pyplot as _plt
             import matplotlib.colors as _colors
+
             _has_matplotlib = True
         except ImportError:
             _has_matplotlib = False
     else:
         _has_matplotlib = False
         _has_display = False
-        #_warn("The DISPLAY environment variable is unset. Plotting functionality disabled!")
+        # _warn("The DISPLAY environment variable is unset. Plotting functionality disabled!")
 
 del _display
 
@@ -71,43 +73,54 @@ if _has_matplotlib:
     _BIGGER_SIZE = 18
 
     # Set font sizes.
-    _plt.rc('font', size=_SMALL_SIZE)          # controls default text sizes
-    _plt.rc('axes', titlesize=_SMALL_SIZE)     # fontsize of the axes title
-    _plt.rc('axes', labelsize=_MEDIUM_SIZE)    # fontsize of the x and y labels
-    _plt.rc('xtick', labelsize=_SMALL_SIZE)    # fontsize of the tick labels
-    _plt.rc('ytick', labelsize=_SMALL_SIZE)    # fontsize of the tick labels
-    _plt.rc('legend', fontsize=_SMALL_SIZE)    # legend fontsize
-    _plt.rc('figure', titlesize=_BIGGER_SIZE)  # fontsize of the figure title
+    _plt.rc("font", size=_SMALL_SIZE)  # controls default text sizes
+    _plt.rc("axes", titlesize=_SMALL_SIZE)  # fontsize of the axes title
+    _plt.rc("axes", labelsize=_MEDIUM_SIZE)  # fontsize of the x and y labels
+    _plt.rc("xtick", labelsize=_SMALL_SIZE)  # fontsize of the tick labels
+    _plt.rc("ytick", labelsize=_SMALL_SIZE)  # fontsize of the tick labels
+    _plt.rc("legend", fontsize=_SMALL_SIZE)  # legend fontsize
+    _plt.rc("figure", titlesize=_BIGGER_SIZE)  # fontsize of the figure title
 
-def plot(x=None, y=None, xerr=None, yerr=None, xlabel=None, ylabel=None, logx=False, logy=False):
-    """A simple function to create x/y plots with matplotlib.
 
-       Parameters
-       ----------
+def plot(
+    x=None,
+    y=None,
+    xerr=None,
+    yerr=None,
+    xlabel=None,
+    ylabel=None,
+    logx=False,
+    logy=False,
+):
+    """
+    A simple function to create x/y plots with matplotlib.
 
-       x : list
-           A list of x data values.
+    Parameters
+    ----------
 
-       y : list
-           A list of y data values.
+    x : list
+        A list of x data values.
 
-       xerr: list
-           A list of error values for the x data.
+    y : list
+        A list of y data values.
 
-       yerr: list
-           A list of error values for the y data.
+    xerr: list
+        A list of error values for the x data.
 
-       xlabel : str
-           The x axis label string.
+    yerr: list
+        A list of error values for the y data.
 
-       ylabel : str
-           The y axis label string.
+    xlabel : str
+        The x axis label string.
 
-       logx : bool
-           Whether the x axis is logarithmic.
+    ylabel : str
+        The y axis label string.
 
-       logy : bool
-           Whether the y axis is logarithmic.
+    logx : bool
+        Whether the x axis is logarithmic.
+
+    logy : bool
+        Whether the y axis is logarithmic.
     """
 
     # Make sure were running interactively.
@@ -117,8 +130,10 @@ def plot(x=None, y=None, xerr=None, yerr=None, xlabel=None, ylabel=None, logx=Fa
 
     # Matplotlib failed to import.
     if not _has_matplotlib and _has_display:
-        _warn("BioSimSpace.Notebook.plot is disabled as matplotlib failed "
-              "to load. Please check your matplotlib installation.")
+        _warn(
+            "BioSimSpace.Notebook.plot is disabled as matplotlib failed "
+            "to load. Please check your matplotlib installation."
+        )
         return None
 
     if not isinstance(logx, bool):
@@ -205,8 +220,7 @@ def plot(x=None, y=None, xerr=None, yerr=None, xlabel=None, ylabel=None, logx=Fa
     # Lists must contain the same number of records.
     # Truncate the longer list to the length of the shortest.
     if len(x) != len(y):
-        _warn("Mismatch in list sizes: len(x) = %d, len(y) = %d"
-            % (len(x), len(y)))
+        _warn("Mismatch in list sizes: len(x) = %d, len(y) = %d" % (len(x), len(y)))
 
         len_x = len(x)
         len_y = len(y)
@@ -217,23 +231,33 @@ def plot(x=None, y=None, xerr=None, yerr=None, xlabel=None, ylabel=None, logx=Fa
             x = x[:len_y]
 
         if xerr is not None:
-            xerr = xerr[:len(x)]
+            xerr = xerr[: len(x)]
         if yerr is not None:
-            yerr = yerr[:len(y)]
+            yerr = yerr[: len(y)]
 
     if xlabel is not None:
         if not isinstance(xlabel, str):
             raise TypeError("'xlabel' must be of type 'str'")
     else:
         if isinstance(x[0], _Type):
-            xlabel = x[0].__class__.__qualname__ + " (" + x[0]._print_format[x[0].unit()] + ")"
+            xlabel = (
+                x[0].__class__.__qualname__
+                + " ("
+                + x[0]._print_format[x[0].unit()]
+                + ")"
+            )
 
     if ylabel is not None:
         if not isinstance(ylabel, str):
             raise TypeError("'ylabel' must be of type 'str'")
     else:
         if isinstance(y[0], _Type):
-            ylabel = y[0].__class__.__qualname__ + " (" + y[0]._print_format[y[0].unit()] + ")"
+            ylabel = (
+                y[0].__class__.__qualname__
+                + " ("
+                + y[0]._print_format[y[0].unit()]
+                + ")"
+            )
 
     # Convert the x and y values to floats.
     if is_unit_x:
@@ -277,29 +301,31 @@ def plot(x=None, y=None, xerr=None, yerr=None, xlabel=None, ylabel=None, logx=Fa
 
     return _plt.show()
 
+
 def plotContour(x, y, z, xlabel=None, ylabel=None, zlabel=None):
-    """A simple function to create two-dimensional contour plots with matplotlib.
+    """
+    A simple function to create two-dimensional contour plots with matplotlib.
 
-       Parameters
-       ----------
+    Parameters
+    ----------
 
-       x : list
-           A list of x data values.
+    x : list
+        A list of x data values.
 
-       y : list
-           A list of y data values.
+    y : list
+        A list of y data values.
 
-       z : list
-           A list of z data values.
+    z : list
+        A list of z data values.
 
-       xlabel : str
-           The x axis label string.
+    xlabel : str
+        The x axis label string.
 
-       ylabel : str
-           The y axis label string.
+    ylabel : str
+        The y axis label string.
 
-       zlabel : str
-           The z axis label string.
+    zlabel : str
+        The z axis label string.
     """
 
     import numpy as _np
@@ -314,8 +340,10 @@ def plotContour(x, y, z, xlabel=None, ylabel=None, zlabel=None):
 
     # Matplotlib failed to import.
     if not _has_matplotlib and _has_display:
-        _warn("BioSimSpace.Notebook.plot is disabled as matplotlib failed "
-              "to load. Please check your matplotlib installation.")
+        _warn(
+            "BioSimSpace.Notebook.plot is disabled as matplotlib failed "
+            "to load. Please check your matplotlib installation."
+        )
         return None
 
     # Whether we need to convert the x, y, and z data to floats.
@@ -381,11 +409,11 @@ def plotContour(x, y, z, xlabel=None, ylabel=None, zlabel=None):
 
     # Lists must contain the same number of records.
     # Truncate the longer list to the length of the shortest.
-    if len(x) != len(y) or \
-       len(x) != len(z) or \
-       len(y) != len(z):
-        _warn("Mismatch in list sizes: len(x) = %d, len(y) = %d, len(z) = %d"
-            % (len(x), len(y), len(z)))
+    if len(x) != len(y) or len(x) != len(z) or len(y) != len(z):
+        _warn(
+            "Mismatch in list sizes: len(x) = %d, len(y) = %d, len(z) = %d"
+            % (len(x), len(y), len(z))
+        )
 
         lens = [len(x), len(y), len(z)]
         min_len = min(lens)
@@ -399,21 +427,36 @@ def plotContour(x, y, z, xlabel=None, ylabel=None, zlabel=None):
             raise TypeError("'xlabel' must be of type 'str'")
     else:
         if isinstance(x[0], _Type):
-            xlabel = x[0].__class__.__qualname__ + " (" + x[0]._print_format[x[0].unit()] + ")"
+            xlabel = (
+                x[0].__class__.__qualname__
+                + " ("
+                + x[0]._print_format[x[0].unit()]
+                + ")"
+            )
 
     if ylabel is not None:
         if not isinstance(ylabel, str):
             raise TypeError("'ylabel' must be of type 'str'")
     else:
         if isinstance(y[0], _Type):
-            ylabel = y[0].__class__.__qualname__ + " (" + y[0]._print_format[y[0].unit()] + ")"
+            ylabel = (
+                y[0].__class__.__qualname__
+                + " ("
+                + y[0]._print_format[y[0].unit()]
+                + ")"
+            )
 
     if zlabel is not None:
         if not isinstance(zlabel, str):
             raise TypeError("'zlabel' must be of type 'str'")
     else:
         if isinstance(z[0], _Type):
-            zlabel = z[0].__class__.__qualname__ + " (" + z[0]._print_format[z[0].unit()] + ")"
+            zlabel = (
+                z[0].__class__.__qualname__
+                + " ("
+                + z[0]._print_format[z[0].unit()]
+                + ")"
+            )
 
     # Convert the x and y values to floats.
     if is_unit_x:
@@ -426,8 +469,10 @@ def plotContour(x, y, z, xlabel=None, ylabel=None, zlabel=None):
     # Convert to two-dimensional arrays. We don't assume the data is on a grid,
     # so we interpolate the z values.
     try:
-        X, Y, = _np.meshgrid(_np.linspace(_np.min(x), _np.max(x), 1000),
-                             _np.linspace(_np.min(y), _np.max(y), 1000))
+        X, Y, = _np.meshgrid(
+            _np.linspace(_np.min(x), _np.max(x), 1000),
+            _np.linspace(_np.min(y), _np.max(y), 1000),
+        )
         Z = _interp.griddata((x, y), z, (X, Y), method="linear")
     except:
         raise ValueError("Unable to interpolate x, y, and z data to a grid.")
@@ -461,14 +506,16 @@ def plotContour(x, y, z, xlabel=None, ylabel=None, zlabel=None):
 
     return _plt.show()
 
+
 def plotOverlapMatrix(overlap):
-    """Plot the overlap matrix from a free-energy perturbation analysis.
+    """
+    Plot the overlap matrix from a free-energy perturbation analysis.
 
-       Parameters
-       ----------
+    Parameters
+    ----------
 
-       overlap : [ [ float, float, ... ] ]
-           The overlap matrix.
+    overlap : [ [ float, float, ... ] ]
+        The overlap matrix.
     """
 
     # Make sure were running interactively.
@@ -478,8 +525,10 @@ def plotOverlapMatrix(overlap):
 
     # Matplotlib failed to import.
     if not _has_matplotlib and _has_display:
-        _warn("BioSimSpace.Notebook.plot is disabled as matplotlib failed "
-              "to load. Please check your matplotlib installation.")
+        _warn(
+            "BioSimSpace.Notebook.plot is disabled as matplotlib failed "
+            "to load. Please check your matplotlib installation."
+        )
         return None
 
     # Validate the input.
@@ -500,7 +549,7 @@ def plotOverlapMatrix(overlap):
             raise TypeError("The 'overlap' matrix must contain 'float' types!")
 
     # Set the colour map.
-    cmap = _colors.ListedColormap(["#FBE8EB","#88CCEE","#78C592", "#117733"])
+    cmap = _colors.ListedColormap(["#FBE8EB", "#88CCEE", "#78C592", "#117733"])
 
     # Create the figure and axis.
     fig, ax = _plt.subplots()

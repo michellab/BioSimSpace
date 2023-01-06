@@ -42,6 +42,7 @@ from ..._Utils import _try_import, _have_imported
 
 # Temporarily redirect stderr to suppress import warnings.
 import sys as _sys
+
 _sys.stderr = open(_os.devnull, "w")
 
 _openff = _try_import("openff")
@@ -107,56 +108,67 @@ if _amber_home is not None:
     if not _os.path.isfile(_parmchk_exe):
         raise IOError("Missing parmchk executable: '%s'" % _parmchk_exe)
 
+
 class AmberProtein(_protocol.Protocol):
     """A class for handling AMBER protein force field models."""
 
-    def __init__(self, forcefield, pdb2gmx=False, tolerance=1.2, max_distance=_Length(6, "A"),
-                 water_model=None, leap_commands=None, bonds=None, property_map={}):
-        """Constructor.
+    def __init__(
+        self,
+        forcefield,
+        pdb2gmx=False,
+        tolerance=1.2,
+        max_distance=_Length(6, "A"),
+        water_model=None,
+        leap_commands=None,
+        bonds=None,
+        property_map={},
+    ):
+        """
+        Constructor.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           forcefield : str
-               The name of the force field.
+        forcefield : str
+            The name of the force field.
 
-           pdb2gmx : bool
-               Whether the force field is supported by pdb2gmx.
+        pdb2gmx : bool
+            Whether the force field is supported by pdb2gmx.
 
-           tolerance : float
-               The tolerance used when searching for disulphide bonds. Atoms will
-               be considered to be bonded if they are a distance of less than
-               tolerance times the sum of the equilibrium bond radii apart.
+        tolerance : float
+            The tolerance used when searching for disulphide bonds. Atoms will
+            be considered to be bonded if they are a distance of less than
+            tolerance times the sum of the equilibrium bond radii apart.
 
-           max_distance : :class:`Length <BioSimSpace.Types.Length>`
-               The maximum distance between atoms when searching for disulphide
-               bonds.
+        max_distance : :class:`Length <BioSimSpace.Types.Length>`
+            The maximum distance between atoms when searching for disulphide
+            bonds.
 
-           water_model : str
-               The water model used to parameterise any structural ions. This
-               will be ignored when it is not supported by the chosen force field.
-               Run 'BioSimSpace.Solvent.waterModels()' to see the supported
-               water models.
+        water_model : str
+            The water model used to parameterise any structural ions. This
+            will be ignored when it is not supported by the chosen force field.
+            Run 'BioSimSpace.Solvent.waterModels()' to see the supported
+            water models.
 
-           leap_commands : [str]
-               An optional list of extra commands for the LEaP program. These
-               will be added after any default commands and can be used to, e.g.,
-               load additional parameter files. When this option is set, we can no
-               longer fall back on GROMACS's pdb2gmx.
+        leap_commands : [str]
+            An optional list of extra commands for the LEaP program. These
+            will be added after any default commands and can be used to, e.g.,
+            load additional parameter files. When this option is set, we can no
+            longer fall back on GROMACS's pdb2gmx.
 
-           bonds : ((class:`Atom <BioSimSpace._SireWrappers.Atom>`, class:`Atom <BioSimSpace._SireWrappers.Atom>`))
-               An optional tuple of atom pairs to specify additional atoms that
-               should be bonded. This is useful when the PDB CONECT record is
-               incomplete.
+        bonds : ((class:`Atom <BioSimSpace._SireWrappers.Atom>`, class:`Atom <BioSimSpace._SireWrappers.Atom>`))
+            An optional tuple of atom pairs to specify additional atoms that
+            should be bonded. This is useful when the PDB CONECT record is
+            incomplete.
 
-           property_map : dict
-               A dictionary that maps system "properties" to their user defined
-               values. This allows the user to refer to properties with their
-               own naming scheme, e.g. { "charge" : "my-charge" }
+        property_map : dict
+            A dictionary that maps system "properties" to their user defined
+            values. This allows the user to refer to properties with their
+            own naming scheme, e.g. { "charge" : "my-charge" }
         """
 
         # Call the base class constructor.
-        super().__init__(forcefield= forcefield, property_map=property_map)
+        super().__init__(forcefield=forcefield, property_map=property_map)
 
         # Validate the pdb2gmx compatibility flag.
         if not isinstance(pdb2gmx, bool):
@@ -174,7 +186,9 @@ class AmberProtein(_protocol.Protocol):
 
         # Validate the max distance.
         if not isinstance(max_distance, _Length):
-            raise ValueError("'max_distance' must be of type 'BioSimSpace.Types.Length'")
+            raise ValueError(
+                "'max_distance' must be of type 'BioSimSpace.Types.Length'"
+            )
         self._max_distance = max_distance
 
         # Validate the water model.
@@ -198,7 +212,9 @@ class AmberProtein(_protocol.Protocol):
                 raise TypeError("'bonds' must be of type 'tuple' or 'list'.")
             for bond in bonds:
                 if not isinstance(bond, (tuple, list)):
-                    raise TypeError("Each bond entry must be a 'tuple' or 'list' of atom pairs.")
+                    raise TypeError(
+                        "Each bond entry must be a 'tuple' or 'list' of atom pairs."
+                    )
                 else:
                     if len(bond) != 2:
                         raise ValueError("Each 'bonds' entry must contain two items.")
@@ -208,8 +224,10 @@ class AmberProtein(_protocol.Protocol):
 
                         # Make sure these are atoms.
                         if not isinstance(atom0, _Atom) or not isinstance(atom1, _Atom):
-                            raise TypeError("'bonds' must contain tuples of "
-                                            "'BioSimSpace._SireWrappers.Atom' types.")
+                            raise TypeError(
+                                "'bonds' must contain tuples of "
+                                "'BioSimSpace._SireWrappers.Atom' types."
+                            )
         self._bonds = bonds
 
         # Set the compatibility flags.
@@ -218,29 +236,32 @@ class AmberProtein(_protocol.Protocol):
             self._pdb2gmx = False
 
     def run(self, molecule, work_dir=None, queue=None):
-        """Run the parameterisation protocol.
+        """
+        Run the parameterisation protocol.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           molecule : BioSimSpace._SireWrappers.Molecule
-               The molecule to apply the parameterisation protocol to.
+        molecule : BioSimSpace._SireWrappers.Molecule
+            The molecule to apply the parameterisation protocol to.
 
-           work_dir : str
-               The working directory.
+        work_dir : str
+            The working directory.
 
-           queue : queue.Queue
-               The thread queue is which this method has been run.
+        queue : queue.Queue
+            The thread queue is which this method has been run.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           molecule : BioSimSpace._SireWrappers.Molecule
-               The parameterised molecule.
+        molecule : BioSimSpace._SireWrappers.Molecule
+            The parameterised molecule.
         """
 
         if not isinstance(molecule, (_Molecule, str)):
-            raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule' or 'str'")
+            raise TypeError(
+                "'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule' or 'str'"
+            )
 
         if work_dir is not None and not isinstance(work_dir, str):
             raise TypeError("'work_dir' must be of type 'str'")
@@ -280,14 +301,18 @@ class AmberProtein(_protocol.Protocol):
                 if _gmx_exe is not None:
                     output = self._run_pdb2gmx(molecule, work_dir)
                 else:
-                    raise _MissingSoftwareError("Cannot parameterise. Missing AmberTools and GROMACS.")
+                    raise _MissingSoftwareError(
+                        "Cannot parameterise. Missing AmberTools and GROMACS."
+                    )
 
         # Parameterise using pdb2gmx.
         elif self._pdb2gmx:
             if _gmx_exe is not None:
                 output = self._run_pdb2gmx(molecule, work_dir)
             else:
-                raise _MissingSoftwareError("Cannot use pdb2gmx since GROMACS is not installed!")
+                raise _MissingSoftwareError(
+                    "Cannot use pdb2gmx since GROMACS is not installed!"
+                )
 
         # Prepend the working directory to the output file names.
         output = [prefix + output[0], prefix + output[1]]
@@ -327,7 +352,9 @@ class AmberProtein(_protocol.Protocol):
             new_mol._sire_object = edit_mol.commit()
 
         else:
-            new_mol.makeCompatibleWith(par_mol, property_map=self._property_map, overwrite=True, verbose=False)
+            new_mol.makeCompatibleWith(
+                par_mol, property_map=self._property_map, overwrite=True, verbose=False
+            )
 
         # Record the forcefield used to parameterise the molecule.
         new_mol._forcefield = self._forcefield
@@ -337,17 +364,18 @@ class AmberProtein(_protocol.Protocol):
         return new_mol
 
     def _run_tleap(self, molecule, work_dir):
-        """Run using tLEaP.
+        """
+        Run using tLEaP.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, str
-               The molecule to parameterise, either as a Molecule object or SMILES
-               string.
+        molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, str
+            The molecule to parameterise, either as a Molecule object or SMILES
+            string.
 
-           work_dir : str
-               The working directory.
+        work_dir : str
+            The working directory.
         """
 
         # Convert SMILES to a molecule.
@@ -383,7 +411,11 @@ class AmberProtein(_protocol.Protocol):
 
         # Check to see if any disulphide bonds are present.
         disulphide_bonds = self._get_disulphide_bonds(
-                molecule._sire_object, self._tolerance, self._max_distance, self._property_map)
+            molecule._sire_object,
+            self._tolerance,
+            self._max_distance,
+            self._property_map,
+        )
 
         # Get any additional bond records.
         bond_records = self._generate_bond_records(molecule, self._bonds)
@@ -397,8 +429,7 @@ class AmberProtein(_protocol.Protocol):
                 d0, d1 = disulphide.split()[1:]
 
                 # Make sure the bonded atoms don't match.
-                if ((a0 == d0 and a1 == d1) or
-                    (a0 == d1 and a1 == d0)):
+                if (a0 == d0 and a1 == d1) or (a0 == d1 and a1 == d0):
                     is_duplicate = True
                     break
 
@@ -441,47 +472,56 @@ class AmberProtein(_protocol.Protocol):
         stderr = open(prefix + "leap.err", "w")
 
         # Run tLEaP as a subprocess.
-        proc = _subprocess.run(_Utils.command_split(command), cwd=work_dir,
-            shell=False, stdout=stdout, stderr=stderr)
+        proc = _subprocess.run(
+            _Utils.command_split(command),
+            cwd=work_dir,
+            shell=False,
+            stdout=stdout,
+            stderr=stderr,
+        )
         stdout.close()
         stderr.close()
 
         # tLEaP doesn't return sensible error codes, so we need to check that
         # the expected output was generated.
-        if _os.path.isfile(prefix + "leap.top") and _os.path.isfile(prefix + "leap.crd"):
+        if _os.path.isfile(prefix + "leap.top") and _os.path.isfile(
+            prefix + "leap.crd"
+        ):
             # Check the output of tLEaP for missing atoms.
             if _has_missing_atoms(prefix + "leap.out"):
-                raise _ParameterisationError("tLEaP added missing atoms. The topology is now "
-                                             "inconsistent with the original molecule. Please "
-                                             "make sure that your initial molecule has a "
-                                             "complete topology.")
+                raise _ParameterisationError(
+                    "tLEaP added missing atoms. The topology is now "
+                    "inconsistent with the original molecule. Please "
+                    "make sure that your initial molecule has a "
+                    "complete topology."
+                )
             return ["leap.top", "leap.crd"]
         else:
             raise _ParameterisationError("tLEaP failed!")
 
     def _run_pdb2gmx(self, molecule, work_dir):
-        """Run using pdb2gmx.
+        """
+        Run using pdb2gmx.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, str
-               The molecule to parameterise, either as a Molecule object or SMILES
-               string.
+        molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, str
+            The molecule to parameterise, either as a Molecule object or SMILES
+            string.
 
-           work_dir : str
-               The working directory.
+        work_dir : str
+            The working directory.
         """
 
         # A list of supported force fields, mapping to their GROMACS ID string.
         # GROMACS supports a sub-set of the AMBER force fields.
-        supported_ff = { "ff99"   : "amber99",
-                         "ff99SB" : "amber99sb",
-                         "ff03"   : "amber03"
-                       }
+        supported_ff = {"ff99": "amber99", "ff99SB": "amber99sb", "ff03": "amber03"}
 
         if self._forcefield not in supported_ff:
-            raise _IncompatibleError("'pdb2gmx' does not support the '%s' force field." % self._forcefield)
+            raise _IncompatibleError(
+                "'pdb2gmx' does not support the '%s' force field." % self._forcefield
+            )
 
         # Convert SMILES to a molecule.
         if isinstance(molecule, str):
@@ -512,8 +552,10 @@ class AmberProtein(_protocol.Protocol):
                 raise IOError(msg) from None
 
         # Generate the pdb2gmx command.
-        command = "%s pdb2gmx -f input.pdb -o output.gro -p output.top -ignh -ff %s -water none" \
+        command = (
+            "%s pdb2gmx -f input.pdb -o output.gro -p output.top -ignh -ff %s -water none"
             % (_gmx_exe, supported_ff[self._forcefield])
+        )
 
         with open(prefix + "README.txt", "w") as file:
             # Write the command to file.
@@ -525,45 +567,54 @@ class AmberProtein(_protocol.Protocol):
         stderr = open(prefix + "pdb2gmx.err", "w")
 
         # Run pdb2gmx as a subprocess.
-        proc = _subprocess.run(_Utils.command_split(command), cwd=work_dir,
-            shell=False, stdout=stdout, stderr=stderr)
+        proc = _subprocess.run(
+            _Utils.command_split(command),
+            cwd=work_dir,
+            shell=False,
+            stdout=stdout,
+            stderr=stderr,
+        )
         stdout.close()
         stderr.close()
 
         # Check for the expected output.
-        if _os.path.isfile(prefix + "output.gro") and _os.path.isfile(prefix + "output.top"):
+        if _os.path.isfile(prefix + "output.gro") and _os.path.isfile(
+            prefix + "output.top"
+        ):
             return ["output.gro", "output.top"]
         else:
             raise _ParameterisationError("pdb2gmx failed!")
 
     @staticmethod
-    def _get_disulphide_bonds(molecule, tolerance=1.2, max_distance=_Length(6, "A"),
-            property_map={}):
-        """Internal function to generate LEaP records for disulphide bonds.
+    def _get_disulphide_bonds(
+        molecule, tolerance=1.2, max_distance=_Length(6, "A"), property_map={}
+    ):
+        """
+        Internal function to generate LEaP records for disulphide bonds.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           molecule : Sire.Mol.Molecule
-               The molecule of interest.
+        molecule : Sire.Mol.Molecule
+            The molecule of interest.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           bond_records : [str]
-               A list of LEaP formatted bond records.
+        bond_records : [str]
+            A list of LEaP formatted bond records.
 
-           tolerance : float
-               The tolerance to use when searching for bonds.
+        tolerance : float
+            The tolerance to use when searching for bonds.
 
-           max_distance : :class:`Length <BioSimSpace.Types.Length>`
-               The maximum distance between atoms when searching for disulphide
-               bonds.
+        max_distance : :class:`Length <BioSimSpace.Types.Length>`
+            The maximum distance between atoms when searching for disulphide
+            bonds.
 
-           property_map : dict
-               A dictionary that maps system "properties" to their user defined
-               values. This allows the user to refer to properties with their
-               own naming scheme, e.g. { "charge" : "my-charge" }
+        property_map : dict
+            A dictionary that maps system "properties" to their user defined
+            values. This allows the user to refer to properties with their
+            own naming scheme, e.g. { "charge" : "my-charge" }
         """
 
         if not isinstance(molecule, _SireMol.Molecule):
@@ -576,8 +627,10 @@ class AmberProtein(_protocol.Protocol):
             raise ValueError("'tolerance' must be >= 1.0.")
 
         if not isinstance(max_distance, _Length):
-            raise ValueError("'max_distance' must be of type 'BioSimSpace.Types.Length'")
-        max_radius2 = max_distance.angstroms().value()**2
+            raise ValueError(
+                "'max_distance' must be of type 'BioSimSpace.Types.Length'"
+            )
+        max_radius2 = max_distance.angstroms().value() ** 2
 
         if not isinstance(property_map, dict):
             raise ValueError("'property_map' must be of type 'dict'")
@@ -586,15 +639,15 @@ class AmberProtein(_protocol.Protocol):
         mol = molecule.__deepcopy__()
 
         # Get the connectivity of the molecule.
-        conn = _SireMol.Connectivity(mol,
-                                     _SireMol.CovalentBondHunter(tolerance, max_radius2),
-                                     property_map)
+        conn = _SireMol.Connectivity(
+            mol, _SireMol.CovalentBondHunter(tolerance, max_radius2), property_map
+        )
 
         # Add this as a molecule property.
         mol = mol.edit().setProperty("connectivity", conn).molecule().commit()
 
         # Create the search query.
-        query =_SireMol.Select("bonds from element S to element S")
+        query = _SireMol.Select("bonds from element S to element S")
 
         # Try searching for disulphide bonds.
         try:
@@ -629,37 +682,42 @@ class AmberProtein(_protocol.Protocol):
 
     @staticmethod
     def _generate_bond_records(molecule, bonds):
-        """Internal function to generate additional LEaP bond records.
+        """
+        Internal function to generate additional LEaP bond records.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           molecule : Sire.Mol.Molecule
-               The molecule of interest.
+        molecule : Sire.Mol.Molecule
+            The molecule of interest.
 
-           bonds : ((class:`Atom <BioSimSpace._SireWrappers.Atom>`, class:`Atom <BioSimSpace._SireWrappers.Atom>`))
-               An optional tuple of atom pairs to specify additional atoms that
-               should be bonded. This is useful when the PDB CONECT record is
-               incomplete.
+        bonds : ((class:`Atom <BioSimSpace._SireWrappers.Atom>`, class:`Atom <BioSimSpace._SireWrappers.Atom>`))
+            An optional tuple of atom pairs to specify additional atoms that
+            should be bonded. This is useful when the PDB CONECT record is
+            incomplete.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           bond_records : [str]
-               A list of LEaP formatted bond records.
+        bond_records : [str]
+            A list of LEaP formatted bond records.
         """
 
         if bonds is None:
             return []
 
         if not isinstance(molecule, _Molecule):
-            raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule'")
+            raise TypeError(
+                "'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule'"
+            )
 
         if not isinstance(bonds, (tuple, list)):
-                raise TypeError("'bonds' must be of type 'tuple' or 'list'.")
+            raise TypeError("'bonds' must be of type 'tuple' or 'list'.")
         for bond in bonds:
             if not isinstance(bond, (tuple, list)):
-                raise TypeError("Each bond entry must be a 'tuple' or 'list' of atom pairs.")
+                raise TypeError(
+                    "Each bond entry must be a 'tuple' or 'list' of atom pairs."
+                )
             else:
                 if len(bond) != 2:
                     raise ValueError("Each 'bonds' entry must contain two items.")
@@ -669,13 +727,18 @@ class AmberProtein(_protocol.Protocol):
 
                     # Make sure these are atoms.
                     if not isinstance(atom0, _Atom) or not isinstance(atom1, _Atom):
-                        raise TypeError("'bonds' must contain tuples of "
-                                        "'BioSimSpace._SireWrappers.Atom' types.")
+                        raise TypeError(
+                            "'bonds' must contain tuples of "
+                            "'BioSimSpace._SireWrappers.Atom' types."
+                        )
 
                     # Make sure that they belong to the molecule being parameterised.
-                    if (not (atom0._sire_object.molecule() == molecule._sire_object) or
-                        not (atom1._sire_object.molecule() == molecule._sire_object)):
-                        raise ValueError("Atoms in 'bonds' don't belong to the 'molecule'.")
+                    if not (
+                        atom0._sire_object.molecule() == molecule._sire_object
+                    ) or not (atom1._sire_object.molecule() == molecule._sire_object):
+                        raise ValueError(
+                            "Atoms in 'bonds' don't belong to the 'molecule'."
+                        )
 
         # Create a list to store the LEaP bond record strings.
         bond_records = []
@@ -702,37 +765,34 @@ class AmberProtein(_protocol.Protocol):
 
         return bond_records
 
+
 class GAFF(_protocol.Protocol):
     """A class for handling protocols for the GAFF force field model."""
 
     # A list of supported charge methods.
-    _charge_methods = ["RESP",
-                       "CM2",
-                       "MUL",
-                       "BCC",
-                       "ESP",
-                       "GAS"]
+    _charge_methods = ["RESP", "CM2", "MUL", "BCC", "ESP", "GAS"]
 
     def __init__(self, version, charge_method="BCC", net_charge=None, property_map={}):
-        """Constructor.
+        """
+        Constructor.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           version : int
-               Whether version 1 or 2 of GAFF.
+        version : int
+            Whether version 1 or 2 of GAFF.
 
-           charge_method : str
-               The method to use when calculating atomic charges:
-               "RESP", "CM2", "MUL", "BCC", "ESP", "GAS"
+        charge_method : str
+            The method to use when calculating atomic charges:
+            "RESP", "CM2", "MUL", "BCC", "ESP", "GAS"
 
-           net_charge: int
-               The net charge on the molecule.
+        net_charge: int
+            The net charge on the molecule.
 
-           property_map : dict
-               A dictionary that maps system "properties" to their user defined
-               values. This allows the user to refer to properties with their
-               own naming scheme, e.g. { "charge" : "my-charge" }
+        property_map : dict
+            A dictionary that maps system "properties" to their user defined
+            values. This allows the user to refer to properties with their
+            own naming scheme, e.g. { "charge" : "my-charge" }
         """
 
         if type(version) is not int:
@@ -750,8 +810,10 @@ class GAFF(_protocol.Protocol):
 
         # Check that the charge method is valid.
         if not charge_method in self._charge_methods:
-            raise ValueError("Unsupported charge method: '%s'. Supported methods are: %s"
-                % (charge_method, self._charge_methods))
+            raise ValueError(
+                "Unsupported charge method: '%s'. Supported methods are: %s"
+                % (charge_method, self._charge_methods)
+            )
 
         if net_charge is not None:
             # Get the value of the charge.
@@ -766,7 +828,9 @@ class GAFF(_protocol.Protocol):
             try:
                 net_charge = int(net_charge)
             except:
-                raise TypeError("'net_charge' must be of type 'int', or `BioSimSpace.Types.Charge'")
+                raise TypeError(
+                    "'net_charge' must be of type 'int', or `BioSimSpace.Types.Charge'"
+                )
 
         # Set the version.
         self._version = version
@@ -781,30 +845,33 @@ class GAFF(_protocol.Protocol):
         super().__init__(forcefield="gaff", property_map=property_map)
 
     def run(self, molecule, work_dir=None, queue=None):
-        """Run the parameterisation protocol.
+        """
+        Run the parameterisation protocol.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, str
-               The molecule to parameterise, either as a Molecule object or SMILES
-               string.
+        molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, str
+            The molecule to parameterise, either as a Molecule object or SMILES
+            string.
 
-           work_dir : str
-               The working directory.
+        work_dir : str
+            The working directory.
 
-           queue : queue.Queue
-               The thread queue is which this method has been run.
+        queue : queue.Queue
+            The thread queue is which this method has been run.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           molecule : BioSimSpace._SireWrappers.Molecule
-               The parameterised molecule.
+        molecule : BioSimSpace._SireWrappers.Molecule
+            The parameterised molecule.
         """
 
         if not isinstance(molecule, (_Molecule, str)):
-            raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule' or 'str'")
+            raise TypeError(
+                "'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule' or 'str'"
+            )
 
         if work_dir is not None and not isinstance(work_dir, str):
             raise TypeError("'work_dir' must be of type 'str'")
@@ -846,10 +913,10 @@ class GAFF(_protocol.Protocol):
 
             # Get the total charge on the molecule.
             if "charge" in self._property_map:
-                _property_map = { "charge": self._property_map["charge"] }
+                _property_map = {"charge": self._property_map["charge"]}
                 prop = self._property_map["charge"]
             else:
-                _property_map = { "charge": "charge" }
+                _property_map = {"charge": "charge"}
                 prop = "charge"
 
             # The molecule has a charge property.
@@ -869,10 +936,10 @@ class GAFF(_protocol.Protocol):
             if charge is None:
                 # Get the total formal charge on the molecule.
                 if "formal_charge" in self._property_map:
-                    _property_map = { "charge": self._property_map["formal_charge"] }
+                    _property_map = {"charge": self._property_map["formal_charge"]}
                     prop = self._property_map["charge"]
                 else:
-                    _property_map = { "charge": "formal_charge" }
+                    _property_map = {"charge": "formal_charge"}
                     prop = "formal_charge"
 
                 if new_mol._getSireObject().hasProperty(prop):
@@ -882,18 +949,24 @@ class GAFF(_protocol.Protocol):
                     formal_charge = _formalCharge(new_mol).value()
 
                     if charge != formal_charge:
-                        _warnings.warn("The formal charge on the molecule is %d "
-                                       "but we estimate it to be %d" % (charge, formal_charge))
+                        _warnings.warn(
+                            "The formal charge on the molecule is %d "
+                            "but we estimate it to be %d" % (charge, formal_charge)
+                        )
                 else:
-                    msg = ("The molecule has no 'charge' or 'formal_charge' information, and "
-                           "no 'net_charge' option has been passed. You can use the "
-                           "'BioSimSpace.Parameters.formalCharge' function to compute the "
-                           "formal charge")
+                    msg = (
+                        "The molecule has no 'charge' or 'formal_charge' information, and "
+                        "no 'net_charge' option has been passed. You can use the "
+                        "'BioSimSpace.Parameters.formalCharge' function to compute the "
+                        "formal charge"
+                    )
                     raise _ParameterisationError(msg)
 
         # Write the system to a PDB file.
         try:
-            _IO.saveMolecules(prefix + "antechamber", new_mol, "pdb", self._property_map)
+            _IO.saveMolecules(
+                prefix + "antechamber", new_mol, "pdb", self._property_map
+            )
         except Exception as e:
             msg = "Failed to write system to 'PDB' format."
             if _isVerbose():
@@ -903,10 +976,10 @@ class GAFF(_protocol.Protocol):
                 raise IOError(msg) from None
 
         # Generate the Antechamber command.
-        command = ("%s -at %d -i antechamber.pdb -fi pdb " +
-                "-o antechamber.mol2 -fo mol2 -c %s -s 2 -nc %d"
-                ) % (_antechamber_exe, self._version,
-                        self._charge_method.lower(), charge)
+        command = (
+            "%s -at %d -i antechamber.pdb -fi pdb "
+            + "-o antechamber.mol2 -fo mol2 -c %s -s 2 -nc %d"
+        ) % (_antechamber_exe, self._version, self._charge_method.lower(), charge)
 
         with open(prefix + "README.txt", "w") as file:
             # Write the command to file.
@@ -918,8 +991,13 @@ class GAFF(_protocol.Protocol):
         stderr = open(prefix + "antechamber.err", "w")
 
         # Run Antechamber as a subprocess.
-        proc = _subprocess.run(_Utils.command_split(command), cwd=work_dir,
-            shell=False, stdout=stdout, stderr=stderr)
+        proc = _subprocess.run(
+            _Utils.command_split(command),
+            cwd=work_dir,
+            shell=False,
+            stdout=stdout,
+            stderr=stderr,
+        )
         stdout.close()
         stderr.close()
 
@@ -928,9 +1006,9 @@ class GAFF(_protocol.Protocol):
         if _os.path.isfile(prefix + "antechamber.mol2"):
 
             # Run parmchk to check for missing parameters.
-            command = ("%s -s %d -i antechamber.mol2 -f mol2 " +
-                    "-o antechamber.frcmod"
-                    ) % (_parmchk_exe, self._version)
+            command = (
+                "%s -s %d -i antechamber.mol2 -f mol2 " + "-o antechamber.frcmod"
+            ) % (_parmchk_exe, self._version)
 
             with open(prefix + "README.txt", "a") as file:
                 # Write the command to file.
@@ -942,8 +1020,13 @@ class GAFF(_protocol.Protocol):
             stderr = open(prefix + "parmchk.err", "w")
 
             # Run parmchk as a subprocess.
-            proc = _subprocess.run(_Utils.command_split(command), cwd=work_dir,
-                shell=False, stdout=stdout, stderr=stderr)
+            proc = _subprocess.run(
+                _Utils.command_split(command),
+                cwd=work_dir,
+                shell=False,
+                stdout=stdout,
+                stderr=stderr,
+            )
             stdout.close()
             stderr.close()
 
@@ -981,24 +1064,35 @@ class GAFF(_protocol.Protocol):
                 stderr = open(prefix + "leap.err", "w")
 
                 # Run tLEaP as a subprocess.
-                proc = _subprocess.run(_Utils.command_split(command), cwd=work_dir,
-                    shell=False, stdout=stdout, stderr=stderr)
+                proc = _subprocess.run(
+                    _Utils.command_split(command),
+                    cwd=work_dir,
+                    shell=False,
+                    stdout=stdout,
+                    stderr=stderr,
+                )
                 stdout.close()
                 stderr.close()
 
                 # tLEaP doesn't return sensible error codes, so we need to check that
                 # the expected output was generated.
-                if _os.path.isfile(prefix + "leap.top") and _os.path.isfile(prefix + "leap.crd"):
+                if _os.path.isfile(prefix + "leap.top") and _os.path.isfile(
+                    prefix + "leap.crd"
+                ):
                     # Check the output of tLEaP for missing atoms.
                     if _has_missing_atoms(prefix + "leap.out"):
-                        raise _ParameterisationError("tLEaP added missing atoms. The topology is now "
-                                                     "inconsistent with the original molecule. Please "
-                                                     "make sure that your initial molecule has a "
-                                                     "complete topology.")
+                        raise _ParameterisationError(
+                            "tLEaP added missing atoms. The topology is now "
+                            "inconsistent with the original molecule. Please "
+                            "make sure that your initial molecule has a "
+                            "complete topology."
+                        )
 
                     # Load the parameterised molecule. (This could be a system of molecules.)
                     try:
-                        par_mol = _IO.readMolecules([prefix + "leap.top", prefix + "leap.crd"])
+                        par_mol = _IO.readMolecules(
+                            [prefix + "leap.top", prefix + "leap.crd"]
+                        )
                         # Extract single molecules.
                         if par_mol.nMolecules() == 1:
                             par_mol = par_mol.getMolecules()[0]
@@ -1025,13 +1119,22 @@ class GAFF(_protocol.Protocol):
 
                         # Rename the residue LIG.
                         resname = _SireMol.ResName("LIG")
-                        edit_mol = edit_mol.residue(_SireMol.ResIdx(0)).rename(resname).molecule()
+                        edit_mol = (
+                            edit_mol.residue(_SireMol.ResIdx(0))
+                            .rename(resname)
+                            .molecule()
+                        )
 
                         # Commit the changes.
                         new_mol._sire_object = edit_mol.commit()
 
                     else:
-                        new_mol.makeCompatibleWith(par_mol, property_map=self._property_map, overwrite=True, verbose=False)
+                        new_mol.makeCompatibleWith(
+                            par_mol,
+                            property_map=self._property_map,
+                            overwrite=True,
+                            verbose=False,
+                        )
 
                     # Record the forcefield used to parameterise the molecule.
                     new_mol._forcefield = ff
@@ -1047,20 +1150,22 @@ class GAFF(_protocol.Protocol):
             queue.put(new_mol)
         return new_mol
 
+
 def _find_force_field(forcefield):
-    """Internal helper function to search LEaP compatible force field files.
+    """
+    Internal helper function to search LEaP compatible force field files.
 
-       Parameters
-       ----------
+    Parameters
+    ----------
 
-       forcefield : str
-           The name of the force field.
+    forcefield : str
+        The name of the force field.
 
-       Returns
-       -------
+    Returns
+    -------
 
-       file : str
-           The full path of the matching force field file.
+    file : str
+        The full path of the matching force field file.
     """
 
     # Whether the force field is old.
@@ -1094,20 +1199,22 @@ def _find_force_field(forcefield):
     # Return the force field.
     return ff
 
+
 def _has_missing_atoms(tleap_file):
-    """Check whether tLEaP has added missing atoms.
+    """
+    Check whether tLEaP has added missing atoms.
 
-       Parameters
-       ----------
+    Parameters
+    ----------
 
-       tleap_file : str
-           The path to the output file generated by tLEaP.
+    tleap_file : str
+        The path to the output file generated by tLEaP.
 
-       Returns
-       -------
+    Returns
+    -------
 
-       has_missing_atoms : bool
-           Whether missing atoms were added.
+    has_missing_atoms : bool
+        Whether missing atoms were added.
     """
 
     if not isinstance(tleap_file, str):
@@ -1123,23 +1230,25 @@ def _has_missing_atoms(tleap_file):
 
     return False
 
+
 def _smiles_to_molecule(smiles, work_dir):
-    """Convert a SMILES string to a Molecule.
+    """
+    Convert a SMILES string to a Molecule.
 
-       Parameters
-       ----------
+    Parameters
+    ----------
 
-       smiles : str
-           A SMILES representation of a molecule.
+    smiles : str
+        A SMILES representation of a molecule.
 
-       work_dir : str
-           The working directory.
+    work_dir : str
+        The working directory.
 
-       Returns
-       -------
+    Returns
+    -------
 
-       molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
-           The BioSimSpace representation of the molecule.
+    molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+        The BioSimSpace representation of the molecule.
     """
 
     # Create an OpenFF molecule from the smiles string.

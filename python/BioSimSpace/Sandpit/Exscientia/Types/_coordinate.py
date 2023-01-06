@@ -31,23 +31,25 @@ __all__ = ["Coordinate"]
 from ._length import Length as _Length
 from ._vector import Vector as _Vector
 
-class Coordinate():
+
+class Coordinate:
     """A coordinate (position vector)."""
 
     def __init__(self, x, y, z):
-        """Constructor.
+        """
+        Constructor.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           x : :class: `Length <BioSimSpace.Types.Length>`
-               The x position.
+        x : :class: `Length <BioSimSpace.Types.Length>`
+            The x position.
 
-           y : :class: `Length <BioSimSpace.Types.Length>`
-               The y position.
+        y : :class: `Length <BioSimSpace.Types.Length>`
+            The y position.
 
-           z : :class: `Length <BioSimSpace.Types.Length>`
-               The z position.
+        z : :class: `Length <BioSimSpace.Types.Length>`
+            The z position.
         """
 
         if not isinstance(x, _Length):
@@ -60,9 +62,10 @@ class Coordinate():
             raise TypeError("'z' must be of type 'BioSimSpace.Types.Length'")
 
         # Set the vector.
-        self._vector = _Vector(x.angstroms().value(),
-                               y.angstroms().value(),
-                               z.angstroms().value())
+        self._vector = _Vector(
+            x.angstroms().value(), y.angstroms().value(), z.angstroms().value()
+        )
+
     def __str__(self):
         """Return a human readable string representation of the object."""
         return "(%s, %s, %s)" % (self.x(), self.y(), self.z())
@@ -80,61 +83,71 @@ class Coordinate():
         return Coordinate(-self.x(), -self.y(), -self.z())
 
     def __add__(self, other):
-        """Addition operator.
+        """
+        Addition operator.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           other : :class: `Coordinate <BioSimSpace.Types.Coordinate>`, \
-                   :class: `Length <BioSimSpace.Types.Length>`
+        other : :class: `Coordinate <BioSimSpace.Types.Coordinate>`, \
+                :class: `Length <BioSimSpace.Types.Length>`
 
-           Return
-           ------
+        Return
+        ------
 
-           result : :class: `Coordinate <BioSimSpace.Types.Coordinate>`
-               The sum of the two coordinates.
+        result : :class: `Coordinate <BioSimSpace.Types.Coordinate>`
+            The sum of the two coordinates.
         """
         if isinstance(other, Coordinate):
             return self.fromVector(self._vector + other._vector, _Length(1, "A"))
 
         elif isinstance(other, _Length):
-            vector = self._vector + _Vector(other.angstroms().value(),
-                                            other.angstroms().value(),
-                                            other.angstroms().value())
+            vector = self._vector + _Vector(
+                other.angstroms().value(),
+                other.angstroms().value(),
+                other.angstroms().value(),
+            )
             return self.fromVector(vector, _Length(1, "A"))
 
         else:
-            raise TypeError("unsupported operand type(s) for -: '%s' and '%s'"
-                % (self.__class__.__qualname__, other.__class__.__qualname__))
+            raise TypeError(
+                "unsupported operand type(s) for -: '%s' and '%s'"
+                % (self.__class__.__qualname__, other.__class__.__qualname__)
+            )
 
     def __sub__(self, other):
-        """Subtraction operator.
+        """
+        Subtraction operator.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           other : :class: `Coordinate <BioSimSpace.Types.Coordinate>`, \
-                   :class: `Length <BioSimSpace.Types.Length>`
-               Another coordinate or a length.
+        other : :class: `Coordinate <BioSimSpace.Types.Coordinate>`, \
+                :class: `Length <BioSimSpace.Types.Length>`
+            Another coordinate or a length.
 
-           Return
-           ------
+        Return
+        ------
 
-           result : :class: `Coordinate <BioSimSpace.Types.Coordinate>`
-               The difference of the two coordinates.
+        result : :class: `Coordinate <BioSimSpace.Types.Coordinate>`
+            The difference of the two coordinates.
         """
         if isinstance(other, Coordinate):
             return self.fromVector(self._vector - other._vector, _Length(1, "A"))
 
         elif isinstance(other, _Length):
-            vector = self._vector - _Vector(other.angstroms().value(),
-                                            other.angstroms().value(),
-                                            other.angstroms().value())
+            vector = self._vector - _Vector(
+                other.angstroms().value(),
+                other.angstroms().value(),
+                other.angstroms().value(),
+            )
             return self.fromVector(vector, _Length(1, "A"))
 
         else:
-            raise TypeError("unsupported operand type(s) for -: '%s' and '%s'"
-                % (self.__class__.__qualname__, other.__class__.__qualname__))
+            raise TypeError(
+                "unsupported operand type(s) for -: '%s' and '%s'"
+                % (self.__class__.__qualname__, other.__class__.__qualname__)
+            )
 
     def __mul__(self, other):
         """Multiplication operator."""
@@ -148,8 +161,10 @@ class Coordinate():
             return self.fromVector(other * self._vector, _Length(1, "A"))
 
         else:
-            raise TypeError("unsupported operand type(s) for *: '%s' and '%s'"
-                % (self.__class__.__qualname__, other.__class__.__qualname__))
+            raise TypeError(
+                "unsupported operand type(s) for *: '%s' and '%s'"
+                % (self.__class__.__qualname__, other.__class__.__qualname__)
+            )
 
     def __rmul__(self, other):
         """Multiplication operator."""
@@ -169,65 +184,72 @@ class Coordinate():
             return self.fromVector(self._vector / other, _Length(1, "A"))
 
         else:
-            raise TypeError("unsupported operand type(s) for /: '%s' and '%s'"
-                % (self.__class__.__qualname__, other.__class__.__qualname__))
+            raise TypeError(
+                "unsupported operand type(s) for /: '%s' and '%s'"
+                % (self.__class__.__qualname__, other.__class__.__qualname__)
+            )
 
     def x(self):
-        """Return the x component of the coordinate.
+        """
+        Return the x component of the coordinate.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           x : :class: `Length <BioSimSpace.Types.Length>`
-               The x component of the coordinate.
+        x : :class: `Length <BioSimSpace.Types.Length>`
+            The x component of the coordinate.
         """
         return _Length(self._vector.x(), "A")
 
     def y(self):
-        """Return the y component of the coordinate.
+        """
+        Return the y component of the coordinate.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           y : :class: `Length <BioSimSpace.Types.Length>`
-               The y component of the coordinate.
+        y : :class: `Length <BioSimSpace.Types.Length>`
+            The y component of the coordinate.
         """
         return _Length(self._vector.y(), "A")
 
     def z(self):
-        """Return the z component of the coordinate.
+        """
+        Return the z component of the coordinate.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           z : :class: `Length <BioSimSpace.Types.Length>`
-               The z component of the coordinate.
+        z : :class: `Length <BioSimSpace.Types.Length>`
+            The z component of the coordinate.
         """
         return _Length(self._vector.z(), "A")
 
     def toVector(self):
-        """Convert to a unitless BioSimSpace.Types.Vector object.
+        """
+        Convert to a unitless BioSimSpace.Types.Vector object.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           vector : :class: `Vector <BioSimSpace.Types.Vector>`
-               The unitless vector.
+        vector : :class: `Vector <BioSimSpace.Types.Vector>`
+            The unitless vector.
         """
         return self._vector
 
     @staticmethod
     def fromVector(vector, unit):
-        """Convert from a unitless BioSimSpace.Types.Vector object.
+        """
+        Convert from a unitless BioSimSpace.Types.Vector object.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           vector : :class: `Vector <BioSimSpace.Types.Vector>`
-               The unitless vector.
+        vector : :class: `Vector <BioSimSpace.Types.Vector>`
+            The unitless vector.
 
-           unit : :class: `Length <BioSimSpace.Types.Length>`
-               The coordinate unit.
+        unit : :class: `Length <BioSimSpace.Types.Length>`
+            The coordinate unit.
         """
         if not isinstance(vector, _Vector):
             raise TypeError("'vector' must be of type 'BioSimSpace.Types.Vector'")
@@ -235,25 +257,28 @@ class Coordinate():
         if not isinstance(unit, _Length):
             raise TypeError("'unit' must be of type 'BioSimSpace.Types.Length'")
 
-        return Coordinate(vector.x()*unit, vector.y()*unit, vector.z()*unit)
+        return Coordinate(vector.x() * unit, vector.y() * unit, vector.z() * unit)
 
     @staticmethod
     def _from_sire_vector(vector):
-        """Create a coordinate from a Sire.Maths.Vector object.
+        """
+        Create a coordinate from a Sire.Maths.Vector object.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           vector : Sire.Maths.Vector
-               The Sire Vector object.
+        vector : Sire.Maths.Vector
+            The Sire Vector object.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           coordinate : :class: `Coordinate <BioSimSpace.Types.Coordinate>`
-               A BioSimSpace Coordinate object.
+        coordinate : :class: `Coordinate <BioSimSpace.Types.Coordinate>`
+            A BioSimSpace Coordinate object.
         """
         # Create a new Coordinate using the x, y, z components.
-        return Coordinate(_Length(vector.x().value(), "A"),
-                          _Length(vector.y().value(), "A"),
-                          _Length(vector.z().value(), "A"))
+        return Coordinate(
+            _Length(vector.x().value(), "A"),
+            _Length(vector.y().value(), "A"),
+            _Length(vector.z().value(), "A"),
+        )

@@ -25,10 +25,10 @@ output = "output.yaml"
 # and passed as input to this node.)
 
 # For example, create a dictionary to hold the input arguments.
-input_dict = {"steps" : 1000, "files" : ["amber/ala/ala.crd", "amber/ala/ala.top"]}
+input_dict = {"steps": 1000, "files": ["amber/ala/ala.crd", "amber/ala/ala.top"]}
 
 # Insert the dictionary into the input DataFrame with label "input".
-input_table = pandas.DataFrame(data={"input" : input_dict})
+input_table = pandas.DataFrame(data={"input": input_dict})
 
 # Write a YAML configuration file for the BioSimSpace script.
 with open("input.yaml", "w") as file:
@@ -48,4 +48,4 @@ with open(output, "r") as file:
     output_dict = yaml.safe_load(file)
 
 # Insert the dictionary into the output DataFrame with label "output".
-output_table = pandas.DataFrame(data={"output" : output_dict})
+output_table = pandas.DataFrame(data={"output": output_dict})

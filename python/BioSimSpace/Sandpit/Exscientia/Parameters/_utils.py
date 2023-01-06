@@ -36,31 +36,35 @@ from .. import _Utils
 from ..Units.Charge import electron_charge as _electron_charge
 from .._SireWrappers import Molecule as _Molecule
 
+
 def formalCharge(molecule):
-    """Compute the formal charge on a molecule. This function requires that
-       the molecule has explicit hydrogen atoms.
+    """
+    Compute the formal charge on a molecule. This function requires that
+    the molecule has explicit hydrogen atoms.
 
-       Parameters
-       ----------
+    Parameters
+    ----------
 
-       molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
-           A molecule object.
+    molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+        A molecule object.
 
-       Returns
-       -------
+    Returns
+    -------
 
-       formal_charge : :class:`Charge <BioSimSpace.Types.Charge>`
-           The total formal charge on the molecule.
+    formal_charge : :class:`Charge <BioSimSpace.Types.Charge>`
+        The total formal charge on the molecule.
     """
 
     if not isinstance(molecule, _Molecule):
-        raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule'")
+        raise TypeError(
+            "'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule'"
+        )
 
     from rdkit import Chem as _Chem
     from rdkit import RDLogger as _RDLogger
 
     # Disable RDKit warnings.
-    _RDLogger.DisableLog('rdApp.*')
+    _RDLogger.DisableLog("rdApp.*")
 
     # Create a temporary working directory.
     tmp_dir = _tempfile.TemporaryDirectory()
