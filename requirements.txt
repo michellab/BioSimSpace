@@ -1,6 +1,6 @@
 # BioSimSpace runtime requirements.
 
-sire ~=2023.0.2   # this matches >= 2023.0.2 && < 2023.1.0
+sire ~=2023.0.3   # this matches >= 2023.0.3 && < 2023.1.0
 
 alchemlyb ; python_version >= '3.8'
 configargparse
