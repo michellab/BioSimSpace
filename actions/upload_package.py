@@ -16,11 +16,11 @@ if "ANACONDA_TOKEN" in os.environ:
 else:
     conda_token = "TEST"
 
-# get the build directory
-if "BUILD_DIR" in os.environ:
-    conda_bld = os.environ["BUILD_DIR"]
-else:
-    conda_bld = os.path.join("..", "build")
+# get the root conda directory
+conda = os.environ["CONDA"]
+
+# Set the path to the conda-bld directory.
+conda_bld = os.path.join(conda, "envs", "bss_build", "conda-bld")
 
 print(f"conda_bld = {conda_bld}")
 
