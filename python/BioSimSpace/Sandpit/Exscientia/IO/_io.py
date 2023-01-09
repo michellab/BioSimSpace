@@ -314,7 +314,7 @@ def readPDB(id, pdb4amber=False, work_dir=None, property_map={}):
     return readMolecules(pdb_file, property_map)
 
 
-def readMolecules(files, property_map={}):
+def readMolecules(files, show_warnings=False, property_map={}):
     """
     Read a molecular system from file.
 
@@ -323,6 +323,9 @@ def readMolecules(files, property_map={}):
 
     files : str, [str]
         A file name, or a list of file names.
+
+    show_warnings : bool
+        Whether to show any warnings raised during parsing of the input files.
 
     property_map : dict
         A dictionary that maps system "properties" to their user defined
@@ -384,6 +387,10 @@ def readMolecules(files, property_map={}):
     else:
         raise TypeError("'files' must be of type 'str', or a list of 'str' types.")
 
+    # Validate the warning message flag.
+    if not isinstance(show_warnings, bool):
+        raise TypeError("'show_warnings' must be of type 'bool'.")
+
     # Validate the map.
     if not isinstance(property_map, dict):
         raise TypeError("'property_map' must be of type 'dict'")
@@ -397,9 +404,13 @@ def readMolecules(files, property_map={}):
         if not _os.path.isfile(file):
             raise IOError("Missing input file: '%s'" % file)
 
+    # Copy the property map.
+    pmap = property_map.copy()
+    pmap["show_warnings"] = _SireBase.wrap(show_warnings)
+
     # Try to read the files and return a molecular system.
     try:
-        system = _SireIO.MoleculeParser.read(files, property_map)
+        system = _SireIO.MoleculeParser.read(files, pmap)
     except Exception as e0:
         if "There are no lead parsers!" in str(e0):
             # First check to see if the failure was due to the presence
