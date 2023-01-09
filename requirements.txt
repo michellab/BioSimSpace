@@ -2,7 +2,7 @@
 
 sire ~=2023.0.3   # this matches >= 2023.0.3 && < 2023.1.0
 
-alchemlyb ; python_version >= '3.8'
+alchemlyb<2
 configargparse
 kcombu_bss
 ipywidgets<8
