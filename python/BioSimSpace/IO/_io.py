@@ -165,7 +165,7 @@ def formatInfo(format):
         return None
 
 
-def readPDB(id, pdb4amber=False, work_dir=None, property_map={}):
+def readPDB(id, pdb4amber=False, work_dir=None, show_warnings=False, property_map={}):
     """
     Read a molecular system from a Protein Data Bank (PDBP) ID in the RSCB PDB
     website.
@@ -179,6 +179,9 @@ def readPDB(id, pdb4amber=False, work_dir=None, property_map={}):
     pdb4amber : bool
         Whether to process the PDB file using pdb4amber. This reformats the file
         such that it can be handled by the AMBER suite of tools.
+
+    show_warnings : bool
+        Whether to show any warnings raised during parsing of the input files.
 
     work_dir : str
         The working directory used to run pdb4amber.
@@ -311,7 +314,9 @@ def readPDB(id, pdb4amber=False, work_dir=None, property_map={}):
             raise IOError("pdb4amber failed!")
 
     # Read the file and return a molecular system.
-    return readMolecules(pdb_file, property_map)
+    return readMolecules(
+        pdb_file, show_warnings=show_warnings, property_map=property_map
+    )
 
 
 def readMolecules(files, show_warnings=False, property_map={}):
