@@ -37,7 +37,7 @@ test:
 
 about:
   home: https://biosimspace.org
-  license: GPL-2.0
+  license: GPL-3.0-or-later
   license_file: '{{ environ["RECIPE_DIR"] }}/LICENSE'
   summary: "An interoperable Python framework for biomolecular simulation."
   dev_url: https://github.com/michellab/BioSimSpace
