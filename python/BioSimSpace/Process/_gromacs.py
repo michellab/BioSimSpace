@@ -19,9 +19,7 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-"""
-Functionality for running simulations with GROMACS.
-"""
+"""Functionality for running simulations with GROMACS."""
 
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
@@ -1098,8 +1096,7 @@ class Gromacs(_process.Process):
         self._generate_binary_run_file()
 
     def resetConfig(self):
-        """
-        Reset the configuration parameters."""
+        """Reset the configuration parameters."""
         self._generate_config()
 
         # Use grompp to generate the portable binary run input file.

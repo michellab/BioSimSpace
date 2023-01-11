@@ -19,9 +19,7 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-"""
-Functionality for production protocols.
-"""
+"""Functionality for production protocols."""
 
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
@@ -263,7 +261,7 @@ class Production(_Protocol):
 
     def getReportInterval(self):
         """
-        Return the interval between reporting statistics. (In integration steps.)
+        Return the interval between reporting statistics. (In integration steps.).
 
         Returns
         -------
@@ -275,7 +273,7 @@ class Production(_Protocol):
 
     def setReportInterval(self, report_interval):
         """
-        Set the interval at which statistics are reported. (In integration steps.)
+        Set the interval at which statistics are reported. (In integration steps.).
 
         Parameters
         ----------
@@ -295,7 +293,7 @@ class Production(_Protocol):
     def getRestartInterval(self):
         """
         Return the interval between saving restart confiugrations, and/or
-        trajectory frames. (In integration steps.)
+        trajectory frames. (In integration steps.).
 
         Returns
         -------
@@ -309,7 +307,7 @@ class Production(_Protocol):
     def setRestartInterval(self, restart_interval):
         """
         Set the interval between saving restart confiugrations, and/or
-        trajectory frames. (In integration steps.)
+        trajectory frames. (In integration steps.).
 
         Parameters
         ----------

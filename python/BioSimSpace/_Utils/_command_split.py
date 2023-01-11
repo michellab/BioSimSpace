@@ -19,9 +19,7 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-"""
-Custom context managers.
-"""
+"""Custom context managers."""
 
 __author__ = "Christopher Woods"
 __email__ = "chryswoods@hey.com"
@@ -32,7 +30,7 @@ __all__ = ["command_split"]
 def command_split(command):
     """
     Cross platform version of 'shlex.split'. This will split the passed
-    command into parts, doing the right thing on Linux, MacOS and Windows
+    command into parts, doing the right thing on Linux, MacOS and Windows.
     """
     import sys
 

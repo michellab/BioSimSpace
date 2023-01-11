@@ -21,7 +21,7 @@
 
 """
 Functionality running parameterisation protocols as a background process.
-Author: Lester Hedges <lester.hedges@gmail.com>
+Author: Lester Hedges <lester.hedges@gmail.com>.
 """
 
 __author__ = "Lester Hedges"
@@ -97,7 +97,7 @@ class Process:
 
     def __init__(self, molecule, protocol, work_dir=None, auto_start=False):
         """
-        Constructor
+        Constructor.
 
         Parameters
         ----------

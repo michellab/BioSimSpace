@@ -1122,7 +1122,6 @@ class System(_SireWrapper):
             A dictionary that maps system "properties" to their user defined
             values. This allows the user to refer to properties with their
             own naming scheme, e.g. { "charge" : "my-charge" }
-
         """
 
         # Convert tuples to lists.

@@ -1,5 +1,5 @@
 """
-metadynamics.py: Well-tempered metadynamics
+Metadynamics.py: Well-tempered metadynamics.
 
 This is part of the OpenMM molecular simulation toolkit originating from
 Simbios, the NIH National Center for Physics-Based Simulation of
@@ -249,7 +249,7 @@ class Metadynamics(object):
         return self._force.getCollectiveVariableValues(simulation.context)
 
     def getHillHeight(self, simulation):
-        """Get the current height of the Gaussian hill in kJ/mol"""
+        """Get the current height of the Gaussian hill in kJ/mol."""
         energy = simulation.context.getState(
             getEnergy=True, groups={31}
         ).getPotentialEnergy()

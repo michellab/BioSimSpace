@@ -20,7 +20,7 @@ def test_sanity(mol):
 @pytest.mark.parametrize("LJ0", [True, False])
 @pytest.mark.parametrize("LJ1", [True, False])
 def test_set_property_map(mol, charge0, charge1, LJ0, LJ1):
-    """Test if the charge and LJ are set properly"""
+    """Test if the charge and LJ are set properly."""
     new = decouple(mol, charge=(charge0, charge1), LJ=(LJ0, LJ1))
     decouple_dict = new._sire_object.property("decouple")
     assert bool(decouple_dict["charge"][0]) is charge0
@@ -32,7 +32,7 @@ def test_set_property_map(mol, charge0, charge1, LJ0, LJ1):
 
 
 def test_ommit_property_map(mol):
-    """Test if the charge and LJ are set to True by default"""
+    """Test if the charge and LJ are set to True by default."""
     new = decouple(mol)
     decouple_dict = new._sire_object.property("decouple")
     assert bool(decouple_dict["charge"][0]) is True
@@ -44,7 +44,7 @@ def test_ommit_property_map(mol):
 
 
 def test_intramol(mol):
-    """Test the case of intramol=False"""
+    """Test the case of intramol=False."""
     new = decouple(mol, intramol=False)
     decouple_dict = new._sire_object.property("decouple")
     assert new.isDecoupled() is True
@@ -52,7 +52,7 @@ def test_intramol(mol):
 
 
 def test_getDecoupledMolecules(mol):
-    """Test the method of DecoupledMolecules"""
+    """Test the method of DecoupledMolecules."""
     new = decouple(mol)
     decoupled_mol_list = new.toSystem().getDecoupledMolecules()
     assert isinstance(decoupled_mol_list[0], BSS._SireWrappers.Molecule)

@@ -99,7 +99,8 @@ if _sys.platform == "win32":
 
 class RestraintSearch:
     """Class for running unrestrained simulations from which receptor-ligand
-    restraints are selected"""
+    restraints are selected.
+    """
 
     # Create a list of supported molecular dynamics engines.
     _engines = [
@@ -161,7 +162,7 @@ class RestraintSearch:
 
         extra_lines : list
             A list of extra lines to be put at the end of the script.
-        
+
         property_map : dict
             A dictionary that maps system "properties" to their user defined
             values. This allows the user to refer to properties with their
@@ -405,7 +406,6 @@ class RestraintSearch:
 
         kwargs :
             Keyword arguments to be passed to the BSS.Process.
-
         """
 
         # Convert to an appropriate AMBER topology. (Required by SOMD for its
@@ -528,7 +528,6 @@ class RestraintSearch:
            restraint : :class:`Restraint <BioSimSpace.Sandpit.Exscientia.FreeEnergy.Restraint>`
                The restraints of `restraint_type` which best mimic the strongest receptor-ligand
                interactions.
-
         """
         # Check all inputs
 
@@ -676,7 +675,6 @@ class RestraintSearch:
         restraint : :class:`Restraint <BioSimSpace.Sandpit.Exscientia.FreeEnergy.Restraint>`
             The restraints of `restraint_type` which best mimic the strongest receptor-ligand
             interactions.
-
         """
         if method == "MDRestraintsGenerator":
             if _have_imported(_MDRestraintsGenerator):
@@ -956,7 +954,7 @@ class RestraintSearch:
             """
             Takes in index of anchor atom 1 and universe and returns
             list of all three anchor atoms, which are chosen to be bonded
-            and not H"
+            and not H".
 
             Args:
                 a1_idx (int): Index of the first anchor atom

@@ -21,7 +21,7 @@
 
 """
 Functionality for storing custom simulation protocols.
-Author: Lester Hedges <lester.hedges@gmail.com>
+Author: Lester Hedges <lester.hedges@gmail.com>.
 """
 
 __author__ = "Lester Hedges"

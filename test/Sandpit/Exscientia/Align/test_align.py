@@ -96,15 +96,18 @@ def test_invalid_prematch(prematch):
         )
 
 
-
 @pytest.fixture()
 def propane():
-    return BSS.Parameters.parameterise("CCC", "openff_unconstrained-2.0.0").getMolecule()
+    return BSS.Parameters.parameterise(
+        "CCC", "openff_unconstrained-2.0.0"
+    ).getMolecule()
 
 
 @pytest.fixture()
 def butane():
-    return BSS.Parameters.parameterise("CCCC", "openff_unconstrained-2.0.0").getMolecule()
+    return BSS.Parameters.parameterise(
+        "CCCC", "openff_unconstrained-2.0.0"
+    ).getMolecule()
 
 
 @pytest.fixture()
@@ -274,12 +277,16 @@ def test_merge():
 
 @pytest.fixture(scope="module")
 def roi_mol0():
-    return BSS.IO.readMolecules(BSS.IO.glob("test/Sandpit/Exscientia/input/ligands/wild*"))[0]
+    return BSS.IO.readMolecules(
+        BSS.IO.glob("test/Sandpit/Exscientia/input/ligands/wild*")
+    )[0]
 
 
 @pytest.fixture(scope="module")
 def roi_mol1():
-    return BSS.IO.readMolecules(BSS.IO.glob("test/Sandpit/Exscientia/input/ligands/mutated*"))[0]
+    return BSS.IO.readMolecules(
+        BSS.IO.glob("test/Sandpit/Exscientia/input/ligands/mutated*")
+    )[0]
 
 
 @pytest.fixture(scope="module")
@@ -304,10 +311,16 @@ def roi_merged_mol(roi_mol0, roi_mol1):
         for idx in range(0, mol.nAtoms()):
             if idx in coord_dict:
                 vec = coord_dict[idx]
-                vec = Vector(vec.x().angstroms().value(),
-                             vec.y().angstroms().value(),
-                             vec.z().angstroms().value())
-                edit_mol = edit_mol.atom(AtomIdx(idx)).setProperty("coordinates", vec).molecule()
+                vec = Vector(
+                    vec.x().angstroms().value(),
+                    vec.y().angstroms().value(),
+                    vec.z().angstroms().value(),
+                )
+                edit_mol = (
+                    edit_mol.atom(AtomIdx(idx))
+                    .setProperty("coordinates", vec)
+                    .molecule()
+                )
         mol._sire_object = edit_mol.commit()
 
     mol0_res_name, mol0_res_idx = get_res_info(roi_mol0)
@@ -340,7 +353,9 @@ def roi_merged_mol(roi_mol0, roi_mol1):
     update_coordinate(roi_mol0, coord_dict)
 
     # Create the merged molecule.
-    merged_mol = BSS.Align.merge(roi_mol0, roi_mol1, mapping=mapping, roi=[mut0_idx, mut1_idx])
+    merged_mol = BSS.Align.merge(
+        roi_mol0, roi_mol1, mapping=mapping, roi=[mut0_idx, mut1_idx]
+    )
 
     return merged_mol
 
@@ -419,8 +434,12 @@ def test_roi_nonbonded0(roi_merged_mol, roi_intraclj0, roi_intraff0, roi_pmap0):
     intraff_merged = IntraFF("intraclj")
     intraclj_merged.add(roi_merged_mol._sire_object, roi_pmap0)
     intraff_merged.add(roi_merged_mol._sire_object, roi_pmap0)
-    assert roi_intraclj0.energy().value() == pytest.approx(intraclj_merged.energy().value())
-    assert roi_intraff0.energy().value() == pytest.approx(intraff_merged.energy().value())
+    assert roi_intraclj0.energy().value() == pytest.approx(
+        intraclj_merged.energy().value()
+    )
+    assert roi_intraff0.energy().value() == pytest.approx(
+        intraff_merged.energy().value()
+    )
 
 
 def test_roi_nonbonded1(roi_merged_mol, roi_intraclj1, roi_intraff1, roi_pmap1):
@@ -429,8 +448,12 @@ def test_roi_nonbonded1(roi_merged_mol, roi_intraclj1, roi_intraff1, roi_pmap1):
     intraff_merged = IntraFF("intraclj")
     intraclj_merged.add(roi_merged_mol._sire_object, roi_pmap1)
     intraff_merged.add(roi_merged_mol._sire_object, roi_pmap1)
-    assert roi_intraclj1.energy().value() == pytest.approx(intraclj_merged.energy().value())
-    assert roi_intraff1.energy().value() == pytest.approx(intraff_merged.energy().value())
+    assert roi_intraclj1.energy().value() == pytest.approx(
+        intraclj_merged.energy().value()
+    )
+    assert roi_intraff1.energy().value() == pytest.approx(
+        intraff_merged.energy().value()
+    )
 
 
 def test_roi_bonded0(roi_mol0, roi_merged_mol, roi_pmap0, roi_internal0):
@@ -441,7 +464,9 @@ def test_roi_bonded0(roi_mol0, roi_merged_mol, roi_pmap0, roi_internal0):
     roi_internal_merged = InternalFF("internal")
     roi_internal_merged.setStrict(True)
     roi_internal_merged.add(amber_mol._sire_object)
-    assert roi_internal0.energy().value() == pytest.approx(roi_internal_merged.energy().value())
+    assert roi_internal0.energy().value() == pytest.approx(
+        roi_internal_merged.energy().value()
+    )
 
 
 def test_roi_bonded1(roi_mol1, roi_merged_mol, roi_pmap1, roi_internal1):
@@ -452,10 +477,14 @@ def test_roi_bonded1(roi_mol1, roi_merged_mol, roi_pmap1, roi_internal1):
     roi_internal_merged = InternalFF("internal")
     roi_internal_merged.setStrict(True)
     roi_internal_merged.add(amber_mol._sire_object)
-    assert roi_internal1.energy().value() == pytest.approx(roi_internal_merged.energy().value())
+    assert roi_internal1.energy().value() == pytest.approx(
+        roi_internal_merged.energy().value()
+    )
 
 
-@pytest.mark.xfail(reason="Mapping generated with latest RDKit which requires sanitization no longer triggers the exception")
+@pytest.mark.xfail(
+    reason="Mapping generated with latest RDKit which requires sanitization no longer triggers the exception"
+)
 def test_ring_breaking_three_membered():
     # Load the ligands.
     s0 = BSS.IO.readMolecules(

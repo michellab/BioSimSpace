@@ -19,9 +19,7 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-"""
-Functionality for running simulation processes.
-"""
+"""Functionality for running simulation processes."""
 
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
@@ -640,7 +638,6 @@ class Process:
 
         system : :class:`System <BioSimSpace._SireWrappers.System>`
             The molecular system.
-
 
         Returns
         -------

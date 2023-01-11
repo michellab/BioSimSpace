@@ -121,7 +121,8 @@ def test_restraints(restraint):
 @pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
 def test_write_restraint(system, tmp_path):
     """Test if the restraint has been written in a way that could be processed
-    correctly."""
+    correctly.
+    """
     ligand = ligand = BSS.IO.readMolecules(
         BSS.IO.glob("test/input/ligands/ligand01*")
     ).getMolecule(0)

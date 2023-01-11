@@ -196,7 +196,7 @@ class Bond(_SireWrapper):
 
     def length(self):
         """
-        Return the length of the bond
+        Return the length of the bond.
 
         Returns
         -------

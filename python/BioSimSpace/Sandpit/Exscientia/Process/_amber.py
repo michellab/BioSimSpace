@@ -19,9 +19,7 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-"""
-Functionality for running simulations using AMBER.
-"""
+"""Functionality for running simulations using AMBER."""
 
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
@@ -176,7 +174,8 @@ class Amber(_process.Process):
         seed=None,
         extra_options=None,
         extra_lines=None,
-        reference_system=None, property_map={},
+        reference_system=None,
+        property_map={},
     ):
         """
         Constructor.
@@ -322,28 +321,28 @@ class Amber(_process.Process):
 
     def _write_system(self, system, coord_file=None, topol_file=None):
         """Validates an input system and makes some internal modifications to it,
-           if needed, before writing it out to a coordinate and/or a topology file.
+        if needed, before writing it out to a coordinate and/or a topology file.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           system : :class:`System <BioSimSpace._SireWrappers.System>`
-               The molecular system.
+        system : :class:`System <BioSimSpace._SireWrappers.System>`
+            The molecular system.
 
-           coord_file : str or None
-               The coordinate file to which to write out the system.
+        coord_file : str or None
+            The coordinate file to which to write out the system.
 
-           topol_file : str or None
-               The topology file to which to write out the system.
+        topol_file : str or None
+            The topology file to which to write out the system.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           system : BioSimSpace._SireWrappers.System
-                The system used for writing out the topologies.
+        system : BioSimSpace._SireWrappers.System
+             The system used for writing out the topologies.
 
-           mapping : dict(Sire.Mol.MolIdx, Sire.Mol.MolIdx)
-                The corresponding molecule-to-molecule mapping.
+        mapping : dict(Sire.Mol.MolIdx, Sire.Mol.MolIdx)
+             The corresponding molecule-to-molecule mapping.
         """
         # Create a copy of the system.
         system = system.copy()
@@ -549,9 +548,7 @@ class Amber(_process.Process):
             setattr(self, "getTime", self._getTime)
 
         # Set the configuration.
-        config = _Protocol.ConfigFactory(
-            self._system, self._protocol, squashed_system=self._squashed_system
-        )
+        config = _Protocol.ConfigFactory(self._system, self._protocol)
         self.addToConfig(
             config.generateAmberConfig(
                 extra_options={**config_options, **self._extra_options},
@@ -1140,7 +1137,7 @@ class Amber(_process.Process):
 
     def getDihedralEnergy(self, time_series=False, block="AUTO"):
         """
-        Get the total dihedral energy (proper + improper)
+        Get the total dihedral energy (proper + improper).
 
         Parameters
         ----------

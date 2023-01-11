@@ -41,7 +41,6 @@ class _PositionRestraintMixin:
             The force constant for the restraint potential. If a 'float' is
             passed, then default units of 'kcal_per_mol / angstrom**2' will
             be used.
-
         """
         # Set the restraint.
         if restraint is not None:

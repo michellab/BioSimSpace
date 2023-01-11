@@ -19,9 +19,7 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-"""
-Functionality for running simulations using NAMD.
-"""
+"""Functionality for running simulations using NAMD."""
 
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
@@ -1616,7 +1614,7 @@ class Namd(_process.Process):
 
     def getTotal2Energy(self, time_series=False, block="AUTO"):
         """
-        Get the total energy. (Better KE conservation.)
+        Get the total energy. (Better KE conservation.).
 
         Parameters
         ----------
@@ -1637,7 +1635,7 @@ class Namd(_process.Process):
 
     def getCurrentTotal2Energy(self, time_series=False):
         """
-        Get the current total energy. (Better KE conservation.)
+        Get the current total energy. (Better KE conservation.).
 
         Parameters
         ----------
@@ -1655,7 +1653,7 @@ class Namd(_process.Process):
 
     def getTotal3Energy(self, time_series=False, block="AUTO"):
         """
-        Get the total energy. (Smaller short-time fluctuations.)
+        Get the total energy. (Smaller short-time fluctuations.).
 
         Parameters
         ----------
@@ -1676,7 +1674,7 @@ class Namd(_process.Process):
 
     def getCurrentTotal3Energy(self, time_series=False):
         """
-        Get the total energy. (Smaller short-time fluctuations.)
+        Get the total energy. (Smaller short-time fluctuations.).
 
         Parameters
         ----------
@@ -1850,7 +1848,7 @@ class Namd(_process.Process):
 
     def getGPressure(self, time_series=False, block="AUTO"):
         """
-        Get the pressure. (Hydrogens incorporated into bonded atoms.)
+        Get the pressure. (Hydrogens incorporated into bonded atoms.).
 
         Parameters
         ----------
@@ -1871,7 +1869,7 @@ class Namd(_process.Process):
 
     def getCurrentGPressure(self, time_series=False):
         """
-        Get the current pressure. (Hydrogens incorporated into bonded atoms.)
+        Get the current pressure. (Hydrogens incorporated into bonded atoms.).
 
         Parameters
         ----------
@@ -1889,7 +1887,7 @@ class Namd(_process.Process):
 
     def getGPressureAverage(self, time_series=False, block="AUTO"):
         """
-        Get the average pressure. (Hydrogens incorporated into bonded atoms.)
+        Get the average pressure. (Hydrogens incorporated into bonded atoms.).
 
         Parameters
         ----------
@@ -1910,7 +1908,7 @@ class Namd(_process.Process):
 
     def getCurrentGPressureAverage(self, time_series=False):
         """
-        Get the current average pressure. (Hydrogens incorporated into bonded atoms.)
+        Get the current average pressure. (Hydrogens incorporated into bonded atoms.).
 
         Parameters
         ----------

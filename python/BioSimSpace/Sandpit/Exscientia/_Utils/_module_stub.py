@@ -92,7 +92,7 @@ def _try_import(name: str, install_command: str = None):
     """
     Try to import the module called 'name' and return
     the resulting module. If this fails, catch the
-    error and instead return a _ModuleStub
+    error and instead return a _ModuleStub.
 
     Parameters
     ----------
@@ -139,7 +139,7 @@ def _assert_imported(module):
     """
     Assert that the passed module has indeed been imported.
     This will raise a ModuleNotFoundError if the module
-    has not been imported, and has instead been stubbed
+    has not been imported, and has instead been stubbed.
     """
     if type(module) == _ModuleStub:
         module.this_will_break()
@@ -148,6 +148,6 @@ def _assert_imported(module):
 def _have_imported(module) -> bool:
     """
     Return whether or not the passed module has indeed
-    been imported (and thus is not stubbed)
+    been imported (and thus is not stubbed).
     """
     return type(module) != _ModuleStub

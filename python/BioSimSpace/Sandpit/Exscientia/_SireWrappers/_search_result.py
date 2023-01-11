@@ -270,7 +270,7 @@ class SearchResult:
 
     def bonds(self):
         """
-        Return all of the bonds in this result
+        Return all of the bonds in this result.
 
         Returns
         -------

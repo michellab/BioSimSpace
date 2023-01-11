@@ -19,9 +19,7 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-"""
-Functionality for generating box parameters.
-"""
+"""Functionality for generating box parameters."""
 
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"

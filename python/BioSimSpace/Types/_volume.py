@@ -19,9 +19,7 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-"""
-A volume type.
-"""
+"""A volume type."""
 
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
@@ -290,8 +288,7 @@ class Volume(_Type):
             )
 
     def _validate_unit(self, unit):
-        """
-        Validate that the unit are supported."""
+        """Validate that the unit are supported."""
 
         # Strip whitespace and convert to upper case.
         unit = unit.replace(" ", "").upper()

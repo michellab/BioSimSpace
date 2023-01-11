@@ -19,9 +19,7 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-"""
-Functionality for aligning molecules.
-"""
+"""Functionality for aligning molecules."""
 
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
@@ -742,7 +740,7 @@ def matchAtoms(
     When requesting more than one match, the mappings will be sorted using
     a scoring function and returned in order of best to worst score. (Note
     that, depending on the scoring function the "best" score may have the
-    lowest value.)
+    lowest value.).
 
     Parameters
     ----------
@@ -1352,7 +1350,8 @@ def merge(
     mapping=None,
     allow_ring_breaking=False,
     allow_ring_size_change=False,
-    force=False, roi=None,
+    force=False,
+    roi=None,
     property_map0={},
     property_map1={},
 ):
@@ -1483,7 +1482,8 @@ def merge(
         sire_mapping,
         allow_ring_breaking=allow_ring_breaking,
         allow_ring_size_change=allow_ring_size_change,
-        force=force, roi=roi,
+        force=force,
+        roi=roi,
         property_map0=property_map0,
         property_map1=property_map1,
     )
@@ -2146,19 +2146,19 @@ def _validate_mapping(molecule0, molecule1, mapping, name):
 
 def _validate_roi(molecule0, molecule1, roi):
     """Internal function to validate that a mapping contains key:value pairs
-       of the correct type.
+    of the correct type.
 
-       Parameters
-       ----------
+    Parameters
+    ----------
 
-       molecule0 : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
-           The molecule of interest.
+    molecule0 : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+        The molecule of interest.
 
-       molecule1 : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
-           The reference molecule.
+    molecule1 : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+        The reference molecule.
 
-       roi : list
-           The region of interest to merge.
+    roi : list
+        The region of interest to merge.
     """
     if len(roi) != 2:
         raise ValueError("The length of roi list must be 2.")
@@ -2169,8 +2169,9 @@ def _validate_roi(molecule0, molecule1, roi):
             if type(atom_idx) is not int:
                 raise ValueError(f"The element of roi[{mol_idx}] should be of type int")
             if atom_idx >= [molecule0, molecule1][mol_idx].nAtoms():
-                raise IndexError(f"The element of roi[{mol_idx}] should within range of number of atoms")
-
+                raise IndexError(
+                    f"The element of roi[{mol_idx}] should within range of number of atoms"
+                )
 
 
 def _to_sire_mapping(mapping):

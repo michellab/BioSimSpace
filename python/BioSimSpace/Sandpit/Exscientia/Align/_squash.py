@@ -15,43 +15,47 @@ from .._SireWrappers import Molecule as _Molecule
 
 def _squash(system):
     """Internal function which converts a merged BioSimSpace system into an AMBER-compatible format, where all perturbed
-       molecules are represented sequentially, instead of in a mixed topology, like in GROMACS. In the current
-       implementation, all perturbed molecules are moved at the end of the squashed system. For example, if we have an
-       input system, containing regular molecules (M) and perturbed molecules (P):
+    molecules are represented sequentially, instead of in a mixed topology, like in GROMACS. In the current
+    implementation, all perturbed molecules are moved at the end of the squashed system. For example, if we have an
+    input system, containing regular molecules (M) and perturbed molecules (P):
 
-       M0 - M1 - P0 - M2 - P1 - M3
+    M0 - M1 - P0 - M2 - P1 - M3
 
-       This function will return the following squashed system:
+    This function will return the following squashed system:
 
-       M0 - M1 - M2 - M3 - P0_A - PO_B - P1_A - P1_B
+    M0 - M1 - M2 - M3 - P0_A - PO_B - P1_A - P1_B
 
-       Where A and B denote the dummyless lambda=0 and lambda=1 states. In addition, we also
-       return a mapping between the old unperturbed molecule indices and the new ones. This
-       mapping can be used during coordinate update. Updating the coordinates of the perturbed
-       molecules, however, has to be done manually through the Python layer.
+    Where A and B denote the dummyless lambda=0 and lambda=1 states. In addition, we also
+    return a mapping between the old unperturbed molecule indices and the new ones. This
+    mapping can be used during coordinate update. Updating the coordinates of the perturbed
+    molecules, however, has to be done manually through the Python layer.
 
-       Parameters
-       ----------
+    Parameters
+    ----------
 
-       system : BioSimSpace._SireWrappers.System
-           The system.
+    system : BioSimSpace._SireWrappers.System
+        The system.
 
-       Returns
-       -------
+    Returns
+    -------
 
-       system : BioSimSpace._SireWrappers.System
-            The output squashed system.
+    system : BioSimSpace._SireWrappers.System
+         The output squashed system.
 
-       mapping : dict(Sire.Mol.MolIdx, Sire.Mol.MolIdx)
-            The corresponding molecule-to-molecule mapping. Only the non-perturbable
-            molecules are contained in this mapping as the perturbable ones do not
-            have a one-to-one mapping and cannot be expressed as a dictionary.
+    mapping : dict(Sire.Mol.MolIdx, Sire.Mol.MolIdx)
+         The corresponding molecule-to-molecule mapping. Only the non-perturbable
+         molecules are contained in this mapping as the perturbable ones do not
+         have a one-to-one mapping and cannot be expressed as a dictionary.
     """
     # Create a copy of the original system.
     new_system = system.copy()
 
     # Get the perturbable molecules and their corresponding indices.
-    pertmol_idxs = [i for i, molecule in enumerate(system.getMolecules()) if molecule.isPerturbable()]
+    pertmol_idxs = [
+        i
+        for i, molecule in enumerate(system.getMolecules())
+        if molecule.isPerturbable()
+    ]
     pert_mols = system.getPerturbableMolecules()
 
     # Remove the perturbable molecules from the system.
@@ -64,38 +68,40 @@ def _squash(system):
         new_system += _squash_molecule(pert_mol)
 
     # Create the old molecule index to new molecule index mapping.
-    mapping = {_SireMol.MolIdx(idx): _SireMol.MolIdx(i) for i, idx in enumerate(new_indices)}
+    mapping = {
+        _SireMol.MolIdx(idx): _SireMol.MolIdx(i) for i, idx in enumerate(new_indices)
+    }
 
     return new_system, mapping
 
 
 def _squash_molecule(molecule):
     """This internal function converts a perturbed molecule to a system that is
-       recognisable to the AMBER alchemical code. If the molecule contains a single
-       residue, then the squashed system is just the two separate pure endstate
-       molecules in order. If the molecule contains regular (R) and perturbable (P)
-       resides of the form:
+    recognisable to the AMBER alchemical code. If the molecule contains a single
+    residue, then the squashed system is just the two separate pure endstate
+    molecules in order. If the molecule contains regular (R) and perturbable (P)
+    resides of the form:
 
-       R0 - R1 - P0 - R2 - P1 - R3
+    R0 - R1 - P0 - R2 - P1 - R3
 
-       Then a system containing a single molecule will be returned, which is generated
-       by ParmEd's tiMerge as follows:
+    Then a system containing a single molecule will be returned, which is generated
+    by ParmEd's tiMerge as follows:
 
-       R0 - R1 - P0_A - R2 - P1_A - R3 - P0_B - P1_B
+    R0 - R1 - P0_A - R2 - P1_A - R3 - P0_B - P1_B
 
-       Where A and B denote the dummyless lambda=0 and lambda=1 states.
+    Where A and B denote the dummyless lambda=0 and lambda=1 states.
 
-       Parameters
-       ----------
+    Parameters
+    ----------
 
-       molecule : BioSimSpace._SireWrappers.Molecule
-           The input molecule.
+    molecule : BioSimSpace._SireWrappers.Molecule
+        The input molecule.
 
-       Returns
-       -------
+    Returns
+    -------
 
-       system : BioSimSpace._SireWrappers.System
-            The output squashed system.
+    system : BioSimSpace._SireWrappers.System
+         The output squashed system.
     """
     if not molecule.isPerturbable():
         return molecule
@@ -123,7 +129,9 @@ def _squash_molecule(molecule):
         # Determine the residue masks.
         atom0_offset, atom1_offset = 0, mol0.nAtoms()
         res_atoms0, res_atoms1 = [], []
-        for res0, res1, res01 in zip(mol0.getResidues(), mol1.getResidues(), molecule.getResidues()):
+        for res0, res1, res01 in zip(
+            mol0.getResidues(), mol1.getResidues(), molecule.getResidues()
+        ):
             if _is_perturbed(res01) or molecule.nResidues() == 1:
                 res_atoms0 += list(range(atom0_offset, atom0_offset + res0.nAtoms()))
                 res_atoms1 += list(range(atom1_offset, atom1_offset + res1.nAtoms()))
@@ -134,40 +142,42 @@ def _squash_molecule(molecule):
 
         # Merge the residues.
         action = _pmd.tools.tiMerge(parm, mol_mask0, mol_mask1, res_mask0, res_mask1)
-        action.output = open(_os.devnull, 'w')  # Avoid some of the spam
+        action.output = open(_os.devnull, "w")  # Avoid some of the spam
         action.execute()
 
         # Reload into BioSimSpace.
         # TODO: prm7/rst7 doesn't work for some reason so we need to use gro/top
         parm.save(f"{tempdir}/squashed.gro", overwrite=True)
         parm.save(f"{tempdir}/squashed.top", overwrite=True)
-        squashed_mol = _readMolecules([f"{tempdir}/squashed.gro", f"{tempdir}/squashed.top"])
+        squashed_mol = _readMolecules(
+            [f"{tempdir}/squashed.gro", f"{tempdir}/squashed.top"]
+        )
 
     return squashed_mol
 
 
 def _unsquash(system, squashed_system, mapping):
     """Internal function which converts an alchemical AMBER system where the perturbed molecules are
-       defined sequentially and updates the coordinates and velocities of an input unsquashed system.
-       Refer to the _squash() function documentation to see the structure of the squashed system
-       relative to the unsquashed one.
+    defined sequentially and updates the coordinates and velocities of an input unsquashed system.
+    Refer to the _squash() function documentation to see the structure of the squashed system
+    relative to the unsquashed one.
 
-       Parameters
-       ----------
+    Parameters
+    ----------
 
-       system : BioSimSpace._SireWrappers.System
-           The regular unsquashed system.
+    system : BioSimSpace._SireWrappers.System
+        The regular unsquashed system.
 
-       squashed_system : BioSimSpace._SireWrappers.System
-           The corresponding squashed system.
+    squashed_system : BioSimSpace._SireWrappers.System
+        The corresponding squashed system.
 
-       mapping : dict(Sire.Mol.MolIdx, Sire.Mol.MolIdx)
-           The molecule-molecule mapping generated by _squash().
+    mapping : dict(Sire.Mol.MolIdx, Sire.Mol.MolIdx)
+        The molecule-molecule mapping generated by _squash().
 
-       Returns
-       -------
-       system : BioSimSpace._SireWrappers.System
-            The output unsquashed system.
+    Returns
+    -------
+    system : BioSimSpace._SireWrappers.System
+         The output unsquashed system.
     """
     # Create a copy of the original new_system.
     new_system = system.copy()
@@ -175,13 +185,15 @@ def _unsquash(system, squashed_system, mapping):
     # Update the unperturbed molecule coordinates in the original new_system using the mapping.
     if mapping:
         new_system._sire_object, _ = _SireIO.updateCoordinatesAndVelocities(
-            new_system._sire_object,
-            squashed_system._sire_object,
-            mapping
+            new_system._sire_object, squashed_system._sire_object, mapping
         )
 
     # From now on we handle all perturbed molecules.
-    pertmol_idxs = [i for i, molecule in enumerate(new_system.getMolecules()) if molecule.isPerturbable()]
+    pertmol_idxs = [
+        i
+        for i, molecule in enumerate(new_system.getMolecules())
+        if molecule.isPerturbable()
+    ]
 
     # Get the molecule mapping and combine it with the lambda=0 molecule being prioritised
     molecule_mapping0 = _squashed_molecule_mapping(new_system, is_lambda1=False)
@@ -189,7 +201,9 @@ def _unsquash(system, squashed_system, mapping):
     molecule_mapping0_rev = {v: k for k, v in molecule_mapping0.items()}
     molecule_mapping1_rev = {v: k for k, v in molecule_mapping1.items()}
     molecule_mapping_rev = {**molecule_mapping1_rev, **molecule_mapping0_rev}
-    molecule_mapping_rev = {k: v for k, v in molecule_mapping_rev.items() if v in pertmol_idxs}
+    molecule_mapping_rev = {
+        k: v for k, v in molecule_mapping_rev.items() if v in pertmol_idxs
+    }
 
     # Update the perturbed molecule coordinates based on the molecule mapping
     for merged_idx in set(molecule_mapping_rev.values()):
@@ -200,7 +214,9 @@ def _unsquash(system, squashed_system, mapping):
         if squashed_idx0 == squashed_idx1:
             squashed_molecules = squashed_system[squashed_idx0].toSystem()
         else:
-            squashed_molecules = (squashed_system[squashed_idx0] + squashed_system[squashed_idx1]).toSystem()
+            squashed_molecules = (
+                squashed_system[squashed_idx0] + squashed_system[squashed_idx1]
+            ).toSystem()
 
         new_pertmol = _unsquash_molecule(pertmol, squashed_molecules)
         new_system.updateMolecule(merged_idx, new_pertmol)
@@ -210,22 +226,22 @@ def _unsquash(system, squashed_system, mapping):
 
 def _unsquash_molecule(molecule, squashed_molecules):
     """This internal function loads the coordinates and velocities of squashed molecules
-       as defined by the _squash_molecule() function into an unsquashed merged molecule.
+    as defined by the _squash_molecule() function into an unsquashed merged molecule.
 
-       Parameters
-       ----------
+    Parameters
+    ----------
 
-       molecule : BioSimSpace._SireWrappers.Molecule
-           The unsquashed merged molecule whose coordinates and velocities are to be updated.
+    molecule : BioSimSpace._SireWrappers.Molecule
+        The unsquashed merged molecule whose coordinates and velocities are to be updated.
 
-       squashed_molecules : BioSimSpace._SireWrappers.Molecules
-           The corresponding squashed molecule(s) whose coordinates are to be used for updating.
+    squashed_molecules : BioSimSpace._SireWrappers.Molecules
+        The corresponding squashed molecule(s) whose coordinates are to be used for updating.
 
-       Returns
-       -------
+    Returns
+    -------
 
-       molecule : BioSimSpace._SireWrappers.Molecule
-            The output updated merged molecule.
+    molecule : BioSimSpace._SireWrappers.Molecule
+         The output updated merged molecule.
     """
     # Get the atom mapping and combine it with the lambda=0 molecule being prioritised
     atom_mapping0 = _squashed_atom_mapping(molecule, is_lambda1=False)
@@ -271,24 +287,24 @@ def _unsquash_molecule(molecule, squashed_molecules):
 
 def _squashed_molecule_mapping(system, is_lambda1=False):
     """This internal function returns a dictionary whose keys correspond to the molecule
-       index of the each molecule in the original merged system, and whose values
-       contain the corresponding index of the same molecule at the specified endstate
-       in the squashed system.
+    index of the each molecule in the original merged system, and whose values
+    contain the corresponding index of the same molecule at the specified endstate
+    in the squashed system.
 
-       Parameters
-       ----------
+    Parameters
+    ----------
 
-       system : BioSimSpace._SireWrappers.System
-           The input merged system.
+    system : BioSimSpace._SireWrappers.System
+        The input merged system.
 
-       is_lambda1 : bool
-           Whether to use the lambda=1 endstate.
+    is_lambda1 : bool
+        Whether to use the lambda=1 endstate.
 
-       Returns
-       -------
+    Returns
+    -------
 
-       mapping : dict(int, int)
-           The corresponding molecule mapping.
+    mapping : dict(int, int)
+        The corresponding molecule mapping.
     """
     # Get the perturbable molecules and their corresponding indices.
     pertmol_idxs = [i for i, molecule in enumerate(system) if molecule.isPerturbable()]
@@ -315,24 +331,24 @@ def _squashed_molecule_mapping(system, is_lambda1=False):
 
 def _squashed_atom_mapping(system, is_lambda1=False):
     """This internal function returns a dictionary whose keys correspond to the atom
-       index of the each atom in the original merged system, and whose values
-       contain the corresponding index of the same atom at the specified endstate
-       in the squashed system.
+    index of the each atom in the original merged system, and whose values
+    contain the corresponding index of the same atom at the specified endstate
+    in the squashed system.
 
-       Parameters
-       ----------
+    Parameters
+    ----------
 
-       system : BioSimSpace._SireWrappers.System
-           The input merged system.
+    system : BioSimSpace._SireWrappers.System
+        The input merged system.
 
-       is_lambda1 : bool
-           Whether to use the lambda=1 endstate.
+    is_lambda1 : bool
+        Whether to use the lambda=1 endstate.
 
-       Returns
-       -------
+    Returns
+    -------
 
-       mapping : dict(int, int)
-           The corresponding atom mapping.
+    mapping : dict(int, int)
+        The corresponding atom mapping.
     """
     if isinstance(system, _Molecule):
         return _squashed_atom_mapping(system.toSystem(), is_lambda1=is_lambda1)
@@ -344,7 +360,9 @@ def _squashed_atom_mapping(system, is_lambda1=False):
     for molecule in system:
         if not molecule.isPerturbable():
             atom_indices = _np.arange(atom_idx, atom_idx + molecule.nAtoms())
-            squashed_atom_indices = _np.arange(squashed_atom_idx, squashed_atom_idx + molecule.nAtoms())
+            squashed_atom_indices = _np.arange(
+                squashed_atom_idx, squashed_atom_idx + molecule.nAtoms()
+            )
             atom_mapping.update(dict(zip(atom_indices, squashed_atom_indices)))
             atom_idx += molecule.nAtoms()
             squashed_atom_idx += molecule.nAtoms()
@@ -353,7 +371,7 @@ def _squashed_atom_mapping(system, is_lambda1=False):
                 molecule,
                 offset_merged=atom_idx,
                 offset_squashed=squashed_offset + squashed_atom_idx_perturbed,
-                is_lambda1=is_lambda1
+                is_lambda1=is_lambda1,
             )
             atom_mapping.update(residue_atom_mapping)
             atom_idx += molecule.nAtoms()
@@ -363,35 +381,39 @@ def _squashed_atom_mapping(system, is_lambda1=False):
     return {int(k): int(v) for k, v in atom_mapping.items()}
 
 
-def _squashed_atom_mapping_molecule(molecule, offset_merged=0, offset_squashed=0, is_lambda1=False):
+def _squashed_atom_mapping_molecule(
+    molecule, offset_merged=0, offset_squashed=0, is_lambda1=False
+):
     """This internal function returns a dictionary whose keys correspond to the atom
-       index of the each atom in the original merged molecule, and whose values
-       contain the corresponding index of the same atom at the specified endstate
-       in the squashed molecule at a particular offset.
+    index of the each atom in the original merged molecule, and whose values
+    contain the corresponding index of the same atom at the specified endstate
+    in the squashed molecule at a particular offset.
 
-       Parameters
-       ----------
+    Parameters
+    ----------
 
-       molecule : BioSimSpace._SireWrappers.Molecule
-           The input merged molecule.
+    molecule : BioSimSpace._SireWrappers.Molecule
+        The input merged molecule.
 
-       offset_merged : int
-           The index at which to start the merged atom numbering.
+    offset_merged : int
+        The index at which to start the merged atom numbering.
 
-       offset_squashed : int
-           The index at which to start the squashed atom numbering.
+    offset_squashed : int
+        The index at which to start the squashed atom numbering.
 
-       is_lambda1 : bool
-           Whether to use the lambda=1 endstate.
+    is_lambda1 : bool
+        Whether to use the lambda=1 endstate.
 
-       Returns
-       -------
+    Returns
+    -------
 
-       mapping : dict(int, int)
-           The corresponding atom mapping.
+    mapping : dict(int, int)
+        The corresponding atom mapping.
     """
     if not molecule.isPerturbable():
-        return {offset_merged + i: offset_squashed + i for i in range(molecule.nAtoms())}
+        return {
+            offset_merged + i: offset_squashed + i for i in range(molecule.nAtoms())
+        }
 
     # Both mappings start from 0 and we add all offsets at the end.
     mapping, mapping_lambda1 = {}, {}
@@ -399,14 +421,22 @@ def _squashed_atom_mapping_molecule(molecule, offset_merged=0, offset_squashed=0
     for residue in molecule.getResidues():
         if not (_is_perturbed(residue) or molecule.nResidues() == 1):
             # The residue is not perturbed.
-            mapping.update({atom_idx_merged + i: atom_idx_squashed + i
-                            for i in range(residue.nAtoms())})
+            mapping.update(
+                {
+                    atom_idx_merged + i: atom_idx_squashed + i
+                    for i in range(residue.nAtoms())
+                }
+            )
             atom_idx_merged += residue.nAtoms()
             atom_idx_squashed += residue.nAtoms()
         else:
             # The residue is perturbed.
-            types0 = [atom._sire_object.property("ambertype0") for atom in residue.getAtoms()]
-            types1 = [atom._sire_object.property("ambertype1") for atom in residue.getAtoms()]
+            types0 = [
+                atom._sire_object.property("ambertype0") for atom in residue.getAtoms()
+            ]
+            types1 = [
+                atom._sire_object.property("ambertype1") for atom in residue.getAtoms()
+            ]
             in_mol0 = ["du" not in x for x in types0]
             in_mol1 = ["du" not in x for x in types1]
             ndummy0 = residue.nAtoms() - sum(in_mol1)
@@ -416,12 +446,20 @@ def _squashed_atom_mapping_molecule(molecule, offset_merged=0, offset_squashed=0
             natoms1 = ncommon + ndummy1
 
             if not is_lambda1:
-                atom_indices = _np.arange(atom_idx_merged, atom_idx_merged + residue.nAtoms())[in_mol0]
-                squashed_atom_indices = _np.arange(atom_idx_squashed, atom_idx_squashed + natoms0)
+                atom_indices = _np.arange(
+                    atom_idx_merged, atom_idx_merged + residue.nAtoms()
+                )[in_mol0]
+                squashed_atom_indices = _np.arange(
+                    atom_idx_squashed, atom_idx_squashed + natoms0
+                )
                 mapping.update(dict(zip(atom_indices, squashed_atom_indices)))
             else:
-                atom_indices = _np.arange(atom_idx_merged, atom_idx_merged + residue.nAtoms())[in_mol1]
-                squashed_atom_indices = _np.arange(atom_idx_squashed_lambda1, atom_idx_squashed_lambda1 + natoms1)
+                atom_indices = _np.arange(
+                    atom_idx_merged, atom_idx_merged + residue.nAtoms()
+                )[in_mol1]
+                squashed_atom_indices = _np.arange(
+                    atom_idx_squashed_lambda1, atom_idx_squashed_lambda1 + natoms1
+                )
                 mapping_lambda1.update(dict(zip(atom_indices, squashed_atom_indices)))
 
             atom_idx_merged += residue.nAtoms()
@@ -429,12 +467,16 @@ def _squashed_atom_mapping_molecule(molecule, offset_merged=0, offset_squashed=0
             atom_idx_squashed_lambda1 += natoms1
 
     # Finally add the appropriate offsets
-    all_ndummy1 = sum("du" in x for x in molecule._sire_object.property("ambertype0").toVector())
+    all_ndummy1 = sum(
+        "du" in x for x in molecule._sire_object.property("ambertype0").toVector()
+    )
     offset_squashed_lambda1 = molecule.nAtoms() - all_ndummy1
     res = {
         **{offset_merged + k: offset_squashed + v for k, v in mapping.items()},
-        **{offset_merged + k: offset_squashed + offset_squashed_lambda1 + v
-           for k, v in mapping_lambda1.items()}
+        **{
+            offset_merged + k: offset_squashed + offset_squashed_lambda1 + v
+            for k, v in mapping_lambda1.items()
+        },
     }
 
     return res, atom_idx_squashed + atom_idx_squashed_lambda1
@@ -442,19 +484,19 @@ def _squashed_atom_mapping_molecule(molecule, offset_merged=0, offset_squashed=0
 
 def _is_perturbed(residue):
     """This determines whether a merged residue is actually perturbed. Note that
-       it is possible that this function returns false negatives.
+    it is possible that this function returns false negatives.
 
-       Parameters
-       ----------
+    Parameters
+    ----------
 
-       residue : BioSimSpace._SireWrappers.Residue
-           The input residue.
+    residue : BioSimSpace._SireWrappers.Residue
+        The input residue.
 
-       Returns
-       -------
+    Returns
+    -------
 
-       res : bool
-           Whether the residue is perturbed.
+    res : bool
+        Whether the residue is perturbed.
     """
     # If the elements are different, then we are definitely perturbing.
     elem0 = [atom._sire_object.property("element0") for atom in residue.getAtoms()]
@@ -465,17 +507,17 @@ def _is_perturbed(residue):
 def _amber_mask_from_indices(atom_idxs):
     """Internal helper function to create an AMBER mask from a list of atom indices.
 
-       Parameters
-       ----------
+    Parameters
+    ----------
 
-       atom_idxs : [int]
-           A list of atom indices.
+    atom_idxs : [int]
+        A list of atom indices.
 
-       Returns
-       -------
+    Returns
+    -------
 
-       mask : str
-           The AMBER mask.
+    mask : str
+        The AMBER mask.
     """
     # AMBER has a restriction on the number of characters in the restraint
     # mask (not documented) so we can't just use comma-separated atom

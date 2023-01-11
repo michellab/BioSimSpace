@@ -19,9 +19,7 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-"""
-Functionality for relative free-energy simulations.
-"""
+"""Functionality for relative free-energy simulations."""
 
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
@@ -890,7 +888,6 @@ class Relative:
             -------
             dH/dl : Series
                 dH/dl as a function of time for this lambda window.
-
             """
             # open the file
             file = simfile
@@ -1231,7 +1228,6 @@ class Relative:
 
         system : :class:`System <BioSimSpace._SireWrappers.System>`
             The molecular system.
-
         """
 
         # Initialise list to store the processe

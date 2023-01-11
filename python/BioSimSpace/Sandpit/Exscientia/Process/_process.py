@@ -19,9 +19,7 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-"""
-Functionality for running simulation processes.
-"""
+"""Functionality for running simulation processes."""
 
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
@@ -283,7 +281,6 @@ class Process:
     def _check_protocol_restart(self, protocol, system):
         """This function checks if the restart setting in the protocol is
         consistent with the velocity in the system.
-
         """
         # Ensure that the restart is off when the system doesn't have velocity
         if (
@@ -704,7 +701,6 @@ class Process:
 
         system : :class:`System <BioSimSpace._SireWrappers.System>`
             The molecular system.
-
 
         Returns
         -------

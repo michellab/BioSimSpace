@@ -19,9 +19,7 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-"""
-Functionality for running multiple processes.
-"""
+"""Functionality for running multiple processes."""
 
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
@@ -191,7 +189,6 @@ class ProcessRunner:
 
         name : str
             The name of the process.
-
         """
         return self._name
 
@@ -487,7 +484,7 @@ class ProcessRunner:
 
     def start(self, index):
         """
-        Start a specific process. The same can be achieved using:\n
+        Start a specific process. The same can be achieved using:\n.
 
             runner.processes()[index].start()
 
@@ -750,7 +747,7 @@ class ProcessRunner:
 
     def kill(self, index):
         """
-        Kill a specific process. The same can be achieved using:\n
+        Kill a specific process. The same can be achieved using:\n.
 
             runner.processes()[index].kill()
 
@@ -780,8 +777,7 @@ class ProcessRunner:
         self._processes[index].kill()
 
     def killAll(self):
-        """
-        Kill all of the processes."""
+        """Kill all of the processes."""
 
         self._is_killed = True
 

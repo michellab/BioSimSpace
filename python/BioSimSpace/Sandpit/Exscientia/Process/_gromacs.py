@@ -19,9 +19,7 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-"""
-Functionality for running simulations with GROMACS.
-"""
+"""Functionality for running simulations with GROMACS."""
 
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
@@ -266,19 +264,19 @@ class Gromacs(_process.Process):
 
     def _write_system(self, system, coord_file=None, topol_file=None):
         """Validates an input system and makes some internal modifications to it,
-           if needed, before writing it out to a coordinate and/or a topology file.
+        if needed, before writing it out to a coordinate and/or a topology file.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           system : :class:`System <BioSimSpace._SireWrappers.System>`
-               The molecular system.
+        system : :class:`System <BioSimSpace._SireWrappers.System>`
+            The molecular system.
 
-           coord_file : str or None
-               The coordinate file to which to write out the system.
+        coord_file : str or None
+            The coordinate file to which to write out the system.
 
-           topol_file : str or None
-               The topology file to which to write out the system.
+        topol_file : str or None
+            The topology file to which to write out the system.
         """
         # Create a copy of the system.
         system = system.copy()
@@ -286,8 +284,8 @@ class Gromacs(_process.Process):
         if isinstance(self._protocol, _Protocol._FreeEnergyMixin):
             # Check that the system contains a perturbable molecule.
             if (
-                    system.nPerturbableMolecules() == 0
-                    and system.nDecoupledMolecules() == 0
+                system.nPerturbableMolecules() == 0
+                and system.nDecoupledMolecules() == 0
             ):
                 raise ValueError(
                     "'BioSimSpace.Protocol.FreeEnergy' requires a "

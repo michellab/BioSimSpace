@@ -19,9 +19,7 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-"""
-Functionality for handling collective variables for metadynamics simulations.
-"""
+"""Functionality for handling collective variables for metadynamics simulations."""
 
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"

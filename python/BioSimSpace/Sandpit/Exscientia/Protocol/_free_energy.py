@@ -19,9 +19,7 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-"""
-Functionality for free energy protocols.
-"""
+"""Functionality for free energy protocols."""
 
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
@@ -36,7 +34,6 @@ from .. import Types as _Types
 from ._free_energy_mixin import _FreeEnergyMixin
 from ._production import Production as _Production
 from .. import Units as _Units
-
 
 
 class FreeEnergy(_Production, _FreeEnergyMixin):

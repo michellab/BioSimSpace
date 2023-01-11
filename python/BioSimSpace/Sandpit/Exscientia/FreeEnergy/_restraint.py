@@ -19,9 +19,7 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-"""
-A class for holding restraints.
-"""
+"""A class for holding restraints."""
 
 import numpy as np
 from sire.legacy.Units import k_boltz as _k_boltz
@@ -80,7 +78,6 @@ class Restraint:
                            "kphiA": BioSimSpace.Types.Energy / (BioSimSpace.Types.Area * BioSimSpace.Types.Area),
                            "kphiB": BioSimSpace.Types.Energy / (BioSimSpace.Types.Area * BioSimSpace.Types.Area),
                            "kphiC": BioSimSpace.Types.Energy / (BioSimSpace.Types.Area * BioSimSpace.Types.Area)}}
-
     """
 
     def __init__(self, system, restraint_dict, temperature, restraint_type="Boresch"):

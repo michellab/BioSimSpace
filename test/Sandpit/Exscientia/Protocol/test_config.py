@@ -2,12 +2,16 @@ import pandas as pd
 import pytest
 
 import BioSimSpace.Sandpit.Exscientia as BSS
-from BioSimSpace.Sandpit.Exscientia.Protocol import ConfigFactory, FreeEnergyMinimisation, FreeEnergyEquilibration
+from BioSimSpace.Sandpit.Exscientia.Protocol import (
+    ConfigFactory,
+    FreeEnergyMinimisation,
+    FreeEnergyEquilibration,
+)
 from BioSimSpace.Sandpit.Exscientia.Align._decouple import decouple
 
 
 class TestAmberRBFE:
-    @pytest.fixture(scope='class')
+    @pytest.fixture(scope="class")
     def system(self):
         m0 = BSS.IO.readMolecules("test/input/ligands/CAT-13c*").getMolecule(0)
         m1 = BSS.IO.readMolecules("test/input/ligands/CAT-13a*").getMolecule(0)
@@ -32,7 +36,7 @@ class TestAmberRBFE:
         protocol = FreeEnergyEquilibration(restraint=[0, 24], force_constant=4.3)
         config = ConfigFactory(system, protocol)
         res = [x.strip().strip(",") for x in config.generateAmberConfig()]
-        expected_res = {"ntr=1", "restraintmask=\"@1,25,46\"", "restraint_wt=4.3"}
+        expected_res = {"ntr=1", 'restraintmask="@1,25,46"', "restraint_wt=4.3"}
         assert expected_res.issubset(res)
 
 
@@ -55,7 +59,7 @@ class TestGromacsRBFE:
         has_gromacs is False, reason="Requires GROMACS to be installed."
     )
     def test_fep(self, system):
-        """Test if the default config writer will write the expected thing"""
+        """Test if the default config writer will write the expected thing."""
         protocol = FreeEnergyMinimisation(
             lam=0.0,
             lam_vals=None,
@@ -83,7 +87,8 @@ class TestGromacsRBFE:
     )
     def test_fep_df(self, system):
         """Test if the default config writer configured with the pd.DataFrame
-        will write the expected thing."""
+        will write the expected thing.
+        """
         protocol = FreeEnergyMinimisation(
             lam=pd.Series(data={"fep": 0.0}),
             lam_vals=None,
@@ -110,7 +115,7 @@ class TestGromacsRBFE:
         has_gromacs is False, reason="Requires GROMACS to be installed."
     )
     def test_staged_fep_df(self, system):
-        """Test if the multi-stage lambda will be written correctly"""
+        """Test if the multi-stage lambda will be written correctly."""
         protocol = FreeEnergyMinimisation(
             lam=pd.Series(data={"bonded": 0.0, "coul": 0.0, "vdw": 0.0}),
             lam_vals=pd.DataFrame(
@@ -168,7 +173,7 @@ class TestGromacsABFE:
     )
     def test_decouple_vdw_q(self, system):
         m, protocol = system
-        """Test the decoupling where lambda0 = vdw-q and lambda1=none"""
+        """Test the decoupling where lambda0 = vdw-q and lambda1=none."""
         mol = decouple(m)
         freenrg = BSS.FreeEnergy.Relative(
             mol.toSystem(),
@@ -186,7 +191,7 @@ class TestGromacsABFE:
         has_gromacs is False, reason="Requires GROMACS to be installed."
     )
     def test_annihilate_vdw2q(self, system):
-        """Test the annihilation where lambda0 = vdw-q and lambda1=none"""
+        """Test the annihilation where lambda0 = vdw-q and lambda1=none."""
         m, protocol = system
         mol = decouple(m, charge=(False, True), LJ=(True, False), intramol=False)
         freenrg = BSS.FreeEnergy.Relative(
@@ -208,7 +213,8 @@ class TestGromacsABFE:
         """Test if the soft core parameters have been written.
         The default sc-alpha is 0, which means the soft-core of the vdw is not
         turned on by default. This checks if the this value has been changed to
-        0.5."""
+        0.5.
+        """
         m, protocol = system
         mol = decouple(m)
         freenrg = BSS.FreeEnergy.Relative(

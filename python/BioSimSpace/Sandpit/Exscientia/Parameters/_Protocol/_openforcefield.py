@@ -22,7 +22,7 @@
 """
 Functionality for handling parameterisation protocols
 for force fields from the Open Force Field Initiative.
-Author: Lester Hedges <lester.hedges@gmail.com>
+Author: Lester Hedges <lester.hedges@gmail.com>.
 """
 
 __author__ = "Lester Hedges"

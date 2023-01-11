@@ -19,9 +19,7 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-"""
-Functionality for equilibration protocols.
-"""
+"""Functionality for equilibration protocols."""
 
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
@@ -56,8 +54,9 @@ class Equilibration(_Protocol, _PositionRestraintMixin):
         restart_interval=1000,
         restraint=None,
         force_constant=10 * _Units.Energy.kcal_per_mol / _Units.Area.angstrom2,
-        restart=False,):
-    """
+        restart=False,
+    ):
+        """
         Constructor.
 
         Parameters
@@ -116,6 +115,7 @@ class Equilibration(_Protocol, _PositionRestraintMixin):
         """
 
         # Call the base class constructor.
+
         _Protocol.__init__(self)
 
         # Set the time step.
@@ -335,7 +335,7 @@ class Equilibration(_Protocol, _PositionRestraintMixin):
 
     def getReportInterval(self):
         """
-        Return the interval between reporting statistics. (In integration steps.)
+        Return the interval between reporting statistics. (In integration steps.).
 
         Returns
         -------
@@ -347,7 +347,7 @@ class Equilibration(_Protocol, _PositionRestraintMixin):
 
     def setReportInterval(self, report_interval):
         """
-        Set the interval at which statistics are reported. (In integration steps.)
+        Set the interval at which statistics are reported. (In integration steps.).
 
         Parameters
         ----------
@@ -367,7 +367,7 @@ class Equilibration(_Protocol, _PositionRestraintMixin):
     def getRestartInterval(self):
         """
         Return the interval between saving restart confiugrations, and/or
-        trajectory frames. (In integration steps.)
+        trajectory frames. (In integration steps.).
 
         Returns
         -------
@@ -381,7 +381,7 @@ class Equilibration(_Protocol, _PositionRestraintMixin):
     def setRestartInterval(self, restart_interval):
         """
         Set the interval between saving restart confiugrations, and/or
-        trajectory frames. (In integration steps.)
+        trajectory frames. (In integration steps.).
 
         Parameters
         ----------

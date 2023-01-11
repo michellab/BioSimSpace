@@ -22,7 +22,7 @@
 """
 Functionality for handling parameterisation protocols
 for AMBER force field models.
-Author: Lester Hedges <lester.hedges@gmail.com>
+Author: Lester Hedges <lester.hedges@gmail.com>.
 """
 
 __author__ = "Lester Hedges"

@@ -19,9 +19,7 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-"""
-A general three-vector type.
-"""
+"""A general three-vector type."""
 
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"

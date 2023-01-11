@@ -19,9 +19,7 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-"""
-Functionality for configuring bounds on collective variables.
-"""
+"""Functionality for configuring bounds on collective variables."""
 
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"

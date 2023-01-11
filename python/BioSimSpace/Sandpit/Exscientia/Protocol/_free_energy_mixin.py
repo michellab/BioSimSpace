@@ -74,16 +74,14 @@ class _FreeEnergyMixin(_Protocol):
         if self._is_customised:
             return "<BioSimSpace.Protocol.Custom>"
         else:
-            return f
-                "<BioSimSpace.Protocol._FreeEnergyMixin: {self._get_parm()}>"
+            return f"<BioSimSpace.Protocol._FreeEnergyMixin: {self._get_parm()}>"
 
     def __repr__(self):
         """Return a string showing how to instantiate the object."""
         if self._is_customised:
             return "BioSimSpace.Protocol.Custom"
         else:
-            return f
-                "BioSimSpace.Protocol._FreeEnergyMixin({self._get_parm()})"
+            return f"BioSimSpace.Protocol._FreeEnergyMixin({self._get_parm()})"
 
     def getPerturbationType(self):
         """
@@ -248,7 +246,6 @@ class _FreeEnergyMixin(_Protocol):
 
         lam : float or pandas.Series
             The perturbation parameter: [0.0, 1.0]
-
         """
         if not isinstance(lam, _pd.Series):
             # For pandas < 1.4, TypeError won't be raised if the type cannot
@@ -287,7 +284,6 @@ class _FreeEnergyMixin(_Protocol):
         -------
         lam_vals : pandas.DataFrame
             The pd.DataFrame representing the checked lambda values.
-
         """
         # A list of lambda values takes precedence.
         if lam_vals is not None:

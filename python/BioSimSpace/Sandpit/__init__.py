@@ -19,6 +19,4 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-"""
-A sandpit for experimental BioSimSpace features.
-"""
+"""A sandpit for experimental BioSimSpace features."""
