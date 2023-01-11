@@ -39,8 +39,8 @@ import warnings as _warnings
 
 from sire.legacy import Base as _SireBase
 from sire.legacy import IO as _SireIO
+from sire.legacy import Units as _SireUnits
 
-from sire import units as _SireUnits
 
 from .. import _isVerbose
 from .._Exceptions import IncompatibleError as _IncompatibleError
