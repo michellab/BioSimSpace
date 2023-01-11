@@ -204,7 +204,7 @@ class OpenForceField(_protocol.Protocol):
                 "SDF" in molecule._sire_object.property("fileformat").value()):
                     # Write the molecule to SDF format.
                     try:
-                        _IO.saveMolecules(prefix + "molecule", molecule, "sdf")
+                        _IO.saveMolecules(prefix + "molecule", molecule, "sdf", self._property_map)
                     except Exception as e:
                         msg = "Failed to write the molecule to 'SDF' format."
                         if _isVerbose():
@@ -218,7 +218,7 @@ class OpenForceField(_protocol.Protocol):
             else:
                 # Write the molecule to a PDB file.
                 try:
-                    _IO.saveMolecules(prefix + "molecule", molecule, "pdb")
+                    _IO.saveMolecules(prefix + "molecule", molecule, "pdb", self._property_map)
                 except Exception as e:
                     msg = "Failed to write the molecule to 'PDB' format."
                     if _isVerbose():
