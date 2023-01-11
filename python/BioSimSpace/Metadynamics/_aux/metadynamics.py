@@ -31,7 +31,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 from ..._Utils import _try_import
 
 mm = _try_import("openmm")
-unit = _try_import("openmm.unit", "conda install -c cond-forge openmm")
+unit = _try_import("openmm.unit", "conda install -c conda-forge openmm")
 
 from collections import namedtuple
 from functools import reduce
