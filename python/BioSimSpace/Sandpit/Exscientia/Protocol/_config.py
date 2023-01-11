@@ -1,7 +1,7 @@
 import math as _math
 import warnings as _warnings
 
-from sire import units as _SireUnits
+from sire.legacy import Units as _SireUnits
 
 from .. import Protocol as _Protocol
 from ..Align._squash import _amber_mask_from_indices, _squashed_atom_mapping
