@@ -1,13 +1,13 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2022
+# Copyright: 2017-2023
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
 # BioSimSpace is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 2 of the License, or
+# the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
 # BioSimSpace is distributed in the hope that it will be useful,
@@ -28,7 +28,8 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Protocol"]
 
-class Protocol():
+
+class Protocol:
     """A base class for holding simulation protocols."""
 
     def __init__(self):
@@ -60,13 +61,14 @@ class Protocol():
             return f"BioSimSpace.Protocol.Protocol({self._get_parm()})"
 
     def _setCustomised(self, is_customised):
-        """Internal function to flag whether a protocol has been customised.
+        """
+        Internal function to flag whether a protocol has been customised.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           is_customised : bool
-               Whether the protocol has been customised.
+        is_customised : bool
+            Whether the protocol has been customised.
         """
         if not isinstance(is_customised, bool):
             raise TypeError("'is_customised' must be of type 'bool'.")

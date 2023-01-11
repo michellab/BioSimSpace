@@ -1,13 +1,13 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2022
+# Copyright: 2017-2023
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
 # BioSimSpace is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 2 of the License, or
+# the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
 # BioSimSpace is distributed in the hope that it will be useful,
@@ -28,6 +28,7 @@ from .. import _Utils
 import os as _os
 import shlex as _shlex
 import subprocess as _subprocess
+
 _yaml = _try_import("yaml")
 
 from sire.legacy import Base as _SireBase
@@ -36,6 +37,7 @@ from sire.legacy import Base as _SireBase
 _node_dir = _os.path.dirname(__file__) + "/_nodes"
 
 __all__ = ["list", "help", "run", "setNodeDirectory"]
+
 
 def list():
     """Return a list of the available nodes."""
@@ -48,14 +50,16 @@ def list():
 
     return nodes
 
+
 def help(name):
-    """Print the help message for the named node.
+    """
+    Print the help message for the named node.
 
-       Parameters
-       ----------
+    Parameters
+    ----------
 
-       name : str
-           The name of the node.
+    name : str
+        The name of the node.
     """
 
     if not isinstance(name) is not str:
@@ -67,8 +71,10 @@ def help(name):
     # Make sure the node exists.
     if not _os.path.isfile(full_name):
         if not _os.path.isfile(full_name + ".py"):
-            raise ValueError("Cannot find node: '%s'. " % name
-                           + "Run 'Node.list()' to see available nodes!")
+            raise ValueError(
+                "Cannot find node: '%s'. " % name
+                + "Run 'Node.list()' to see available nodes!"
+            )
         else:
             full_name += ".py"
 
@@ -76,29 +82,32 @@ def help(name):
     command = "%s/python %s --help" % (_SireBase.getBinDir(), full_name)
 
     # Run the node as a subprocess.
-    proc = _subprocess.run(_Utils.command_split(command), shell=False,
-        text=True, stdout=_subprocess.PIPE)
+    proc = _subprocess.run(
+        _Utils.command_split(command), shell=False, text=True, stdout=_subprocess.PIPE
+    )
 
     # Print the standard output, decoded as UTF-8.
     print(proc.stdout)
 
+
 def run(name, args={}):
-    """Run a node.
+    """
+    Run a node.
 
-       Parameters
-       ----------
+    Parameters
+    ----------
 
-       name : str
-           The name of the node.
+    name : str
+        The name of the node.
 
-       args : dict
-           A dictionary of arguments to be passed to the node.
+    args : dict
+        A dictionary of arguments to be passed to the node.
 
-       Returns
-       -------
+    Returns
+    -------
 
-       output : dict
-           A dictionary containing the output of the node.
+    output : dict
+        A dictionary containing the output of the node.
     """
 
     # Validate the input.
@@ -112,8 +121,10 @@ def run(name, args={}):
     # Make sure the node exists.
     if not _os.path.isfile(full_name):
         if not _os.path.isfile(full_name + ".py"):
-            raise ValueError("Cannot find node: '%s'. " % name
-                           + "Run 'Node.list()' to see available nodes!")
+            raise ValueError(
+                "Cannot find node: '%s'. " % name
+                + "Run 'Node.list()' to see available nodes!"
+            )
         else:
             full_name += ".py"
 
@@ -123,15 +134,19 @@ def run(name, args={}):
             _yaml.dump(args, file, default_flow_style=False)
 
         # Create the command.
-        command = "%s/python %s --config input.yaml" % (_SireBase.getBinDir(), full_name)
+        command = "%s/python %s --config input.yaml" % (
+            _SireBase.getBinDir(),
+            full_name,
+        )
 
     # No arguments.
     else:
         command = "%s/python %s" % (_SireBase.getBinDir(), full_name)
 
     # Run the node as a subprocess.
-    proc = _subprocess.run(_Utils.command_split(command), shell=False,
-        text=True, stderr=_subprocess.PIPE)
+    proc = _subprocess.run(
+        _Utils.command_split(command), shell=False, text=True, stderr=_subprocess.PIPE
+    )
 
     if proc.returncode == 0:
         # Read the output YAML file into a dictionary.
@@ -148,14 +163,16 @@ def run(name, args={}):
         # Print the standard error, decoded as UTF-8.
         print(proc.stderr)
 
+
 def setNodeDirectory(dir):
-    """Set the directory of the node library.
+    """
+    Set the directory of the node library.
 
-       Parameters
-       ----------
+    Parameters
+    ----------
 
-       dir : str
-           The path to the node library.
+    dir : str
+        The path to the node library.
     """
 
     if not _os.path.isdir(dir):

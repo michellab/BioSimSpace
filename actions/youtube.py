@@ -1,4 +1,4 @@
-#-*- coding:utf-8 -*-
+# -*- coding:utf-8 -*-
 
 from urllib.parse import urlparse
 from urllib.parse import parse_qs
@@ -7,39 +7,35 @@ from docutils import nodes
 from docutils.parsers import rst
 
 
-
 class youtube(nodes.General, nodes.Element):
     pass
 
 
-
 def get_video_id(url):
 
-    return parse_qs(urlparse(url).query)['v'][0]
-
-
+    return parse_qs(urlparse(url).query)["v"][0]
 
 
 def visit(self, node):
 
     video_id = get_video_id(node.url)
 
-    url = u'//www.youtube.com/embed/{0}?feature=player_detailpage'.format(video_id)
+    url = "//www.youtube.com/embed/{0}?feature=player_detailpage".format(video_id)
 
-    tag = u'''<iframe width="640" height="360" src="{0}" frameborder="0" allowfullscreen="1">&nbsp;</iframe>'''.format(url)
+    tag = """<iframe width="640" height="360" src="{0}" frameborder="0" allowfullscreen="1">&nbsp;</iframe>""".format(
+        url
+    )
 
     self.body.append(tag)
-
 
 
 def depart(self, node):
     pass
 
 
-
 class YoutubeDirective(rst.Directive):
 
-    name = 'youtube'
+    name = "youtube"
     node_class = youtube
 
     has_content = False
@@ -48,7 +44,6 @@ class YoutubeDirective(rst.Directive):
     final_argument_whitespace = False
     option_spec = {}
 
-
     def run(self):
 
         node = self.node_class()
@@ -56,4 +51,3 @@ class YoutubeDirective(rst.Directive):
         node.url = self.arguments[0]
 
         return [node]
-

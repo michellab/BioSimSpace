@@ -13,17 +13,20 @@ for var in dir(Types):
         if var != "Vector" and var != "Coordinate" and var != "GeneralUnit":
             types.append(getattr(Types, var))
 
+
 def insert_space(string, index):
     return string[:index] + " " + string[index:]
+
 
 def lower_case(string, index):
     x = len(string)
     if index == 0:
         return string[0].lower() + string[1:]
     elif index == x - 1:
-        return string[:x-1] + string[x-1].lower()
+        return string[: x - 1] + string[x - 1].lower()
     else:
-        return string[:index] + string[index].lower() + string[index+1:]
+        return string[:index] + string[index].lower() + string[index + 1 :]
+
 
 @pytest.mark.parametrize("Type", types)
 def test_supported_units(Type):
@@ -40,14 +43,15 @@ def test_supported_units(Type):
 
         # Swap the case of random characters.
         for x in range(0, 5):
-            unit = lower_case(unit, random.randint(0, len(unit)-1))
+            unit = lower_case(unit, random.randint(0, len(unit) - 1))
 
         # Add random whitespace.
         for x in range(0, 5):
-            unit = insert_space(unit, random.randint(0, len(unit)-1))
+            unit = insert_space(unit, random.randint(0, len(unit) - 1))
 
         # Attempt to instantiate an object.
         my_type = Type(1.0, unit)
+
 
 @pytest.mark.parametrize("Type", types)
 def test_abbreviations(Type):
@@ -64,14 +68,15 @@ def test_abbreviations(Type):
 
         # Swap the case of random characters.
         for x in range(0, 5):
-            abbrev = lower_case(abbrev, random.randint(0, len(abbrev)-1))
+            abbrev = lower_case(abbrev, random.randint(0, len(abbrev) - 1))
 
         # Add random whitespace.
         for x in range(0, 5):
-            unit = insert_space(abbrev, random.randint(0, len(abbrev)-1))
+            unit = insert_space(abbrev, random.randint(0, len(abbrev) - 1))
 
         # Attempt to instantiate an object.
         my_type = Type(1.0, abbrev)
+
 
 @pytest.mark.parametrize("Type", types)
 def test_round_trip(Type):
@@ -87,12 +92,13 @@ def test_round_trip(Type):
         my_type = Type(1.0, unit)
 
         # Convert to the next unit.
-        for x in range(1, len(units)+1):
-            my_type = my_type._convert_to(units[index-x])
+        for x in range(1, len(units) + 1):
+            my_type = my_type._convert_to(units[index - x])
 
         # Make sure the unit and value are correct.
         assert my_type.value() == pytest.approx(1.0)
         assert unit == my_type.unit()
+
 
 @pytest.mark.parametrize("Type", types)
 def test_from_sire_unit(Type):
@@ -105,6 +111,7 @@ def test_from_sire_unit(Type):
     for sire_unit in Type._supported_units.values():
         # Try to instantiate the type from the Sire unit.
         my_type = Type(sire_unit)
+
 
 @pytest.mark.parametrize("Type", types)
 def test_container_mul(Type):

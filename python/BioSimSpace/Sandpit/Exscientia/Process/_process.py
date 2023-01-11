@@ -1,13 +1,13 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2022
+# Copyright: 2017-2023
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
 # BioSimSpace is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 2 of the License, or
+# the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
 # BioSimSpace is distributed in the hope that it will be useful,
@@ -358,7 +358,8 @@ class Process:
             _os.remove(file)
 
     def _getPlumedConfig(self):
-        """Return the list of PLUMED configuration strings.
+        """
+        Return the list of PLUMED configuration strings.
 
         Returns
         -------
@@ -369,7 +370,8 @@ class Process:
         return self._plumed_config
 
     def _setPlumedConfig(self, config):
-        """Set the list of PLUMED configuration file strings.
+        """
+        Set the list of PLUMED configuration file strings.
 
         Parameters
         ----------
@@ -405,7 +407,8 @@ class Process:
         self._protocol._setCustomised(True)
 
     def _getPlumedConfigFile(self):
-        """Return path to the PLUMED config file.
+        """
+        Return path to the PLUMED config file.
 
         Returns
         -------
@@ -416,7 +419,8 @@ class Process:
         return self._plumed_config_file
 
     def _getTime(self, time_series=False, block="AUTO"):
-        """Get the time (in nanoseconds).
+        """
+        Get the time (in nanoseconds).
 
         Parameters
         ----------
@@ -448,7 +452,8 @@ class Process:
         return self._plumed.getTime(time_series)
 
     def _getCollectiveVariable(self, index, time_series=False, block="AUTO"):
-        """Get the value of a collective variable.
+        """
+        Get the value of a collective variable.
 
         Parameters
         ----------
@@ -485,31 +490,32 @@ class Process:
     def _getFreeEnergy(
         self, index=None, stride=None, kt=_Units.Energy.kt, block="AUTO"
     ):
-        """Get the current free energy estimate.
+        """
+        Get the current free energy estimate.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           index : int
-               The index of the collective variable. If None, then all variables
-               will be considered.
+        index : int
+            The index of the collective variable. If None, then all variables
+            will be considered.
 
-           stride : int
-               The stride for integrating the free energy. This can be used to
-               check for convergence.
+        stride : int
+            The stride for integrating the free energy. This can be used to
+            check for convergence.
 
-           kt : BioSimSpace.Types.Energy
-               The temperature in energy units for integrating out variables.
+        kt : BioSimSpace.Types.Energy
+            The temperature in energy units for integrating out variables.
 
-           block : bool
-               Whether to block until the process has finished running.
+        block : bool
+            Whether to block until the process has finished running.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           free_energies : [:class:`Type <BioSimSpace.Types>`, ...], \
-                           [[:class:`Type <BioSimSpace.Types>`, :class:`Type <BioSimSpace.Types>`, ...], ...]
-               The free energy estimate for the chosen collective variables.
+        free_energies : [:class:`Type <BioSimSpace.Types>`, ...], \
+                        [[:class:`Type <BioSimSpace.Types>`, :class:`Type <BioSimSpace.Types>`, ...], ...]
+            The free energy estimate for the chosen collective variables.
         """
 
         # Check that this is a metadynamics simulation.
@@ -526,7 +532,8 @@ class Process:
         return self._plumed.getFreeEnergy(index, stride, kt)
 
     def _sampleConfigurations(self, bounds, number=1, block="AUTO"):
-        """Sample configurations based on values of the collective variable(s).
+        """
+        Sample configurations based on values of the collective variable(s).
 
         Parameters
         ----------
@@ -688,7 +695,8 @@ class Process:
         return configs, colvar_vals
 
     def _checkPerturbable(self, system):
-        """Helper function to check for perturble molecules and convert to the
+        """
+        Helper function to check for perturble molecules and convert to the
         desired end state.
 
         Parameters
@@ -747,7 +755,8 @@ class Process:
         return system
 
     def start(self):
-        """Start the process.
+        """
+        Start the process.
 
         Returns
         -------
@@ -761,7 +770,8 @@ class Process:
         )
 
     def run(self, system=None, protocol=None, auto_start=True, restart=False):
-        """Create and run a new process.
+        """
+        Create and run a new process.
 
         Parameters
         ----------
@@ -819,7 +829,8 @@ class Process:
             return process
 
     def getPackageName(self):
-        """Return the package name.
+        """
+        Return the package name.
 
         Returns
         -------
@@ -830,7 +841,8 @@ class Process:
         return self._package_name
 
     def getName(self):
-        """Return the process name.
+        """
+        Return the process name.
 
         Returns:
 
@@ -840,7 +852,8 @@ class Process:
         return self._name
 
     def setName(self, name):
-        """Set the process name.
+        """
+        Set the process name.
 
         Parameters
         ----------
@@ -855,7 +868,8 @@ class Process:
             self._name = name
 
     def getSeed(self):
-        """Return the random number seed.
+        """
+        Return the random number seed.
 
         Returns
         -------
@@ -866,7 +880,8 @@ class Process:
         return self._seed
 
     def setSeed(self, seed):
-        """Set the random number seed.
+        """
+        Set the random number seed.
 
         Parameters
         ----------
@@ -882,7 +897,8 @@ class Process:
             self._seed = seed
 
     def wait(self, max_time=None):
-        """Wait for the process to finish.
+        """
+        Wait for the process to finish.
 
         Parameters
         ----------
@@ -925,7 +941,8 @@ class Process:
             self._process.wait()
 
     def isQueued(self):
-        """Return whether the process is queued.
+        """
+        Return whether the process is queued.
 
         Returns
         -------
@@ -936,7 +953,8 @@ class Process:
         return self._is_queued
 
     def isRunning(self):
-        """Return whether the process is running.
+        """
+        Return whether the process is running.
 
         Returns
         -------
@@ -950,7 +968,8 @@ class Process:
             return False
 
     def isError(self):
-        """Return whether the process exited with an error.
+        """
+        Return whether the process exited with an error.
 
         Returns
         -------
@@ -969,7 +988,8 @@ class Process:
             self._process.kill()
 
     def stdout(self, n=10):
-        """Print the last n lines of the stdout buffer.
+        """
+        Print the last n lines of the stdout buffer.
 
         Parameters
         ----------
@@ -1000,7 +1020,8 @@ class Process:
             print(self._stdout[x])
 
     def stderr(self, n=10):
-        """Print the last n lines of the stderr buffer.
+        """
+        Print the last n lines of the stderr buffer.
 
         Parameters
         ----------
@@ -1031,7 +1052,8 @@ class Process:
             print(self._stderr[x])
 
     def exe(self):
-        """Return the executable.
+        """
+        Return the executable.
 
         Returns
         -------
@@ -1042,7 +1064,8 @@ class Process:
         return self._exe
 
     def inputFiles(self):
-        """Return the list of input files.
+        """
+        Return the list of input files.
 
         Returns
         -------
@@ -1053,7 +1076,8 @@ class Process:
         return self._input_files.copy()
 
     def workDir(self):
-        """Return the working directory.
+        """
+        Return the working directory.
 
         Returns
         -------
@@ -1064,7 +1088,8 @@ class Process:
         return self._work_dir
 
     def getStdout(self, block="AUTO"):
-        """Return the entire stdout for the process as a list of strings.
+        """
+        Return the entire stdout for the process as a list of strings.
 
         Parameters
         ----------
@@ -1092,7 +1117,8 @@ class Process:
         return self._stdout.copy()
 
     def getStderr(self, block="AUTO"):
-        """Return the entire stderr for the process as a list of strings.
+        """
+        Return the entire stderr for the process as a list of strings.
 
         Parameters
         ----------
@@ -1120,7 +1146,8 @@ class Process:
         return self._stderr.copy()
 
     def getInput(self, name=None, file_link=False):
-        """Return a link to a zip file containing the input files used by
+        """
+        Return a link to a zip file containing the input files used by
         the process.
 
         Parameters
@@ -1173,7 +1200,8 @@ class Process:
             return zipname
 
     def getOutput(self, name=None, block="AUTO", file_link=False):
-        """Return a link to a zip file of the working directory.
+        """
+        Return a link to a zip file of the working directory.
 
         Parameters
         ----------
@@ -1228,7 +1256,8 @@ class Process:
             return zipname
 
     def command(self):
-        """Return the command-line string used to run the process.
+        """
+        Return the command-line string used to run the process.
 
         Returns
         -------
@@ -1239,7 +1268,8 @@ class Process:
         return self._command
 
     def getConfig(self):
-        """Get the list of configuration file strings.
+        """
+        Get the list of configuration file strings.
 
         Returns
         -------
@@ -1250,7 +1280,8 @@ class Process:
         return self._config.copy()
 
     def setConfig(self, config):
-        """Set the list of configuration file strings.
+        """
+        Set the list of configuration file strings.
 
         Parameters
         ----------
@@ -1286,7 +1317,8 @@ class Process:
         self._protocol._setCustomised(True)
 
     def addToConfig(self, config):
-        """Add a string to the configuration list.
+        """
+        Add a string to the configuration list.
 
         Parameters
         ----------
@@ -1336,7 +1368,8 @@ class Process:
         self._protocol._setCustomised(False)
 
     def writeConfig(self, file):
-        """Write the configuration to file.
+        """
+        Write the configuration to file.
 
         Parameters
         ----------
@@ -1352,7 +1385,8 @@ class Process:
                 f.write("%s\n" % line)
 
     def _writePlumedConfig(self, file):
-        """Write the PLUMED configuration to file.
+        """
+        Write the PLUMED configuration to file.
 
         Parameters
         ----------
@@ -1368,7 +1402,8 @@ class Process:
                 f.write("%s\n" % line)
 
     def getArgs(self):
-        """Get the dictionary of command-line arguments.
+        """
+        Get the dictionary of command-line arguments.
 
         Returns
         -------
@@ -1379,7 +1414,8 @@ class Process:
         return self._args.copy()
 
     def getArgString(self):
-        """Get the command-line arguments string.
+        """
+        Get the command-line arguments string.
 
         Returns
         -------
@@ -1390,7 +1426,8 @@ class Process:
         return " ".join(self.getArgStringList())
 
     def getArgStringList(self):
-        """Convert the argument dictionary into a list of strings.
+        """
+        Convert the argument dictionary into a list of strings.
 
         Returns
         -------
@@ -1417,7 +1454,8 @@ class Process:
         return args
 
     def setArgs(self, args):
-        """Set the dictionary of command-line arguments.
+        """
+        Set the dictionary of command-line arguments.
 
         Parameters
         ----------
@@ -1458,7 +1496,8 @@ class Process:
         self._args[arg] = value
 
     def insertArg(self, arg, value, index):
-        """Insert a command-line argument at a specific index.
+        """
+        Insert a command-line argument at a specific index.
 
         Parameters
         ----------
@@ -1479,7 +1518,8 @@ class Process:
         _odict_insert(self._args, arg, value, index)
 
     def addArgs(self, args):
-        """Append additional command-line arguments.
+        """
+        Append additional command-line arguments.
 
         Parameters
         ----------
@@ -1496,7 +1536,8 @@ class Process:
             )
 
     def deleteArg(self, arg):
-        """Delete an argument from the dictionary.
+        """
+        Delete an argument from the dictionary.
 
         Parameters
         ----------
@@ -1519,7 +1560,8 @@ class Process:
         self._generate_args()
 
     def runTime(self):
-        """Return the running time for the process (in minutes).
+        """
+        Return the running time for the process (in minutes).
 
         Returns
         -------
@@ -1550,7 +1592,8 @@ class Process:
                     return self._runtime * _Units.Time.minute
 
     def getSystem(self, block="AUTO"):
-        """Get the latest molecular system.
+        """
+        Get the latest molecular system.
 
         Parameters
         ----------
@@ -1570,7 +1613,8 @@ class Process:
         )
 
     def getTrajectory(self, block="AUTO"):
-        """Return a trajectory object.
+        """
+        Return a trajectory object.
 
         Parameters
         ----------

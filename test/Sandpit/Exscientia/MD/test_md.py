@@ -28,6 +28,7 @@ try:
 except:
     has_namd = False
 
+
 @pytest.mark.skipif(has_amber is False, reason="Requires AMBER to be installed.")
 def test_amber():
     """Test a short AMBER minimisation protocol with the MD driver."""
@@ -50,6 +51,7 @@ def test_amber():
     # Check that the process finishes without error.
     assert not process.isError()
 
+
 @pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
 def test_gromacs():
     """Test a short GROMACS minimisation protocol with the MD driver."""
@@ -71,6 +73,7 @@ def test_gromacs():
 
     # Check that the process finishes without error.
     assert not process.isError()
+
 
 @pytest.mark.skipif(has_namd is False, reason="Requires NAMD to be installed.")
 def test_namd():

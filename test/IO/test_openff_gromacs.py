@@ -16,12 +16,15 @@ else:
 # Check whether GROMACS is installed.
 has_gromacs = BSS._gmx_exe is not None
 
-@pytest.mark.skipif(has_amber is False or has_gromacs is False,
-    reason="Requires that both AMBER and GROMACS are installed.")
+
+@pytest.mark.skipif(
+    has_amber is False or has_gromacs is False,
+    reason="Requires that both AMBER and GROMACS are installed.",
+)
 def test_molecule_combine():
     """Single point energy comparison to make sure that GROMACS
-       can correctly combine Open Force Field molecules where
-       duplicate atom types have different molecular parameters.
+    can correctly combine Open Force Field molecules where
+    duplicate atom types have different molecular parameters.
     """
 
     # Create two test molecules, parameterised using OpenFF.
@@ -35,14 +38,14 @@ def test_molecule_combine():
     m1 = BSS.Parameters.openff_unconstrained_2_0_0("c1ccccc1").getMolecule()
 
     # Translate m1 such that the molecules don't interact.
-    m1.translate(3*[50*BSS.Units.Length.angstrom])
+    m1.translate(3 * [50 * BSS.Units.Length.angstrom])
 
     # Create a single-step minimisation protocol.
     protocol = BSS.Protocol.Minimisation(steps=1)
 
     # Create processes to single point calculations with GROMACS.
-    p0  = BSS.Process.Gromacs(m0.toSystem(), protocol)
-    p1  = BSS.Process.Gromacs(m1.toSystem(), protocol)
+    p0 = BSS.Process.Gromacs(m0.toSystem(), protocol)
+    p1 = BSS.Process.Gromacs(m1.toSystem(), protocol)
     p01 = BSS.Process.Gromacs((m0 + m1).toSystem(), protocol)
 
     # Modify the GROMACS configuration to run zero steps.
@@ -61,8 +64,8 @@ def test_molecule_combine():
     p01.wait()
 
     # Get the potential energies.
-    e0  = p0.getPotentialEnergy()
-    e1  = p1.getPotentialEnergy()
+    e0 = p0.getPotentialEnergy()
+    e1 = p1.getPotentialEnergy()
     e01 = p01.getPotentialEnergy()
 
     # Make sure the energies are consistent.

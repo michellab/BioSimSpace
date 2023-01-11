@@ -74,17 +74,20 @@ class _FreeEnergyMixin(_Protocol):
         if self._is_customised:
             return "<BioSimSpace.Protocol.Custom>"
         else:
-            return f"<BioSimSpace.Protocol._FreeEnergyMixin: {self._get_parm()}>"
+            return f
+                "<BioSimSpace.Protocol._FreeEnergyMixin: {self._get_parm()}>"
 
     def __repr__(self):
         """Return a string showing how to instantiate the object."""
         if self._is_customised:
             return "BioSimSpace.Protocol.Custom"
         else:
-            return f"BioSimSpace.Protocol._FreeEnergyMixin({self._get_parm()})"
+            return f
+                "BioSimSpace.Protocol._FreeEnergyMixin({self._get_parm()})"
 
     def getPerturbationType(self):
-        """Get the perturbation type.
+        """
+        Get the perturbation type.
 
         Returns
         -------
@@ -95,7 +98,8 @@ class _FreeEnergyMixin(_Protocol):
         return self._perturbation_type
 
     def setPerturbationType(self, perturbation_type):
-        """Set the perturbation type.
+        """
+        Set the perturbation type.
 
         Parameters
         ----------
@@ -161,7 +165,8 @@ class _FreeEnergyMixin(_Protocol):
                     )
 
     def getLambda(self, type="float"):
-        """Get the value of the perturbation parameter.
+        """
+        Get the value of the perturbation parameter.
 
         Parameters
         ----------
@@ -189,7 +194,8 @@ class _FreeEnergyMixin(_Protocol):
             raise ValueError(f"{type} could only be 'float' or 'series'.")
 
     def getLambdaIndex(self):
-        """Get the index of the lambda value within the lambda array.
+        """
+        Get the index of the lambda value within the lambda array.
 
         Returns
         -------
@@ -202,7 +208,8 @@ class _FreeEnergyMixin(_Protocol):
         ].tolist()[0]
 
     def getLambdaValues(self, type="list"):
-        """Get the lambda values.
+        """
+        Get the lambda values.
 
         Parameters
         ----------
@@ -233,7 +240,8 @@ class _FreeEnergyMixin(_Protocol):
             raise ValueError(f"{type} could only be 'list' or 'dataframe'.")
 
     def setLambda(self, lam):
-        """Set the current lambda.
+        """
+        Set the current lambda.
 
         Parameters
         ----------
@@ -257,7 +265,8 @@ class _FreeEnergyMixin(_Protocol):
 
     @staticmethod
     def checkLambdaValues(lam_vals, min_lam=None, max_lam=None, num_lam=None):
-        """Sanity check of the list of lambda values.
+        """
+        Sanity check of the list of lambda values.
 
         Parameters
         ----------
@@ -349,7 +358,8 @@ class _FreeEnergyMixin(_Protocol):
     def setLambdaValues(
         self, lam, lam_vals=None, min_lam=None, max_lam=None, num_lam=None
     ):
-        """Set the list of lambda values.
+        """
+        Set the list of lambda values.
 
         Parameters
         ----------

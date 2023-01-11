@@ -3,11 +3,11 @@
 
 # Author: Lester Hedges<br>
 # Email:&nbsp;&nbsp; lester.hedges@bristol.ac.uk
-# 
+#
 # # Conversion
-# 
+#
 # In this notebook you'll learn how to use BioSimSpace to convert between molecular file formats.
-# 
+#
 # First we'll need to import BioSimSpace:
 
 # In[ ]:
@@ -29,7 +29,11 @@ node = BSS.Gateway.Node("A node to convert between molecular file formats.")
 # In[ ]:
 
 
-node.addAuthor(name="Lester Hedges", email="lester.hedges@bristol.ac.uk", affiliation="University of Bristol")
+node.addAuthor(
+    name="Lester Hedges",
+    email="lester.hedges@bristol.ac.uk",
+    affiliation="University of Bristol",
+)
 node.setLicense("GPLv3")
 
 
@@ -39,9 +43,14 @@ node.setLicense("GPLv3")
 
 
 node.addInput("files", BSS.Gateway.FileSet(help="A set of molecular input files."))
-node.addInput("format", BSS.Gateway.String(help="The molecular file format to convert to.",
-                                           allowed=BSS.IO.fileFormats(),
-                                           default="PDB"))
+node.addInput(
+    "format",
+    BSS.Gateway.String(
+        help="The molecular file format to convert to.",
+        allowed=BSS.IO.fileFormats(),
+        default="PDB",
+    ),
+)
 
 
 # We now need to define the output of the node. In this case we will return a file containing the converted molecular system.
@@ -53,17 +62,17 @@ node.addOutput("converted", BSS.Gateway.File(help="The converted molecular syste
 
 
 # When working interactively within a Jupyter notebook we need a way to allow users to set the input requirements. The `node.showControls` method will display a graphical user interface (GUI), from which inputs can be set.
-# 
+#
 # Note that the GUI requires active user input. All input requirements that don't have a default value _must_ be set before the node can proceed. If you try to query the node for one of the user values then an error will be raised. Use the dropdown button to choose a file format from the list of allowed values.
-# 
+#
 # When working interactively you will typically be running on a remote server where you won't have access to the local filesystem. In this case you'll need to upload files for any of the `File` or `FileSet` input requirements. The GUI below will provide buttons that allow you to browse your own filesystem and select files. Since Jupyter has a limit of 5MB for file transfers, we provide support for compressed formats, such as `.zip` or `.tar.gz`. (A single archive can contain a set of files, allowing you to set a single value for a `FileSet` requirement.) We've provided some example input files that can be used in the training notebooks, which are available to download from the links below. These can then be re-uploaded using the GUI.
-# 
+#
 # AMBER: [ala.crd](https://raw.githubusercontent.com/michellab/BioSimSpace/devel/demo/amber/ala/ala.crd), [ala.top](https://raw.githubusercontent.com/michellab/BioSimSpace/devel/demo/amber/ala/ala.top)
-# 
+#
 # GROMACS: [kigaki.gro](https://raw.githubusercontent.com/michellab/BioSimSpace/devel/demo/gromacs/kigaki/kigaki.gro), [kigaki.top](https://raw.githubusercontent.com/michellab/BioSimSpace/devel/demo/gromacs/kigaki/kigaki.top)
-# 
+#
 # NAMD: [alanin.pdb](https://raw.githubusercontent.com/michellab/BioSimSpace/devel/demo/namd/alanin/alanin.pdb), [alanin.psf](https://raw.githubusercontent.com/michellab/BioSimSpace/devel/demo/namd/alanin/alanin.psf), [alanin.params](https://raw.githubusercontent.com/michellab/BioSimSpace/devel/demo/namd/alanin/alanin.params)
-# 
+#
 # When uploading files the name of the current file(s) will replace the `Upload` button. If you need to change the file, simply click on the button again and choose a new file.
 
 # In[ ]:
@@ -73,7 +82,7 @@ node.showControls()
 
 
 # Once all requirements are set then we can access the values using the `node.getInput` method. The first time this is called the `node` will automatically validate all of the input and report the user if any errors were found.
-# 
+#
 # We'll now create a molecular system using the input files uploaded by the user. Note that we don't specify the format of the files, since this is automatically determined by BioSimSpace. (BioSimSpace has support for a wide range of formats and can convert between certain formats too.)
 
 # In[ ]:
@@ -96,7 +105,7 @@ node.setOutput("converted", BSS.IO.saveMolecules("converted", system, file_forma
 
 
 # Finally, we validate that the node completed successfully. This will check that all output requirements are satisfied and that no errors were raised by the user. Any file outputs will be available for the user to download as a compressed archive.
-# 
+#
 # Note that the validation will fail until the cell above finishes running.
 
 # In[ ]:
@@ -106,6 +115,6 @@ node.validate()
 
 
 # Once we are satisfied with our node we can choose to download it as a regular Python script that can be run from the command-line.
-# 
+#
 # In JupyterHub, click on: `File/Download As/Python`\
 # In JupyterLab, click on: `File/Export Notebook As/Export Notebook to Executable Script`

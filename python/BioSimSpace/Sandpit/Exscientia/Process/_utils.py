@@ -1,13 +1,13 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2022
+# Copyright: 2017-2023
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
 # BioSimSpace is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 2 of the License, or
+# the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
 # BioSimSpace is distributed in the hope that it will be useful,
@@ -35,10 +35,11 @@ from ._openmm import *
 from ._process_runner import *
 from ._somd import *
 
-_engines = []         # List of supported engines (actual name).
-_engines_lower = []   # List of lower case engine names.
-_engine_dict = {}     # Mapping between lower case name and class.
+_engines = []  # List of supported engines (actual name).
+_engines_lower = []  # List of lower case engine names.
+_engine_dict = {}  # Mapping between lower case name and class.
 import sys as _sys
+
 _namespace = _sys.modules[__name__]
 for _var in dir():
     if _var[0] != "_" and _var != "ProcessRunner":
@@ -49,46 +50,52 @@ del _namespace
 del _sys
 del _var
 
+
 def engines():
-    """Return a list of the supported Molecular Dynamics engines.
+    """
+    Return a list of the supported Molecular Dynamics engines.
 
-       Returns
-       -------
+    Returns
+    -------
 
-       engines : [str]
-           The list of supported Molecular Dynamics engines.
+    engines : [str]
+        The list of supported Molecular Dynamics engines.
     """
     return _engines
 
+
 def createProcess(system, protocol, engine, **kwargs):
-    """Create a simulation process.
+    """
+    Create a simulation process.
 
-       Parameters
-       ----------
+    Parameters
+    ----------
 
-       system : :class:`System <BioSimSpace._SireWrappers.System>`
-           The molecular system.
+    system : :class:`System <BioSimSpace._SireWrappers.System>`
+        The molecular system.
 
-       protocol : :class:`Protocol <BioSimSpace.Protocol>`
-           The protocol for the process.
+    protocol : :class:`Protocol <BioSimSpace.Protocol>`
+        The protocol for the process.
 
-       engine : str
-           The name of the simulation engine.
+    engine : str
+        The name of the simulation engine.
 
-       kwargs : dict
-           A dictionary of optional keyword arguments neeeded by the engine.
+    kwargs : dict
+        A dictionary of optional keyword arguments neeeded by the engine.
 
-       Returns
-       -------
+    Returns
+    -------
 
-       process : :class:`Process <BioSimSpace.Process>`
-           The process object for the specific simulation engine.
+    process : :class:`Process <BioSimSpace.Process>`
+        The process object for the specific simulation engine.
     """
 
     # Strip whitespace and convert to lower case.
     _engine = engine.replace(" ", "").lower()
 
     if _engine not in _engines_lower:
-        raise KeyError("Unsupported engine '%s', supported engines are %s" % (engine, _engines))
+        raise KeyError(
+            "Unsupported engine '%s', supported engines are %s" % (engine, _engines)
+        )
 
     return _engine_dict[_engine](system, protocol, **kwargs)

@@ -8,12 +8,14 @@ from ..Align._squash import _amber_mask_from_indices, _squashed_atom_mapping
 from .._Exceptions import IncompatibleError as _IncompatibleError
 
 
+
 class ConfigFactory:
     # TODO: Integrate this class better into the other Protocols.
     """A class for generating a config based on a template protocol."""
 
     def __init__(self, system, protocol):
-        """Constructor.
+        """
+        Constructor.
 
         Parameters
         ----------
@@ -136,7 +138,8 @@ class ConfigFactory:
         return option_dict
 
     def generateAmberConfig(self, extra_options=None, extra_lines=None):
-        """Outputs the current protocol in a format compatible with AMBER.
+        """
+        Outputs the current protocol in a format compatible with AMBER.
 
         Parameters
         ----------
@@ -240,7 +243,9 @@ class ConfigFactory:
                 # Don't add restraints if there are no atoms to restrain.
                 if len(atom_idxs) > 0:
                     # Generate the restraint mask based on atom indices.
-                    restraint_mask = _amber_mask_from_indices(atom_idxs)
+                    restraint_mask = _amber_mask_from_indices(
+                        atom_idxs
+                    )
 
                     # The restraintmask cannot be more than 256 characters.
                     if len(restraint_mask) > 256:
@@ -347,7 +352,8 @@ class ConfigFactory:
         return total_lines
 
     def generateGromacsConfig(self, extra_options=None, extra_lines=None):
-        """Outputs the current protocol in a format compatible with GROMACS.
+        """
+        Outputs the current protocol in a format compatible with GROMACS.
 
         Parameters
         ----------
@@ -452,7 +458,9 @@ class ConfigFactory:
                     temp = "%.2f" % self.protocol.getStartTemperature().kelvin().value()
                 else:
                     # still need a reference temperature for each group, even when heating/cooling
-                    temp = "%.2f" % self.protocol.getEndTemperature().kelvin().value()
+                    temp = (
+                        "%.2f" % self.protocol.getEndTemperature().kelvin().value()
+                    )
                     # Work out the final time of the simulation.
                     timestep = self.protocol.getTimeStep().picoseconds().value()
                     end_time = _math.floor(timestep * self._steps)
@@ -555,7 +563,8 @@ class ConfigFactory:
         return total_lines
 
     def generateSomdConfig(self, extra_options=None, extra_lines=None):
-        """Outputs the current protocol in a format compatible with SOMD.
+        """
+        Outputs the current protocol in a format compatible with SOMD.
 
         Parameters
         ----------

@@ -5,6 +5,7 @@ from ._minimisation import Minimisation as _Minimisation
 from .. import Units as _Units
 
 
+
 class FreeEnergyMinimisation(_Minimisation, _FreeEnergyMixin):
     """A class for storing free energy minimisation protocols."""
 

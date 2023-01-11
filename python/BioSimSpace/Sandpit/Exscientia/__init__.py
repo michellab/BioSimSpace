@@ -1,13 +1,13 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2022
+# Copyright: 2017-2023
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
 # BioSimSpace is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 2 of the License, or
+# the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
 # BioSimSpace is distributed in the hope that it will be useful,
@@ -31,73 +31,80 @@ www.biosimspace.org
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
 
-__all__ = ["Align",
-           "Box",
-           "FreeEnergy",
-           "Gateway",
-           "IO",
-           "Metadynamics",
-           "MD",
-           "Node",
-           "Notebook",
-           "Parameters",
-           "Process",
-           "Protocol",
-           "Solvent",
-           "Trajectory",
-           "Types",
-           "Units"]
+__all__ = [
+    "Align",
+    "Box",
+    "FreeEnergy",
+    "Gateway",
+    "IO",
+    "Metadynamics",
+    "MD",
+    "Node",
+    "Notebook",
+    "Parameters",
+    "Process",
+    "Protocol",
+    "Solvent",
+    "Trajectory",
+    "Types",
+    "Units",
+]
 
 # Make sure we're using the Sire python interpreter.
 try:
     import sire
+
     del sire
 except ModuleNotFoundError:
-    raise ModuleNotFoundError("BioSimSpace currently requires the Sire "
-        + "Python interpreter: www.siremol.org")
+    raise ModuleNotFoundError(
+        "BioSimSpace currently requires the Sire "
+        + "Python interpreter: www.siremol.org"
+    )
 
 # Determine whether we're being imported from a Jupyter notebook.
 try:
     _shell = get_ipython().__class__.__name__
-    if _shell == 'ZMQInteractiveShell':
-        _is_notebook = True   # Jupyter notebook or qtconsole
-    elif _shell == 'TerminalInteractiveShell':
+    if _shell == "ZMQInteractiveShell":
+        _is_notebook = True  # Jupyter notebook or qtconsole
+    elif _shell == "TerminalInteractiveShell":
         _is_notebook = False  # Terminal running IPython
     else:
         _is_notebook = False  # Other type (?)
     del _shell
 except NameError:
-    _is_notebook = False      # Probably standard Python interpreter
+    _is_notebook = False  # Probably standard Python interpreter
 
 # Determine whether we're being run interactively.
 try:
     _shell = get_ipython().__class__.__name__
-    if _shell == 'ZMQInteractiveShell':
-        _is_interactive = True   # Jupyter notebook or qtconsole
-    elif _shell == 'TerminalInteractiveShell':
-        _is_interactive = True   # Terminal running IPython
+    if _shell == "ZMQInteractiveShell":
+        _is_interactive = True  # Jupyter notebook or qtconsole
+    elif _shell == "TerminalInteractiveShell":
+        _is_interactive = True  # Terminal running IPython
     else:
         _is_interactive = False  # Other type (?)
     del _shell
 except NameError:
-    _is_interactive = False      # Probably standard Python interpreter
+    _is_interactive = False  # Probably standard Python interpreter
 
 # Default to non-verbose error messages, unless the 'BSS_VERBOSE_ERRORS'
 # environment variable is set to '1' (this allows verbose to be set before
 # import, so that we can see verbose messages if there are any problems
 # while importing BioSimSpace)
 from os import environ as _environ
-_is_verbose = "BSS_VERBOSE_ERRORS" in _environ and \
-    _environ["BSS_VERBOSE_ERRORS"] == "1"
+
+_is_verbose = "BSS_VERBOSE_ERRORS" in _environ and _environ["BSS_VERBOSE_ERRORS"] == "1"
+
 
 def setVerbose(verbose):
-    """Set verbosity of error messages.
+    """
+    Set verbosity of error messages.
 
-       Parameters
-       ----------
+    Parameters
+    ----------
 
-       verbose : bool
-           Whether to print verbose error messages.
+    verbose : bool
+        Whether to print verbose error messages.
     """
     if type(verbose) is not bool:
         raise TypeError("'verbose' must be of type 'bool'.")
@@ -105,17 +112,20 @@ def setVerbose(verbose):
     global _is_verbose
     _is_verbose = verbose
 
+
 def _isVerbose():
-    """Whether verbose error messages are active.
+    """
+    Whether verbose error messages are active.
 
-       Returns
-       ------
+    Returns
+    ------
 
-       is_verbose : bool
-           Whether verbose error messages are active.
+    is_verbose : bool
+        Whether verbose error messages are active.
     """
     global _is_verbose
     return _is_verbose
+
 
 from warnings import warn as _warn
 
@@ -134,12 +144,14 @@ from os import path as _path
 _gmx_exe = None
 if "GROMACSHOME" in _environ:
     try:
-        _gmx_exe = _SireBase.findExe("%s/bin/gmx" % _environ.get("GROMACSHOME")) \
-                            .absoluteFilePath()
+        _gmx_exe = _SireBase.findExe(
+            "%s/bin/gmx" % _environ.get("GROMACSHOME")
+        ).absoluteFilePath()
     except:
         try:
-            _gmx_exe = _SireBase.findExe("%s/bin/gmx_mpi" % _environ.get("GROMACSHOME")) \
-                                .absoluteFilePath()
+            _gmx_exe = _SireBase.findExe(
+                "%s/bin/gmx_mpi" % _environ.get("GROMACSHOME")
+            ).absoluteFilePath()
         except:
             pass
 
@@ -171,8 +183,13 @@ if _gmx_exe is not None:
     from ._Utils import command_split
 
     # Run the command.
-    _proc = _subprocess.run(command_split(_command), shell=False,
-        text=True, stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
+    _proc = _subprocess.run(
+        command_split(_command),
+        shell=False,
+        text=True,
+        stdout=_subprocess.PIPE,
+        stderr=_subprocess.PIPE,
+    )
 
     del _command
 
@@ -217,6 +234,6 @@ from . import Types
 from . import Units
 
 from ._version import get_versions
-__version__ = get_versions()['version']
-del _version
+
+__version__ = get_versions()["version"]
 del get_versions
