@@ -11,7 +11,7 @@ BioSimSpace
    :alt: Conda Downloads
 
 .. image:: https://img.shields.io/badge/License-GPL%20v3-blue.svg
-   :target: https://www.gnu.org/licenses/old-licenses/gpl-3.0.en.html
+   :target: https://www.gnu.org/licenses/gpl-3.0.html
    :alt: License
 
 .. image:: https://joss.theoj.org/papers/4ba84ad443693b5dded90e35bf5f8225/status.svg
