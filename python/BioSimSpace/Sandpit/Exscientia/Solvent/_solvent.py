@@ -19,9 +19,7 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-"""
-Functionality for solvating molecular systems.
-"""
+"""Functionality for solvating molecular systems."""
 
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
@@ -826,7 +824,6 @@ def _solvate(
         A dictionary that maps system "properties" to their user defined
         values. This allows the user to refer to properties with their
         own naming scheme, e.g. { "charge" : "my-charge" }
-
 
     Returns
     -------

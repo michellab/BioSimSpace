@@ -19,9 +19,7 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-"""
-Utility functions.
-"""
+"""Utility functions."""
 
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
@@ -76,7 +74,7 @@ def createProtocol(protocol):
         The name of the simulation protocol.
 
     Returns
-    --------
+    -------
 
     protocol : :class:`Protocol <BioSimSpace.Protocol>`
         The chosen simulation protocol.

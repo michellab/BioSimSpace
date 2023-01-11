@@ -19,9 +19,7 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-"""
-A general three-vector type.
-"""
+"""A general three-vector type."""
 
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
@@ -136,8 +134,7 @@ class Vector:
         return self._from_sire_vector(self._sire_object - other._sire_object)
 
     def __mul__(self, other):
-        """
-        Multiplication operator."""
+        """Multiplication operator."""
 
         # Convert int to float.
         if type(other) is int:

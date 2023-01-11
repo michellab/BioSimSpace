@@ -71,10 +71,10 @@ def _module_stub(name: str, install_command: str = None):
     Parameters
     ----------
 
-    name: str
+    name : str
         The name of the module being stubbed
 
-    install_command: str (optional)
+    install_command : str (optional)
         The command used to install the module. If
         this is not supplied, then it is assumed
         to be 'conda install {name}'
@@ -82,7 +82,7 @@ def _module_stub(name: str, install_command: str = None):
     Returns
     -------
 
-    module: _ModuleStub
+    module : _ModuleStub
         The stubbed module
     """
     return _ModuleStub(name=name, install_command=install_command)
@@ -92,15 +92,15 @@ def _try_import(name: str, install_command: str = None):
     """
     Try to import the module called 'name' and return
     the resulting module. If this fails, catch the
-    error and instead return a _ModuleStub
+    error and instead return a _ModuleStub.
 
     Parameters
     ----------
 
-    name: str
+    name : str
         The name of the module being stubbed
 
-    install_command: str (optional)
+    install_command : str (optional)
         The command used to install the module. If
         this is not supplied, then it is assumed
         to be 'conda install {name}'
@@ -108,7 +108,7 @@ def _try_import(name: str, install_command: str = None):
     Returns
     -------
 
-    module: _ModuleStub | module
+    module : _ModuleStub | module
         The module if it loaded correctly, else otherwise
         a _ModuleStub for that module
     """
@@ -139,7 +139,7 @@ def _assert_imported(module):
     """
     Assert that the passed module has indeed been imported.
     This will raise a ModuleNotFoundError if the module
-    has not been imported, and has instead been stubbed
+    has not been imported, and has instead been stubbed.
     """
     if type(module) == _ModuleStub:
         module.this_will_break()
@@ -148,6 +148,6 @@ def _assert_imported(module):
 def _have_imported(module) -> bool:
     """
     Return whether or not the passed module has indeed
-    been imported (and thus is not stubbed)
+    been imported (and thus is not stubbed).
     """
     return type(module) != _ModuleStub

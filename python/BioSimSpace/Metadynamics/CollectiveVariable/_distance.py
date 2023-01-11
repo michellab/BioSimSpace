@@ -19,9 +19,7 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-"""
-Functionality for distance based collective variables.
-"""
+"""Functionality for distance based collective variables."""
 
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
@@ -598,7 +596,7 @@ class Distance(_CollectiveVariable):
         distance is used.
 
         Returns
-        --------
+        -------
 
         component : str
             'x', 'y', or 'z'

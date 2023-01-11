@@ -19,9 +19,7 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-"""
-Functionality for reading and analysing molecular trajectories.
-"""
+"""Functionality for reading and analysing molecular trajectories."""
 
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"

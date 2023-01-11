@@ -19,9 +19,7 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-"""
-Functionality for aligning molecules.
-"""
+"""Functionality for aligning molecules."""
 
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
@@ -742,7 +740,7 @@ def matchAtoms(
     When requesting more than one match, the mappings will be sorted using
     a scoring function and returned in order of best to worst score. (Note
     that, depending on the scoring function the "best" score may have the
-    lowest value.)
+    lowest value.).
 
     Parameters
     ----------

@@ -19,9 +19,7 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-"""
-An angle type.
-"""
+"""An angle type."""
 
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
@@ -191,8 +189,7 @@ class Angle(_Type):
             )
 
     def _validate_unit(self, unit):
-        """
-        Validate that the unit are supported."""
+        """Validate that the unit are supported."""
 
         # Strip whitespace and convert to upper case.
         unit = unit.replace(" ", "").upper()

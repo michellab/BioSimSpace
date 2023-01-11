@@ -244,7 +244,6 @@ class _FreeEnergyMixin(_Protocol):
 
         lam : float or pandas.Series
             The perturbation parameter: [0.0, 1.0]
-
         """
         if not isinstance(lam, _pd.Series):
             # For pandas < 1.4, TypeError won't be raised if the type cannot
@@ -283,7 +282,6 @@ class _FreeEnergyMixin(_Protocol):
         -------
         lam_vals : pandas.DataFrame
             The pd.DataFrame representing the checked lambda values.
-
         """
         # A list of lambda values takes precedence.
         if lam_vals is not None:

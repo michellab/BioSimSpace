@@ -19,9 +19,7 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-"""
-A general unit based type.
-"""
+"""A general unit based type."""
 
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"

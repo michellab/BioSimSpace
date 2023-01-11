@@ -19,9 +19,7 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-"""
-Functionality for torsion based collective variables.
-"""
+"""Functionality for torsion based collective variables."""
 
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
@@ -54,7 +52,7 @@ class Torsion(_CollectiveVariable):
         Parameters
         ----------
 
-        atoms :  [int, int, int, int]
+        atoms : [int, int, int, int]
             The indices of the four atoms involved in the torsion.
 
         hill_width : :class:`Angle <BioSimSpace.Types.Angle>`

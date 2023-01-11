@@ -19,9 +19,7 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-"""
-Functionality for running simulations using AMBER.
-"""
+"""Functionality for running simulations using AMBER."""
 
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
@@ -1095,7 +1093,7 @@ class Amber(_process.Process):
 
     def getDihedralEnergy(self, time_series=False, block="AUTO"):
         """
-        Get the total dihedral energy (proper + improper)
+        Get the total dihedral energy (proper + improper).
 
         Parameters
         ----------
@@ -1829,7 +1827,7 @@ class Amber(_process.Process):
         Parameters
         ----------
 
-        max_time: :class:`Time <BioSimSpace.Types.Time>`, int, float
+        max_time : :class:`Time <BioSimSpace.Types.Time>`, int, float
             The maximum time to wait (in minutes).
         """
 

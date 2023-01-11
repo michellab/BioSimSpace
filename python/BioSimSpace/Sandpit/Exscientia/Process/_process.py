@@ -19,9 +19,7 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-"""
-Functionality for running simulation processes.
-"""
+"""Functionality for running simulation processes."""
 
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
@@ -673,11 +671,10 @@ class Process:
         desired end state.
 
         Parameters
-        ---------
+        ----------
 
         system : :class:`System <BioSimSpace._SireWrappers.System>`
             The molecular system.
-
 
         Returns
         -------
@@ -876,7 +873,7 @@ class Process:
         Parameters
         ----------
 
-        max_time: :class:`Time <BioSimSpace.Types.Time>`, int, float
+        max_time : :class:`Time <BioSimSpace.Types.Time>`, int, float
             The maximum time to wait (in minutes).
         """
 

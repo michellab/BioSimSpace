@@ -19,9 +19,7 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-"""
-Utility class for interfacing with PLUMED.
-"""
+"""Utility class for interfacing with PLUMED."""
 
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"

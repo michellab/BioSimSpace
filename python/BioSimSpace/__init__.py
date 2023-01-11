@@ -126,7 +126,7 @@ def _isVerbose():
     Whether verbose error messages are active.
 
     Returns
-    ------
+    -------
 
     is_verbose : bool
         Whether verbose error messages are active.

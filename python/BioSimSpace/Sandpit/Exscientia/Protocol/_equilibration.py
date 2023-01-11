@@ -19,9 +19,7 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-"""
-Functionality for equilibration protocols.
-"""
+"""Functionality for equilibration protocols."""
 
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
@@ -360,7 +358,7 @@ class Equilibration(_Protocol):
 
     def getReportInterval(self):
         """
-        Return the interval between reporting statistics. (In integration steps.)
+        Return the interval between reporting statistics. (In integration steps.).
 
         Returns
         -------
@@ -372,7 +370,7 @@ class Equilibration(_Protocol):
 
     def setReportInterval(self, report_interval):
         """
-        Set the interval at which statistics are reported. (In integration steps.)
+        Set the interval at which statistics are reported. (In integration steps.).
 
         Parameters
         ----------
@@ -392,7 +390,7 @@ class Equilibration(_Protocol):
     def getRestartInterval(self):
         """
         Return the interval between saving restart confiugrations, and/or
-        trajectory frames. (In integration steps.)
+        trajectory frames. (In integration steps.).
 
         Returns
         -------
@@ -406,7 +404,7 @@ class Equilibration(_Protocol):
     def setRestartInterval(self, restart_interval):
         """
         Set the interval between saving restart confiugrations, and/or
-        trajectory frames. (In integration steps.)
+        trajectory frames. (In integration steps.).
 
         Parameters
         ----------
@@ -519,7 +517,7 @@ class Equilibration(_Protocol):
         Returns
         -------
 
-        force_constant :class:`GeneralUnit <BioSimSpace.Types._GeneralUnit>`
+        force_constant : class:`GeneralUnit <BioSimSpace.Types._GeneralUnit>`
             The force constant for the restraint, in units of
             kcal_per_mol/angstrom**2.
         """

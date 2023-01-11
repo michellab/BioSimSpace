@@ -19,9 +19,7 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-"""
-Functionality for reading/writing molecular systems.
-"""
+"""Functionality for reading/writing molecular systems."""
 
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
@@ -155,7 +153,6 @@ def formatInfo(format):
     >>> import BioSimSpace as BSS
     >>> for format in BSS.IO.fileFormats:
     ...     BSS.IO.formatInfo(format)
-
     """
 
     try:

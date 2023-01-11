@@ -19,9 +19,7 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-"""
-Tools for plotting data.
-"""
+"""Tools for plotting data."""
 
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
@@ -104,10 +102,10 @@ def plot(
     y : list
         A list of y data values.
 
-    xerr: list
+    xerr : list
         A list of error values for the x data.
 
-    yerr: list
+    yerr : list
         A list of error values for the y data.
 
     xlabel : str

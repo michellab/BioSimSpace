@@ -21,7 +21,7 @@
 
 """
 Functionality for defining and validating BioSimSpace input and output requirements.
-Author: Lester Hedges <lester.hedges@gmail.com>
+Author: Lester Hedges <lester.hedges@gmail.com>.
 """
 
 __author__ = "Lester Hedges"
@@ -672,7 +672,7 @@ class FileSet(Requirement):
         Return the value.
 
         Returns
-        --------
+        -------
 
         value : [str]
             A list of the files associated with this requirement.
@@ -821,7 +821,7 @@ class Length(Requirement):
         Return the value.
 
         Returns
-        --------
+        -------
 
         value : :class:`Length <BioSimSpace.Types.Length>`
             The value of the requirement.
@@ -1775,7 +1775,7 @@ def _validate_unit_requirement(value, unit_type):
     value : str
         The value of the input requirement.
 
-    unit_type: str
+    unit_type : str
         The unit type.
 
      Returns

@@ -22,7 +22,7 @@
 """
 Functionality for handling parameterisation protocols
 for AMBER force field models.
-Author: Lester Hedges <lester.hedges@gmail.com>
+Author: Lester Hedges <lester.hedges@gmail.com>.
 """
 
 __author__ = "Lester Hedges"
@@ -781,7 +781,7 @@ class GAFF(_protocol.Protocol):
             The method to use when calculating atomic charges:
             "RESP", "CM2", "MUL", "BCC", "ESP", "GAS"
 
-        net_charge: int
+        net_charge : int
             The net charge on the molecule.
 
         property_map : dict

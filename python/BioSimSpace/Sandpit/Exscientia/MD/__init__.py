@@ -52,7 +52,6 @@ Examples
 
    # Now start the process in the background.
    process.start()
-
 """
 
 from ._md import *

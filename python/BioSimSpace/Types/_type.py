@@ -19,9 +19,7 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-"""
-A base class for physical unit types.
-"""
+"""A base class for physical unit types."""
 
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"

@@ -19,9 +19,7 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-"""
-Custom context managers.
-"""
+"""Custom context managers."""
 
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
@@ -36,7 +34,7 @@ import os as _os
 @_contextmanager
 def cd(work_dir):
     """
-    Execute the context in the directory "work_dir"
+    Execute the context in the directory "work_dir".
 
     Parameters
     ----------
