@@ -2,7 +2,7 @@ Changelog
 =========
 
 `2022.3.0 <https://github.com/michellab/BioSimSpace/compare/2022.2.1...2022.3.0>`_ - Sep 28 2022 (Pre-release)
-------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------
 
 * Improved NAMD restraint implementation for consistency with other engines.
 * Make sure we wait for ``trjconv`` to finish when calling as a sub-process.
