@@ -57,6 +57,8 @@ except:
 # Flag that we've not yet raised a warning about GROMACS not being installed.
 _has_gmx_warned = False
 
+import sire as _sire
+
 from sire.legacy import Base as _SireBase
 from sire.legacy import IO as _SireIO
 from sire.legacy import Mol as _SireMol
@@ -316,7 +318,7 @@ def readPDB(id, pdb4amber=False, work_dir=None, show_warnings=False, property_ma
     )
 
 
-def readMolecules(files, show_warnings=False, property_map={}):
+def readMolecules(files, show_warnings=False, download_dir=None, property_map={}):
     """
     Read a molecular system from file.
 
@@ -324,10 +326,16 @@ def readMolecules(files, show_warnings=False, property_map={}):
     ----------
 
     files : str, [str]
-        A file name, or a list of file names.
+        A file name, or a list of file names. Note that the file names can
+        be URLs, in which case the files will be downloaded and (if necessary)
+        extracted before reading.
 
     show_warnings : bool
         Whether to show any warnings raised during parsing of the input files.
+
+    download_dir : str
+        The directory to download files to. If None, then a temporary directory
+        will be created for you.
 
     property_map : dict
         A dictionary that maps system "properties" to their user defined
@@ -393,6 +401,25 @@ def readMolecules(files, show_warnings=False, property_map={}):
     if not isinstance(show_warnings, bool):
         raise TypeError("'show_warnings' must be of type 'bool'.")
 
+    # Validate the download directory.
+    if download_dir is not None:
+        if not isinstance(download_dir, str):
+            raise TypeError("'download_dir' must be of type 'str'")
+
+        # Use full path.
+        if download_dir[0] != "/":
+            download_dir = _os.getcwd() + "/" + download_dir
+
+        # Create the directory if it doesn't already exist.
+        if not _os.path.isdir(download_dir):
+            _os.makedirs(download_dir, exist_ok=True)
+
+    # Create a temporary working directory and store the directory name.
+    else:
+        if download_dir is None:
+            tmp_dir = _tempfile.TemporaryDirectory()
+            download_dir = tmp_dir.name
+
     # Validate the map.
     if not isinstance(property_map, dict):
         raise TypeError("'property_map' must be of type 'dict'")
@@ -401,18 +428,19 @@ def readMolecules(files, show_warnings=False, property_map={}):
     if _gmx_path is not None and ("GROMACS_PATH" not in property_map):
         property_map["GROMACS_PATH"] = _gmx_path
 
-    # Check that the files exist.
+    # Check that the files exist (if not a URL).
     for file in files:
-        if not _os.path.isfile(file):
+        if not "http" in file and not _os.path.isfile(file):
             raise IOError("Missing input file: '%s'" % file)
-
-    # Copy the property map.
-    pmap = property_map.copy()
-    pmap["show_warnings"] = _SireBase.wrap(show_warnings)
 
     # Try to read the files and return a molecular system.
     try:
-        system = _SireIO.MoleculeParser.read(files, pmap)
+        system = _patch_sire_load(
+            files,
+            directory=download_dir,
+            property_map=property_map,
+            show_warnings=show_warnings,
+        )
     except Exception as e0:
         if "There are no lead parsers!" in str(e0):
             # First check to see if the failure was due to the presence
@@ -947,3 +975,81 @@ def readPerturbableSystem(top0, coords0, top1, coords1, property_map={}):
     system0.updateMolecules(mol)
 
     return system0
+
+
+def _patch_sire_load(path, *args, show_warnings=True, property_map={}, **kwargs):
+    """
+    Load the molecular system at 'path'. This can be a filename
+    of a URL. If it is a URL, then the file will be downloaded
+    to the current directory and loaded from there.
+
+    Parameters
+    ----------
+
+    path : str or list[str]
+        The filename (or names) or the URL or URLS of the molecular
+        system to load. This allows multiple paths to be input
+        as some molecular file formats split molecular information
+        across multiple files. Multiple paths can also be passed
+        as multiple arguments to this function.
+
+    log : (dict)
+        Optional dictionary that you can pass in that will be populated
+        with any error messages or warnings from the parsers as they
+        attempt to load in the molecular data. This can be helpful
+        in diagnosing why your file wasn't loaded.
+
+    show_warnings : bool
+        Whether or not to print out any warnings that are encountered
+        when loading your file(s). This is default True, and may lead
+        to noisy output. Set `show_warnings=False` to silence this output.
+
+    directory : str
+        Optional directory which will be used when creating any
+        files (e.g. as a download from a URL or which unzipping files)
+
+    Returns
+    -------
+
+    system : sire.legacy.System.System:
+        The molecules that have been loaded are returned as
+        a sire.legacy.System.System.
+    """
+
+    if type(path) is not list:
+        paths = [path]
+    else:
+        paths = path
+
+    for arg in args:
+        paths.append(arg)
+
+    if "log" in kwargs:
+        log = kwargs["log"]
+    else:
+        log = {}
+
+    if "directory" in kwargs:
+        directory = kwargs["directory"]
+    else:
+        directory = "."
+
+    if "silent" in kwargs:
+        silent = kwargs["silent"]
+    else:
+        silent = False
+
+    p = []
+
+    for i in range(0, len(paths)):
+        # resolve the paths, downloading as needed
+        p += _sire._load._resolve_path(paths[i], directory=directory, silent=silent)
+
+    paths = p
+
+    if len(paths) == 0:
+        raise IOError("No valid files specified. Nothing to load?")
+
+    s = _sire.io.load_molecules(paths, map=_sire.base.create_map(property_map))
+
+    return _sire._load._to_legacy_system(s)
