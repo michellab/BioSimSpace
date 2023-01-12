@@ -98,19 +98,12 @@ Protocols
 
    protocols
 
-Media
-=====
+Support
+=======
 .. toctree::
    :maxdepth: 2
 
-   media
-
-Legal Notices
-=============
-.. toctree::
-   :maxdepth: 1
-
-   legal
+   support
 
 Indices and tables
 ==================
