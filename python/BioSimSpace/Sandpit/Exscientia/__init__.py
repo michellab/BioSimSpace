@@ -113,6 +113,11 @@ def setVerbose(verbose):
     _is_verbose = verbose
 
 
+def tutorialUrl():
+    """Return the base URL for example files used in the tests and tutorials."""
+    return "https://biosimspace.openbiosim.org/m"
+
+
 def _isVerbose():
     """
     Whether verbose error messages are active.
