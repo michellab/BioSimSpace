@@ -1,6 +1,6 @@
-===========
-BioSimSpace
-===========
+========================
+OpenBioSim | BioSimSpace
+========================
 
 .. image:: https://github.com/michellab/BioSimSpace/workflows/Build/badge.svg
    :target: https://github.com/michellab/BioSimSpace/actions?query=workflow%3ABuild)
