@@ -39,7 +39,7 @@ Examples
    import BioSimSpace as BSS
 
    # Load a molecular system from file.
-   system = BSS.IO.readMolecules(BSS.IO.glob("amber/ala/*")
+   system = BSS.IO.readMolecules("amber/ala/*")
 
    # Create a default minimisation protocol.
    protocol = BSS.Protocol.Minimisation()
