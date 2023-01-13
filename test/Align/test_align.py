@@ -5,6 +5,7 @@ import BioSimSpace as BSS
 
 import pytest
 
+
 def test_flex_align():
     # Load the ligands.
     s0 = BSS.IO.readMolecules(BSS.IO.glob("test/input/ligands/ligand01*"))
@@ -15,21 +16,36 @@ def test_flex_align():
     m1 = s1.getMolecules()[0]
 
     # Get the best mapping between the molecules that contains the prematch.
-    mapping = BSS.Align.matchAtoms(m0, m1, timeout=BSS.Units.Time.second,
-                                   scoring_function="rmsd_flex_align")
+    mapping = BSS.Align.matchAtoms(
+        m0, m1, timeout=BSS.Units.Time.second, scoring_function="rmsd_flex_align"
+    )
 
     # I don't know what the mapping should be. For the moment,
     # I will assume that what came out is correct, i.e.
-    expect = {28: 12, 0: 13, 29: 14, 1: 15, 3: 16, 4: 21, 5: 20, 6: 19, 26: 18, 27: 17, 49: 38, 48: 39, 31: 40, 30: 41, 2: 37}
+    expect = {
+        28: 12,
+        0: 13,
+        29: 14,
+        1: 15,
+        3: 16,
+        4: 21,
+        5: 20,
+        6: 19,
+        26: 18,
+        27: 17,
+        49: 38,
+        48: 39,
+        31: 40,
+        30: 41,
+        2: 37,
+    }
 
     for key, value in mapping.items():
         assert value == expect[key]
 
+
 # Parameterise the function with a set of valid atom pre-matches.
-@pytest.mark.parametrize("prematch", [{3 : 1},
-                                      {5 : 9},
-                                      {4 : 5},
-                                      {1 : 0}])
+@pytest.mark.parametrize("prematch", [{3: 1}, {5: 9}, {4: 5}, {1: 0}])
 def test_prematch(prematch):
     # Load the ligands.
     s0 = BSS.IO.readMolecules(BSS.IO.glob("test/input/ligands/ligand01*"))
@@ -40,18 +56,17 @@ def test_prematch(prematch):
     m1 = s1.getMolecules()[0]
 
     # Get the best mapping between the molecules that contains the prematch.
-    mapping = BSS.Align.matchAtoms(m0, m1, timeout=BSS.Units.Time.second,
-                                   prematch=prematch)
+    mapping = BSS.Align.matchAtoms(
+        m0, m1, timeout=BSS.Units.Time.second, prematch=prematch
+    )
 
     # Check that the prematch key:value pair is in the mapping.
     for key, value in prematch.items():
         assert mapping[key] == value
 
+
 # Parameterise the function with a set of invalid atom pre-matches.
-@pytest.mark.parametrize("prematch", [{-1 :  1},
-                                      {50 :  9},
-                                      { 4 : 48},
-                                      { 1 : -1}])
+@pytest.mark.parametrize("prematch", [{-1: 1}, {50: 9}, {4: 48}, {1: -1}])
 def test_invalid_prematch(prematch):
     # Load the ligands.
     s0 = BSS.IO.readMolecules(BSS.IO.glob("test/input/ligands/ligand01*"))
@@ -63,8 +78,10 @@ def test_invalid_prematch(prematch):
 
     # Assert that the invalid prematch raises a ValueError.
     with pytest.raises(ValueError):
-        mapping = BSS.Align.matchAtoms(m0, m1, timeout=BSS.Units.Time.second,
-                                       prematch=prematch)
+        mapping = BSS.Align.matchAtoms(
+            m0, m1, timeout=BSS.Units.Time.second, prematch=prematch
+        )
+
 
 def test_merge():
     # Load the ligands.
@@ -194,7 +211,10 @@ def test_merge():
 
     assert internalff1.energy().value() == pytest.approx(internalff2.energy().value())
 
-@pytest.mark.xfail(reason="Mapping generated with latest RDKit which requires sanitization no longer triggers the exception")
+
+@pytest.mark.xfail(
+    reason="Mapping generated with latest RDKit which requires sanitization no longer triggers the exception"
+)
 def test_ring_breaking_three_membered():
     # Load the ligands.
     s0 = BSS.IO.readMolecules(BSS.IO.glob("test/input/ligands/CAT-13a*"))
@@ -217,7 +237,10 @@ def test_ring_breaking_three_membered():
     # Now check that we can merge if we allow ring breaking.
     m2 = BSS.Align.merge(m0, m1, mapping, allow_ring_breaking=True)
 
-@pytest.mark.xfail(reason="Mapping generated with latest RDKit which requires sanitization no longer triggers the exception")
+
+@pytest.mark.xfail(
+    reason="Mapping generated with latest RDKit which requires sanitization no longer triggers the exception"
+)
 def test_ring_breaking_five_membered():
     # Load the ligands.
     s0 = BSS.IO.readMolecules(BSS.IO.glob("test/input/ligands/ligand31*"))
@@ -240,7 +263,10 @@ def test_ring_breaking_five_membered():
     # Now check that we can merge if we allow ring breaking.
     m2 = BSS.Align.merge(m0, m1, mapping, allow_ring_breaking=True)
 
-@pytest.mark.xfail(reason="Mapping generated with latest RDKit which requires sanitization no longer triggers the exception")
+
+@pytest.mark.xfail(
+    reason="Mapping generated with latest RDKit which requires sanitization no longer triggers the exception"
+)
 def test_ring_breaking_six_membered():
     # Load the ligands.
     s0 = BSS.IO.readMolecules(BSS.IO.glob("test/input/ligands/ligand31*"))
@@ -263,10 +289,24 @@ def test_ring_breaking_six_membered():
     # Now check that we can merge if we allow ring breaking.
     m2 = BSS.Align.merge(m0, m1, mapping, allow_ring_breaking=True)
 
-@pytest.mark.parametrize("ligands", [ pytest.param(["CAT-13c", "CAT-17i"], marks=pytest.mark.xfail(reason="Mapping generated with latest RDKit which requires sanitization no longer triggers the exception")),
-                                     pytest.param(["CAT-13e", "CAT-17g"], marks=pytest.mark.xfail(reason="Mapping generated with latest RDKit which requires sanitization no longer triggers the exception"))
-                                     ],
-                        )
+
+@pytest.mark.parametrize(
+    "ligands",
+    [
+        pytest.param(
+            ["CAT-13c", "CAT-17i"],
+            marks=pytest.mark.xfail(
+                reason="Mapping generated with latest RDKit which requires sanitization no longer triggers the exception"
+            ),
+        ),
+        pytest.param(
+            ["CAT-13e", "CAT-17g"],
+            marks=pytest.mark.xfail(
+                reason="Mapping generated with latest RDKit which requires sanitization no longer triggers the exception"
+            ),
+        ),
+    ],
+)
 def test_ring_size_change(ligands):
     # Load the ligands.
     s0 = BSS.IO.readMolecules(BSS.IO.glob("test/input/ligands/%s.*" % ligands[0]))
@@ -287,50 +327,66 @@ def test_ring_size_change(ligands):
         m2 = BSS.Align.merge(m0, m1, mapping)
 
     # Now check that we can merge if we allow ring breaking.
-    m2 = BSS.Align.merge(m0, m1, mapping, allow_ring_breaking=True, allow_ring_size_change=True)
+    m2 = BSS.Align.merge(
+        m0, m1, mapping, allow_ring_breaking=True, allow_ring_size_change=True
+    )
+
 
 # Parameterise the function with a valid mapping.
-@pytest.mark.parametrize("ligands, mapping", [(("grow1", "grow2"),
-                                               {2 : 21,
-                                                4 : 23,
-                                                6 : 25,
-                                                8 : 27,
-                                                10 : 18,
-                                                1 : 19,
-                                                0 : 20,
-                                                11 : 16,
-                                                12 : 17,
-                                                13 : 14,
-                                                15 : 13,
-                                                18 : 11,
-                                                20 : 9,
-                                                22 : 8,
-                                                23 : 5,
-                                                16 : 6,
-                                                24 : 3,
-                                                26 : 1,
-                                                27 : 0,
-                                                9 : 28,
-                                                5 : 24,
-                                                3 : 22,
-                                                7 : 26,
-                                                14 : 15,
-                                                19 : 12,
-                                                21 : 10,
-                                                17 : 7,
-                                                25 : 4}),
-                                               (("grow3", "grow4"),
-                                               {1: 6,
-                                                2: 7,
-                                                3: 8,
-                                                4: 9,
-                                                5: 10,
-                                                6: 11,
-                                                14: 21,
-                                                13: 20,
-                                                12: 19,
-                                                11: 18,
-                                                10: 17})])
+@pytest.mark.parametrize(
+    "ligands, mapping",
+    [
+        (
+            ("grow1", "grow2"),
+            {
+                2: 21,
+                4: 23,
+                6: 25,
+                8: 27,
+                10: 18,
+                1: 19,
+                0: 20,
+                11: 16,
+                12: 17,
+                13: 14,
+                15: 13,
+                18: 11,
+                20: 9,
+                22: 8,
+                23: 5,
+                16: 6,
+                24: 3,
+                26: 1,
+                27: 0,
+                9: 28,
+                5: 24,
+                3: 22,
+                7: 26,
+                14: 15,
+                19: 12,
+                21: 10,
+                17: 7,
+                25: 4,
+            },
+        ),
+        (
+            ("grow3", "grow4"),
+            {
+                1: 6,
+                2: 7,
+                3: 8,
+                4: 9,
+                5: 10,
+                6: 11,
+                14: 21,
+                13: 20,
+                12: 19,
+                11: 18,
+                10: 17,
+            },
+        ),
+    ],
+)
 def test_grow_whole_ring(ligands, mapping):
     # Load the ligands.
     s0 = BSS.IO.readMolecules(BSS.IO.glob(f"test/input/ligands/{ligands[0]}*"))
@@ -345,6 +401,7 @@ def test_grow_whole_ring(ligands, mapping):
 
     # Check that we can merge without allowing ring breaking.
     m2 = BSS.Align.merge(m0, m1, mapping)
+
 
 def test_hydrogen_mass_repartitioning():
     # Load the ligands.

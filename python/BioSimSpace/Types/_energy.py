@@ -1,13 +1,13 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2022
+# Copyright: 2017-2023
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
 # BioSimSpace is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 2 of the License, or
+# the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
 # BioSimSpace is distributed in the hope that it will be useful,
@@ -19,18 +19,17 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-"""
-An energy type.
-"""
+"""An energy type."""
 
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Energy"]
 
-from sire import units as _SireUnits
+from sire.legacy import Units as _SireUnits
 
 from ._type import Type as _Type
+
 
 class Energy(_Type):
     """An energy type."""
@@ -39,122 +38,148 @@ class Energy(_Type):
     _sire_units = ["kcal_per_mol", "kJ_per_mol"]
 
     # Dictionary of allowed units.
-    _supported_units = { "KILO CALORIES PER MOL" : _SireUnits.kcal_per_mol,
-                         "KILO JOULES PER MOL"   : _SireUnits.kJ_per_mol,
-                         "KT"                    : 2.479 * _SireUnits.kJ_per_mol }
+    _supported_units = {
+        "KILO CALORIES PER MOL": _SireUnits.kcal_per_mol,
+        "KILO JOULES PER MOL": _SireUnits.kJ_per_mol,
+        "KT": 2.479 * _SireUnits.kJ_per_mol,
+    }
 
     # Map unit abbreviations to the full name.
-    _abbreviations = { "KCAL/MOL" : "KILO CALORIES PER MOL",
-                       "KJ/MOL"   : "KILO JOULES PER MOL",
-                       "KT"       : "KT" }
+    _abbreviations = {
+        "KCAL/MOL": "KILO CALORIES PER MOL",
+        "KJ/MOL": "KILO JOULES PER MOL",
+        "KT": "KT",
+    }
 
     # Print formatting.
-    _print_format = { "KILO CALORIES PER MOL" : "kcal/mol",
-                      "KILO JOULES PER MOL"   : "kJ/mol",
-                      "KT"                    : "KT" }
+    _print_format = {
+        "KILO CALORIES PER MOL": "kcal/mol",
+        "KILO JOULES PER MOL": "kJ/mol",
+        "KT": "KT",
+    }
 
     # Documentation strings.
-    _doc_strings = { "KILO CALORIES PER MOL" : "An energy in kcal per mol.",
-                     "KILO JOULES PER MOL"   : "An energy in kJ per mol.",
-                     "KT"                    : "An energy in KT." }
+    _doc_strings = {
+        "KILO CALORIES PER MOL": "An energy in kcal per mol.",
+        "KILO JOULES PER MOL": "An energy in kJ per mol.",
+        "KT": "An energy in KT.",
+    }
 
     # Null type unit for avoiding issue printing configargparse help.
     _default_unit = "KILO CALORIES PER MOL"
 
-    # The dimension mask.
-    #              Angle, Charge, Length, Mass, Quantity, Temperature, Time
-    _dimensions = (    0,      0,      2,    1,       -1,           0,   -2)
+    # The dimension mask:
+    #     Angle, Charge, Length, Mass, Quantity, Temperature, Time
+    _dimensions = (0, 0, 2, 1, -1, 0, -2)
 
     def __init__(self, *args):
-        """Constructor.
+        """
+        Constructor.
 
-           ``*args`` can be a value and unit, or a string representation
-           of the energy, e.g. "78.4 kcal/mol".
+        ``*args`` can be a value and unit, or a string representation
+        of the energy, e.g. "78.4 kcal/mol".
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           value : float
-               The value.
+        value : float
+            The value.
 
-           unit : str
-               The unit.
+        unit : str
+            The unit.
 
-           string : str
-               A string representation of the energy.
+        string : str
+            A string representation of the energy.
 
-           Examples
-           --------
+        Examples
+        --------
 
-           Create an object representing an energy of -1038 kilo calories per
-           mol and print the energy in kilo joules per mol.
+        Create an object representing an energy of -1038 kilo calories per
+        mol and print the energy in kilo joules per mol.
 
-           >>> import BioSimSpace as BSS
-           >>> energy = BSS.Types.Energy(-1038, "kcal/mol")
-           >>> print(energy.kj_per_mol())
+        >>> import BioSimSpace as BSS
+        >>> energy = BSS.Types.Energy(-1038, "kcal/mol")
+        >>> print(energy.kj_per_mol())
 
-           The same as above, except passing a string representation of the
-           energy to the constructor.
+        The same as above, except passing a string representation of the
+        energy to the constructor.
 
-           >>> import BioSimSpace as BSS
-           >>> energy = BSS.Types.Energy("-1038 kcal/mol")
-           >>> print(energy.kj_per_mol())
+        >>> import BioSimSpace as BSS
+        >>> energy = BSS.Types.Energy("-1038 kcal/mol")
+        >>> print(energy.kj_per_mol())
 
-           The string matching is extremeley flexible, so all of the following
-           would be valid arguments: "-1038 kcal/mol", "-1.038e3 kcal/mol",
-           "-1038 kilo cal per mol".
+        The string matching is extremeley flexible, so all of the following
+        would be valid arguments: "-1038 kcal/mol", "-1.038e3 kcal/mol",
+        "-1038 kilo cal per mol".
         """
 
         # Call the base class constructor.
         super().__init__(*args)
 
     def kcal_per_mol(self):
-        """Return the energy in kcal per mol.
-
-           Returns
-           -------
-
-           energy : :class:`Energy <BioSimSpace.Types.Energy>`
-               The energy in kcal per mol.
         """
-        return Energy((self._value * self._supported_units[self._unit]).to(_SireUnits.kcal_per_mol), "KILO CALORIES PER MOL")
+        Return the energy in kcal per mol.
+
+        Returns
+        -------
+
+        energy : :class:`Energy <BioSimSpace.Types.Energy>`
+            The energy in kcal per mol.
+        """
+        return Energy(
+            (self._value * self._supported_units[self._unit]).to(
+                _SireUnits.kcal_per_mol
+            ),
+            "KILO CALORIES PER MOL",
+        )
 
     def kj_per_mol(self):
-        """Return the energy in kJ per mol.
-
-           Returns
-           -------
-
-           energy : :class:`Energy <BioSimSpace.Types.Energy>`
-               The energy in kJ per mol.
         """
-        return Energy((self._value * self._supported_units[self._unit]).to(_SireUnits.kJ_per_mol), "KILO JOULES PER MOL")
+        Return the energy in kJ per mol.
+
+        Returns
+        -------
+
+        energy : :class:`Energy <BioSimSpace.Types.Energy>`
+            The energy in kJ per mol.
+        """
+        return Energy(
+            (self._value * self._supported_units[self._unit]).to(_SireUnits.kJ_per_mol),
+            "KILO JOULES PER MOL",
+        )
 
     def kt(self):
-        """Return the energy in KT.
-
-           Returns
-           -------
-
-           energy : :class:`Energy <BioSimSpace.Types.Energy>`
-               The energy in KT.
         """
-        return Energy((self._value * self._supported_units[self._unit]).to(2.479 * _SireUnits.kJ_per_mol), "KT")
+        Return the energy in KT.
+
+        Returns
+        -------
+
+        energy : :class:`Energy <BioSimSpace.Types.Energy>`
+            The energy in KT.
+        """
+        return Energy(
+            (self._value * self._supported_units[self._unit]).to(
+                2.479 * _SireUnits.kJ_per_mol
+            ),
+            "KT",
+        )
 
     def _to_default_unit(self, mag=None):
-        """Internal method to return an object of the same type in the default unit.
+        """
+        Internal method to return an object of the same type in the default unit.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           mag : float
-               The value (optional).
+        mag : float
+            The value (optional).
 
-           Returns
-           -------
+        Returns
+        -------
 
-           energy : :class:`Energy <BioSimSpace.Types.Energy>`
-               The energy in the default unit of kcal per mol.
+        energy : :class:`Energy <BioSimSpace.Types.Energy>`
+            The energy in the default unit of kcal per mol.
         """
         if mag is None:
             return self.kcal_per_mol()
@@ -162,19 +187,20 @@ class Energy(_Type):
             return Energy(mag, "KILO CALORIES PER MOL")
 
     def _convert_to(self, unit):
-        """Return the energy in a different unit.
+        """
+        Return the energy in a different unit.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           unit : str
-               The unit to convert to.
+        unit : str
+            The unit to convert to.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           energy : :class:`Energy <BioSimSpace.Types.Energy>`
-               The energy in the specified unit.
+        energy : :class:`Energy <BioSimSpace.Types.Energy>`
+            The energy in the specified unit.
         """
         if unit == "KILO CALORIES PER MOL":
             return self.kcal_per_mol()
@@ -183,7 +209,9 @@ class Energy(_Type):
         elif unit == "KT":
             return self.kt()
         else:
-            raise ValueError("Supported units are: '%s'" % list(self._supported_units.keys()))
+            raise ValueError(
+                "Supported units are: '%s'" % list(self._supported_units.keys())
+            )
 
     def _validate_unit(self, unit):
         """Validate that the unit are supported."""
@@ -210,23 +238,26 @@ class Energy(_Type):
         if unit in self._abbreviations:
             return self._abbreviations[unit]
         else:
-            raise ValueError("Supported units are: '%s'" % list(self._supported_units.keys()))
+            raise ValueError(
+                "Supported units are: '%s'" % list(self._supported_units.keys())
+            )
 
     @staticmethod
     def _to_sire_format(unit):
-        """Reformat the unit string so it adheres to the Sire unit formatting.
+        """
+        Reformat the unit string so it adheres to the Sire unit formatting.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           unit : str
-               A string representation of the unit.
+        unit : str
+            A string representation of the unit.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           sire_unit : str
-               The unit string in Sire compatible format.
+        sire_unit : str
+            The unit string in Sire compatible format.
         """
 
         unit = unit.replace("mole", "mol")
@@ -246,7 +277,9 @@ class Energy(_Type):
         unit = unit.replace("kcal_per_mol3", "(kcal_per_mol*kcal_per_mol*kcal_per_mol)")
         unit = unit.replace("kcal_per_mol-1", "(1/kcal_per_mol)")
         unit = unit.replace("kcal_per_mol-2", "(1/(kcal_per_mol*kcal_per_mol))")
-        unit = unit.replace("kcal_per_mol-3", "(1/(kcal_per_mol*kcal_per_mol*kcal_per_mol))")
+        unit = unit.replace(
+            "kcal_per_mol-3", "(1/(kcal_per_mol*kcal_per_mol*kcal_per_mol))"
+        )
         unit = unit.replace("kJ_per_mol2", "(kJ_per_mol*kJ_per_mol)")
         unit = unit.replace("kJ_per_mol3", "(kJ_per_mol*kJ_per_mol*kJ_per_mol)")
         unit = unit.replace("kJ_per_mol-1", "(1/kJ_per_mol)")

@@ -1,5 +1,5 @@
-
 import BioSimSpace as BSS
+
 
 def test_sire_properties():
     s = BSS.IO.readMolecules("test/input/amber/ala/*")
@@ -45,4 +45,3 @@ def test_sire_properties():
 
 if __name__ == "__main__":
     test_sire_properties()
-

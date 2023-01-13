@@ -1,13 +1,13 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2022
+# Copyright: 2017-2023
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
 # BioSimSpace is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 2 of the License, or
+# the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
 # BioSimSpace is distributed in the hope that it will be useful,
@@ -19,9 +19,7 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-"""
-Functionality for torsion based collective variables.
-"""
+"""Functionality for torsion based collective variables."""
 
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
@@ -35,36 +33,45 @@ from math import pi as _pi
 from ._collective_variable import CollectiveVariable as _CollectiveVariable
 from ...Types import Angle as _Angle
 
+
 class Torsion(_CollectiveVariable):
     """A class for torsion based collective variables."""
 
-    def __init__(self, atoms, hill_width=_Angle(0.35, "radian"),
-            lower_bound=None, upper_bound=None, grid=None, pbc=True):
-        """Constructor.
+    def __init__(
+        self,
+        atoms,
+        hill_width=_Angle(0.35, "radian"),
+        lower_bound=None,
+        upper_bound=None,
+        grid=None,
+        pbc=True,
+    ):
+        """
+        Constructor.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           atoms :  [int, int, int, int]
-               The indices of the four atoms involved in the torsion.
+        atoms : [int, int, int, int]
+            The indices of the four atoms involved in the torsion.
 
-           hill_width : :class:`Angle <BioSimSpace.Types.Angle>`
-               The width of the Gaussian hill used to sample this variable.
+        hill_width : :class:`Angle <BioSimSpace.Types.Angle>`
+            The width of the Gaussian hill used to sample this variable.
 
-           lower_bound : :class:`Bound <BioSimSpace.Metadynamics.Bound>`
-               A lower bound on the value of the collective variable.
+        lower_bound : :class:`Bound <BioSimSpace.Metadynamics.Bound>`
+            A lower bound on the value of the collective variable.
 
-           upper_bound : :class:`Bound <BioSimSpace.Metadynamics.Bound>`
-               An upper bound on the value of the collective variable.
+        upper_bound : :class:`Bound <BioSimSpace.Metadynamics.Bound>`
+            An upper bound on the value of the collective variable.
 
-           grid : :class:`Grid <BioSimSpace.Metadynamics.Grid>`
-               The grid on which the collective variable will be sampled.
-               This can help speed up long metadynamics simulations where
-               the number of Gaussian kernels can become prohibitive.
+        grid : :class:`Grid <BioSimSpace.Metadynamics.Grid>`
+            The grid on which the collective variable will be sampled.
+            This can help speed up long metadynamics simulations where
+            the number of Gaussian kernels can become prohibitive.
 
-           pbc : bool
-               Whether to use periodic boundary conditions when computing the
-               collective variable.
+        pbc : bool
+            Whether to use periodic boundary conditions when computing the
+            collective variable.
         """
 
         # Call the base class constructor.
@@ -108,7 +115,7 @@ class Torsion(_CollectiveVariable):
             string += ", upper_bound=%s" % self._upper_bound
         if self._grid is not None:
             string += ", grid=%s" % self._grid
-        string += ", pbc=%s"% self._pbc
+        string += ", pbc=%s" % self._pbc
         string += ">"
         return string
 
@@ -117,15 +124,16 @@ class Torsion(_CollectiveVariable):
         return self.__str__()
 
     def setAtoms(self, atoms):
-        """Set the atoms for which the torsion will be calculated.
-           measured.
+        """
+        Set the atoms for which the torsion will be calculated.
+        measured.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           atoms : [int, int, int, int]
-               The atoms involved in the torsion.
-               will be measured from.
+        atoms : [int, int, int, int]
+            The atoms involved in the torsion.
+            will be measured from.
         """
 
         # List/tuple of atom indices.
@@ -141,22 +149,24 @@ class Torsion(_CollectiveVariable):
         self._atoms = list(atoms)
 
     def getAtoms(self):
-        """Return list of atom indices involved in the torsion.
+        """
+        Return list of atom indices involved in the torsion.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           atoms : [int, int, int, int]
-               The atom indices involved in the torsion.
+        atoms : [int, int, int, int]
+            The atom indices involved in the torsion.
         """
         return self._atoms
 
     def setHillWidth(self, hill_width):
-        """Set the width of the Gaussian hills used to bias this collective
-           variable.
+        """
+        Set the width of the Gaussian hills used to bias this collective
+        variable.
 
-           hill_width : :class:`Angle <BioSimSpace.Types.Angle>`
-               The width of the Gaussian hill.
+        hill_width : :class:`Angle <BioSimSpace.Types.Angle>`
+            The width of the Gaussian hill.
         """
         if not isinstance(hill_width, _Angle):
             raise TypeError("'hill_width' must be of type 'BioSimSpace.Types.Angle'")
@@ -168,40 +178,43 @@ class Torsion(_CollectiveVariable):
         self._hill_width = hill_width.radians()
 
     def getHillWidth(self):
-        """Return the width of the Gaussian hill used to bias this collective
-           variable.
+        """
+        Return the width of the Gaussian hill used to bias this collective
+        variable.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           hill_width : :class:`Angle <BioSimSpace.Types.Angle>`
-               The width of the Gaussian hill.
+        hill_width : :class:`Angle <BioSimSpace.Types.Angle>`
+            The width of the Gaussian hill.
         """
         return self._hill_width
 
     def setPeriodicBoundaries(self, pbc):
-        """Set whether to use periodic_boundaries when calculating the
-           collective variable.
+        """
+        Set whether to use periodic_boundaries when calculating the
+        collective variable.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           pbc : bool
-               Whether to use periodic boundaries conditions.
+        pbc : bool
+            Whether to use periodic boundaries conditions.
         """
         if not isinstance(pbc, bool):
             raise TypeError("'pbc' must be of type 'bool'")
         self._pbc = pbc
 
     def getPeriodicBoundaries(self):
-        """Return whether to take account of periodic boundary conditions
-           when computing the collective variable.
+        """
+        Return whether to take account of periodic boundary conditions
+        when computing the collective variable.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           pbc : bool
-               Whether to use periodic boundaries conditions.
+        pbc : bool
+            Whether to use periodic boundaries conditions.
         """
         return self._pbc
 
@@ -210,12 +223,16 @@ class Torsion(_CollectiveVariable):
 
         if self._lower_bound is not None:
             if not isinstance(self._lower_bound.getValue(), _Angle):
-                raise TypeError("'lower_bound' must be of type 'BioSimSpace.Types.Angle'")
+                raise TypeError(
+                    "'lower_bound' must be of type 'BioSimSpace.Types.Angle'"
+                )
             # Convert to default unit.
             self._lower_bound.setValue(self._lower_bound.getValue().radians())
         if self._upper_bound is not None:
             if not isinstance(self._upper_bound.getValue(), _Angle):
-                raise TypeError("'upper_bound' must be of type 'BioSimSpace.Types.Angle'")
+                raise TypeError(
+                    "'upper_bound' must be of type 'BioSimSpace.Types.Angle'"
+                )
             # Convert to default unit.
             self._upper_bound.setValue(self._upper_bound.getValue().radians())
         if self._lower_bound is not None and self._upper_bound is not None:
@@ -224,11 +241,15 @@ class Torsion(_CollectiveVariable):
 
         if self._grid is not None:
             if not isinstance(self._grid.getMinimum(), _Angle):
-                raise TypeError("'grid' minimum must be of type 'BioSimSpace.Types.Angle'")
+                raise TypeError(
+                    "'grid' minimum must be of type 'BioSimSpace.Types.Angle'"
+                )
             # Convert to default unit.
             self._grid.setMinimum(self._grid.getMinimum().radians())
             if not isinstance(self._grid.getMaximum(), _Angle):
-                raise TypeError("Grid 'maximum' must be of type 'BioSimSpace.Types.Angle'")
+                raise TypeError(
+                    "Grid 'maximum' must be of type 'BioSimSpace.Types.Angle'"
+                )
             # Convert to default unit.
             self._grid.setMaximum(self._grid.getMaximum().radians())
 
@@ -236,13 +257,23 @@ class Torsion(_CollectiveVariable):
             # from -pi to pi. PLUMED allows no other grid, regardless of lower or
             # upper walls.
             if not _isclose(self._grid.getMinimum().value() / _pi, -1.0, rel_tol=1e-6):
-                raise ValueError("'Torsion' is a periodic collective variable: 'grid_min' must be -pi radians.")
+                raise ValueError(
+                    "'Torsion' is a periodic collective variable: 'grid_min' must be -pi radians."
+                )
             if not _isclose(self._grid.getMaximum().value() / _pi, 1.0, rel_tol=1e-6):
-                raise ValueError("'Torsion' is a periodic collective variable: 'grid_max' must be +pi radians.")
+                raise ValueError(
+                    "'Torsion' is a periodic collective variable: 'grid_max' must be +pi radians."
+                )
 
-            if self._lower_bound is not None and self._grid.getMinimum() > self._lower_bound.getValue():
+            if (
+                self._lower_bound is not None
+                and self._grid.getMinimum() > self._lower_bound.getValue()
+            ):
                 raise ValueError("'lower_bound' is less than 'grid' minimum.")
-            if self._upper_bound is not None and self._grid.getMaximum() < self._upper_bound.getValue():
+            if (
+                self._upper_bound is not None
+                and self._grid.getMaximum() < self._upper_bound.getValue()
+            ):
                 raise ValueError("'upper_bound' is greater than 'grid' maximum.")
 
             # If the number of bins isn't specified, estimate it out from the hill width.

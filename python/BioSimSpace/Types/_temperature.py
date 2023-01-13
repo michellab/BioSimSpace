@@ -1,13 +1,13 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2022
+# Copyright: 2017-2023
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
 # BioSimSpace is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 2 of the License, or
+# the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
 # BioSimSpace is distributed in the hope that it will be useful,
@@ -19,91 +19,89 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-"""
-A temperature type.
-"""
+"""A temperature type."""
 
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Temperature"]
 
-from sire import units as _SireUnits
+from sire.legacy import Units as _SireUnits
 
 from ._type import Type as _Type
+
 
 class Temperature(_Type):
     """A temperature type."""
 
     # A list of the supported Sire unit names.
-    _sire_units = ["kelvin",
-                   "celsius",
-                   "fahrenheit"]
+    _sire_units = ["kelvin", "celsius", "fahrenheit"]
 
     # Dictionary of allowed units.
-    _supported_units = { "KELVIN"     : _SireUnits.kelvin,
-                         "CELSIUS"    : _SireUnits.celsius,
-                         "FAHRENHEIT" : _SireUnits.fahrenheit }
+    _supported_units = {
+        "KELVIN": _SireUnits.kelvin,
+        "CELSIUS": _SireUnits.celsius,
+        "FAHRENHEIT": _SireUnits.fahrenheit,
+    }
 
     # Map unit abbreviations to the full name.
-    _abbreviations = { "K" : "KELVIN",
-                       "C" : "CELSIUS",
-                       "F" : "FAHRENHEIT" }
+    _abbreviations = {"K": "KELVIN", "C": "CELSIUS", "F": "FAHRENHEIT"}
 
     # Print formatting.
-    _print_format = { "KELVIN"     : "K",
-                      "CELSIUS"    : "C",
-                      "FAHRENHEIT" : "F" }
+    _print_format = {"KELVIN": "K", "CELSIUS": "C", "FAHRENHEIT": "F"}
 
     # Documentation strings.
-    _doc_strings = { "KELVIN"     : "A temperature in Kelvin.",
-                     "CELSIUS"    : "A temperature in Celsius.",
-                     "FAHRENHEIT" : "A temperature in Fahrenheit." }
+    _doc_strings = {
+        "KELVIN": "A temperature in Kelvin.",
+        "CELSIUS": "A temperature in Celsius.",
+        "FAHRENHEIT": "A temperature in Fahrenheit.",
+    }
 
     # Null type unit for avoiding issue printing configargparse help.
     _default_unit = "KELVIN"
 
-    # The dimension mask.
-    #              Angle, Charge, Length, Mass, Quantity, Temperature, Time
-    _dimensions = (    0,      0,      0,    0,        0,           1,    0)
+    # The dimension mask:
+    #     Angle, Charge, Length, Mass, Quantity, Temperature, Time
+    _dimensions = (0, 0, 0, 0, 0, 1, 0)
 
     def __init__(self, *args):
-        """Constructor.
+        """
+        Constructor.
 
-           ``*args`` can be a value and unit, or a string representation
-           of the temperature, e.g. "298 K".
+        ``*args`` can be a value and unit, or a string representation
+        of the temperature, e.g. "298 K".
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           value : float
-               The value.
+        value : float
+            The value.
 
-           unit : str
-               The unit.
+        unit : str
+            The unit.
 
-           string : str
-               A string representation of the temperature.
+        string : str
+            A string representation of the temperature.
 
-           Examples
-           --------
+        Examples
+        --------
 
-           Create an object representing a temperature of 298 Kelvin then
-           print the temperature in Celsius.
+        Create an object representing a temperature of 298 Kelvin then
+        print the temperature in Celsius.
 
-           >>> import BioSimSpace as BSS
-           >>> temperature = BSS.Types.Temperature(298, "K")
-           >>> print(temperature.celsius())
+        >>> import BioSimSpace as BSS
+        >>> temperature = BSS.Types.Temperature(298, "K")
+        >>> print(temperature.celsius())
 
-           The same as above, except passing a string representation of the
-           temperature to the constructor.
+        The same as above, except passing a string representation of the
+        temperature to the constructor.
 
-           >>> import BioSimSpace as BSS
-           >>> time = BSS.Types.Temperature("298 K")
-           >>> print(temperature.celsius())
+        >>> import BioSimSpace as BSS
+        >>> time = BSS.Types.Temperature("298 K")
+        >>> print(temperature.celsius())
 
-           The string matching is extremeley flexible, so all of the following
-           would be valid arguments: "298 K", "298 kelvin", "2.98e2 k".
+        The string matching is extremeley flexible, so all of the following
+        would be valid arguments: "298 K", "298 kelvin", "2.98e2 k".
         """
 
         # Call the base class constructor.
@@ -120,7 +118,9 @@ class Temperature(_Type):
             if self._unit == other._unit:
                 if self._unit != "KELVIN":
                     if not allow_offset:
-                        raise ValueError("Ambiguous operation with offset unit: '%s'" % self._unit)
+                        raise ValueError(
+                            "Ambiguous operation with offset unit: '%s'" % self._unit
+                        )
                     else:
                         # Add the value in the original unit.
                         mag = self._value + other._value
@@ -131,7 +131,9 @@ class Temperature(_Type):
                     return super().__add__(other)
             else:
                 if not allow_offset:
-                    raise ValueError("Ambiguous operation with offset unit: '%s'" % self._unit)
+                    raise ValueError(
+                        "Ambiguous operation with offset unit: '%s'" % self._unit
+                    )
                 else:
                     # Left-hand operand takes precedence.
                     mag = self._value + other._convert_to(self._unit).value()
@@ -145,8 +147,10 @@ class Temperature(_Type):
             return self + temp
 
         else:
-            raise TypeError("unsupported operand type(s) for +: '%s' and '%s'"
-                % (self.__class__.__qualname__, other.__class__.__qualname__))
+            raise TypeError(
+                "unsupported operand type(s) for +: '%s' and '%s'"
+                % (self.__class__.__qualname__, other.__class__.__qualname__)
+            )
 
     def __sub__(self, other):
         """Subtraction operator."""
@@ -159,7 +163,9 @@ class Temperature(_Type):
             if self._unit == other._unit:
                 if self._unit != "KELVIN":
                     if not allow_offset:
-                        raise ValueError("Ambiguous operation with offset unit: '%s'" % self._unit)
+                        raise ValueError(
+                            "Ambiguous operation with offset unit: '%s'" % self._unit
+                        )
                     else:
                         # Subtract the value in the original unit.
                         mag = self._value - other._value
@@ -170,7 +176,9 @@ class Temperature(_Type):
                     return super().__sub__(other)
             else:
                 if not allow_offset:
-                    raise ValueError("Ambiguous operation with offset unit: '%s'" % self._unit)
+                    raise ValueError(
+                        "Ambiguous operation with offset unit: '%s'" % self._unit
+                    )
                 else:
                     # Left-hand operand takes precedence.
                     mag = self._value - other._convert_to(self._unit).value()
@@ -184,16 +192,21 @@ class Temperature(_Type):
             return self - temp
 
         else:
-            raise TypeError("unsupported operand type(s) for -: '%s' and '%s'"
-                % (self.__class__.__qualname__, other.__class__.__qualname__))
+            raise TypeError(
+                "unsupported operand type(s) for -: '%s' and '%s'"
+                % (self.__class__.__qualname__, other.__class__.__qualname__)
+            )
 
     def __mul__(self, other):
         """Multiplication operator."""
 
         if self._unit != "KELVIN":
             from ..Units import allow_offset
+
             if not allow_offset:
-                raise ValueError("Ambiguous operation with offset unit: '%s'" % self._unit)
+                raise ValueError(
+                    "Ambiguous operation with offset unit: '%s'" % self._unit
+                )
 
             else:
                 # Handle containers by converting each item in the container to
@@ -218,11 +231,14 @@ class Temperature(_Type):
                 # Multiplication by another type.
                 elif isinstance(other, _Type):
                     from ._general_unit import GeneralUnit as _GeneralUnit
+
                     return _GeneralUnit(self._to_sire_unit() * other._to_sire_unit())
 
                 else:
-                    raise TypeError("unsupported operand type(s) for *: '%s' and '%s'"
-                        % (self.__class__.__qualname__, other.__class__.__qualname__))
+                    raise TypeError(
+                        "unsupported operand type(s) for *: '%s' and '%s'"
+                        % (self.__class__.__qualname__, other.__class__.__qualname__)
+                    )
 
         else:
             return super().__mul__(other)
@@ -238,8 +254,11 @@ class Temperature(_Type):
 
         if self._unit != "KELVIN":
             from ..Units import allow_offset
+
             if not allow_offset:
-                raise ValueError("Ambiguous operation with offset unit: '%s'" % self._unit)
+                raise ValueError(
+                    "Ambiguous operation with offset unit: '%s'" % self._unit
+                )
 
             else:
                 # Convert int to float.
@@ -261,6 +280,7 @@ class Temperature(_Type):
                 # Division by another type.
                 elif isinstance(other, _Type):
                     from ._general_unit import GeneralUnit as _GeneralUnit
+
                     return _GeneralUnit(self._to_sire_unit() / other._to_sire_unit())
 
                 # Division by a string.
@@ -269,8 +289,10 @@ class Temperature(_Type):
                     return self / obj
 
                 else:
-                    raise TypeError("unsupported operand type(s) for /: '%s' and '%s'"
-                        % (self.__class__.__qualname__, other.__class__.__qualname__))
+                    raise TypeError(
+                        "unsupported operand type(s) for /: '%s' and '%s'"
+                        % (self.__class__.__qualname__, other.__class__.__qualname__)
+                    )
         else:
             return super().__truediv__(other)
 
@@ -279,52 +301,64 @@ class Temperature(_Type):
         return (self._value * self._supported_units[self._unit]).value()
 
     def kelvin(self):
-        """Return the temperature in Kelvin.
-
-           Returns
-           -------
-
-           temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
-               The temperature in Kelvin.
         """
-        return Temperature((self._value * self._supported_units[self._unit]).value(), "KELVIN")
+        Return the temperature in Kelvin.
+
+        Returns
+        -------
+
+        temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
+            The temperature in Kelvin.
+        """
+        return Temperature(
+            (self._value * self._supported_units[self._unit]).value(), "KELVIN"
+        )
 
     def celsius(self):
-        """Return the temperature in Celsius.
-
-           Returns
-           -------
-
-           temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
-               The temperature in Celsius.
         """
-        return Temperature((self._value * self._supported_units[self._unit]).to(_SireUnits.celsius), "CELSIUS")
+        Return the temperature in Celsius.
+
+        Returns
+        -------
+
+        temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
+            The temperature in Celsius.
+        """
+        return Temperature(
+            (self._value * self._supported_units[self._unit]).to(_SireUnits.celsius),
+            "CELSIUS",
+        )
 
     def fahrenheit(self):
-        """Return the temperature in Fahrenheit.
-
-           Returns
-           -------
-
-           temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
-               The temperature in Fahrenheit.
         """
-        return Temperature((self._value * self._supported_units[self._unit]).to(_SireUnits.fahrenheit), "FAHRENHEIT")
+        Return the temperature in Fahrenheit.
+
+        Returns
+        -------
+
+        temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
+            The temperature in Fahrenheit.
+        """
+        return Temperature(
+            (self._value * self._supported_units[self._unit]).to(_SireUnits.fahrenheit),
+            "FAHRENHEIT",
+        )
 
     def _to_default_unit(self, mag=None):
-        """Internal method to return an object of the same type in the default unit.
+        """
+        Internal method to return an object of the same type in the default unit.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           mag : float
-               The value (optional).
+        mag : float
+            The value (optional).
 
-           Returns
-           -------
+        Returns
+        -------
 
-           temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
-               The temperature in the default unit of Kelvin.
+        temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
+            The temperature in the default unit of Kelvin.
         """
         if mag is None:
             return self.kelvin()
@@ -332,19 +366,20 @@ class Temperature(_Type):
             return Temperature(mag, "KELVIN")
 
     def _convert_to(self, unit):
-        """Return the temperature in a different unit.
+        """
+        Return the temperature in a different unit.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           unit : str
-               The unit to convert to.
+        unit : str
+            The unit to convert to.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
-               The temperature in the specified unit.
+        temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
+            The temperature in the specified unit.
         """
         if unit == "KELVIN":
             return self.kelvin()
@@ -353,7 +388,9 @@ class Temperature(_Type):
         elif unit == "FAHRENHEIT":
             return self.fahrenheit()
         else:
-            raise ValueError("Supported units are: '%s'" % list(self._supported_units.keys()))
+            raise ValueError(
+                "Supported units are: '%s'" % list(self._supported_units.keys())
+            )
 
     def _validate_unit(self, unit):
         """Validate that the unit are supported."""
@@ -375,46 +412,53 @@ class Temperature(_Type):
         elif len(unit) == 0:
             raise ValueError(f"Unit is not given. You must supply the unit.")
         else:
-            raise ValueError("Unsupported unit '%s'. Supported units are: '%s'" % (
-                    unit, list(self._supported_units.keys())))
+            raise ValueError(
+                "Unsupported unit '%s'. Supported units are: '%s'"
+                % (unit, list(self._supported_units.keys()))
+            )
 
     def _to_sire_unit(self):
-        """Return the internal Sire Unit object to which this type corresponds.
+        """
+        Return the internal Sire Unit object to which this type corresponds.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           sire_unit : sire.units.GeneralUnit
-               The internal Sire Unit object that is being wrapped.
+        sire_unit : sire.units.GeneralUnit
+            The internal Sire Unit object that is being wrapped.
         """
         return self.kelvin().value() * _SireUnits.kelvin
 
     @classmethod
     def _from_sire_unit(cls, sire_unit):
-        """Convert from a Sire Units object.
+        """
+        Convert from a Sire Units object.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           sire_unit : sire.units.GeneralUnit, sire.units.Celsius, sire.units.Fahrenheit
-               The temperature as a Sire Units object.
+        sire_unit : sire.units.GeneralUnit, sire.units.Celsius, sire.units.Fahrenheit
+            The temperature as a Sire Units object.
         """
 
         if isinstance(sire_unit, _SireUnits.GeneralUnit):
             # Create a mask for the dimensions of the object.
-            dimensions = (sire_unit.ANGLE(),
-                          sire_unit.CHARGE(),
-                          sire_unit.LENGTH(),
-                          sire_unit.MASS(),
-                          sire_unit.QUANTITY(),
-                          sire_unit.TEMPERATURE(),
-                          sire_unit.TIME()
-                         )
+            dimensions = (
+                sire_unit.ANGLE(),
+                sire_unit.CHARGE(),
+                sire_unit.LENGTH(),
+                sire_unit.MASS(),
+                sire_unit.QUANTITY(),
+                sire_unit.TEMPERATURE(),
+                sire_unit.TIME(),
+            )
 
             # Make sure the dimensions match.
             if dimensions != cls._dimensions:
-                raise ValueError("The dimensions of the passed 'sire_unit' are incompatible with "
-                                f"'{cls.__name__}'")
+                raise ValueError(
+                    "The dimensions of the passed 'sire_unit' are incompatible with "
+                    f"'{cls.__name__}'"
+                )
 
             # Get the value in the default Sire unit for this type.
             value = sire_unit.to(cls._supported_units[cls._default_unit])
@@ -427,24 +471,27 @@ class Temperature(_Type):
             return cls(sire_unit.value(), cls._default_unit)
 
         else:
-            raise TypeError("'sire_unit' must be of type 'sire.units.GeneralUnit', "
-                            "'sire.units.Celsius', or 'sire.units.Fahrenheit'")
+            raise TypeError(
+                "'sire_unit' must be of type 'sire.units.GeneralUnit', "
+                "'sire.units.Celsius', or 'sire.units.Fahrenheit'"
+            )
 
     @staticmethod
     def _to_sire_format(unit):
-        """Reformat the unit string so it adheres to the Sire unit formatting.
+        """
+        Reformat the unit string so it adheres to the Sire unit formatting.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           unit : str
-               A string representation of the unit.
+        unit : str
+            A string representation of the unit.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           sire_unit : str
-               The unit string in Sire compatible format.
+        sire_unit : str
+            The unit string in Sire compatible format.
         """
 
         # Convert everything to Kelvin.

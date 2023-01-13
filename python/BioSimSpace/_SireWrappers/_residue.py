@@ -1,13 +1,13 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2022
+# Copyright: 2017-2023
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
 # BioSimSpace is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 2 of the License, or
+# the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
 # BioSimSpace is distributed in the hope that it will be useful,
@@ -35,17 +35,19 @@ from .. import _isVerbose
 
 from ._sire_wrapper import SireWrapper as _SireWrapper
 
+
 class Residue(_SireWrapper):
     """A class for storing a residue."""
 
     def __init__(self, residue):
-        """Constructor.
+        """
+        Constructor.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           residue : Sire.Mol.Residue, :class:`Residue <BioSimSpace._SireWrappers.Residue>`
-               A Sire or BioSimSpace Residue object.
+        residue : Sire.Mol.Residue, :class:`Residue <BioSimSpace._SireWrappers.Residue>`
+            A Sire or BioSimSpace Residue object.
         """
 
         # Check that the residue is valid.
@@ -60,8 +62,10 @@ class Residue(_SireWrapper):
 
         # Invalid type.
         else:
-            raise TypeError("'residue' must be of type 'Sire.Mol.Residue' "
-                            "or 'BioSimSpace._SireWrappers.Residue'.")
+            raise TypeError(
+                "'residue' must be of type 'Sire.Mol.Residue' "
+                "or 'BioSimSpace._SireWrappers.Residue'."
+            )
 
         # Call the base class constructor.
         super().__init__(sire_object)
@@ -80,13 +84,21 @@ class Residue(_SireWrapper):
 
     def __str__(self):
         """Return a human readable string representation of the object."""
-        return "<BioSimSpace.Residue: name=%r, molecule=%d, index=%d, nAtoms=%d>" \
-            % (self.name(), self.moleculeNumber(), self.index(), self.nAtoms())
+        return "<BioSimSpace.Residue: name=%r, molecule=%d, index=%d, nAtoms=%d>" % (
+            self.name(),
+            self.moleculeNumber(),
+            self.index(),
+            self.nAtoms(),
+        )
 
     def __repr__(self):
         """Return a string showing how to instantiate the object."""
-        return "<BioSimSpace.Residue: name=%r, molecule=%d, index=%d, nAtoms=%d>" \
-            % (self.name(), self.moleculeNumber(), self.index(), self.nAtoms())
+        return "<BioSimSpace.Residue: name=%r, molecule=%d, index=%d, nAtoms=%d>" % (
+            self.name(),
+            self.moleculeNumber(),
+            self.index(),
+            self.nAtoms(),
+        )
 
     def __contains__(self, other):
         """Return whether other is in self."""
@@ -120,7 +132,7 @@ class Residue(_SireWrapper):
             except:
                 raise TypeError("'key' must be of type 'int'")
 
-            if key < -self._num_atoms or key > self._num_atoms -1:
+            if key < -self._num_atoms or key > self._num_atoms - 1:
                 raise IndexError("Residue index is out of range.")
 
             if key < 0:
@@ -160,54 +172,58 @@ class Residue(_SireWrapper):
         return self._num_atoms
 
     def name(self):
-        """Return the name of the residue.
+        """
+        Return the name of the residue.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           name : str
-               The name of the residue.
+        name : str
+            The name of the residue.
         """
         return self._sire_object.name().value()
 
     def index(self):
-        """Return the index of the residue.
+        """
+        Return the index of the residue.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           index : int
-               The index of the residue.
+        index : int
+            The index of the residue.
         """
         return self._sire_object.index().value()
 
     def moleculeNumber(self):
-        """Return the number of the molecule to which this residue belongs.
+        """
+        Return the number of the molecule to which this residue belongs.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           number : int
-               The number of the molecule to which the residue belongs.
+        number : int
+            The number of the molecule to which the residue belongs.
         """
         return self._sire_object.molecule().number().value()
 
     def coordinates(self, property_map={}):
-        """Return the coordinates of the atoms in the residue.
+        """
+        Return the coordinates of the atoms in the residue.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           property_map : dict
-               A dictionary that maps system "properties" to their user defined
-               values. This allows the user to refer to properties with their
-               own naming scheme, e.g. { "charge" : "my-charge" }
+        property_map : dict
+            A dictionary that maps system "properties" to their user defined
+            values. This allows the user to refer to properties with their
+            own naming scheme, e.g. { "charge" : "my-charge" }
 
-           Returns
-           -------
+        Returns
+        -------
 
-           [coordinates] : [class:`Coordinate <BioSimSpace.Types.Coordinate>`]
-               The coordinates of the atoms in the residue.
+        [coordinates] : [class:`Coordinate <BioSimSpace.Types.Coordinate>`]
+            The coordinates of the atoms in the residue.
         """
         # Get the "coordinates" property for each atom in the residue.
         try:
@@ -221,27 +237,29 @@ class Residue(_SireWrapper):
         return coordinates
 
     def nAtoms(self):
-        """Return the number of atoms in the residue.
+        """
+        Return the number of atoms in the residue.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           num_atoms : int
-               The number of atoms in the system.
+        num_atoms : int
+            The number of atoms in the system.
         """
         return self._num_atoms
 
     def getAtoms(self):
-        """Return a list containing all of the atoms in the residue.
+        """
+        Return a list containing all of the atoms in the residue.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           Returns
-           -------
+        Returns
+        -------
 
-           atoms : [:class:`Atoms <BioSimSpace._SireWrappers.Atom>`]
-               The list of atoms in the residue.
+        atoms : [:class:`Atoms <BioSimSpace._SireWrappers.Atom>`]
+            The list of atoms in the residue.
         """
         atoms = []
         for atom in self._sire_object.atoms():
@@ -249,45 +267,49 @@ class Residue(_SireWrapper):
         return atoms
 
     def toMolecule(self):
-        """Convert a single Residue to a Molecule.
-
-           Returns
-           -------
-
-           system : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
         """
-        return _Molecule(_SireMol.PartialMolecule(self._sire_object).extract().molecule())
+        Convert a single Residue to a Molecule.
+
+        Returns
+        -------
+
+        system : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+        """
+        return _Molecule(
+            _SireMol.PartialMolecule(self._sire_object).extract().molecule()
+        )
 
     def search(self, query, property_map={}):
-        """Search the residue for atoms and residues.
+        """
+        Search the residue for atoms and residues.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           query : str
-               The search query.
+        query : str
+            The search query.
 
-           property_map : dict
-               A dictionary that maps system "properties" to their user defined
-               values. This allows the user to refer to properties with their
-               own naming scheme, e.g. { "charge" : "my-charge" }
+        property_map : dict
+            A dictionary that maps system "properties" to their user defined
+            values. This allows the user to refer to properties with their
+            own naming scheme, e.g. { "charge" : "my-charge" }
 
-           Returns
-           -------
+        Returns
+        -------
 
-           results : [:class:`Atom <BioSimSpace._SireWrappers.Atom>`]
-               A list of objects matching the search query.
+        results : [:class:`Atom <BioSimSpace._SireWrappers.Atom>`]
+            A list of objects matching the search query.
 
-           Examples
-           --------
+        Examples
+        --------
 
-           Search for all oxygen or hydrogen atoms.
+        Search for all oxygen or hydrogen atoms.
 
-           >>> result = residue.search("element oxygen or element hydrogen")
+        >>> result = residue.search("element oxygen or element hydrogen")
 
-           Search for atom index 23.
+        Search for atom index 23.
 
-           >>> result = residue.search("atomidx 23")
+        >>> result = residue.search("atomidx 23")
         """
 
         if not isinstance(query, str):
@@ -311,6 +333,7 @@ class Residue(_SireWrapper):
                 raise ValueError(msg) from None
 
         return _SearchResult(search_result)
+
 
 # Import at bottom of module to avoid circular dependency.
 from ._atom import Atom as _Atom

@@ -1,13 +1,13 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2022
+# Copyright: 2017-2023
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
 # BioSimSpace is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 2 of the License, or
+# the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
 # BioSimSpace is distributed in the hope that it will be useful,
@@ -38,17 +38,19 @@ from .._Exceptions import IncompatibleError as _IncompatibleError
 from ..Types import Length as _Length
 from .. import Units as _Units
 
-class SireWrapper():
+
+class SireWrapper:
     """A base class for wrapping Sire objects."""
 
     def __init__(self, object):
-        """Constructor.
+        """
+        Constructor.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           object : Sire.System.System, Sire.Mol.Molecule, Sire.Mol.Residue, Sire.Mol.Atom
-               A Sire object.
+        object : Sire.System.System, Sire.Mol.Molecule, Sire.Mol.Residue, Sire.Mol.Atom
+            A Sire object.
         """
 
         # Store a deep copy of the Sire object.
@@ -81,40 +83,42 @@ class SireWrapper():
         return hash(self._sire_object)
 
     def copy(self):
-        """Return a copy of this object. The return type is same as the object
-           on which copy is called.
+        """
+        Return a copy of this object. The return type is same as the object
+        on which copy is called.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           object : :class:`Atom <BioSimSpace._SireWrappers.Atom>`, \
-                    :class:`Residue <BioSimSpace._SireWrappers.Residue>`, \
-                    :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, \
-                    :class:`Molecules <BioSimSpace._SireWrappers.Molecules>`, \
-                    :class:`System <BioSimSpace._SireWrappers.System>`
-               A copy of the object.
+        object : :class:`Atom <BioSimSpace._SireWrappers.Atom>`, \
+                 :class:`Residue <BioSimSpace._SireWrappers.Residue>`, \
+                 :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, \
+                 :class:`Molecules <BioSimSpace._SireWrappers.Molecules>`, \
+                 :class:`System <BioSimSpace._SireWrappers.System>`
+            A copy of the object.
         """
         return type(self)(self)
 
     def charge(self, property_map={}, is_lambda1=False):
-        """Return the charge.
+        """
+        Return the charge.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           property_map : dict
-               A dictionary that maps system "properties" to their user defined
-               values. This allows the user to refer to properties with their
-               own naming scheme, e.g. { "charge" : "my-charge" }
+        property_map : dict
+            A dictionary that maps system "properties" to their user defined
+            values. This allows the user to refer to properties with their
+            own naming scheme, e.g. { "charge" : "my-charge" }
 
-           is_lambda1 : bool
-              Whether to use the charge at lambda = 1 if the object is peturbable.
+        is_lambda1 : bool
+           Whether to use the charge at lambda = 1 if the object is peturbable.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           charge : :class:`Charge <BioSimSpace.Types.Charge>`
-               The charge.
+        charge : :class:`Charge <BioSimSpace.Types.Charge>`
+            The charge.
         """
 
         if not isinstance(property_map, dict):
@@ -131,9 +135,9 @@ class SireWrapper():
             if self._is_perturbable:
                 # Compute the charge for the chosen end state.
                 if is_lambda1:
-                    _property_map = { "charge" : "charge1" }
+                    _property_map = {"charge": "charge1"}
                 else:
-                    _property_map = { "charge" : "charge0" }
+                    _property_map = {"charge": "charge0"}
 
         # Calculate the charge.
         try:
@@ -145,18 +149,19 @@ class SireWrapper():
         return charge * _Units.Charge.electron_charge
 
     def translate(self, vector, property_map={}):
-        """Translate the object.
+        """
+        Translate the object.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           vector : [:class:`Length <BioSimSpace.Types.Length>`]
-               The translation vector in Angstroms.
+        vector : [:class:`Length <BioSimSpace.Types.Length>`]
+            The translation vector in Angstroms.
 
-           property_map : dict
-               A dictionary that maps system "properties" to their user defined
-               values. This allows the user to refer to properties with their
-               own naming scheme, e.g. { "charge" : "my-charge" }
+        property_map : dict
+            A dictionary that maps system "properties" to their user defined
+            values. This allows the user to refer to properties with their
+            own naming scheme, e.g. { "charge" : "my-charge" }
         """
 
         # Convert tuple to a list.
@@ -174,8 +179,10 @@ class SireWrapper():
                 elif isinstance(x, _Length):
                     vec.append(x.angstroms().value())
                 else:
-                    raise TypeError("'vector' must contain 'int', 'float', or "
-                                    "'BioSimSpace.Types.Length' types only!")
+                    raise TypeError(
+                        "'vector' must contain 'int', 'float', or "
+                        "'BioSimSpace.Types.Length' types only!"
+                    )
         else:
             raise TypeError("'vector' must be of type 'list' or 'tuple'")
 
@@ -191,85 +198,92 @@ class SireWrapper():
                 _property_map["coordinates"] = "coordinates0"
 
             # Perform the translation.
-            self._sire_object = self._sire_object                                     \
-                                    .move()                                           \
-                                    .translate(_SireMaths.Vector(vec), _property_map) \
-                                    .commit()
+            self._sire_object = (
+                self._sire_object.move()
+                .translate(_SireMaths.Vector(vec), _property_map)
+                .commit()
+            )
 
             # This is a perturbable molecule. Now translate the lamba = 1 state.
             if self._is_perturbable:
                 _property_map["coordinates"] = "coordinates1"
 
                 # Perform the translation.
-                self._sire_object = self._sire_object                                     \
-                                        .move()                                           \
-                                        .translate(_SireMaths.Vector(vec), _property_map) \
-                                        .commit()
+                self._sire_object = (
+                    self._sire_object.move()
+                    .translate(_SireMaths.Vector(vec), _property_map)
+                    .commit()
+                )
 
         except UserWarning as e:
-            msg = "Cannot compute axis-aligned bounding box " + \
-                   "since the object has no 'coordinates' property."
+            msg = (
+                "Cannot compute axis-aligned bounding box "
+                + "since the object has no 'coordinates' property."
+            )
             if _isVerbose():
                 raise _IncompatibleError(msg) from e
             else:
                 raise _IncompatibleError(msg) from None
 
     def getAxisAlignedBoundingBox(self, property_map={}):
-        """Get the axis-aligned bounding box enclosing the object.
+        """
+        Get the axis-aligned bounding box enclosing the object.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           property_map : dict
-               A dictionary that maps system "properties" to their user defined
-               values. This allows the user to refer to properties with their
-               own naming scheme, e.g. { "charge" : "my-charge" }
+        property_map : dict
+            A dictionary that maps system "properties" to their user defined
+            values. This allows the user to refer to properties with their
+            own naming scheme, e.g. { "charge" : "my-charge" }
 
-           Returns
-           -------
+        Returns
+        -------
 
-           box_min : [:class:`Length <BioSimSpace.Types.Length>`]
-               The minimum coordinates of the axis-aligned bounding box in
-               each dimension.
+        box_min : [:class:`Length <BioSimSpace.Types.Length>`]
+            The minimum coordinates of the axis-aligned bounding box in
+            each dimension.
 
-           box_max : [:class:`Length <BioSimSpace.Types.Length>`]
-               The minimum coordinates of the axis-aligned bounding box in
-               each dimension.
+        box_max : [:class:`Length <BioSimSpace.Types.Length>`]
+            The minimum coordinates of the axis-aligned bounding box in
+            each dimension.
         """
         aabox = self._getAABox(property_map)
 
-        box_min = [x*_Units.Length.angstrom for x in aabox.minCoords()]
-        box_max = [x*_Units.Length.angstrom for x in aabox.maxCoords()]
+        box_min = [x.value() * _Units.Length.angstrom for x in aabox.minCoords()]
+        box_max = [x.value() * _Units.Length.angstrom for x in aabox.maxCoords()]
 
         return box_min, box_max
 
     def _getSireObject(self):
-        """Return the underlying Sire object.
+        """
+        Return the underlying Sire object.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           object : Sire.System.System, Sire.Mol.Molecule, Sire.Mol.Residue, Sire.Mol.Atom
-               The Sire object that is being wrapped.
+        object : Sire.System.System, Sire.Mol.Molecule, Sire.Mol.Residue, Sire.Mol.Atom
+            The Sire object that is being wrapped.
         """
         return self._sire_object
 
     def _getAABox(self, property_map={}):
-        """Get the axis-aligned bounding box for the object.
+        """
+        Get the axis-aligned bounding box for the object.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           property_map : dict
-               A dictionary that maps system "properties" to their user defined
-               values. This allows the user to refer to properties with their
-               own naming scheme, e.g. { "charge" : "my-charge" }
+        property_map : dict
+            A dictionary that maps system "properties" to their user defined
+            values. This allows the user to refer to properties with their
+            own naming scheme, e.g. { "charge" : "my-charge" }
 
-           Returns
-           -------
+        Returns
+        -------
 
-           aabox : Sire.Vol.AABox
-               The axis-aligned bounding box for the object.
+        aabox : Sire.Vol.AABox
+            The axis-aligned bounding box for the object.
         """
 
         # Initialise the coordinates vector.
@@ -281,16 +295,18 @@ class SireWrapper():
         if self._is_perturbable:
             prop = "coordinates0"
 
-        # Residues need to be converted to molecules to have a
-        # coordinates property.
+        # Residues now have a coordinates property, but this is returned as a
+        # Python list.
         try:
-            c = self._sire_object.property(prop)
+            c = self._sire_object.property(prop).toVector()
         except:
             try:
-                c = self.toMolecule()._sire_object.property(prop)
+                c = self._sire_object.property(prop)
             except Exception as e:
-                msg = "Cannot compute axis-aligned bounding box " + \
-                      "since the object has no 'coordinates' property."
+                msg = (
+                    "Cannot compute axis-aligned bounding box "
+                    + "since the object has no 'coordinates' property."
+                )
                 if _isVerbose():
                     print(msg)
                     raise _IncompatibleError(msg) from e
@@ -299,7 +315,7 @@ class SireWrapper():
 
         # We have a vector of coordinates. (Multiple atoms)
         if self._is_multi_atom:
-            coord.extend(c.toVector())
+            coord.extend(c)
         # Convert to a list.
         else:
             coord = [c]

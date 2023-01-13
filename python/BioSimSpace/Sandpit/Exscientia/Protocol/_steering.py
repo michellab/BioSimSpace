@@ -1,13 +1,13 @@
 #####################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2022
+# Copyright: 2017-2023
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
 # BioSimSpace is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 2 of the License, or
+# the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
 # BioSimSpace is distributed in the hope that it will be useful,
@@ -19,9 +19,7 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-"""
-Functionality for steered molecular dynamics protocols.
-"""
+"""Functionality for steered molecular dynamics protocols."""
 
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
@@ -40,64 +38,67 @@ from ._protocol import Protocol as _Protocol
 # Store the collective variable base type.
 _colvar_type = _CollectiveVariable._collective_variable.CollectiveVariable
 
+
 class Steering(_Protocol):
     """A class for storing steered molecular dynamics protocols."""
 
-    def __init__(self,
-                 collective_variable,
-                 schedule,
-                 restraints,
-                 verse="both",
-                 timestep=_Types.Time(2, "femtosecond"),
-                 runtime=_Types.Time(1, "nanosecond"),
-                 temperature=_Types.Temperature(300, "kelvin"),
-                 pressure=_Types.Pressure(1, "atmosphere"),
-                 report_interval=1000,
-                 restart_interval=1000,
-                 colvar_file=None
-                ):
-        """Constructor.
+    def __init__(
+        self,
+        collective_variable,
+        schedule,
+        restraints,
+        verse="both",
+        timestep=_Types.Time(2, "femtosecond"),
+        runtime=_Types.Time(1, "nanosecond"),
+        temperature=_Types.Temperature(300, "kelvin"),
+        pressure=_Types.Pressure(1, "atmosphere"),
+        report_interval=1000,
+        restart_interval=1000,
+        colvar_file=None,
+    ):
+        """
+        Constructor.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           collective_variable : :class:`CollectiveVariable <BioSimSpace.Metadynamics.CollectiveVariable>`, \
-                                [:class:`CollectiveVariable <BioSimSpace.Metadynamics.CollectiveVariable>`]
-               The collective variable (or variables) used to perform the steering.
+        collective_variable : :class:`CollectiveVariable <BioSimSpace.Metadynamics.CollectiveVariable>`, \
+                             [:class:`CollectiveVariable <BioSimSpace.Metadynamics.CollectiveVariable>`]
+            The collective variable (or variables) used to perform the steering.
 
-           schedule : [:class:`Time <BioSimSpace.Types.Time>`]
-               The time schedule for the steering.
+        schedule : [:class:`Time <BioSimSpace.Types.Time>`]
+            The time schedule for the steering.
 
-           restraints : [:class:`Restraint <BioSimSpace.Metadynamics.Restraint>`] \
-                        [(:class:`Restraint <BioSimSpace.Metadynamics.Restraint>`)]]
-               The position of the restraint on each collective variable for
-               each stage of the schedule.
+        restraints : [:class:`Restraint <BioSimSpace.Metadynamics.Restraint>`] \
+                    [(:class:`Restraint <BioSimSpace.Metadynamics.Restraint>`)]]
+            The position of the restraint on each collective variable for
+            each stage of the schedule.
 
-           verse : str
-               Whether the restraint is acting for values of the collective
-               variable "larger" or "smaller" than the restraint, or acting
-               on "both" sides (default).
+        verse : str
+            Whether the restraint is acting for values of the collective
+            variable "larger" or "smaller" than the restraint, or acting
+            on "both" sides (default).
 
-           timestep : :class:`Time <BioSimSpace.Types.Time>`
-               The integration timestep.
+        timestep : :class:`Time <BioSimSpace.Types.Time>`
+            The integration timestep.
 
-           runtime : :class:`Time <BioSimSpace.Types.Time>`
-               The running time.
+        runtime : :class:`Time <BioSimSpace.Types.Time>`
+            The running time.
 
-           temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
-               The temperature.
+        temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
+            The temperature.
 
-           pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
-               The pressure. Pass pressure=None to use the NVT ensemble.
+        pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
+            The pressure. Pass pressure=None to use the NVT ensemble.
 
-           restart_interval : int
-               The frequency at which restart configurations and trajectory
-               frames are saved. (In integration steps.)
+        restart_interval : int
+            The frequency at which restart configurations and trajectory
+            frames are saved. (In integration steps.)
 
-           colvar_file : str
-               The path to a COLVAR file from a previous simulation. The
-               information in the file must be consistent with the
-               'collective_variable' argument.
+        colvar_file : str
+            The path to a COLVAR file from a previous simulation. The
+            information in the file must be consistent with the
+            'collective_variable' argument.
         """
 
         # Call the base class constructor.
@@ -175,25 +176,27 @@ class Steering(_Protocol):
         return self.__str__()
 
     def getCollectiveVariable(self):
-        """Return the collective variable (or variables).
+        """
+        Return the collective variable (or variables).
 
-           Returns
-           -------
+        Returns
+        -------
 
-           collective_variable : [:class:`CollectiveVariable <BioSimSpace.Metadynamics.CollectiveVariable>`]
-               The collective variable (or variables) for the simulation.
+        collective_variable : [:class:`CollectiveVariable <BioSimSpace.Metadynamics.CollectiveVariable>`]
+            The collective variable (or variables) for the simulation.
         """
         return self._collective_variable.copy()
 
     def setCollectiveVariable(self, collective_variable):
-        """Set the collective variable (or variables).
+        """
+        Set the collective variable (or variables).
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           collective_variable : :class:`CollectiveVariable <BioSimSpace.Metadynamics.CollectiveVariable>`, \
-                                [:class:`CollectiveVariable <BioSimSpace.Metadynamics.CollectiveVariable>`]
-               The collective variable (or variables) for the simulation.
+        collective_variable : :class:`CollectiveVariable <BioSimSpace.Metadynamics.CollectiveVariable>`, \
+                             [:class:`CollectiveVariable <BioSimSpace.Metadynamics.CollectiveVariable>`]
+            The collective variable (or variables) for the simulation.
         """
 
         # A single collective variable.
@@ -203,12 +206,16 @@ class Steering(_Protocol):
         else:
             if isinstance(collective_variable, (list, tuple)):
                 if not all(isinstance(x, _colvar_type) for x in collective_variable):
-                    raise TypeError("'collective_variable' must all be of type "
-                                    "'BioSimSpace.Metadynamics.CollectiveVariable'")
+                    raise TypeError(
+                        "'collective_variable' must all be of type "
+                        "'BioSimSpace.Metadynamics.CollectiveVariable'"
+                    )
             else:
-                raise TypeError("'collective_variable' must be of type "
-                                "'BioSimSpace.Metadynamics.CollectiveVariable' "
-                                "or a list of 'BioSimSpace.Metadynamics.CollectiveVariable' types.")
+                raise TypeError(
+                    "'collective_variable' must be of type "
+                    "'BioSimSpace.Metadynamics.CollectiveVariable' "
+                    "or a list of 'BioSimSpace.Metadynamics.CollectiveVariable' types."
+                )
 
             self._collective_variable = collective_variable
 
@@ -218,14 +225,15 @@ class Steering(_Protocol):
             self.setRestraints(self._restraints)
 
     def getSchedule(self):
-        """Return steering schedule.
+        """
+        Return steering schedule.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           schedule : [int]
-               The schedule for the steering, i.e. the integration time steps
-               at which restraints are applied/adjusted.
+        schedule : [int]
+            The schedule for the steering, i.e. the integration time steps
+            at which restraints are applied/adjusted.
         """
         steps = []
         for time in self._schedule:
@@ -233,22 +241,25 @@ class Steering(_Protocol):
         return steps
 
     def setSchedule(self, schedule):
-        """Set the steering schedule.
+        """
+        Set the steering schedule.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           schedule : [:class:`Time <BioSimSpace.Types.Tme>`]
-               The time schedule for the steering.
+        schedule : [:class:`Time <BioSimSpace.Types.Tme>`]
+            The time schedule for the steering.
         """
 
         if isinstance(schedule, (list, tuple)):
             if not all(isinstance(x, _Types.Time) for x in schedule):
-                raise TypeError("'schedule' must all be of type "
-                                "'BioSimSpace.Types.Time'")
+                raise TypeError(
+                    "'schedule' must all be of type " "'BioSimSpace.Types.Time'"
+                )
         else:
-            raise TypeError("'schedule' must be a list of "
-                            "'BioSimSpace.Types.Time' types.")
+            raise TypeError(
+                "'schedule' must be a list of " "'BioSimSpace.Types.Time' types."
+            )
 
         # Make sure the times are linearly increasing and are less than
         # the total run time.
@@ -270,39 +281,45 @@ class Steering(_Protocol):
             self.setRestraints(self._restraints)
 
     def getRestraints(self):
-        """Return the restraint on each collective variable for each stage in
-           the schedule.
+        """
+        Return the restraint on each collective variable for each stage in
+        the schedule.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           restraints : [:class`CollectiveVariable <BioSimSpace.Metadynamics.CollectiveVariable>`] \
-                        [(:class:`CollectiveVariable <BioSimSpace.Metadynamics.CollectiveVariable>`)]]
-               The position of the restraint on each collective variable for
-               each stage of the schedule.
+        restraints : [:class`CollectiveVariable <BioSimSpace.Metadynamics.CollectiveVariable>`] \
+                     [(:class:`CollectiveVariable <BioSimSpace.Metadynamics.CollectiveVariable>`)]]
+            The position of the restraint on each collective variable for
+            each stage of the schedule.
         """
         return self._restraints.copy()
 
     def setRestraints(self, restraints):
-        """Set the restraints for the steering schedule.
+        """
+        Set the restraints for the steering schedule.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           restraint : [:class`Restraint <BioSimSpace.Metadynamics.Restraint>`] \
-                       [(:class:`Restraint <BioSimSpace.Metadynamics.Restraint>`)]]
-               The position of the restraint on each collective variable for
-               each stage of the schedule.
+        restraint : [:class`Restraint <BioSimSpace.Metadynamics.Restraint>`] \
+                    [(:class:`Restraint <BioSimSpace.Metadynamics.Restraint>`)]]
+            The position of the restraint on each collective variable for
+            each stage of the schedule.
         """
 
         # Validate type.
         if not isinstance(restraints, (list, tuple)):
-            raise TypeError("'restraints' must be a list of "
-                            "'BioSimSpace.CollectiveVariable.Restraint' types.")
+            raise TypeError(
+                "'restraints' must be a list of "
+                "'BioSimSpace.CollectiveVariable.Restraint' types."
+            )
 
         # Make sure we are self-consistent with the schedule.
         if len(restraints) != len(self._schedule):
-            raise ValueError(f"'len(restraints) != len(schedule), i.e. {len(restraints)} != {len(self._schedule)}")
+            raise ValueError(
+                f"'len(restraints) != len(schedule), i.e. {len(restraints)} != {len(self._schedule)}"
+            )
 
         # Convert all single entries to lists and validate types.
         new_restraints = []
@@ -317,20 +334,29 @@ class Steering(_Protocol):
             # Validate that there is a restraint for each collective variable
             # for each stage in the schedule.
             if len(restraint) != num_cvs:
-                raise ValueError("Must have a restraint for each collective "
-                                 "variable for each stage of the schedule.")
+                raise ValueError(
+                    "Must have a restraint for each collective "
+                    "variable for each stage of the schedule."
+                )
             # Validate type.
             if not all(isinstance(x, _Restraint) for x in restraint):
-                raise TypeError("'restraint' must all be of type "
-                                "'BioSimSpace.Metadynamics.Restraint'")
+                raise TypeError(
+                    "'restraint' must all be of type "
+                    "'BioSimSpace.Metadynamics.Restraint'"
+                )
             # Validate that restraints are harmonic.
             if not all(r.getSlope() == 0 for r in restraint):
                 raise ValueError("'restraints' can only contain harmonic restraints!")
             # Validate that the value of the restraint matches the type of each
             # collective variable for each stage in the schedule.
-            if not all(type(r.getValue()) in self._collective_variable[x]._types for x, r in enumerate(restraint)):
-                raise ValueError("The type of value for each restraint must match the "
-                                 "type of the collective variable to which it corresponds.")
+            if not all(
+                type(r.getValue()) in self._collective_variable[x]._types
+                for x, r in enumerate(restraint)
+            ):
+                raise ValueError(
+                    "The type of value for each restraint must match the "
+                    "type of the collective variable to which it corresponds."
+                )
 
             # Append to the new list.
             new_restraints.append(restraint)
@@ -338,32 +364,34 @@ class Steering(_Protocol):
         self._restraints = new_restraints
 
     def getVerse(self):
-        """Returns whether the restraint is acting for values of the collective
-           variable "larger" or "smaller" than the restraint, or acting on "both"
-           sides (default).
+        """
+        Returns whether the restraint is acting for values of the collective
+        variable "larger" or "smaller" than the restraint, or acting on "both"
+        sides (default).
 
-           Returns
-           -------
+        Returns
+        -------
 
-           verse : str
-               Whether the restraint is acting for values of the collective
-               variable "larger" or "smaller" than the restraint, or acting
-               on "both" sides (default).
+        verse : str
+            Whether the restraint is acting for values of the collective
+            variable "larger" or "smaller" than the restraint, or acting
+            on "both" sides (default).
         """
         return self._verse
 
     def setVerse(self, verse):
-        """Set whether the restraint is acting for values of the collective
-           variable "larger" or "smaller" than the restraint, or acting on "both"
-           sides (default).
+        """
+        Set whether the restraint is acting for values of the collective
+        variable "larger" or "smaller" than the restraint, or acting on "both"
+        sides (default).
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           verse : str, [str]
-               Whether the restraint is acting for values of the collective
-               variable "larger" or "smaller" than the restraint, or acting
-               on "both" sides (default).
+        verse : str, [str]
+            Whether the restraint is acting for values of the collective
+            variable "larger" or "smaller" than the restraint, or acting
+            on "both" sides (default).
         """
 
         # Convert string to list.
@@ -373,9 +401,13 @@ class Steering(_Protocol):
 
         if isinstance(verse, (list, tuple)):
             if not all(isinstance(x, str) for x in verse):
-                raise TypeError("'verse' must be of type 'str' or a list of 'str' types.")
+                raise TypeError(
+                    "'verse' must be of type 'str' or a list of 'str' types."
+                )
             elif len(verse) != len(self.getCollectiveVariable()):
-                raise ValueError("'verse' must be of same length as 'collective_variable'")
+                raise ValueError(
+                    "'verse' must be of same length as 'collective_variable'"
+                )
         else:
             raise TypeError("'verse' must be of type 'str' or a list of 'str' types.")
 
@@ -394,24 +426,26 @@ class Steering(_Protocol):
         self._verse = new_verse
 
     def getTimeStep(self):
-        """Return the time step.
+        """
+        Return the time step.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           timestep : :class:`Time <BioSimSpace.Types.Time>`
-               The integration time step.
+        timestep : :class:`Time <BioSimSpace.Types.Time>`
+            The integration time step.
         """
         return self._timestep
 
     def setTimeStep(self, timestep):
-        """Set the time step.
+        """
+        Set the time step.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           timestep : :class:`Time <BioSimSpace.Types.Time>`
-               The integration time step.
+        timestep : :class:`Time <BioSimSpace.Types.Time>`
+            The integration time step.
         """
         if isinstance(timestep, _Types.Time):
             self._timestep = timestep
@@ -424,24 +458,26 @@ class Steering(_Protocol):
             self.setSchedule(self._schedule)
 
     def getRunTime(self):
-        """Return the running time.
+        """
+        Return the running time.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           runtime : :class:`Time <BioSimSpace.Types.Time>`
-               The simulation run time.
+        runtime : :class:`Time <BioSimSpace.Types.Time>`
+            The simulation run time.
         """
         return self._runtime
 
     def setRunTime(self, runtime):
-        """Set the running time.
+        """
+        Set the running time.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           runtime : :class:`Time <BioSimSpace.Types.Time>`
-               The simulation run time.
+        runtime : :class:`Time <BioSimSpace.Types.Time>`
+            The simulation run time.
         """
         if isinstance(runtime, _Types.Time):
             self._runtime = runtime
@@ -454,49 +490,55 @@ class Steering(_Protocol):
             self.setSchedule(self._schedule)
 
     def getTemperature(self):
-        """Return temperature.
+        """
+        Return temperature.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
-               The simulation temperature.
+        temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
+            The simulation temperature.
         """
         return self._temperature
 
     def setTemperature(self, temperature):
-        """Set the temperature.
+        """
+        Set the temperature.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
-               The simulation temperature.
+        temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
+            The simulation temperature.
         """
         if isinstance(temperature, _Types.Temperature):
             self._temperature = temperature
         else:
-            raise TypeError("'temperature' must be of type 'BioSimSpace.Types.Temperature'")
+            raise TypeError(
+                "'temperature' must be of type 'BioSimSpace.Types.Temperature'"
+            )
 
     def getPressure(self):
-        """Return the pressure.
+        """
+        Return the pressure.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
-               The pressure.
+        pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
+            The pressure.
         """
         return self._pressure
 
     def setPressure(self, pressure):
-        """Set the pressure.
+        """
+        Set the pressure.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
-               The pressure.
+        pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
+            The pressure.
         """
         if isinstance(pressure, _Types.Pressure):
             self._pressure = pressure
@@ -504,24 +546,26 @@ class Steering(_Protocol):
             raise TypeError("'pressure' must be of type 'BioSimSpace.Types.Pressure'")
 
     def getReportInterval(self):
-        """Return the interval between reporting statistics. (In integration steps.)
+        """
+        Return the interval between reporting statistics. (In integration steps.).
 
-           Returns
-           -------
+        Returns
+        -------
 
-           report_interval : int
-               The number of integration steps between reporting statistics.
+        report_interval : int
+            The number of integration steps between reporting statistics.
         """
         return self._report_interval
 
     def setReportInterval(self, report_interval):
-        """Set the interval at which statistics are reported. (In integration steps.)
+        """
+        Set the interval at which statistics are reported. (In integration steps.).
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           report_interval : int
-               The number of integration steps between reporting statistics.
+        report_interval : int
+            The number of integration steps between reporting statistics.
         """
         if not type(report_interval) is int:
             raise TypeError("'report_interval' must be of type 'int'")
@@ -533,28 +577,30 @@ class Steering(_Protocol):
         self._report_interval = report_interval
 
     def getRestartInterval(self):
-        """Return the interval between saving restart confiugrations, and/or
-           trajectory frames. (In integration steps.)
+        """
+        Return the interval between saving restart confiugrations, and/or
+        trajectory frames. (In integration steps.).
 
-           Returns
-           -------
+        Returns
+        -------
 
-           restart_interval : int
-               The number of integration steps between saving restart
-               configurations and/or trajectory frames.
+        restart_interval : int
+            The number of integration steps between saving restart
+            configurations and/or trajectory frames.
         """
         return self._restart_interval
 
     def setRestartInterval(self, restart_interval):
-        """Set the interval between saving restart confiugrations, and/or
-           trajectory frames. (In integration steps.)
+        """
+        Set the interval between saving restart confiugrations, and/or
+        trajectory frames. (In integration steps.).
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           restart_interval : int
-               The number of integration steps between saving restart
-               configurations and/or trajectory frames.
+        restart_interval : int
+            The number of integration steps between saving restart
+            configurations and/or trajectory frames.
         """
         if not type(restart_interval) is int:
             raise TypeError("'restart_interval' must be of type 'int'")
@@ -566,24 +612,26 @@ class Steering(_Protocol):
         self._restart_interval = restart_interval
 
     def getColvarFile(self):
-        """Return the path to the COLVAR file.
+        """
+        Return the path to the COLVAR file.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           colvar_file : str
-               The path to the COLVAR file.
+        colvar_file : str
+            The path to the COLVAR file.
         """
         return self._colvar_file
 
     def setColvarFile(self, colvar_file):
-        """Set the location of an existing COLVAR file.
+        """
+        Set the location of an existing COLVAR file.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           colvar_file : str
-               The path to an existing COLVAR file.
+        colvar_file : str
+            The path to an existing COLVAR file.
         """
         if not isinstance(colvar_file, str):
             raise ValueError("'colvar_file' must be of type 'str'")

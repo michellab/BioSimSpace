@@ -1,13 +1,13 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2022
+# Copyright: 2017-2023
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
 # BioSimSpace is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 2 of the License, or
+# the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
 # BioSimSpace is distributed in the hope that it will be useful,
@@ -19,9 +19,7 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-"""
-Utility class for interfacing with PLUMED.
-"""
+"""Utility class for interfacing with PLUMED."""
 
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
@@ -32,6 +30,7 @@ from .._Utils import _try_import
 
 import glob as _glob
 import os as _os
+
 _pygtail = _try_import("pygtail")
 import shlex as _shlex
 import shutil as _shutil
@@ -56,18 +55,20 @@ from .. import Units as _Units
 
 from ._process import _MultiDict
 
-class Plumed():
+
+class Plumed:
     """A class for interfacing with PLUMED."""
 
     def __init__(self, work_dir):
-        """Constructor.
+        """
+        Constructor.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           work_dir : str
-               The working directory of the process that is interfacing
-               with PLUMED.
+        work_dir : str
+            The working directory of the process that is interfacing
+            with PLUMED.
         """
 
         # Check that the working directory is valid.
@@ -79,20 +80,26 @@ class Plumed():
 
         # Try to locate the PLUMED executable.
         try:
-            self._exe= _findExe("plumed").absoluteFilePath()
+            self._exe = _findExe("plumed").absoluteFilePath()
         except:
-            raise _Exceptions.MissingSoftwareError("Metadynamics simulations required "
-                "that PLUMED is installed: www.plumed.org")
+            raise _Exceptions.MissingSoftwareError(
+                "Metadynamics simulations required "
+                "that PLUMED is installed: www.plumed.org"
+            )
 
         # Run a PLUMED as a background process to query the version number.
         command = "%s info --version" % self._exe
-        process = _subprocess.run(_Utils.command_split(command), shell=False, stdout=_subprocess.PIPE)
+        process = _subprocess.run(
+            _Utils.command_split(command), shell=False, stdout=_subprocess.PIPE
+        )
 
         if process.returncode == 0:
             self._plumed_version = float(process.stdout.decode("ascii").strip())
 
             if self._plumed_version < 2.5:
-                raise _Exceptions.IncompatibleError("PLUMED version >= 2.5 is required.")
+                raise _Exceptions.IncompatibleError(
+                    "PLUMED version >= 2.5 is required."
+                )
 
         else:
             raise _Exceptions.IncompatibleError("Could not determine PLUMED version!")
@@ -139,33 +146,36 @@ class Plumed():
         self._has_config = False
 
     def createConfig(self, system, protocol, property_map={}):
-        """Create a PLUMED configuration file.
+        """
+        Create a PLUMED configuration file.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           system : :class:`System <BioSimSpace._SireWrappers.System>`
-               A BioSimSpace system object.
+        system : :class:`System <BioSimSpace._SireWrappers.System>`
+            A BioSimSpace system object.
 
-           protocol : :class:`Protocol.Metadynamics <BioSimSpace.Protocol.Metadynamics>`, \
-                      :class:`Protocol.Steering <BioSimSpace.Protocol.Steering>`, \
-               The metadynamics or steered molecular dynamics protocol.
+        protocol : :class:`Protocol.Metadynamics <BioSimSpace.Protocol.Metadynamics>`, \
+                    :class:`Protocol.Steering <BioSimSpace.Protocol.Steering>`, \
+            The metadynamics or steered molecular dynamics protocol.
 
-           property_map : dict
-               A dictionary that maps system "properties" to their user defined
-               values. This allows the user to refer to properties with their
-               own naming scheme, e.g. { "charge" : "my-charge" }
+        property_map : dict
+            A dictionary that maps system "properties" to their user defined
+            values. This allows the user to refer to properties with their
+            own naming scheme, e.g. { "charge" : "my-charge" }
 
-           Returns
-           -------
+        Returns
+        -------
 
-           config, auxiliary_files : [str], [str]
-               The list of PLUMED configuration strings and paths to any auxiliary
-               files required by the collective variables.
+        config, auxiliary_files : [str], [str]
+            The list of PLUMED configuration strings and paths to any auxiliary
+            files required by the collective variables.
         """
 
         if not isinstance(system, _System):
-            raise TypeError("'system' must be of type 'BioSimSpace._SireWrappers.System'")
+            raise TypeError(
+                "'system' must be of type 'BioSimSpace._SireWrappers.System'"
+            )
 
         # Create a metadynamics protocol.
         if isinstance(protocol, _Metadynamics):
@@ -176,39 +186,46 @@ class Plumed():
             return self._createSteeringConfig(system, protocol, property_map)
 
         else:
-            raise TypeError("'protocol' must be of type 'BioSimSpace.Protocol.Metadynamics' "
-                            " or 'BioSimSpace.Protocol.Steering'")
+            raise TypeError(
+                "'protocol' must be of type 'BioSimSpace.Protocol.Metadynamics' "
+                " or 'BioSimSpace.Protocol.Steering'"
+            )
 
     def _createMetadynamicsConfig(self, system, protocol, property_map={}):
-        """Create a PLUMED metadynamics configuration file.
+        """
+        Create a PLUMED metadynamics configuration file.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           system : :class:`System <BioSimSpace._SireWrappers.System>`
-               A BioSimSpace system object.
+        system : :class:`System <BioSimSpace._SireWrappers.System>`
+            A BioSimSpace system object.
 
-           protocol : :class:`Protocol.Metadynamics <BioSimSpace.Protocol.Metadynamics>`
-               The metadynamics protocol.
+        protocol : :class:`Protocol.Metadynamics <BioSimSpace.Protocol.Metadynamics>`
+            The metadynamics protocol.
 
-           property_map : dict
-               A dictionary that maps system "properties" to their user defined
-               values. This allows the user to refer to properties with their
-               own naming scheme, e.g. { "charge" : "my-charge" }
+        property_map : dict
+            A dictionary that maps system "properties" to their user defined
+            values. This allows the user to refer to properties with their
+            own naming scheme, e.g. { "charge" : "my-charge" }
 
-           Returns
-           -------
+        Returns
+        -------
 
-           config, auxiliary_files : [str], [str]
-               The list of PLUMED configuration strings and paths to any auxiliary
-               files required by the collective variables.
+        config, auxiliary_files : [str], [str]
+            The list of PLUMED configuration strings and paths to any auxiliary
+            files required by the collective variables.
         """
 
         if not isinstance(system, _System):
-            raise TypeError("'system' must be of type 'BioSimSpace._SireWrappers.System'")
+            raise TypeError(
+                "'system' must be of type 'BioSimSpace._SireWrappers.System'"
+            )
 
         if not isinstance(protocol, _Metadynamics):
-            raise TypeError("'protocol' must be of type 'BioSimSpace.Protocol.Metadynamics'")
+            raise TypeError(
+                "'protocol' must be of type 'BioSimSpace.Protocol.Metadynamics'"
+            )
 
         if not isinstance(property_map, dict):
             raise TypeError("'property_map' must be of type 'dict'")
@@ -313,10 +330,12 @@ class Plumed():
                             # Check the upper bound is greater than dim/2 for
                             # each dimension.
                             for dim in dimensions:
-                                if value >= 0.5*dim:
-                                    message = ("The simulation box is too small for the funnel. "
-                                               "Try reducing the upper bound of the collective "
-                                               "variable or increasing the box size.")
+                                if value >= 0.5 * dim:
+                                    message = (
+                                        "The simulation box is too small for the funnel. "
+                                        "Try reducing the upper bound of the collective "
+                                        "variable or increasing the box size."
+                                    )
                                     raise _Exceptions.IncompatibleError(message)
 
                         # Handle TriclinicBox.
@@ -328,10 +347,12 @@ class Plumed():
 
                             # Check the upper bound is greater than mag/2 for
                             for mag in [m0, m1, m2]:
-                                if value >= 0.5*mag:
-                                    message = ("The simulation box is too small for the funnel. "
-                                               "Try reducing the upper bound of the collective "
-                                               "variable or increasing the box size.")
+                                if value >= 0.5 * mag:
+                                    message = (
+                                        "The simulation box is too small for the funnel. "
+                                        "Try reducing the upper bound of the collective "
+                                        "variable or increasing the box size."
+                                    )
                                     raise _Exceptions.IncompatibleError(message)
 
                 # Here we assume that we have a solvated protein/ligand
@@ -344,7 +365,9 @@ class Plumed():
                     atom_nums.append(mol.nAtoms())
 
                 # Sort the molecule indices by the number of atoms they contain.
-                sorted_nums = sorted((value, num) for value, num in zip(atom_nums, system._mol_nums))
+                sorted_nums = sorted(
+                    (value, num) for value, num in zip(atom_nums, system._mol_nums)
+                )
 
                 # Store the indices of the largest and second largest molecules.
                 molecules = [sorted_nums[-1][1], sorted_nums[-2][1]]
@@ -354,7 +377,13 @@ class Plumed():
                 if self._plumed_version < 2.7:
                     aux_file = "ProjectionOnAxis.cpp"
                     self._config.append(f"LOAD FILE={aux_file}")
-                    aux_file = _os.path.dirname(_CollectiveVariable.__file__).replace("CollectiveVariable", "_aux") + "/" + aux_file
+                    aux_file = (
+                        _os.path.dirname(_CollectiveVariable.__file__).replace(
+                            "CollectiveVariable", "_aux"
+                        )
+                        + "/"
+                        + aux_file
+                    )
                     self._aux_files.append(aux_file)
 
             # RMSD.
@@ -368,8 +397,11 @@ class Plumed():
             for idx in atoms:
                 # The atom index is invalid.
                 if idx >= system.nAtoms():
-                    raise _Exceptions.IncompatibleError("The collective variable is incompatible with the "
-                        "system. Contains atom index %d, number of atoms in system is %d " % (idx, system.nAtoms()))
+                    raise _Exceptions.IncompatibleError(
+                        "The collective variable is incompatible with the "
+                        "system. Contains atom index %d, number of atoms in system is %d "
+                        % (idx, system.nAtoms())
+                    )
 
                 # Get the molecule numbers in this system.
                 mol_nums = system._sire_object.molNums()
@@ -378,7 +410,7 @@ class Plumed():
                 for x, num in enumerate(mol_nums):
                     # The atom was in the previous molecule.
                     if system._atom_index_tally[num] > idx:
-                        num = mol_nums[x-1]
+                        num = mol_nums[x - 1]
                         break
 
                 # This is a new molecule.
@@ -397,7 +429,7 @@ class Plumed():
             num_atoms = system._sire_object.molecule(molecule).nAtoms()
 
             # Create the entity record. Remember to one-index the atoms.
-            string += " ENTITY%d=%d-%d" % (x, idx+1, idx+num_atoms)
+            string += " ENTITY%d=%d-%d" % (x, idx + 1, idx + num_atoms)
 
         # Append the string to the configuration list.
         self._config.append("\n# Define the molecular entities.")
@@ -461,8 +493,10 @@ class Plumed():
                     num_center += 1
                     colvar_string += "c%d" % num_center
 
-                    center_string = "c%d: CENTER ATOMS=%s" \
-                        % (num_center, ",".join([str(x+1) for x in atom0]))
+                    center_string = "c%d: CENTER ATOMS=%s" % (
+                        num_center,
+                        ",".join([str(x + 1) for x in atom0]),
+                    )
 
                     # Center of mass weighting takes precedence.
                     if is_com0:
@@ -470,7 +504,9 @@ class Plumed():
 
                     # User weights.
                     elif weights0 is not None:
-                        center_string += " WEIGHTS=%s" % ",".join([str(x) for x in weights0])
+                        center_string += " WEIGHTS=%s" % ",".join(
+                            [str(x) for x in weights0]
+                        )
 
                     self._config.append(center_string)
 
@@ -482,7 +518,9 @@ class Plumed():
                     z = atom0.z().nanometers().value()
 
                     num_fixed += 1
-                    self._config.append("f%d: FIXEDATOM AT=%s,%s,%s" % (num_fixed, x, y, z))
+                    self._config.append(
+                        "f%d: FIXEDATOM AT=%s,%s,%s" % (num_fixed, x, y, z)
+                    )
                     colvar_string += "f%d" % num_fixed
 
                 # Process the second atom(s) or fixed coordinate.
@@ -496,8 +534,10 @@ class Plumed():
                     num_center += 1
                     colvar_string += ",c%d" % num_center
 
-                    center_string = "c%d: CENTER ATOMS=%s" \
-                        % (num_center, ",".join([str(x+1) for x in atom1]))
+                    center_string = "c%d: CENTER ATOMS=%s" % (
+                        num_center,
+                        ",".join([str(x + 1) for x in atom1]),
+                    )
 
                     # Center of mass weighting takes precedence.
                     if is_com1:
@@ -505,7 +545,9 @@ class Plumed():
 
                     # User weights.
                     elif weights1 is not None:
-                        center_string += " WEIGHTS=%s" % ",".join([str(x) for x in weights1])
+                        center_string += " WEIGHTS=%s" % ",".join(
+                            [str(x) for x in weights1]
+                        )
 
                     self._config.append(center_string)
 
@@ -517,7 +559,9 @@ class Plumed():
                     z = atom1.z().nanometers().value()
 
                     num_fixed += 1
-                    self._config.append("f%d: FIXEDATOM AT=%s,%s,%s" % (num_fixed, x, y, z))
+                    self._config.append(
+                        "f%d: FIXEDATOM AT=%s,%s,%s" % (num_fixed, x, y, z)
+                    )
                     colvar_string += ",f%d" % num_fixed
 
                 # Disable periodic boundaries.
@@ -546,8 +590,10 @@ class Plumed():
                 is_torsion = True
                 num_torsion += 1
                 arg_name = "t%d" % num_torsion
-                colvar_string = "%s: TORSION ATOMS=%s" \
-                    % (arg_name, ",".join([str(x+1) for x in colvar.getAtoms()]))
+                colvar_string = "%s: TORSION ATOMS=%s" % (
+                    arg_name,
+                    ",".join([str(x + 1) for x in colvar.getAtoms()]),
+                )
 
                 # Store the collective variable name and its unit.
                 self._colvar_name.append(arg_name)
@@ -613,21 +659,25 @@ class Plumed():
                 num_atoms = system._sire_object.molecule(molecule).nAtoms()
 
                 # Create the ligand record. Remember to one-index the atoms.
-                colvar_string = "lig: COM ATOMS=%d-%d" % (idx+1, idx+num_atoms)
+                colvar_string = "lig: COM ATOMS=%d-%d" % (idx + 1, idx + num_atoms)
                 self._config.append(colvar_string)
 
                 # Create the center-of-mass record for the atoms that are used
                 # to define the funnel origin.
                 arg_name = "p1"
-                colvar_string = "%s: COM ATOMS=%s" \
-                    % (arg_name, ",".join([str(x+1) for x in colvar.getAtoms0()]))
+                colvar_string = "%s: COM ATOMS=%s" % (
+                    arg_name,
+                    ",".join([str(x + 1) for x in colvar.getAtoms0()]),
+                )
                 self._config.append(colvar_string)
 
                 # Create the center-of-mass record for the atoms that are used
                 # to define the funnel inflection point.
                 arg_name = "p2"
-                colvar_string = "%s: COM ATOMS=%s" \
-                    % (arg_name, ",".join([str(x+1) for x in colvar.getAtoms1()]))
+                colvar_string = "%s: COM ATOMS=%s" % (
+                    arg_name,
+                    ",".join([str(x + 1) for x in colvar.getAtoms1()]),
+                )
                 self._config.append(colvar_string)
 
                 # Create the "projection-on-axis" collective variable.
@@ -638,10 +688,18 @@ class Plumed():
                 # Add funnel parameters.
                 self._config.append("")
                 self._config.append("# Funnel parameters.")
-                self._config.append(f"s_cent: CONSTANT VALUES={colvar.getInflection().value()}")  # inflection
-                self._config.append(f"beta_cent: CONSTANT VALUES={colvar.getSteepness()}")        # steepness
-                self._config.append(f"wall_width: CONSTANT VALUES={colvar.getWidth().value()}")   # width
-                self._config.append(f"wall_buffer: CONSTANT VALUES={colvar.getBuffer().value()}") # total = width + buffer
+                self._config.append(
+                    f"s_cent: CONSTANT VALUES={colvar.getInflection().value()}"
+                )  # inflection
+                self._config.append(
+                    f"beta_cent: CONSTANT VALUES={colvar.getSteepness()}"
+                )  # steepness
+                self._config.append(
+                    f"wall_width: CONSTANT VALUES={colvar.getWidth().value()}"
+                )  # width
+                self._config.append(
+                    f"wall_buffer: CONSTANT VALUES={colvar.getBuffer().value()}"
+                )  # total = width + buffer
 
                 # Define the funnel calculation. This function returns the
                 # radius of the funnel at the current value of the collective
@@ -649,7 +707,9 @@ class Plumed():
                 self._config.append("\n# Calculate the funnel.")
                 self._config.append("MATHEVAL ...")
                 self._config.append("        LABEL=wall_center")
-                self._config.append("        ARG=pp.proj,s_cent,beta_cent,wall_width,wall_buffer")
+                self._config.append(
+                    "        ARG=pp.proj,s_cent,beta_cent,wall_width,wall_buffer"
+                )
                 self._config.append("        VAR=s,sc,b,h,f")
                 self._config.append("        FUNC=h*(1./(1.+exp(b*(s-sc))))+f")
                 self._config.append("        PERIODIC=NO")
@@ -675,7 +735,10 @@ class Plumed():
             # This only applies to the first collective variable name.
             if lower_wall is not None:
                 self._num_lower_walls += 1
-                lower_wall_string = "lwall%d: LOWER_WALLS ARG=%s" % (self._num_lower_walls, arg_name[0])
+                lower_wall_string = "lwall%d: LOWER_WALLS ARG=%s" % (
+                    self._num_lower_walls,
+                    arg_name[0],
+                )
                 try:
                     # Unit based.
                     lower_wall_string += ", AT=%s" % lower_wall.getValue().value()
@@ -692,7 +755,10 @@ class Plumed():
             # This only applies to the first collective variable name.
             if upper_wall is not None:
                 self._num_upper_walls += 1
-                upper_wall_string = "uwall%d: UPPER_WALLS ARG=%s" % (self._num_upper_walls, arg_name[0])
+                upper_wall_string = "uwall%d: UPPER_WALLS ARG=%s" % (
+                    self._num_upper_walls,
+                    arg_name[0],
+                )
                 try:
                     # Unit based.
                     upper_wall_string += ", AT=%s" % upper_wall.getValue().value()
@@ -708,27 +774,39 @@ class Plumed():
             # Store grid data.
             if grid is not None:
                 if is_torsion:
-                        grid_data.append(("-pi", "pi", grid.getBins()))
+                    grid_data.append(("-pi", "pi", grid.getBins()))
                 elif is_funnel:
                     # Grid for "projection" component.
-                    grid_data.append((grid[0].getMinimum().value(),
-                                      grid[0].getMaximum().value(),
-                                      grid[0].getBins()))
+                    grid_data.append(
+                        (
+                            grid[0].getMinimum().value(),
+                            grid[0].getMaximum().value(),
+                            grid[0].getBins(),
+                        )
+                    )
                     # Grid for "extent" component.
-                    grid_data.append((grid[1].getMinimum().value(),
-                                      grid[1].getMaximum().value(),
-                                      grid[1].getBins()))
+                    grid_data.append(
+                        (
+                            grid[1].getMinimum().value(),
+                            grid[1].getMaximum().value(),
+                            grid[1].getBins(),
+                        )
+                    )
                 else:
                     try:
                         # Unit based.
-                        grid_data.append((grid.getMinimum().value(),
-                                          grid.getMaximum().value(),
-                                          grid.getBins()))
+                        grid_data.append(
+                            (
+                                grid.getMinimum().value(),
+                                grid.getMaximum().value(),
+                                grid.getBins(),
+                            )
+                        )
                     except:
                         # Dimensionless.
-                        grid_data.append((grid.getMinimum(),
-                                          grid.getMaximum(),
-                                          grid.getBins()))
+                        grid_data.append(
+                            (grid.getMinimum(), grid.getMaximum(), grid.getBins())
+                        )
 
             # Add the argument to the METAD record. We join argument names with
             # a "," to handle multi-component collective variables.
@@ -781,7 +859,9 @@ class Plumed():
                     grid_bin_string += ","
 
             metad_string += grid_min_string + grid_max_string + grid_bin_string
-            metad_string += " GRID_WFILE=GRID GRID_WSTRIDE=%s" % protocol.getHillFrequency()
+            metad_string += (
+                " GRID_WFILE=GRID GRID_WSTRIDE=%s" % protocol.getHillFrequency()
+            )
             if is_restart and _os.path.isfile(f"{self._work_dir}/GRID"):
                 metad_string += " GRID_RFILE=GRID"
             metad_string += " CALC_RCT"
@@ -805,35 +885,40 @@ class Plumed():
         return self._config, self._aux_files
 
     def _createSteeringConfig(self, system, protocol, property_map={}):
-        """Create a PLUMED steering molecular dynamics configuration file.
+        """
+        Create a PLUMED steering molecular dynamics configuration file.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           system : :class:`System <BioSimSpace._SireWrappers.System>`
-               A BioSimSpace system object.
+        system : :class:`System <BioSimSpace._SireWrappers.System>`
+            A BioSimSpace system object.
 
-           protocol : :class:`Protocol.Steering <BioSimSpace.Protocol.Steering>`
-               The metadynamics protocol.
+        protocol : :class:`Protocol.Steering <BioSimSpace.Protocol.Steering>`
+            The metadynamics protocol.
 
-           property_map : dict
-               A dictionary that maps system "properties" to their user defined
-               values. This allows the user to refer to properties with their
-               own naming scheme, e.g. { "charge" : "my-charge" }
+        property_map : dict
+            A dictionary that maps system "properties" to their user defined
+            values. This allows the user to refer to properties with their
+            own naming scheme, e.g. { "charge" : "my-charge" }
 
-           Returns
-           -------
+        Returns
+        -------
 
-           config, auxiliary_files : [str], [str]
-               The list of PLUMED configuration strings and paths to any auxiliary
-               files required by the collective variables.
+        config, auxiliary_files : [str], [str]
+            The list of PLUMED configuration strings and paths to any auxiliary
+            files required by the collective variables.
         """
 
         if not isinstance(system, _System):
-            raise TypeError("'system' must be of type 'BioSimSpace._SireWrappers.System'")
+            raise TypeError(
+                "'system' must be of type 'BioSimSpace._SireWrappers.System'"
+            )
 
         if not isinstance(protocol, _Steering):
-            raise TypeError("'protocol' must be of type 'BioSimSpace.Protocol.Steering'")
+            raise TypeError(
+                "'protocol' must be of type 'BioSimSpace.Protocol.Steering'"
+            )
 
         if not isinstance(property_map, dict):
             raise TypeError("'property_map' must be of type 'dict'")
@@ -902,7 +987,9 @@ class Plumed():
 
             # Funnel.
             if isinstance(colvar, _CollectiveVariable.Funnel):
-                raise ValueError("'CollectiveVariable.Funnel' is not supported for steered molecular dynamics.")
+                raise ValueError(
+                    "'CollectiveVariable.Funnel' is not supported for steered molecular dynamics."
+                )
 
             # RMSD.
             elif isinstance(colvar, _CollectiveVariable.RMSD):
@@ -915,8 +1002,11 @@ class Plumed():
             for idx in atoms:
                 # The atom index is invalid.
                 if idx >= system.nAtoms():
-                    raise _Exceptions.IncompatibleError("The collective variable is incompatible with the "
-                        "system. Contains atom index %d, number of atoms in system is %d " % (idx, system.nAtoms()))
+                    raise _Exceptions.IncompatibleError(
+                        "The collective variable is incompatible with the "
+                        "system. Contains atom index %d, number of atoms in system is %d "
+                        % (idx, system.nAtoms())
+                    )
 
                 # Get the molecule numbers in this system.
                 mol_nums = system._sire_object.molNums()
@@ -925,7 +1015,7 @@ class Plumed():
                 for x, num in enumerate(mol_nums):
                     # The atom was in the previous molecule.
                     if system._atom_index_tally[num] > idx:
-                        num = mol_nums[x-1]
+                        num = mol_nums[x - 1]
                         break
 
                 # This is a new molecule.
@@ -944,7 +1034,7 @@ class Plumed():
             num_atoms = system._sire_object.molecule(molecule).nAtoms()
 
             # Create the entity record. Remember to one-index the atoms.
-            string += " ENTITY%d=%d-%d" % (x, idx+1, idx+num_atoms)
+            string += " ENTITY%d=%d-%d" % (x, idx + 1, idx + num_atoms)
 
         # Append the string to the configuration list.
         self._config.append("\n# Define the molecular entities.")
@@ -999,8 +1089,10 @@ class Plumed():
                     num_center += 1
                     colvar_string += "c%d" % num_center
 
-                    center_string = "c%d: CENTER ATOMS=%s" \
-                        % (num_center, ",".join([str(x+1) for x in atom0]))
+                    center_string = "c%d: CENTER ATOMS=%s" % (
+                        num_center,
+                        ",".join([str(x + 1) for x in atom0]),
+                    )
 
                     # Center of mass weighting takes precedence.
                     if is_com0:
@@ -1008,7 +1100,9 @@ class Plumed():
 
                     # User weights.
                     elif weights0 is not None:
-                        center_string += " WEIGHTS=%s" % ",".join([str(x) for x in weights0])
+                        center_string += " WEIGHTS=%s" % ",".join(
+                            [str(x) for x in weights0]
+                        )
 
                     self._config.append(center_string)
 
@@ -1020,7 +1114,9 @@ class Plumed():
                     z = atom0.z().nanometers().value()
 
                     num_fixed += 1
-                    self._config.append("f%d: FIXEDATOM AT=%s,%s,%s" % (num_fixed, x, y, z))
+                    self._config.append(
+                        "f%d: FIXEDATOM AT=%s,%s,%s" % (num_fixed, x, y, z)
+                    )
                     colvar_string += "f%d" % num_fixed
 
                 # Process the second atom(s) or fixed coordinate.
@@ -1034,8 +1130,10 @@ class Plumed():
                     num_center += 1
                     colvar_string += ",c%d" % num_center
 
-                    center_string = "c%d: CENTER ATOMS=%s" \
-                        % (num_center, ",".join([str(x+1) for x in atom1]))
+                    center_string = "c%d: CENTER ATOMS=%s" % (
+                        num_center,
+                        ",".join([str(x + 1) for x in atom1]),
+                    )
 
                     # Center of mass weighting takes precedence.
                     if is_com1:
@@ -1043,7 +1141,9 @@ class Plumed():
 
                     # User weights.
                     elif weights1 is not None:
-                        center_string += " WEIGHTS=%s" % ",".join([str(x) for x in weights1])
+                        center_string += " WEIGHTS=%s" % ",".join(
+                            [str(x) for x in weights1]
+                        )
 
                     self._config.append(center_string)
 
@@ -1055,7 +1155,9 @@ class Plumed():
                     z = atom1.z().nanometers().value()
 
                     num_fixed += 1
-                    self._config.append("f%d: FIXEDATOM AT=%s,%s,%s" % (num_fixed, x, y, z))
+                    self._config.append(
+                        "f%d: FIXEDATOM AT=%s,%s,%s" % (num_fixed, x, y, z)
+                    )
                     colvar_string += ",f%d" % num_fixed
 
                 # Disable periodic boundaries.
@@ -1084,8 +1186,10 @@ class Plumed():
                 is_torsion = True
                 num_torsion += 1
                 arg_name = "t%d" % num_torsion
-                colvar_string = "%s: TORSION ATOMS=%s" \
-                    % (arg_name, ",".join([str(x+1) for x in colvar.getAtoms()]))
+                colvar_string = "%s: TORSION ATOMS=%s" % (
+                    arg_name,
+                    ",".join([str(x + 1) for x in colvar.getAtoms()]),
+                )
 
                 # Store the collective variable name and its unit.
                 self._colvar_name.append(arg_name)
@@ -1107,11 +1211,16 @@ class Plumed():
             elif isinstance(colvar, _CollectiveVariable.RMSD):
                 num_rmsd += 1
                 arg_name = "r%d" % num_rmsd
-                colvar_string = "%s: RMSD REFERENCE=reference_%i.pdb" % (arg_name, num_rmsd)
+                colvar_string = "%s: RMSD REFERENCE=reference_%i.pdb" % (
+                    arg_name,
+                    num_rmsd,
+                )
                 colvar_string += " TYPE=%s" % colvar.getAlignmentType().upper()
 
                 # Write the reference PDB file.
-                with open("%s/reference_%i.pdb" % (self._work_dir, num_rmsd), "w") as file:
+                with open(
+                    "%s/reference_%i.pdb" % (self._work_dir, num_rmsd), "w"
+                ) as file:
                     for line in colvar.getReferencePDB():
                         file.write(line + "\n")
 
@@ -1150,9 +1259,7 @@ class Plumed():
 
         # Create the VERSE record.
         verse_string = "  VERSE="
-        mapping = {"both"    : "B",
-                   "larger"  : "U",
-                   "smaller" : "L"}
+        mapping = {"both": "B", "larger": "U", "smaller": "L"}
         verse = protocol.getVerse()
         mapped_verse = [mapping[v] for v in verse]
         verse_string += ",".join(mapped_verse)
@@ -1161,8 +1268,8 @@ class Plumed():
         # Add all the stages of the schedule.
         for x in range(0, len(schedule)):
             # Initialise the strings.
-            step  = f"STEP{x}={schedule[x]}"
-            at    = (16-len(str(schedule[x])))*" " + f"AT{x}="
+            step = f"STEP{x}={schedule[x]}"
+            at = (16 - len(str(schedule[x]))) * " " + f"AT{x}="
             kappa = f"KAPPA{x}="
 
             # Loop over all restraints for this stage.
@@ -1174,10 +1281,10 @@ class Plumed():
                     val = val.nanometers().value()
                 elif isinstance(val, _Types.Angle):
                     val = val.radians().value()
-                at    += f"{val:.6f}"
+                at += f"{val:.6f}"
                 kappa += f"{r.getForceConstant():.2f}"
                 if idx < self._num_colvar - 1:
-                    at    += ","
+                    at += ","
                     kappa += ","
 
             # Add the stage to the config.
@@ -1187,7 +1294,9 @@ class Plumed():
         self._config.append("... MOVINGRESTRAINT")
 
         # Add PRINT record.
-        print_string = "PRINT STRIDE=%s ARG=* FILE=COLVAR" % protocol.getReportInterval()
+        print_string = (
+            "PRINT STRIDE=%s ARG=* FILE=COLVAR" % protocol.getReportInterval()
+        )
         self._config.append(print_string)
 
         # Flag that we have a valid config.
@@ -1196,19 +1305,20 @@ class Plumed():
         return self._config, self._aux_files
 
     def getTime(self, time_series=False):
-        """Get the simulation run time.
+        """
+        Get the simulation run time.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           time_series : bool
-               Whether to return a list of time series records.
+        time_series : bool
+            Whether to return a list of time series records.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           time : :class:`Time <BioSimSpace.Types.Time>`
-               The simulation run time.
+        time : :class:`Time <BioSimSpace.Types.Time>`
+            The simulation run time.
         """
 
         # We need to have generated a valid config before being able to parse
@@ -1221,32 +1331,33 @@ class Plumed():
         self._update_colvar_dict()
 
         # Get the corresponding data from the dictionary and return.
-        return self._get_colvar_record(key="time",
-                                       time_series=time_series,
-                                       unit=_Units.Time.picosecond)
+        return self._get_colvar_record(
+            key="time", time_series=time_series, unit=_Units.Time.picosecond
+        )
 
     def getCollectiveVariable(self, index, time_series=False):
-        """Get the value of a collective variable.
+        """
+        Get the value of a collective variable.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           index : int
-               The index of the collective variable (CV), or CV component. If
-               there are a mixture of single and multi-component CVs, then they
-               are indexed by the total number of components in the CV list that
-               was passed to the protocol. For example, if there are two CVs,
-               the first with one component and the second with two, then index
-               1 would refer to the first component of the second CV.
+        index : int
+            The index of the collective variable (CV), or CV component. If
+            there are a mixture of single and multi-component CVs, then they
+            are indexed by the total number of components in the CV list that
+            was passed to the protocol. For example, if there are two CVs,
+            the first with one component and the second with two, then index
+            1 would refer to the first component of the second CV.
 
-           time_series : bool
-               Whether to return a list of time series records.
+        time_series : bool
+            Whether to return a list of time series records.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           collective_variable : :class:`Type <BioSimSpace.Types>`
-               The value of the collective variable.
+        collective_variable : :class:`Type <BioSimSpace.Types>`
+            The value of the collective variable.
         """
 
         # We need to have generated a valid config before being able to parse
@@ -1258,41 +1369,47 @@ class Plumed():
         if not type(index) is int:
             raise TypeError("'index' must be of type 'int'")
         if index > self._num_components - 1 or index < -self._num_components:
-            raise IndexError("'index' must be in range -%d to %d" % (self._num_components, self._num_components-1))
+            raise IndexError(
+                "'index' must be in range -%d to %d"
+                % (self._num_components, self._num_components - 1)
+            )
 
         # Get the latest records.
         self._update_colvar_dict()
 
         # Get the corresponding data from the dictionary and return.
-        return self._get_colvar_record(key=self._colvar_name[index],
-                                       time_series=time_series,
-                                       unit=self._colvar_unit[self._colvar_name[index]])
+        return self._get_colvar_record(
+            key=self._colvar_name[index],
+            time_series=time_series,
+            unit=self._colvar_unit[self._colvar_name[index]],
+        )
 
     def getFreeEnergy(self, index=None, stride=None, kt=_Types.Energy(1.0, "kt")):
-        """Get the current free energy estimate.
+        """
+        Get the current free energy estimate.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           index : int
-               The index of the collective variable (CV), or CV component. If
-               there are a mixture of single and multi-component CVs, then they
-               are indexed by the total number of components in the CV list that
-               was passed to the protocol. For example, if there are two CVs,
-               the first with one component and the second with two, then index
-               1 would refer to the first component of the second CV. If None,
-               then all variables and components will be considered.
+        index : int
+            The index of the collective variable (CV), or CV component. If
+            there are a mixture of single and multi-component CVs, then they
+            are indexed by the total number of components in the CV list that
+            was passed to the protocol. For example, if there are two CVs,
+            the first with one component and the second with two, then index
+            1 would refer to the first component of the second CV. If None,
+            then all variables and components will be considered.
 
-           stride : int
-               The stride for integrating the free energy. This can be used to
-               check for convergence.
+        stride : int
+            The stride for integrating the free energy. This can be used to
+            check for convergence.
 
-           kt : :class:`Energy <BioSimSpace.Types.Energy>`
-               The temperature in energy units for integrating out variables.
+        kt : :class:`Energy <BioSimSpace.Types.Energy>`
+            The temperature in energy units for integrating out variables.
 
-           free_energies : [:class:`Type <BioSimSpace.Types>`, ...], \
-                           [[:class:`Type <BioSimSpace.Types>`, :class:`Type <BioSimSpace.Types>`, ...], ...]
-               The free energy estimate for the chosen collective variables.
+        free_energies : [:class:`Type <BioSimSpace.Types>`, ...], \
+                        [[:class:`Type <BioSimSpace.Types>`, :class:`Type <BioSimSpace.Types>`, ...], ...]
+            The free energy estimate for the chosen collective variables.
         """
 
         # We need to have generated a valid config before being able to compute
@@ -1305,7 +1422,10 @@ class Plumed():
             if not type(index) is int:
                 raise TypeError("'index' must be of type 'int'")
             if index > self._num_components - 1 or index < -self._num_components:
-                raise IndexError("'index' must be in range -%d to %d" % (self._num_components, self._num_components-1))
+                raise IndexError(
+                    "'index' must be in range -%d to %d"
+                    % (self._num_components, self._num_components - 1)
+                )
 
         if stride is not None:
             if not type(stride) is int:
@@ -1343,12 +1463,19 @@ class Plumed():
         with _Utils.cd(self._work_dir + "/fes"):
 
             # Run the sum_hills command as a background process.
-            proc = _subprocess.run(_Utils.command_split(command), shell=False, text=True,
-                stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
+            proc = _subprocess.run(
+                _Utils.command_split(command),
+                shell=False,
+                text=True,
+                stdout=_subprocess.PIPE,
+                stderr=_subprocess.PIPE,
+            )
 
             if proc.returncode != 0:
-                raise RuntimeError("Failed to generate free energy estimate.\n"
-                                   "Error: %s" % proc.stderr)
+                raise RuntimeError(
+                    "Failed to generate free energy estimate.\n"
+                    "Error: %s" % proc.stderr
+                )
 
             # Get a sorted list of all the fes*.dat files.
             fes_files = _glob.glob("fes*.dat")
@@ -1403,12 +1530,21 @@ class Plumed():
                                 if index is None:
                                     for x in range(0, self._num_components):
                                         name = self._colvar_name[x]
-                                        free_energy[x].append(data[x] * self._colvar_unit[name])
-                                    free_energy[self._num_components].append(data[self._num_components] * _Units.Energy.kj_per_mol)
+                                        free_energy[x].append(
+                                            data[x] * self._colvar_unit[name]
+                                        )
+                                    free_energy[self._num_components].append(
+                                        data[self._num_components]
+                                        * _Units.Energy.kj_per_mol
+                                    )
                                 else:
                                     name = self._colvar_name[0]
-                                    free_energy[0].append(data[0] * self._colvar_unit[name])
-                                    free_energy[1].append(data[1] * _Units.Energy.kj_per_mol)
+                                    free_energy[0].append(
+                                        data[0] * self._colvar_unit[name]
+                                    )
+                                    free_energy[1].append(
+                                        data[1] * _Units.Energy.kj_per_mol
+                                    )
 
                 if len(fes_files) == 1:
                     free_energies = free_energy
@@ -1442,7 +1578,7 @@ class Plumed():
 
                 # Is this a header line. If so, store the keys.
                 if line[3:9] == "FIELDS":
-                    self._colvar_keys = line[10:].split()[:self._num_components+1]
+                    self._colvar_keys = line[10:].split()[: self._num_components + 1]
 
                 # This is an actual data record. Update the multi-dictionary.
                 elif line[0] != "#":
@@ -1485,25 +1621,26 @@ class Plumed():
                     self._hills_dict[key] = value
 
     def _get_colvar_record(self, key, time_series=False, unit=None):
-        """Helper function to get a COLVAR record from the dictionary.
+        """
+        Helper function to get a COLVAR record from the dictionary.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           key : str
-               The record key.
+        key : str
+            The record key.
 
-           time_series : bool
-               Whether to return a time series of records.
+        time_series : bool
+            Whether to return a time series of records.
 
-           unit : BioSimSpace.Types._type.Type
-               The unit to convert the record to.
+        unit : BioSimSpace.Types._type.Type
+            The unit to convert the record to.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           record :
-               The matching stdout record.
+        record :
+            The matching stdout record.
         """
 
         # No data!
@@ -1526,7 +1663,9 @@ class Plumed():
                     return self._colvar_dict[key]
                 else:
                     if key == "time":
-                        return [(x * unit).nanoseconds() for x in self._colvar_dict[key]]
+                        return [
+                            (x * unit).nanoseconds() for x in self._colvar_dict[key]
+                        ]
                     else:
                         return [x * unit for x in self._colvar_dict[key]]
 
@@ -1548,25 +1687,26 @@ class Plumed():
                 return None
 
     def _get_hills_record(self, key, time_series=False, unit=None):
-        """Helper function to get a HILLS record from the dictionary.
+        """
+        Helper function to get a HILLS record from the dictionary.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           key : str
-               The record key.
+        key : str
+            The record key.
 
-           time_series : bool
-               Whether to return a time series of records.
+        time_series : bool
+            Whether to return a time series of records.
 
-           unit : BioSimSpace.Types._type.Type
-               The unit to convert the record to.
+        unit : BioSimSpace.Types._type.Type
+            The unit to convert the record to.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           record :
-               The matching stdout record.
+        record :
+            The matching stdout record.
         """
 
         # No data!

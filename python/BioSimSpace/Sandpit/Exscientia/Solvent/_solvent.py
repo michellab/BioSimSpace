@@ -1,13 +1,13 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2022
+# Copyright: 2017-2023
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
 # BioSimSpace is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 2 of the License, or
+# the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
 # BioSimSpace is distributed in the hope that it will be useful,
@@ -19,9 +19,7 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-"""
-Functionality for solvating molecular systems.
-"""
+"""Functionality for solvating molecular systems."""
 
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
@@ -42,7 +40,7 @@ from sire.legacy import Mol as _SireMol
 from sire.legacy.Maths import Vector as _Vector
 from sire.legacy.Vol import TriclinicBox as _TriclinicBox
 
-from sire.units import degree as _degree
+from sire.legacy.Units import degree as _degree
 
 from .. import _gmx_exe, _gmx_path
 from .. import _isVerbose
@@ -58,52 +56,63 @@ from ..Types import Length as _Length
 from .. import IO as _IO
 from .. import _Utils
 
-def solvate(model, molecule=None, box=None, angles=3*[_Angle(90, "degrees")],
-        shell=None, ion_conc=0, is_neutral=True, work_dir=None, property_map={}):
-    """Add SPC solvent.
 
-       Parameters
-       ----------
+def solvate(
+    model,
+    molecule=None,
+    box=None,
+    angles=3 * [_Angle(90, "degrees")],
+    shell=None,
+    ion_conc=0,
+    is_neutral=True,
+    work_dir=None,
+    property_map={},
+):
+    """
+    Solvate with the specified water model..
 
-       model : str
-           The name of the water model.
+    Parameters
+    ----------
 
-       molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, \
-                  :class:`Molecule <BioSimSpace._SireWrappers.Molecules>`, \
-                  :class:`System <BioSimSpace._SireWrappers.System>`
-           A molecule, or container/system of molecules.
+    model : str
+        The name of the water model.
 
-       box : [:class:`Length <BioSimSpace.Types.Length>`]
-           A list containing the box size in each dimension: x, y, and z.
+    molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, \
+               :class:`Molecule <BioSimSpace._SireWrappers.Molecules>`, \
+               :class:`System <BioSimSpace._SireWrappers.System>`
+        A molecule, or container/system of molecules.
 
-       angles : [:class:`Angle <BioSimSpace.Types.Angle>`]
-           A list containing the angles between the box vectors: yz, xz, and xy.
+    box : [:class:`Length <BioSimSpace.Types.Length>`]
+        A list containing the box size in each dimension: x, y, and z.
 
-       shell : :class:`Length` <BioSimSpace.Types.Length>`
-           Thickness of the water shell around the solute. Note that the
-           base length of the resulting box must be at least twice as large
-           as the cutoff used by the chosen molecular dynamics engine. As such,
-           the shell option is often unsuitable for small molecules.
+    angles : [:class:`Angle <BioSimSpace.Types.Angle>`]
+        A list containing the angles between the box vectors: yz, xz, and xy.
 
-       ion_conc : float
-           The ion concentration in (mol per litre).
+    shell : :class:`Length` <BioSimSpace.Types.Length>`
+        Thickness of the water shell around the solute. Note that the
+        base length of the resulting box must be at least twice as large
+        as the cutoff used by the chosen molecular dynamics engine. As such,
+        the shell option is often unsuitable for small molecules.
 
-       is_neutral : bool
-           Whether to neutralise the system.
+    ion_conc : float
+        The ion concentration in (mol per litre).
 
-       work_dir : str
-           The working directory for the process.
+    is_neutral : bool
+        Whether to neutralise the system.
 
-       property_map : dict
-           A dictionary that maps system "properties" to their user defined
-           values. This allows the user to refer to properties with their
-           own naming scheme, e.g. { "charge" : "my-charge" }
+    work_dir : str
+        The working directory for the process.
 
-       Returns
-       -------
+    property_map : dict
+        A dictionary that maps system "properties" to their user defined
+        values. This allows the user to refer to properties with their
+        own naming scheme, e.g. { "charge" : "my-charge" }
 
-       system : :class:`System <BioSimSpace._SireWrappers.System>`
-           The solvated molecular system.
+    Returns
+    -------
+
+    system : :class:`System <BioSimSpace._SireWrappers.System>`
+        The solvated molecular system.
     """
 
     if not isinstance(model, str):
@@ -116,338 +125,499 @@ def solvate(model, molecule=None, box=None, angles=3*[_Angle(90, "degrees")],
         if model not in _models_lower:
             raise ValueError("Supported water models are: %s" % waterModels())
 
-    return _model_dict[model](molecule, box, angles, shell, ion_conc, is_neutral, work_dir, property_map)
+    return _model_dict[model](
+        molecule, box, angles, shell, ion_conc, is_neutral, work_dir, property_map
+    )
 
-def spc(molecule=None, box=None, angles=3*[_Angle(90, "degrees")],
-        shell=None, ion_conc=0, is_neutral=True, work_dir=None, property_map={}):
-    """Add SPC solvent.
 
-       Parameters
-       ----------
+def spc(
+    molecule=None,
+    box=None,
+    angles=3 * [_Angle(90, "degrees")],
+    shell=None,
+    ion_conc=0,
+    is_neutral=True,
+    work_dir=None,
+    property_map={},
+):
+    """
+    Add SPC solvent.
 
-       molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, \
-                  :class:`Molecule <BioSimSpace._SireWrappers.Molecules>`, \
-                  :class:`System <BioSimSpace._SireWrappers.System>`
-           A molecule, or container/system of molecules.
+    Parameters
+    ----------
 
-       box : [:class:`Length <BioSimSpace.Types.Length>`]
-           A list containing the box size in each dimension.
+    molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, \
+               :class:`Molecule <BioSimSpace._SireWrappers.Molecules>`, \
+               :class:`System <BioSimSpace._SireWrappers.System>`
+        A molecule, or container/system of molecules.
 
-       angles : [:class:`Angle <BioSimSpace.Types.Angle>`]
-           A list containing the angles between the box vectors: yz, xz, and xy.
+    box : [:class:`Length <BioSimSpace.Types.Length>`]
+        A list containing the box size in each dimension.
 
-       shell : :class:`Length` <BioSimSpace.Types.Length>`
-           Thickness of the water shell around the solute. Note that the
-           base length of the resulting box must be at least twice as large
-           as the cutoff used by the chosen molecular dynamics engine. As such,
-           the shell option is often unsuitable for small molecules.
+    angles : [:class:`Angle <BioSimSpace.Types.Angle>`]
+        A list containing the angles between the box vectors: yz, xz, and xy.
 
-       ion_conc : float
-           The ion concentration in (mol per litre).
+    shell : :class:`Length` <BioSimSpace.Types.Length>`
+        Thickness of the water shell around the solute. Note that the
+        base length of the resulting box must be at least twice as large
+        as the cutoff used by the chosen molecular dynamics engine. As such,
+        the shell option is often unsuitable for small molecules.
 
-       is_neutral : bool
-           Whether to neutralise the system.
+    ion_conc : float
+        The ion concentration in (mol per litre).
 
-       work_dir : str
-           The working directory for the process.
+    is_neutral : bool
+        Whether to neutralise the system.
 
-       property_map : dict
-           A dictionary that maps system "properties" to their user defined
-           values. This allows the user to refer to properties with their
-           own naming scheme, e.g. { "charge" : "my-charge" }
+    work_dir : str
+        The working directory for the process.
 
-       Returns
-       -------
+    property_map : dict
+        A dictionary that maps system "properties" to their user defined
+        values. This allows the user to refer to properties with their
+        own naming scheme, e.g. { "charge" : "my-charge" }
 
-       system : :class:`System <BioSimSpace._SireWrappers.System>`
-           The solvated molecular system.
+    Returns
+    -------
+
+    system : :class:`System <BioSimSpace._SireWrappers.System>`
+        The solvated molecular system.
     """
 
     if _gmx_exe is None or _gmx_path is None:
-        raise _MissingSoftwareError("'BioSimSpace.Solvent.spc' is not supported. "
-                                    "Please install GROMACS (http://www.gromacs.org).")
+        raise _MissingSoftwareError(
+            "'BioSimSpace.Solvent.spc' is not supported. "
+            "Please install GROMACS (http://www.gromacs.org)."
+        )
 
     # Validate arguments.
-    molecule, box, angles, shell, work_dir, property_map = \
-        _validate_input("spc", molecule, box, angles, shell, ion_conc, is_neutral, work_dir, property_map)
+    molecule, box, angles, shell, work_dir, property_map = _validate_input(
+        "spc",
+        molecule,
+        box,
+        angles,
+        shell,
+        ion_conc,
+        is_neutral,
+        work_dir,
+        property_map,
+    )
 
     # Create the solvated system.
-    return _solvate(molecule, box, angles, shell, "spc", 3, ion_conc,
-            is_neutral, work_dir=work_dir, property_map=property_map)
+    return _solvate(
+        molecule,
+        box,
+        angles,
+        shell,
+        "spc",
+        3,
+        ion_conc,
+        is_neutral,
+        work_dir=work_dir,
+        property_map=property_map,
+    )
 
-def spce(molecule=None, box=None, angles=3*[_Angle(90, "degrees")],
-        shell=None, ion_conc=0, is_neutral=True, work_dir=None, property_map={}):
-    """Add SPC/E solvent.
 
-       Parameters
-       ----------
+def spce(
+    molecule=None,
+    box=None,
+    angles=3 * [_Angle(90, "degrees")],
+    shell=None,
+    ion_conc=0,
+    is_neutral=True,
+    work_dir=None,
+    property_map={},
+):
+    """
+    Add SPC/E solvent.
 
-       molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, \
-                  :class:`Molecule <BioSimSpace._SireWrappers.Molecules>`, \
-                  :class:`System <BioSimSpace._SireWrappers.System>`
-           A molecule, or container/system of molecules.
+    Parameters
+    ----------
 
-       box : [:class:`Length <BioSimSpace.Types.Length>`]
-           A list containing the box size in each dimension.
+    molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, \
+               :class:`Molecule <BioSimSpace._SireWrappers.Molecules>`, \
+               :class:`System <BioSimSpace._SireWrappers.System>`
+        A molecule, or container/system of molecules.
 
-       angles : [:class:`Angle <BioSimSpace.Types.Angle>`]
-           A list containing the angles between the box vectors: yz, xz, and xy.
+    box : [:class:`Length <BioSimSpace.Types.Length>`]
+        A list containing the box size in each dimension.
 
-       shell : :class:`Length` <BioSimSpace.Types.Length>`
-           Thickness of the water shell around the solute. Note that the
-           base length of the resulting box must be at least twice as large
-           as the cutoff used by the chosen molecular dynamics engine. As such,
-           the shell option is often unsuitable for small molecules.
+    angles : [:class:`Angle <BioSimSpace.Types.Angle>`]
+        A list containing the angles between the box vectors: yz, xz, and xy.
 
-       ion_conc : float
-           The ion concentration in (mol per litre).
+    shell : :class:`Length` <BioSimSpace.Types.Length>`
+        Thickness of the water shell around the solute. Note that the
+        base length of the resulting box must be at least twice as large
+        as the cutoff used by the chosen molecular dynamics engine. As such,
+        the shell option is often unsuitable for small molecules.
 
-       is_neutral : bool
-           Whether to neutralise the system.
+    ion_conc : float
+        The ion concentration in (mol per litre).
 
-       work_dir : str
-           The working directory for the process.
+    is_neutral : bool
+        Whether to neutralise the system.
 
-       property_map : dict
-           A dictionary that maps system "properties" to their user defined
-           values. This allows the user to refer to properties with their
-           own naming scheme, e.g. { "charge" : "my-charge" }
+    work_dir : str
+        The working directory for the process.
 
-       Returns
-       -------
+    property_map : dict
+        A dictionary that maps system "properties" to their user defined
+        values. This allows the user to refer to properties with their
+        own naming scheme, e.g. { "charge" : "my-charge" }
 
-       system : :class:`System <BioSimSpace._SireWrappers.System>`
-           The solvated molecular system.
+    Returns
+    -------
+
+    system : :class:`System <BioSimSpace._SireWrappers.System>`
+        The solvated molecular system.
     """
 
     if _gmx_exe is None:
-        raise _MissingSoftwareError("'BioSimSpace.Solvent.spce' is not supported. "
-                                    "Please install GROMACS (http://www.gromacs.org).")
+        raise _MissingSoftwareError(
+            "'BioSimSpace.Solvent.spce' is not supported. "
+            "Please install GROMACS (http://www.gromacs.org)."
+        )
 
     # Validate arguments.
-    molecule, box, angles, shell, work_dir, property_map = \
-        _validate_input("spce", molecule, box, angles, shell, ion_conc, is_neutral, work_dir, property_map)
+    molecule, box, angles, shell, work_dir, property_map = _validate_input(
+        "spce",
+        molecule,
+        box,
+        angles,
+        shell,
+        ion_conc,
+        is_neutral,
+        work_dir,
+        property_map,
+    )
 
     # Create the solvated system.
-    return _solvate(molecule, box, angles, shell, "spce", 3, ion_conc,
-            is_neutral, work_dir=work_dir, property_map=property_map)
+    return _solvate(
+        molecule,
+        box,
+        angles,
+        shell,
+        "spce",
+        3,
+        ion_conc,
+        is_neutral,
+        work_dir=work_dir,
+        property_map=property_map,
+    )
 
-def tip3p(molecule=None, box=None, angles=3*[_Angle(90, "degrees")],
-        shell=None, ion_conc=0, is_neutral=True, work_dir=None, property_map={}):
-    """Add TIP3P solvent.
 
-       Parameters
-       ----------
+def tip3p(
+    molecule=None,
+    box=None,
+    angles=3 * [_Angle(90, "degrees")],
+    shell=None,
+    ion_conc=0,
+    is_neutral=True,
+    work_dir=None,
+    property_map={},
+):
+    """
+    Add TIP3P solvent.
 
-       molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, \
-                  :class:`Molecule <BioSimSpace._SireWrappers.Molecules>`, \
-                  :class:`System <BioSimSpace._SireWrappers.System>`
-           A molecule, or container/system of molecules.
+    Parameters
+    ----------
 
-       box : [:class:`Length <BioSimSpace.Types.Length>`]
-           A list containing the box size in each dimension.
+    molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, \
+               :class:`Molecule <BioSimSpace._SireWrappers.Molecules>`, \
+               :class:`System <BioSimSpace._SireWrappers.System>`
+        A molecule, or container/system of molecules.
 
-       angles : [:class:`Angle <BioSimSpace.Types.Angle>`]
-           A list containing the angles between the box vectors: yz, xz, and xy.
+    box : [:class:`Length <BioSimSpace.Types.Length>`]
+        A list containing the box size in each dimension.
 
-       shell : :class:`Length` <BioSimSpace.Types.Length>`
-           Thickness of the water shell around the solute. Note that the
-           base length of the resulting box must be at least twice as large
-           as the cutoff used by the chosen molecular dynamics engine. As such,
-           the shell option is often unsuitable for small molecules.
+    angles : [:class:`Angle <BioSimSpace.Types.Angle>`]
+        A list containing the angles between the box vectors: yz, xz, and xy.
 
-       ion_conc : float
-           The ion concentration in (mol per litre).
+    shell : :class:`Length` <BioSimSpace.Types.Length>`
+        Thickness of the water shell around the solute. Note that the
+        base length of the resulting box must be at least twice as large
+        as the cutoff used by the chosen molecular dynamics engine. As such,
+        the shell option is often unsuitable for small molecules.
 
-       is_neutral : bool
-           Whether to neutralise the system.
+    ion_conc : float
+        The ion concentration in (mol per litre).
 
-       work_dir : str
-           The working directory for the process.
+    is_neutral : bool
+        Whether to neutralise the system.
 
-       property_map : dict
-           A dictionary that maps system "properties" to their user defined
-           values. This allows the user to refer to properties with their
-           own naming scheme, e.g. { "charge" : "my-charge" }
+    work_dir : str
+        The working directory for the process.
 
-       Returns
-       -------
+    property_map : dict
+        A dictionary that maps system "properties" to their user defined
+        values. This allows the user to refer to properties with their
+        own naming scheme, e.g. { "charge" : "my-charge" }
 
-       system : :class:`System <BioSimSpace._SireWrappers.System>`
-           The solvated molecular system.
+    Returns
+    -------
+
+    system : :class:`System <BioSimSpace._SireWrappers.System>`
+        The solvated molecular system.
     """
 
     if _gmx_exe is None:
-        raise _MissingSoftwareError("'BioSimSpace.Solvent.tip3p' is not supported. "
-                                    "Please install GROMACS (http://www.gromacs.org).")
+        raise _MissingSoftwareError(
+            "'BioSimSpace.Solvent.tip3p' is not supported. "
+            "Please install GROMACS (http://www.gromacs.org)."
+        )
 
     # Validate arguments.
-    molecule, box, angles, shell, work_dir, property_map = \
-        _validate_input("tip3p", molecule, box, angles, shell, ion_conc, is_neutral, work_dir, property_map)
+    molecule, box, angles, shell, work_dir, property_map = _validate_input(
+        "tip3p",
+        molecule,
+        box,
+        angles,
+        shell,
+        ion_conc,
+        is_neutral,
+        work_dir,
+        property_map,
+    )
 
     # Create the solvated system.
-    return _solvate(molecule, box, angles, shell, "tip3p", 3, ion_conc,
-            is_neutral, work_dir=work_dir, property_map=property_map)
+    return _solvate(
+        molecule,
+        box,
+        angles,
+        shell,
+        "tip3p",
+        3,
+        ion_conc,
+        is_neutral,
+        work_dir=work_dir,
+        property_map=property_map,
+    )
 
-def tip4p(molecule=None, box=None, angles=3*[_Angle(90, "degrees")],
-        shell=None, ion_conc=0, is_neutral=True, work_dir=None, property_map={}):
-    """Add TIP4P solvent.
 
-       Parameters
-       ----------
+def tip4p(
+    molecule=None,
+    box=None,
+    angles=3 * [_Angle(90, "degrees")],
+    shell=None,
+    ion_conc=0,
+    is_neutral=True,
+    work_dir=None,
+    property_map={},
+):
+    """
+    Add TIP4P solvent.
 
-       molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, \
-                  :class:`Molecule <BioSimSpace._SireWrappers.Molecules>`, \
-                  :class:`System <BioSimSpace._SireWrappers.System>`
-           A molecule, or container/system of molecules.
+    Parameters
+    ----------
 
-       box : [:class:`Length <BioSimSpace.Types.Length>`]
-           A list containing the box size in each dimension.
+    molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, \
+               :class:`Molecule <BioSimSpace._SireWrappers.Molecules>`, \
+               :class:`System <BioSimSpace._SireWrappers.System>`
+        A molecule, or container/system of molecules.
 
-       angles : [:class:`Angle <BioSimSpace.Types.Angle>`]
-           A list containing the angles between the box vectors: yz, xz, and xy.
+    box : [:class:`Length <BioSimSpace.Types.Length>`]
+        A list containing the box size in each dimension.
 
-       shell : :class:`Length` <BioSimSpace.Types.Length>`
-           Thickness of the water shell around the solute. Note that the
-           base length of the resulting box must be at least twice as large
-           as the cutoff used by the chosen molecular dynamics engine. As such,
-           the shell option is often unsuitable for small molecules.
+    angles : [:class:`Angle <BioSimSpace.Types.Angle>`]
+        A list containing the angles between the box vectors: yz, xz, and xy.
 
-       ion_conc : float
-           The ion concentration in (mol per litre).
+    shell : :class:`Length` <BioSimSpace.Types.Length>`
+        Thickness of the water shell around the solute. Note that the
+        base length of the resulting box must be at least twice as large
+        as the cutoff used by the chosen molecular dynamics engine. As such,
+        the shell option is often unsuitable for small molecules.
 
-       is_neutral : bool
-           Whether to neutralise the system.
+    ion_conc : float
+        The ion concentration in (mol per litre).
 
-       work_dir : str
-           The working directory for the process.
+    is_neutral : bool
+        Whether to neutralise the system.
 
-       property_map : dict
-           A dictionary that maps system "properties" to their user defined
-           values. This allows the user to refer to properties with their
-           own naming scheme, e.g. { "charge" : "my-charge" }
+    work_dir : str
+        The working directory for the process.
 
-       Returns
-       -------
+    property_map : dict
+        A dictionary that maps system "properties" to their user defined
+        values. This allows the user to refer to properties with their
+        own naming scheme, e.g. { "charge" : "my-charge" }
 
-       system : :class:`System <BioSimSpace._SireWrappers.System>`
-           The solvated molecular system.
+    Returns
+    -------
+
+    system : :class:`System <BioSimSpace._SireWrappers.System>`
+        The solvated molecular system.
     """
 
     if _gmx_exe is None:
-        raise _MissingSoftwareError("'BioSimSpace.Solvent.tip4p' is not supported. "
-                                    "Please install GROMACS (http://www.gromacs.org).")
+        raise _MissingSoftwareError(
+            "'BioSimSpace.Solvent.tip4p' is not supported. "
+            "Please install GROMACS (http://www.gromacs.org)."
+        )
 
     # Validate arguments.
-    molecule, box, angles, shell, work_dir, property_map = \
-        _validate_input("tip4p", molecule, box, angles, shell, ion_conc, is_neutral, work_dir, property_map)
+    molecule, box, angles, shell, work_dir, property_map = _validate_input(
+        "tip4p",
+        molecule,
+        box,
+        angles,
+        shell,
+        ion_conc,
+        is_neutral,
+        work_dir,
+        property_map,
+    )
 
     # Return the solvated system.
-    return _solvate(molecule, box, angles, shell, "tip4p", 4, ion_conc,
-            is_neutral, work_dir=work_dir, property_map=property_map)
+    return _solvate(
+        molecule,
+        box,
+        angles,
+        shell,
+        "tip4p",
+        4,
+        ion_conc,
+        is_neutral,
+        work_dir=work_dir,
+        property_map=property_map,
+    )
 
-def tip5p(molecule=None, box=None, angles=3*[_Angle(90, "degrees")],
-        shell=None, ion_conc=0, is_neutral=True, work_dir=None, property_map={}):
-    """Add TIP5P solvent.
 
-       Parameters
-       ----------
+def tip5p(
+    molecule=None,
+    box=None,
+    angles=3 * [_Angle(90, "degrees")],
+    shell=None,
+    ion_conc=0,
+    is_neutral=True,
+    work_dir=None,
+    property_map={},
+):
+    """
+    Add TIP5P solvent.
 
-       molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, \
-                  :class:`Molecule <BioSimSpace._SireWrappers.Molecules>`, \
-                  :class:`System <BioSimSpace._SireWrappers.System>`
-           A molecule, or container/system of molecules.
+    Parameters
+    ----------
 
-       box : [:class:`Length <BioSimSpace.Types.Length>`]
-           A list containing the box size in each dimension.
+    molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, \
+               :class:`Molecule <BioSimSpace._SireWrappers.Molecules>`, \
+               :class:`System <BioSimSpace._SireWrappers.System>`
+        A molecule, or container/system of molecules.
 
-       angles : [:class:`Angle <BioSimSpace.Types.Angle>`]
-           A list containing the angles between the box vectors: yz, xz, and xy.
+    box : [:class:`Length <BioSimSpace.Types.Length>`]
+        A list containing the box size in each dimension.
 
-       shell : :class:`Length` <BioSimSpace.Types.Length>`
-           Thickness of the water shell around the solute. Note that the
-           base length of the resulting box must be at least twice as large
-           as the cutoff used by the chosen molecular dynamics engine. As such,
-           the shell option is often unsuitable for small molecules.
+    angles : [:class:`Angle <BioSimSpace.Types.Angle>`]
+        A list containing the angles between the box vectors: yz, xz, and xy.
 
-       ion_conc : float
-           The ion concentration in (mol per litre).
+    shell : :class:`Length` <BioSimSpace.Types.Length>`
+        Thickness of the water shell around the solute. Note that the
+        base length of the resulting box must be at least twice as large
+        as the cutoff used by the chosen molecular dynamics engine. As such,
+        the shell option is often unsuitable for small molecules.
 
-       is_neutral : bool
-           Whether to neutralise the system.
+    ion_conc : float
+        The ion concentration in (mol per litre).
 
-       work_dir : str
-           The working directory for the process.
+    is_neutral : bool
+        Whether to neutralise the system.
 
-       property_map : dict
-           A dictionary that maps system "properties" to their user defined
-           values. This allows the user to refer to properties with their
-           own naming scheme, e.g. { "charge" : "my-charge" }
+    work_dir : str
+        The working directory for the process.
 
-       Returns
-       -------
+    property_map : dict
+        A dictionary that maps system "properties" to their user defined
+        values. This allows the user to refer to properties with their
+        own naming scheme, e.g. { "charge" : "my-charge" }
 
-       system : :class:`System <BioSimSpace._SireWrappers.System>`
-           The solvated molecular system.
+    Returns
+    -------
+
+    system : :class:`System <BioSimSpace._SireWrappers.System>`
+        The solvated molecular system.
     """
 
     if _gmx_exe is None:
-        raise _MissingSoftwareError("'BioSimSpace.Solvent.tip5p' is not supported. "
-                                    "Please install GROMACS (http://www.gromacs.org).")
+        raise _MissingSoftwareError(
+            "'BioSimSpace.Solvent.tip5p' is not supported. "
+            "Please install GROMACS (http://www.gromacs.org)."
+        )
 
     # Validate arguments.
-    molecule, box, angles, shell, work_dir, property_map = \
-        _validate_input("tip5p", molecule, box, angles, shell, ion_conc, is_neutral, work_dir, property_map)
+    molecule, box, angles, shell, work_dir, property_map = _validate_input(
+        "tip5p",
+        molecule,
+        box,
+        angles,
+        shell,
+        ion_conc,
+        is_neutral,
+        work_dir,
+        property_map,
+    )
 
     # Return the solvated system.
-    return _solvate(molecule, box, angles, shell, "tip5p", 5, ion_conc,
-            is_neutral, work_dir=work_dir, property_map=property_map)
+    return _solvate(
+        molecule,
+        box,
+        angles,
+        shell,
+        "tip5p",
+        5,
+        ion_conc,
+        is_neutral,
+        work_dir=work_dir,
+        property_map=property_map,
+    )
 
-def _validate_input(model, molecule, box, angles, shell, ion_conc, is_neutral, work_dir, property_map):
-    """Internal function to validate function arguments.
 
-       Parameters
-       ----------
+def _validate_input(
+    model, molecule, box, angles, shell, ion_conc, is_neutral, work_dir, property_map
+):
+    """
+    Internal function to validate function arguments.
 
-       model : str
-           The name of the water model.
+    Parameters
+    ----------
 
-       molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, \
-                  :class:`Molecule <BioSimSpace._SireWrappers.Molecules>`, \
-                  :class:`System <BioSimSpace._SireWrappers.System>`
-           A molecule, or container/system of molecules.
+    model : str
+        The name of the water model.
 
-       box : [:class:`Length <BioSimSpace.Types.Length>`]
-           A list containing the box size in each dimension.
+    molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, \
+               :class:`Molecule <BioSimSpace._SireWrappers.Molecules>`, \
+               :class:`System <BioSimSpace._SireWrappers.System>`
+        A molecule, or container/system of molecules.
 
-       angles : [:class:`Angle <BioSimSpace.Types.Angle>`]
-           A list containing the angles between the box vectors: yz, xz, and xy.
+    box : [:class:`Length <BioSimSpace.Types.Length>`]
+        A list containing the box size in each dimension.
 
-       shell : :class:`Length` <BioSimSpace.Types.Length>`
-           Thickness of the water shell around the solute. Note that the
-           base length of the resulting box must be at least twice as large
-           as the cutoff used by the chosen molecular dynamics engine. As such,
-           the shell option is often unsuitable for small molecules.
+    angles : [:class:`Angle <BioSimSpace.Types.Angle>`]
+        A list containing the angles between the box vectors: yz, xz, and xy.
 
-       ion_conc : float
-           The ion concentration in (mol per litre).
+    shell : :class:`Length` <BioSimSpace.Types.Length>`
+        Thickness of the water shell around the solute. Note that the
+        base length of the resulting box must be at least twice as large
+        as the cutoff used by the chosen molecular dynamics engine. As such,
+        the shell option is often unsuitable for small molecules.
 
-       is_neutral : bool
-           Whether to neutralise the system.
+    ion_conc : float
+        The ion concentration in (mol per litre).
 
-       work_dir : str
-           The working directory for the process.
+    is_neutral : bool
+        Whether to neutralise the system.
 
-       property_map : dict
-           A dictionary that maps system "properties" to their user defined
-           values. This allows the user to refer to properties with their
-           own naming scheme, e.g. { "charge" : "my-charge" }
+    work_dir : str
+        The working directory for the process.
 
-       Returns
-       -------
+    property_map : dict
+        A dictionary that maps system "properties" to their user defined
+        values. This allows the user to refer to properties with their
+        own naming scheme, e.g. { "charge" : "my-charge" }
 
-       (molecule, box, angles, shell, work_dir, property_map) : tuple
-           The validated input arguments.
+    Returns
+    -------
+
+    (molecule, box, angles, shell, work_dir, property_map) : tuple
+        The validated input arguments.
     """
 
     # Whether to check the box size.
@@ -463,8 +633,10 @@ def _validate_input(model, molecule, box, angles, shell, ion_conc, is_neutral, w
         elif isinstance(molecule, _System):
             _molecule = _System(molecule)
         else:
-            raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule' "
-                            "'BioSimSpace._SireWrappers.Molecules', or 'BioSimSpace._SireWrappers.System'")
+            raise TypeError(
+                "'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule' "
+                "'BioSimSpace._SireWrappers.Molecules', or 'BioSimSpace._SireWrappers.System'"
+            )
 
         # Try to extract the box dimensions from the system.
         if isinstance(_molecule, _System) and box is None and shell is None:
@@ -475,8 +647,10 @@ def _validate_input(model, molecule, box, angles, shell, ion_conc, is_neutral, w
                 # Convert to a list of Length objects.
                 box = [_Length(box[0], "A"), _Length(box[1], "A"), _Length(box[2], "A")]
             except:
-                raise ValueError("The system has no box information. Please use "
-                                 "the 'box' keyword argument.")
+                raise ValueError(
+                    "The system has no box information. Please use "
+                    "the 'box' keyword argument."
+                )
         else:
             if box is None and shell is None:
                 raise ValueError("Missing 'box' keyword argument!")
@@ -487,14 +661,18 @@ def _validate_input(model, molecule, box, angles, shell, ion_conc, is_neutral, w
             for mol in _molecule:
                 ion_water_model = mol._ion_water_model
                 if ion_water_model is not None and ion_water_model != model:
-                    _warnings.warn( "Mismatch with water model used to parameterise "
-                                   f"structural ions: '{ion_water_model}'")
+                    _warnings.warn(
+                        "Mismatch with water model used to parameterise "
+                        f"structural ions: '{ion_water_model}'"
+                    )
                     break
         else:
             ion_water_model = _molecule._ion_water_model
             if ion_water_model is not None and ion_water_model != model:
-                _warnings.warn( "Mismatch with water model used to parameterise "
-                               f"structural ions: '{ion_water_model}'")
+                _warnings.warn(
+                    "Mismatch with water model used to parameterise "
+                    f"structural ions: '{ion_water_model}'"
+                )
 
     else:
         _molecule = None
@@ -520,7 +698,9 @@ def _validate_input(model, molecule, box, angles, shell, ion_conc, is_neutral, w
             raise ValueError("The 'box' must have x, y, and z size information.")
         else:
             if not all(isinstance(x, _Length) for x in box):
-                raise ValueError("The box dimensions must be of type 'BioSimSpace.Types.Length'")
+                raise ValueError(
+                    "The box dimensions must be of type 'BioSimSpace.Types.Length'"
+                )
             if not all(x.value() >= 0 for x in box):
                 raise ValueError("All box dimensions must be greater than zero.")
 
@@ -534,17 +714,21 @@ def _validate_input(model, molecule, box, angles, shell, ion_conc, is_neutral, w
             raise ValueError("'angles' must have three components: yz, xz, and xy.")
         else:
             if not all(isinstance(x, _Angle) for x in angles):
-                raise ValueError("The angle between box vectors must be of type 'BioSimSpace.Types.Angle'")
+                raise ValueError(
+                    "The angle between box vectors must be of type 'BioSimSpace.Types.Angle'"
+                )
     else:
         # Default to periodic box.
-        angles=3*[_Angle(90, "degrees")]
+        angles = 3 * [_Angle(90, "degrees")]
 
     if shell is not None:
         if not isinstance(shell, _Length):
             raise ValueError("'shell' must must be of type 'BioSimSpace.Types.Length'")
 
         if box is not None:
-            _warnings.warn("Ignoring 'box' keyword argument as 'shell' takes precedence.")
+            _warnings.warn(
+                "Ignoring 'box' keyword argument as 'shell' takes precedence."
+            )
 
         # Work out the box size based on axis-aligned bounding box.
         # We take the maximum dimension as the base length of our box.
@@ -559,7 +743,7 @@ def _validate_input(model, molecule, box, angles, shell, ion_conc, is_neutral, w
             base_length = _Length(2.54, "nm")
 
         # Create the dimensions for a cubic box.
-        box = 3*[base_length]
+        box = 3 * [base_length]
 
     # Check that the ion concentration is valid.
     if not isinstance(ion_conc, float) and not type(ion_conc) is int:
@@ -580,57 +764,72 @@ def _validate_input(model, molecule, box, angles, shell, ion_conc, is_neutral, w
 
     # Check that the box is large enough to hold the molecule.
     if check_box:
-        if molecule is not None and shell is None and not _check_box_size(molecule, box, property_map):
+        if (
+            molecule is not None
+            and shell is None
+            and not _check_box_size(molecule, box, property_map)
+        ):
             raise ValueError("The 'box' is not large enough to hold the 'molecule'")
 
     return (_molecule, box, angles, shell, work_dir, property_map)
 
-def _solvate(molecule, box, angles, shell, model, num_point,
-        ion_conc, is_neutral, work_dir=None, property_map={}):
-    """Internal function to add solvent using 'gmx solvate'.
 
-       Parameters
-       ----------
+def _solvate(
+    molecule,
+    box,
+    angles,
+    shell,
+    model,
+    num_point,
+    ion_conc,
+    is_neutral,
+    work_dir=None,
+    property_map={},
+):
+    """
+    Internal function to add solvent using 'gmx solvate'.
 
-       molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, \
-                  :class:`System <BioSimSpace._SireWrappers.System>`
-           A molecule, or system of molecules.
+    Parameters
+    ----------
 
-       box : [:class:`Length <BioSimSpace.Types.Length>`]
-           A list containing the box size in each dimension.
+    molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, \
+               :class:`System <BioSimSpace._SireWrappers.System>`
+        A molecule, or system of molecules.
 
-       angles : [:class:`Angle <BioSimSpace.Types.Angle>`]
-           A list containing the angles between the box vectors: yz, xz, and xy.
+    box : [:class:`Length <BioSimSpace.Types.Length>`]
+        A list containing the box size in each dimension.
 
-       shell : :class:`Length` <BioSimSpace.Types.Length>`
-           Thickness of the water shell around the solute.
+    angles : [:class:`Angle <BioSimSpace.Types.Angle>`]
+        A list containing the angles between the box vectors: yz, xz, and xy.
 
-       model : str
-           The name of the water model.
+    shell : :class:`Length` <BioSimSpace.Types.Length>`
+        Thickness of the water shell around the solute.
 
-       num_point : int
-           The number of atoms in the water model.
+    model : str
+        The name of the water model.
 
-       ion_conc : float
-           The ion concentration in (mol per litre).
+    num_point : int
+        The number of atoms in the water model.
 
-       is_neutral : bool
-           Whether to neutralise the system.
+    ion_conc : float
+        The ion concentration in (mol per litre).
 
-       work_dir : str
-           The working directory for the process.
+    is_neutral : bool
+        Whether to neutralise the system.
 
-       property_map : dict
-           A dictionary that maps system "properties" to their user defined
-           values. This allows the user to refer to properties with their
-           own naming scheme, e.g. { "charge" : "my-charge" }
+    work_dir : str
+        The working directory for the process.
 
+    property_map : dict
+        A dictionary that maps system "properties" to their user defined
+        values. This allows the user to refer to properties with their
+        own naming scheme, e.g. { "charge" : "my-charge" }
 
-       Returns
-       -------
+    Returns
+    -------
 
-       system : :class:`System <BioSimSpace._SireWrappers.System>`
-           The solvated system.
+    system : :class:`System <BioSimSpace._SireWrappers.System>`
+        The solvated system.
     """
 
     if molecule is not None:
@@ -638,22 +837,27 @@ def _solvate(molecule, box, angles, shell, model, num_point,
         aabox_min, aabox_max = molecule.getAxisAlignedBoundingBox()
 
         # Work out the aabox center.
-        center = [0.5*(aabox_max[x] + aabox_min[x]).angstroms().value()
-                for x in range(0, 3)]
+        center = [
+            0.5 * (aabox_max[x] + aabox_min[x]).angstroms().value() for x in range(0, 3)
+        ]
 
         # Generate a TriclinicBox based on the box magnitudes and angles.
-        triclinic_box = _TriclinicBox(box[0].angstroms().value(),
-                                      box[1].angstroms().value(),
-                                      box[2].angstroms().value(),
-                                      angles[0].degrees().value()*_degree,
-                                      angles[1].degrees().value()*_degree,
-                                      angles[2].degrees().value()*_degree)
+        triclinic_box = _TriclinicBox(
+            box[0].angstroms().value(),
+            box[1].angstroms().value(),
+            box[2].angstroms().value(),
+            angles[0].degrees().value() * _degree,
+            angles[1].degrees().value() * _degree,
+            angles[2].degrees().value() * _degree,
+        )
 
         # Work out the center of the triclinic cell.
-        box_center = triclinic_box.cellMatrix()*_Vector(0.5, 0.5, 0.5)
+        box_center = triclinic_box.cellMatrix() * _Vector(0.5, 0.5, 0.5)
 
         # Work out the offset between the molecule and box centers.
-        shift = [_Length(box_center[x]-center[x], "Angstrom") for x in range(0, 3)]
+        shift = [
+            _Length(box_center[x].value() - center[x], "Angstrom") for x in range(0, 3)
+        ]
 
         # Center the solute in the box.
         molecule.translate(shift)
@@ -695,14 +899,22 @@ def _solvate(molecule, box, angles, shell, model, num_point,
                 file.write("   0.00000  0.00000  0.00000\n")
 
         # Create the editconf command.
-        command = "%s editconf -f input.gro -bt triclinic" % _gmx_exe  \
-                + " -box %f %f %f" % (box[0].nanometers().value(),
-                                      box[1].nanometers().value(),
-                                      box[2].nanometers().value())     \
-                + " -angles %f %f %f" % (angles[0].degrees().value(),
-                                         angles[1].degrees().value(),
-                                         angles[2].degrees().value())  \
-                + " -noc -o box.gro"
+        command = (
+            "%s editconf -f input.gro -bt triclinic" % _gmx_exe
+            + " -box %f %f %f"
+            % (
+                box[0].nanometers().value(),
+                box[1].nanometers().value(),
+                box[2].nanometers().value(),
+            )
+            + " -angles %f %f %f"
+            % (
+                angles[0].degrees().value(),
+                angles[1].degrees().value(),
+                angles[2].degrees().value(),
+            )
+            + " -noc -o box.gro"
+        )
 
         with open("README.txt", "w") as file:
             # Write the command to file.
@@ -714,15 +926,19 @@ def _solvate(molecule, box, angles, shell, model, num_point,
         stderr = open("editconf.err", "w")
 
         # Run gmx solvate as a subprocess.
-        proc = _subprocess.run(_Utils.command_split(command), shell=False, stdout=stdout, stderr=stderr)
+        proc = _subprocess.run(
+            _Utils.command_split(command), shell=False, stdout=stdout, stderr=stderr
+        )
         stdout.close()
         stderr.close()
 
         # gmx doesn't return sensible error codes, so we need to check that
         # the expected output was generated.
         if not _os.path.isfile("box.gro"):
-            raise RuntimeError("'gmx editconf failed to generate required box! " +
-                               "Check your lattice vectors and angles.")
+            raise RuntimeError(
+                "'gmx editconf failed to generate required box! "
+                + "Check your lattice vectors and angles."
+            )
 
         # Create the gmx command.
         if num_point == 3:
@@ -747,7 +963,9 @@ def _solvate(molecule, box, angles, shell, model, num_point,
         stderr = open("solvate.err", "w")
 
         # Run gmx solvate as a subprocess.
-        proc = _subprocess.run(_Utils.command_split(command), shell=False, stdout=stdout, stderr=stderr)
+        proc = _subprocess.run(
+            _Utils.command_split(command), shell=False, stdout=stdout, stderr=stderr
+        )
         stdout.close()
         stderr.close()
 
@@ -764,7 +982,7 @@ def _solvate(molecule, box, angles, shell, model, num_point,
                 num_atoms = 0
             else:
                 num_atoms = molecule.nAtoms()
-            for line in file.readlines()[num_atoms+2:]:
+            for line in file.readlines()[num_atoms + 2 :]:
                 if _re.search("SOL", line):
                     # Store the SOL atom record.
                     water_lines.append(line)
@@ -776,13 +994,15 @@ def _solvate(molecule, box, angles, shell, model, num_point,
         if len(water_lines) - 1 > 0:
             with open("water.gro", "w") as file:
                 file.write("BioSimSpace %s water box\n" % model.upper())
-                file.write("%d\n" % (len(water_lines)-1))
+                file.write("%d\n" % (len(water_lines) - 1))
 
                 for line in water_lines:
                     file.write("%s" % line)
         else:
-            raise ValueError("No water molecules were generated. Try increasing "
-                            "the 'box' size or 'shell' thickness.")
+            raise ValueError(
+                "No water molecules were generated. Try increasing "
+                "the 'box' size or 'shell' thickness."
+            )
 
         # Create a TOP file for the water model. By default we use the Amber03
         # force field to generate a dummy topology for the water model.
@@ -798,10 +1018,12 @@ def _solvate(molecule, box, angles, shell, model, num_point,
             file.write("BioSimSpace %s water box\n\n" % model.upper())
             file.write("[ molecules ] \n")
             file.write(";molecule name    nr.\n")
-            file.write("SOL               %d\n" % ((len(water_lines)-1) / num_point))
+            file.write("SOL               %d\n" % ((len(water_lines) - 1) / num_point))
 
         # Load the water box.
-        water = _IO.readMolecules(["water.gro", "water_ions.top"], property_map=_property_map)
+        water = _IO.readMolecules(
+            ["water.gro", "water_ions.top"], property_map=_property_map
+        )
 
         # Create a new system by adding the water to the original molecule.
         if molecule is not None:
@@ -824,11 +1046,17 @@ def _solvate(molecule, box, angles, shell, model, num_point,
 
             try:
                 # Write the molecule + water system to file.
-                _IO.saveMolecules("solvated", system, "gro87", property_map=_property_map)
-                _IO.saveMolecules("solvated", system, "grotop", property_map=_property_map)
+                _IO.saveMolecules(
+                    "solvated", system, "gro87", property_map=_property_map
+                )
+                _IO.saveMolecules(
+                    "solvated", system, "grotop", property_map=_property_map
+                )
             except Exception as e:
-                msg = ("Failed to write GROMACS topology file. "
-                       "Is your molecule parameterised?")
+                msg = (
+                    "Failed to write GROMACS topology file. "
+                    "Is your molecule parameterised?"
+                )
                 if _isVerbose():
                     raise IOError(msg) from e
                 else:
@@ -847,7 +1075,10 @@ def _solvate(molecule, box, angles, shell, model, num_point,
                 file.write("rvdw                    = 1.0\n")
 
             # Create the grompp command.
-            command = "%s grompp -f ions.mdp -po ions.out.mdp -c solvated.gro -p solvated.top -o ions.tpr" % _gmx_exe
+            command = (
+                "%s grompp -f ions.mdp -po ions.out.mdp -c solvated.gro -p solvated.top -o ions.tpr"
+                % _gmx_exe
+            )
 
             with open("README.txt", "a") as file:
                 # Write the command to file.
@@ -859,7 +1090,9 @@ def _solvate(molecule, box, angles, shell, model, num_point,
             stderr = open("grommp.err", "w")
 
             # Run grompp as a subprocess.
-            proc = _subprocess.run(_Utils.command_split(command), shell=False, stdout=stdout, stderr=stderr)
+            proc = _subprocess.run(
+                _Utils.command_split(command), shell=False, stdout=stdout, stderr=stderr
+            )
             stdout.close()
             stderr.close()
 
@@ -869,12 +1102,16 @@ def _solvate(molecule, box, angles, shell, model, num_point,
             # Check for the tpr output file.
             if not _os.path.isfile("ions.tpr"):
                 if shell is None:
-                    raise RuntimeError("'gmx grommp' failed to generate the required output for "
-                                       "'gmx genion'. Perhaps your box is too small?")
+                    raise RuntimeError(
+                        "'gmx grommp' failed to generate the required output for "
+                        "'gmx genion'. Perhaps your box is too small?"
+                    )
                 else:
                     is_break = True
-                    _warnings.warn("Unable to achieve target ion concentration, try using "
-                                   "'box' option instead of 'shell'.")
+                    _warnings.warn(
+                        "Unable to achieve target ion concentration, try using "
+                        "'box' option instead of 'shell'."
+                    )
 
             # Only continue if grommp was successful. This allows us to skip the remainder
             # of the code if the ion addition failed when the 'shell' option was chosen, i.e.
@@ -891,7 +1128,10 @@ def _solvate(molecule, box, angles, shell, model, num_point,
                     charge = round(charge.value())
 
                     # Create the genion command.
-                    command = "%s genion -s ions.tpr -o solvated_ions.gro -p solvated.top -neutral" % _gmx_exe
+                    command = (
+                        "%s genion -s ions.tpr -o solvated_ions.gro -p solvated.top -neutral"
+                        % _gmx_exe
+                    )
 
                     # Add enough counter ions to neutralise the charge.
                     if charge > 0:
@@ -900,8 +1140,10 @@ def _solvate(molecule, box, angles, shell, model, num_point,
                         command += " -np %d" % abs(charge)
                 else:
                     # Create the genion command.
-                    command = "%s genion -s ions.tpr -o solvated_ions.gro -p solvated.top -%s -conc %f" \
+                    command = (
+                        "%s genion -s ions.tpr -o solvated_ions.gro -p solvated.top -%s -conc %f"
                         % (_gmx_exe, "neutral" if is_neutral else "noneutral", ion_conc)
+                    )
 
                 with open("README.txt", "a") as file:
                     # Write the command to file.
@@ -913,9 +1155,16 @@ def _solvate(molecule, box, angles, shell, model, num_point,
                 stderr = open("genion.err", "w")
 
                 # Run genion as a subprocess.
-                proc_echo = _subprocess.Popen(["echo", "SOL"], shell=False, stdout=_subprocess.PIPE)
-                proc = _subprocess.Popen(_Utils.command_split(command), shell=False,
-                    stdin=proc_echo.stdout, stdout=stdout, stderr=stderr)
+                proc_echo = _subprocess.Popen(
+                    ["echo", "SOL"], shell=False, stdout=_subprocess.PIPE
+                )
+                proc = _subprocess.Popen(
+                    _Utils.command_split(command),
+                    shell=False,
+                    stdin=proc_echo.stdout,
+                    stdout=stdout,
+                    stderr=stderr,
+                )
                 proc.wait()
                 proc_echo.stdout.close()
                 stdout.close()
@@ -924,11 +1173,15 @@ def _solvate(molecule, box, angles, shell, model, num_point,
                 # Check for the output GRO file.
                 if not _os.path.isfile("solvated_ions.gro"):
                     if shell is None:
-                        raise RuntimeError("'gmx genion' failed to add ions! Perhaps your box is too small?")
+                        raise RuntimeError(
+                            "'gmx genion' failed to add ions! Perhaps your box is too small?"
+                        )
                     else:
                         is_break = True
-                        _warnings.warn("Unable to achieve target ion concentration, try using "
-                                       "'box' option instead of 'shell'.")
+                        _warnings.warn(
+                            "Unable to achieve target ion concentration, try using "
+                            "'box' option instead of 'shell'."
+                        )
 
                 if not is_break:
                     # Counters for the number of SOL, NA, and CL atoms.
@@ -947,7 +1200,7 @@ def _solvate(molecule, box, angles, shell, model, num_point,
                         # original system.
                         else:
                             num_atoms = molecule.nAtoms()
-                        for line in file.readlines()[num_atoms+2:]:
+                        for line in file.readlines()[num_atoms + 2 :]:
                             # This is a Sodium atom.
                             if _re.search("NA", line):
                                 water_ion_lines.append(line)
@@ -970,7 +1223,7 @@ def _solvate(molecule, box, angles, shell, model, num_point,
                     if len(water_ion_lines) - 1 > 0:
                         with open("water_ions.gro", "w") as file:
                             file.write("BioSimSpace %s water box\n" % model.upper())
-                            file.write("%d\n" % (len(water_ion_lines)-1))
+                            file.write("%d\n" % (len(water_ion_lines) - 1))
 
                             for line in water_ion_lines:
                                 file.write("%s" % line)
@@ -1010,7 +1263,9 @@ def _solvate(molecule, box, angles, shell, model, num_point,
                         # to the new system.
                         for prop in water_ions._sire_object.propertyKeys():
                             prop = _property_map.get(prop, prop)
-                            system._sire_object.setProperty(prop, water_ions._sire_object.property(prop))
+                            system._sire_object.setProperty(
+                                prop, water_ions._sire_object.property(prop)
+                            )
 
                     else:
                         system = water_ions
@@ -1020,29 +1275,31 @@ def _solvate(molecule, box, angles, shell, model, num_point,
 
     return system
 
+
 def _check_box_size(molecule, box, property_map={}):
-    """Internal function to check that box is big enough for the molecule.
+    """
+    Internal function to check that box is big enough for the molecule.
 
-       Parameters
-       ----------
+    Parameters
+    ----------
 
-       molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, \
-                  :class:`System <BioSimSpace._SireWrappers.System>`
-           A molecule, or system of molecules.
+    molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, \
+               :class:`System <BioSimSpace._SireWrappers.System>`
+        A molecule, or system of molecules.
 
-       box : [:class:`Length <BioSimSpace.Types.Length>`]
-           A list containing the box size in each dimension.
+    box : [:class:`Length <BioSimSpace.Types.Length>`]
+        A list containing the box size in each dimension.
 
-       property_map : dict
-           A dictionary that maps system "properties" to their user defined
-           values. This allows the user to refer to properties with their
-           own naming scheme, e.g. { "charge" : "my-charge" }
+    property_map : dict
+        A dictionary that maps system "properties" to their user defined
+        values. This allows the user to refer to properties with their
+        own naming scheme, e.g. { "charge" : "my-charge" }
 
-       Returns
-       -------
+    Returns
+    -------
 
-       is_okay : True
-           Whether the box is large enough.
+    is_okay : True
+        Whether the box is large enough.
     """
 
     # Get the axis-aligned bounding box of the molecule/system.
@@ -1050,7 +1307,7 @@ def _check_box_size(molecule, box, property_map={}):
 
     # Calculate the box size in each dimension, storing each component as a
     # length in Angstroms.
-    mol_box = [_Length(2*x," A") for x in aabox.halfExtents()]
+    mol_box = [_Length(2 * x, " A") for x in aabox.halfExtents()]
 
     # Make sure the box is big enough in each dimension.
     for len1, len2 in zip(box, mol_box):
@@ -1060,21 +1317,23 @@ def _check_box_size(molecule, box, property_map={}):
     # We made it this far, all dimensions are large enough.
     return True
 
+
 def _rename_water_molecule(molecule):
-    """Internal function to rename residues/atoms in a water molecule to match
-       the naming conventions used by GROMACS.
+    """
+    Internal function to rename residues/atoms in a water molecule to match
+    the naming conventions used by GROMACS.
 
-       Parameters
-       ----------
+    Parameters
+    ----------
 
-       molecule : Sire.Mol.Molecule
-           A Sire Molecule object.
+    molecule : Sire.Mol.Molecule
+        A Sire Molecule object.
 
-       Returns
-       -------
+    Returns
+    -------
 
-       molecule : Sire.Mol.Molecule
-           The updated Sire Molecule object.
+    molecule : Sire.Mol.Molecule
+        The updated Sire Molecule object.
     """
 
     # Make the molecule editable.
@@ -1090,9 +1349,9 @@ def _rename_water_molecule(molecule):
     # water model (where we need to add virtual sites).
 
     # Update the molecule with the new residue name.
-    molecule = molecule.residue(_SireMol.ResIdx(0))     \
-                       .rename(_SireMol.ResName("SOL")) \
-                       .molecule()
+    molecule = (
+        molecule.residue(_SireMol.ResIdx(0)).rename(_SireMol.ResName("SOL")).molecule()
+    )
 
     # Index for the hydrogen atoms.
     hydrogen_idx = 1
@@ -1102,15 +1361,19 @@ def _rename_water_molecule(molecule):
         try:
             # Hydrogen.
             if atom.property("element") == _SireMol.Element("H"):
-                molecule = molecule.atom(atom.number())                              \
-                                   .rename(_SireMol.AtomName("HW%d" % hydrogen_idx)) \
-                                   .molecule()
+                molecule = (
+                    molecule.atom(atom.number())
+                    .rename(_SireMol.AtomName("HW%d" % hydrogen_idx))
+                    .molecule()
+                )
                 hydrogen_idx += 1
             # Oxygen.
             elif atom.property("element") == _SireMol.Element("O"):
-                molecule = molecule.atom(atom.number())             \
-                                   .rename(_SireMol.AtomName("OW")) \
-                                   .molecule()
+                molecule = (
+                    molecule.atom(atom.number())
+                    .rename(_SireMol.AtomName("OW"))
+                    .molecule()
+                )
 
         # Otherwise, try to infer the element from the atom name.
         except:
@@ -1125,25 +1388,31 @@ def _rename_water_molecule(molecule):
 
             # Hydrogen.
             if element == _SireMol.Element("H"):
-                molecule = molecule.atom(atom.number())                              \
-                                   .rename(_SireMol.AtomName("HW%d" % hydrogen_idx)) \
-                                   .molecule()
+                molecule = (
+                    molecule.atom(atom.number())
+                    .rename(_SireMol.AtomName("HW%d" % hydrogen_idx))
+                    .molecule()
+                )
                 hydrogen_idx += 1
             # Oxygen.
             elif element == _SireMol.Element("O"):
-                molecule = molecule.atom(atom.number())             \
-                                   .rename(_SireMol.AtomName("OW")) \
-                                   .molecule()
+                molecule = (
+                    molecule.atom(atom.number())
+                    .rename(_SireMol.AtomName("OW"))
+                    .molecule()
+                )
 
     # Commit and return the updated molecule.
     return molecule.commit()
 
+
 # Create a list of the water models names.
 # This needs to come after all of the solvation functions.
-_models = []        # List of water models (actual names).
+_models = []  # List of water models (actual names).
 _models_lower = []  # List of lower case names.
-_model_dict = {}    # Mapping between lower case names and functions.
+_model_dict = {}  # Mapping between lower case names and functions.
 import sys as _sys
+
 _namespace = _sys.modules[__name__]
 for _var in dir():
     if _var[0] != "_" and _var != "solvate" and _var[0] != "M":
@@ -1154,13 +1423,15 @@ del _namespace
 del _sys
 del _var
 
+
 def waterModels():
-    """Return a list of the supported water models.
+    """
+    Return a list of the supported water models.
 
-       Returns
-       -------
+    Returns
+    -------
 
-       models : [str]
-          A list of the supported water models.
+    models : [str]
+       A list of the supported water models.
     """
     return _models

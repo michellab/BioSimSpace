@@ -5,10 +5,12 @@ import pytest
 # Make sure GROMSCS is installed.
 has_gromacs = BSS._gmx_exe is not None
 
+
 @pytest.fixture
 def system(scope="session"):
     """Re-use the same molecuar system for each test."""
     return BSS.IO.readMolecules("test/input/amber/ala/*")
+
 
 @pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
 def test_minimise(system):
@@ -20,6 +22,7 @@ def test_minimise(system):
     # Run the process and check that it finishes without error.
     assert run_process(system, protocol)
 
+
 @pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
 def test_equilibrate(system):
     """Test an equilibration protocol."""
@@ -30,29 +33,36 @@ def test_equilibrate(system):
     # Run the process and check that it finishes without error.
     assert run_process(system, protocol)
 
+
 @pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
 def test_heat(system):
     """Test a heating protocol."""
 
     # Create a short heating protocol.
-    protocol = BSS.Protocol.Equilibration(runtime=BSS.Types.Time(0.001, "nanoseconds"),
-                                          temperature_start=BSS.Types.Temperature(0, "kelvin"),
-                                          temperature_end=BSS.Types.Temperature(300, "kelvin"))
+    protocol = BSS.Protocol.Equilibration(
+        runtime=BSS.Types.Time(0.001, "nanoseconds"),
+        temperature_start=BSS.Types.Temperature(0, "kelvin"),
+        temperature_end=BSS.Types.Temperature(300, "kelvin"),
+    )
 
     # Run the process and check that it finishes without error.
     assert run_process(system, protocol)
+
 
 @pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
 def test_cool(system):
     """Test a cooling protocol."""
 
     # Create a short heating protocol.
-    protocol = BSS.Protocol.Equilibration(runtime=BSS.Types.Time(0.001, "nanoseconds"),
-                                          temperature_start=BSS.Types.Temperature(300, "kelvin"),
-                                          temperature_end=BSS.Types.Temperature(0, "kelvin"))
+    protocol = BSS.Protocol.Equilibration(
+        runtime=BSS.Types.Time(0.001, "nanoseconds"),
+        temperature_start=BSS.Types.Temperature(300, "kelvin"),
+        temperature_end=BSS.Types.Temperature(0, "kelvin"),
+    )
 
     # Run the process and check that it finishes without error.
     assert run_process(system, protocol)
+
 
 @pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
 def test_production(system):
@@ -63,6 +73,7 @@ def test_production(system):
 
     # Run the process and check that it finishes without error.
     assert run_process(system, protocol)
+
 
 @pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
 def test_vacuum_water(system):
@@ -78,6 +89,7 @@ def test_vacuum_water(system):
     # Run the process and check that it finishes without error.
     assert run_process(new_system, protocol)
 
+
 @pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
 @pytest.mark.parametrize("restraint", ["backbone", "heavy"])
 def test_restraints(restraint):
@@ -88,7 +100,7 @@ def test_restraints(restraint):
         "test/input/morphs/complex_vac0.prm7",
         "test/input/morphs/complex_vac0.rst7",
         "test/input/morphs/complex_vac1.prm7",
-        "test/input/morphs/complex_vac1.rst7"
+        "test/input/morphs/complex_vac1.rst7",
     )
 
     # Create an equilibration protocol with backbone restraints.
@@ -96,6 +108,7 @@ def test_restraints(restraint):
 
     # Create the simulation process.
     process = BSS.Process.Gromacs(system, protocol)
+
 
 def run_process(system, protocol):
     """Helper function to run various simulation protocols."""

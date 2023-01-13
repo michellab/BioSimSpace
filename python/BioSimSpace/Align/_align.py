@@ -1,13 +1,13 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2022
+# Copyright: 2017-2023
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
 # BioSimSpace is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 2 of the License, or
+# the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
 # BioSimSpace is distributed in the hope that it will be useful,
@@ -19,19 +19,19 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-"""
-Functionality for aligning molecules.
-"""
+"""Functionality for aligning molecules."""
 
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
 
-__all__ = ["generateNetwork",
-           "matchAtoms",
-           "viewMapping",
-           "rmsdAlign",
-           "flexAlign",
-           "merge"]
+__all__ = [
+    "generateNetwork",
+    "matchAtoms",
+    "viewMapping",
+    "rmsdAlign",
+    "flexAlign",
+    "merge",
+]
 
 import csv as _csv
 import os as _os
@@ -44,6 +44,7 @@ import tempfile as _tempfile
 from .._Utils import _try_import, _have_imported, _assert_imported
 
 import warnings as _warnings
+
 # Suppress numpy warnings from RDKit import.
 _warnings.filterwarnings("ignore", message="numpy.dtype size changed")
 _warnings.filterwarnings("ignore", message="numpy.ndarray size changed")
@@ -61,7 +62,7 @@ with _warnings.catch_warnings():
         from rdkit import RDLogger as _RDLogger
 
         # Disable RDKit warnings.
-        _RDLogger.DisableLog('rdApp.*')
+        _RDLogger.DisableLog("rdApp.*")
     else:
         _Chem = _rdkit
         _rdFMCS = _rdkit
@@ -70,8 +71,7 @@ with _warnings.catch_warnings():
 from sire.legacy import Base as _SireBase
 from sire.legacy import Maths as _SireMaths
 from sire.legacy import Mol as _SireMol
-
-from sire import units as _SireUnits
+from sire.legacy import Units as _SireUnits
 
 from .. import _is_notebook, _isVerbose
 from .._Exceptions import AlignmentError as _AlignmentError
@@ -93,6 +93,7 @@ elif _have_imported(_networkx):
     _lomap = _rdkit
 else:
     from .._Utils import _module_stub
+
     _lomap = _module_stub(name="rdkit, networkx")
 
 from ._merge import merge as _merge
@@ -105,74 +106,83 @@ except:
     except:
         _fkcombu_exe = None
 
-def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
-        links_file=None, property_map={}, n_edges_forced=None):
-    """Generate a perturbation network using Lead Optimisation Mappper (LOMAP).
 
-       Parameters
-       ----------
+def generateNetwork(
+    molecules,
+    names=None,
+    work_dir=None,
+    plot_network=False,
+    links_file=None,
+    property_map={},
+    n_edges_forced=None,
+):
+    """
+    Generate a perturbation network using Lead Optimisation Mappper (LOMAP).
 
-       molecules : :[class:`Molecule <BioSimSpace._SireWrappers.Molecule>`], \
-                    [rdkit.Chem.rdchem.Mol]
-           A list of molecules. (Both BioSimSpace and RDKit molecule objects
-           are supported.)
+    Parameters
+    ----------
 
-       names : [str]
-           A list of names for the molecules. If None, then the index of each
-           molecule will be used.
+    molecules : :[class:`Molecule <BioSimSpace._SireWrappers.Molecule>`], \
+                 [rdkit.Chem.rdchem.Mol]
+        A list of molecules. (Both BioSimSpace and RDKit molecule objects
+        are supported.)
 
-       work_dir : str
-           The working directory for the LOMAP process.
+    names : [str]
+        A list of names for the molecules. If None, then the index of each
+        molecule will be used.
 
-       plot_network : bool
-           Whether to plot the network when running from within a notebook.
-           If using a 'work_dir', then a PNG image will be located in
-           'work_dir/images/network.png'.
+    work_dir : str
+        The working directory for the LOMAP process.
 
-       links_file : str
-           Path to a file providing links to seed the LOMAP graph with. Each
-           record in the file must contain a minimum of two entries, i.e. the
-           names of the ligands of interest, e.g.
-             ligA ligB
-           The third column can include a pre-computed score for the ligand
-           pair, e.g.
-             ligA ligB score
-           A value of < -1 means 'recompute', but force the link to be included.
-           A negative value (>= -1) means use the absolute value as the score,
-           but force the link to be included. A positive means use this value
-           as the score, but treat the link as normal in the LOMAP graph
-           calculation. Finally, if the fourth column contains the string
-           'force', then the link is included, irrespective of its score.
+    plot_network : bool
+        Whether to plot the network when running from within a notebook.
+        If using a 'work_dir', then a PNG image will be located in
+        'work_dir/images/network.png'.
 
-       property_map : dict
-           A dictionary that maps "properties" in molecule0 to their user
-           defined values. This allows the user to refer to properties
-           with their own naming scheme, e.g. { "charge" : "my-charge" }
+    links_file : str
+        Path to a file providing links to seed the LOMAP graph with. Each
+        record in the file must contain a minimum of two entries, i.e. the
+        names of the ligands of interest, e.g.
+            ligA ligB
+        The third column can include a pre-computed score for the ligand
+        pair, e.g.
+            ligA ligB score
+        A value of < -1 means 'recompute', but force the link to be included.
+        A negative value (>= -1) means use the absolute value as the score,
+        but force the link to be included. A positive means use this value
+        as the score, but treat the link as normal in the LOMAP graph
+        calculation. Finally, if the fourth column contains the string
+        'force', then the link is included, irrespective of its score.
 
-       n_edges_forced : int
-           An integer that forces the number of edges that should be used in
-           the perturbation network. Must be in the range
-           [1 .. (len(molecules)**2-len(molecules))/2].
-           In cases where n_edges_forced > the number of edges suggested by
-           LOMAP, BioSimSpace will add the top scoring n edges parsed from the
-           LOMAP output file and add them to the network. Conversely if
-           n_edges_forced < the number of edges suggested by LOMAP, BioSimSpace
-           will remove the bottom n edges parsed from the LOMAP output file.
-           This last option is discouraged as it can cause network cycle
-           breakage and disconnecting of ligands/clusters from the network.
+    property_map : dict
+        A dictionary that maps "properties" in molecule0 to their user
+        defined values. This allows the user to refer to properties
+        with their own naming scheme, e.g. { "charge" : "my-charge" }
 
-       Returns
-       -------
+    n_edges_forced : int
+        An integer that forces the number of edges that should be used in
+        the perturbation network. Must be in the range
+        [1 .. (len(molecules)**2-len(molecules))/2].
+        In cases where n_edges_forced > the number of edges suggested by
+        LOMAP, BioSimSpace will add the top scoring n edges parsed from the
+        LOMAP output file and add them to the network. Conversely if
+        n_edges_forced < the number of edges suggested by LOMAP, BioSimSpace
+        will remove the bottom n edges parsed from the LOMAP output file.
+        This last option is discouraged as it can cause network cycle
+        breakage and disconnecting of ligands/clusters from the network.
 
-       edges : [(int, int)]
-           A tuple containing the edges of the network. Each edge is itself
-           a tuple, containing the indices of the molecules that are
-           connected by the edge.
+    Returns
+    -------
 
-       scores : [float]
-           The LOMAP score for each edge. The higher the score implies that a
-           perturbation between molecules along an edge is likely to be more
-           accurate.
+    edges : [(int, int)]
+        A tuple containing the edges of the network. Each edge is itself
+        a tuple, containing the indices of the molecules that are
+        connected by the edge.
+
+    scores : [float]
+        The LOMAP score for each edge. The higher the score implies that a
+        perturbation between molecules along an edge is likely to be more
+        accurate.
     """
 
     # Adapted from code by Jenke Scheen (@JenkeScheen).
@@ -180,9 +190,11 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
     _assert_imported(_lomap)
 
     if not isinstance(molecules, (list, tuple)):
-        raise TypeError("'molecules' must be a list of "
-                        "'BioSimSpace._SireWrappers.Molecule' "
-                        "or 'rdkit.Chem.rdchem.Mol' objects.")
+        raise TypeError(
+            "'molecules' must be a list of "
+            "'BioSimSpace._SireWrappers.Molecule' "
+            "or 'rdkit.Chem.rdchem.Mol' objects."
+        )
 
     # Validate the molecules.
     rdkit_input = False
@@ -194,9 +206,11 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
     elif all(isinstance(x, _Chem.rdchem.Mol) for x in molecules):
         rdkit_input = True
     else:
-        raise TypeError("'molecules' must be a list of "
-                        "'BioSimSpace._SireWrappers.Molecule' "
-                        "or 'rdkit.Chem.rdchem.Mol' objects.")
+        raise TypeError(
+            "'molecules' must be a list of "
+            "'BioSimSpace._SireWrappers.Molecule' "
+            "or 'rdkit.Chem.rdchem.Mol' objects."
+        )
 
     # Validate the names.
     if names is not None:
@@ -228,7 +242,9 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
         if _os.path.isfile(links_file):
             # Must have names to match against.
             if names is None:
-                raise ValueError("'names' must be defined when passing 'links_file' to LOMAP.")
+                raise ValueError(
+                    "'names' must be defined when passing 'links_file' to LOMAP."
+                )
 
             # Validate the records in the links file. Must have at least two
             # entries per line, i.e. ligA ligB, third column must contain a
@@ -239,18 +255,24 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
                 for line in lf:
                     records = line.split()
                     if len(records) < 2:
-                        raise ValueError(f"{links_file} should have at least two entries "
-                                         f"per line. Failed line is {line.rstrip()}")
+                        raise ValueError(
+                            f"{links_file} should have at least two entries "
+                            f"per line. Failed line is {line.rstrip()}"
+                        )
                     if len(records) > 2:
                         try:
                             float(records[2])
                         except ValueError:
-                            raise ValueError(f"{links_file} contains a non-numerical value for the "
-                                             f"score in the third column: {line.rstrip()}.")
+                            raise ValueError(
+                                f"{links_file} contains a non-numerical value for the "
+                                f"score in the third column: {line.rstrip()}."
+                            )
                     if len(records) > 3:
                         if records[3] != "force":
-                            raise ValueError(f"{links_file} can only contain 'force' in the "
-                                             f"fourth column: {line.rstrip()}.")
+                            raise ValueError(
+                                f"{links_file} can only contain 'force' in the "
+                                f"fourth column: {line.rstrip()}."
+                            )
 
                     # Make sure that the ligands are in the names list.
                     if not records[0] in names:
@@ -266,10 +288,12 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
         if not type(n_edges_forced) is int:
             raise TypeError("'n_edges_forced' must be of type 'int'")
 
-        n_edges_fully_connected = int((len(molecules)**2 - len(molecules))/2)+1
+        n_edges_fully_connected = int((len(molecules) ** 2 - len(molecules)) / 2) + 1
 
         if not 0 < n_edges_forced < n_edges_fully_connected:
-            raise ValueError(f"'n_edges_forced' must be 0 < value < {n_edges_fully_connected}.")
+            raise ValueError(
+                f"'n_edges_forced' must be 0 < value < {n_edges_fully_connected}."
+            )
 
     # Create a temporary working directory and store the directory name.
     if work_dir is None:
@@ -300,12 +324,12 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
             for x, (molecule, name) in enumerate(zip(molecules, names)):
                 file_name = f"{x:03d}_{name}.sdf"
                 links_names[name] = file_name
-                writer =  _Chem.SDWriter(f"{work_dir}/inputs/{file_name}")
+                writer = _Chem.SDWriter(f"{work_dir}/inputs/{file_name}")
                 writer.write(molecule)
                 writer.close()
         else:
             for x, molecule in enumerate(molecules):
-                writer =  _Chem.SDWriter(work_dir + f"/inputs/{x:03d}.sdf")
+                writer = _Chem.SDWriter(work_dir + f"/inputs/{x:03d}.sdf")
                 writer.write(molecule)
                 writer.close()
     else:
@@ -326,28 +350,52 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
                 if "SDF" in molecule._sire_object.property("fileformat").value():
                     is_sdf = True
                     if is_names:
-                        _IO.saveMolecules(work_dir + f"/inputs/{x:03d}_{name}",
-                            molecule, "sdf", property_map=property_map)
+                        _IO.saveMolecules(
+                            work_dir + f"/inputs/{x:03d}_{name}",
+                            molecule,
+                            "sdf",
+                            property_map=property_map,
+                        )
                         links_names[name] = f"{x:03d}_{name}.sdf"
                     else:
-                        _IO.saveMolecules(work_dir + f"/inputs/{x:03d}",
-                            molecule, "sdf", property_map=property_map)
+                        _IO.saveMolecules(
+                            work_dir + f"/inputs/{x:03d}",
+                            molecule,
+                            "sdf",
+                            property_map=property_map,
+                        )
                 else:
                     if is_names:
-                        _IO.saveMolecules(work_dir + f"/inputs/{x:03d}_{name}",
-                            molecule, "mol2", property_map=property_map)
+                        _IO.saveMolecules(
+                            work_dir + f"/inputs/{x:03d}_{name}",
+                            molecule,
+                            "mol2",
+                            property_map=property_map,
+                        )
                         links_names[name] = f"{x:03d}_{name}.mol2"
                     else:
-                        _IO.saveMolecules(work_dir + f"/inputs/{x:03d}",
-                            molecule, "mol2", property_map=property_map)
+                        _IO.saveMolecules(
+                            work_dir + f"/inputs/{x:03d}",
+                            molecule,
+                            "mol2",
+                            property_map=property_map,
+                        )
             else:
                 if is_names:
-                    _IO.saveMolecules(work_dir + f"/inputs/{x:03d}_{name}",
-                        molecule,  "mol2", property_map=property_map)
+                    _IO.saveMolecules(
+                        work_dir + f"/inputs/{x:03d}_{name}",
+                        molecule,
+                        "mol2",
+                        property_map=property_map,
+                    )
                     links_names[name] = f"{x:03d}_{name}.mol2"
                 else:
-                    _IO.saveMolecules(work_dir + f"/inputs/{x:03d}",
-                        molecule,  "mol2", property_map=property_map)
+                    _IO.saveMolecules(
+                        work_dir + f"/inputs/{x:03d}",
+                        molecule,
+                        "mol2",
+                        property_map=property_map,
+                    )
 
     # Create a local copy of the links file in the working directory,
     # replacing the original ligand names with their actual file names.
@@ -369,16 +417,18 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
         lf = None
 
     # Create the DBMolecules object.
-    db_mol = _lomap.DBMolecules(f"{work_dir}/inputs",
-                                name=f"{work_dir}/outputs/lomap",
-                                links_file=lf,
-                                output=True,
-                                output_no_graph=True,
-                                output_no_images=True,
-                                threed=True,
-                                max3d=3.0,
-                                time=3,
-                                parallel=10)
+    db_mol = _lomap.DBMolecules(
+        f"{work_dir}/inputs",
+        name=f"{work_dir}/outputs/lomap",
+        links_file=lf,
+        output=True,
+        output_no_graph=True,
+        output_no_images=True,
+        threed=True,
+        max3d=3.0,
+        time=3,
+        parallel=10,
+    )
 
     # Create the similarity matrices.
     strict, loose = db_mol.build_matrices()
@@ -433,7 +483,7 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
                 score = float(row[4])
 
                 # Update the list while checking that the inverse edge is not already in
-                # the network.
+                # the network.
                 if not (mol1, mol0) in edges:
                     edges_excluded.append((mol0, mol1, score))
 
@@ -445,14 +495,16 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
         edges_excluded.sort(key=lambda x: x[2], reverse=True)
 
         # 1) The network already contains the specified number of edges.
-        if  len(edges) == n_edges_forced:
+        if len(edges) == n_edges_forced:
             # Return the network as is.
-            print(f"LOMAP already suggested the user-specified number of edges ({len(edges)}).")
+            print(
+                f"LOMAP already suggested the user-specified number of edges ({len(edges)})."
+            )
 
         # 2) The network contains fewer edges than the specified number.
         elif len(edges) < n_edges_forced:
-            # We need to add edges to the network to match the queried number.
-            n_to_add = n_edges_forced-len(edges)
+            # We need to add edges to the network to match the queried number.
+            n_to_add = n_edges_forced - len(edges)
             print(f"Adding {n_to_add} edges to the LOMAP network.")
 
             # Get the top n excluded edges.
@@ -463,12 +515,14 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
                 scores.append(edge[2])
 
         # 3) The network contains more edges than the specified number. This is not
-        # recommended as this can cause breaking of network cycles or disconnecting nodes.
+        # recommended as this can cause breaking of network cycles or disconnecting nodes.
         elif len(edges) > n_edges_forced:
             # We need to remove edges from the network to match the queried number.
             n_to_remove = len(edges) - n_edges_forced
-            print(f"Removing {n_to_remove} edges from the LOMAP network, potentially" \
-                +" breaking network cycles or disconnecting ligands/ clusters.")
+            print(
+                f"Removing {n_to_remove} edges from the LOMAP network, potentially"
+                + " breaking network cycles or disconnecting ligands/ clusters."
+            )
             lomap_network = list(zip(edges, scores))
 
             # Sort the network by LOMAP-score.
@@ -494,6 +548,7 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
 
         import matplotlib.image as _mpimg
         import matplotlib.pyplot as _plt
+
         _nx = _try_import("networkx")
         _pydot = _try_import("pydot")
 
@@ -505,7 +560,7 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
         from rdkit.Chem import rdmolops as _rdmolops
 
         # Set the DPI to make the network look nice.
-        _plt.rcParams["figure.dpi"]= 150
+        _plt.rcParams["figure.dpi"] = 150
 
         # Make directory for output images.
         _os.makedirs(work_dir + "/images", exist_ok=True)
@@ -559,13 +614,17 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
             # Remove hydrogens to dramatically speed up MCS algorithm.
             rdmols = [_Chem.RemoveHs(mol) for mol in rdmols]
 
-            template = _Chem.MolFromSmarts(_rdFMCS.FindMCS(rdmols,
-                                    atomCompare=_rdFMCS.AtomCompare.CompareAny,
-                                    bondCompare=_rdFMCS.BondCompare.CompareAny,
-                                    matchValences=False,
-                                    ringMatchesRingOnly=True,
-                                    completeRingsOnly=True,
-                                    matchChiralTag=False).smartsString)
+            template = _Chem.MolFromSmarts(
+                _rdFMCS.FindMCS(
+                    rdmols,
+                    atomCompare=_rdFMCS.AtomCompare.CompareAny,
+                    bondCompare=_rdFMCS.BondCompare.CompareAny,
+                    matchValences=False,
+                    ringMatchesRingOnly=True,
+                    completeRingsOnly=True,
+                    matchChiralTag=False,
+                ).smartsString
+            )
             _AllChem.Compute2DCoords(template)
 
         except Exception as e:
@@ -604,7 +663,7 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
 
             # If ligand names aren't specified, then use the molecule index.
             if names is None:
-                names = [x for x in range(1, len(molecules)+1)]
+                names = [x for x in range(1, len(molecules) + 1)]
 
             # Create a dictionary mapping the edges to their scores.
             edge_dict = {}
@@ -618,9 +677,11 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
 
             # Loop over the edges and add to the graph.
             for edge in edges:
-                graph.add_edge(names[edge[0]],
-                               names[edge[1]],
-                               label=(edge_dict[(names[edge[0]], names[edge[1]])]))
+                graph.add_edge(
+                    names[edge[0]],
+                    names[edge[1]],
+                    label=(edge_dict[(names[edge[0]], names[edge[1]])]),
+                )
 
         except Exception as e:
             msg = "Unable to generate network representation!"
@@ -656,119 +717,123 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
 
     return edges, scores
 
-def matchAtoms(molecule0,
-               molecule1,
-               scoring_function="rmsd_align",
-               matches=1,
-               return_scores=False,
-               prematch={},
-               timeout=5*_Units.Time.second,
-               complete_rings_only=True,
-               max_scoring_matches=1000,
-               property_map0={},
-               property_map1={}):
-    """Find mappings between atom indices in molecule0 to those in molecule1.
-       Molecules are aligned using a Maximum Common Substructure (MCS) search.
-       When requesting more than one match, the mappings will be sorted using
-       a scoring function and returned in order of best to worst score. (Note
-       that, depending on the scoring function the "best" score may have the
-       lowest value.)
 
-       Parameters
-       ----------
+def matchAtoms(
+    molecule0,
+    molecule1,
+    scoring_function="rmsd_align",
+    matches=1,
+    return_scores=False,
+    prematch={},
+    timeout=5 * _Units.Time.second,
+    complete_rings_only=True,
+    max_scoring_matches=1000,
+    property_map0={},
+    property_map1={},
+):
+    """
+    Find mappings between atom indices in molecule0 to those in molecule1.
+    Molecules are aligned using a Maximum Common Substructure (MCS) search.
+    When requesting more than one match, the mappings will be sorted using
+    a scoring function and returned in order of best to worst score. (Note
+    that, depending on the scoring function the "best" score may have the
+    lowest value.).
 
-       molecule0 : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
-           The molecule of interest.
+    Parameters
+    ----------
 
-       molecule1 : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
-           The reference molecule.
+    molecule0 : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+        The molecule of interest.
 
-       scoring_function : str
-           The scoring function used to match atoms. Available options are:
-             - "rmsd"
-                 Calculate the root mean squared distance between the
-                 coordinates of atoms in molecule0 to those that they
-                 map to in molecule1.
-             - "rmsd_align"
-                 Align molecule0 to molecule1 based on the mapping before
-                 computing the above RMSD score.
-             - "rmsd_flex_align"
-                 Flexibly align molecule0 to molecule1 based on the mapping
-                 before computing the above RMSD score. (based on the
-                 'fkcombu'. package: https://pdbj.org/kcombu)
+    molecule1 : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+        The reference molecule.
 
-       matches : int
-           The maximum number of matches to return. (Sorted in order of score).
+    scoring_function : str
+        The scoring function used to match atoms. Available options are:
+          - "rmsd"
+              Calculate the root mean squared distance between the
+              coordinates of atoms in molecule0 to those that they
+              map to in molecule1.
+          - "rmsd_align"
+              Align molecule0 to molecule1 based on the mapping before
+              computing the above RMSD score.
+          - "rmsd_flex_align"
+              Flexibly align molecule0 to molecule1 based on the mapping
+              before computing the above RMSD score. (based on the
+              'fkcombu'. package: https://pdbj.org/kcombu)
 
-       return_scores : bool
-           Whether to return a list containing the scores for each mapping.
+    matches : int
+        The maximum number of matches to return. (Sorted in order of score).
 
-       prematch : dict
-           A dictionary of atom mappings that must be included in the match.
+    return_scores : bool
+        Whether to return a list containing the scores for each mapping.
 
-       timeout : BioSimSpace.Types.Time
-           The timeout for the maximum common substructure search.
+    prematch : dict
+        A dictionary of atom mappings that must be included in the match.
 
-       complete_rings_only : bool
-           Whether to only match complete rings during the MCS search. This
-           option is only relevant to MCS performed using RDKit and will be
-           ignored when falling back on Sire.
+    timeout : BioSimSpace.Types.Time
+        The timeout for the maximum common substructure search.
 
-       max_scoring_matches : int
-           The maximum number of matching MCS substructures to consider when
-           computing mapping scores. Consider reducing this if you find the
-           matchAtoms function to be taking an excessive amount of time. This
-           option is only relevant to MCS performed using RDKit and will be
-           ignored when falling back on Sire.
+    complete_rings_only : bool
+        Whether to only match complete rings during the MCS search. This
+        option is only relevant to MCS performed using RDKit and will be
+        ignored when falling back on Sire.
 
-       property_map0 : dict
-           A dictionary that maps "properties" in molecule0 to their user
-           defined values. This allows the user to refer to properties
-           with their own naming scheme, e.g. { "charge" : "my-charge" }
+    max_scoring_matches : int
+        The maximum number of matching MCS substructures to consider when
+        computing mapping scores. Consider reducing this if you find the
+        matchAtoms function to be taking an excessive amount of time. This
+        option is only relevant to MCS performed using RDKit and will be
+        ignored when falling back on Sire.
 
-       property_map1 : dict
-           A dictionary that maps "properties" in molecule1 to their user
-           defined values.
+    property_map0 : dict
+        A dictionary that maps "properties" in molecule0 to their user
+        defined values. This allows the user to refer to properties
+        with their own naming scheme, e.g. { "charge" : "my-charge" }
 
-       Returns
-       -------
+    property_map1 : dict
+        A dictionary that maps "properties" in molecule1 to their user
+        defined values.
 
-       matches : dict, [dict], ([dict], list)
-           The best atom mapping, a list containing a user specified number of
-           the best mappings ranked by their score, or a tuple containing the
-           list of best mappings and a list of the corresponding scores.
+    Returns
+    -------
 
-       Examples
-       --------
+    matches : dict, [dict], ([dict], list)
+        The best atom mapping, a list containing a user specified number of
+        the best mappings ranked by their score, or a tuple containing the
+        list of best mappings and a list of the corresponding scores.
 
-       Find the best maximum common substructure mapping between two molecules.
+    Examples
+    --------
 
-       >>> import BioSimSpace as BSS
-       >>> mapping = BSS.Align.matchAtoms(molecule0, molecule1)
+    Find the best maximum common substructure mapping between two molecules.
 
-       Find the 5 best mappings.
+    >>> import BioSimSpace as BSS
+    >>> mapping = BSS.Align.matchAtoms(molecule0, molecule1)
 
-       >>> import BioSimSpace as BSS
-       >>> mappings = BSS.Align.matchAtoms(molecule0, molecule1, matches=5)
+    Find the 5 best mappings.
 
-       Find the 5 best mappings along with their ranking scores.
+    >>> import BioSimSpace as BSS
+    >>> mappings = BSS.Align.matchAtoms(molecule0, molecule1, matches=5)
 
-       >>> import BioSimSpace as BSS
-       >>> mappings, scores = BSS.Align.matchAtoms(molecule0, molecule1, matches=5, return_scores=True)
+    Find the 5 best mappings along with their ranking scores.
 
-       Find the 5 best mappings along with their ranking scores. Score
-       by flexibly aligning molecule0 to molecule1 based on each mapping
-       and computing the root mean squared displacement of the matched
-       atoms.
+    >>> import BioSimSpace as BSS
+    >>> mappings, scores = BSS.Align.matchAtoms(molecule0, molecule1, matches=5, return_scores=True)
 
-       >>> import BioSimSpace as BSS
-       >>> mappings, scores = BSS.Align.matchAtoms(molecule0, molecule1, matches=5, return_scores=True, scoring_function="rmsd_flex_align")
+    Find the 5 best mappings along with their ranking scores. Score
+    by flexibly aligning molecule0 to molecule1 based on each mapping
+    and computing the root mean squared displacement of the matched
+    atoms.
 
-       Find the best mapping that contains a prematch (this is a dictionary mapping
-       atom indices in molecule0 to those in molecule1).
+    >>> import BioSimSpace as BSS
+    >>> mappings, scores = BSS.Align.matchAtoms(molecule0, molecule1, matches=5, return_scores=True, scoring_function="rmsd_flex_align")
 
-       >>> import BioSimSpace as BSS
-       >>> mapping = BSS.Align.matchAtoms(molecule0, molecule1, prematch={0 : 10, 3 : 7})
+    Find the best mapping that contains a prematch (this is a dictionary mapping
+    atom indices in molecule0 to those in molecule1).
+
+    >>> import BioSimSpace as BSS
+    >>> mapping = BSS.Align.matchAtoms(molecule0, molecule1, prematch={0 : 10, 3 : 7})
     """
 
     # A list of supported scoring functions.
@@ -777,10 +842,14 @@ def matchAtoms(molecule0,
     # Validate input.
 
     if not isinstance(molecule0, _Molecule):
-        raise TypeError("'molecule0' must be of type 'BioSimSpace._SireWrappers.Molecule'")
+        raise TypeError(
+            "'molecule0' must be of type 'BioSimSpace._SireWrappers.Molecule'"
+        )
 
     if not isinstance(molecule1, _Molecule):
-        raise TypeError("'molecule1' must be of type 'BioSimSpace._SireWrappers.Molecule'")
+        raise TypeError(
+            "'molecule1' must be of type 'BioSimSpace._SireWrappers.Molecule'"
+        )
 
     if not isinstance(scoring_function, str):
         raise TypeError("'scoring_function' must be of type 'str'")
@@ -789,12 +858,16 @@ def matchAtoms(molecule0,
         _scoring_function = scoring_function.replace("_", "").upper()
         _scoring_function = _scoring_function.replace(" ", "").upper()
         if not _scoring_function in scoring_functions:
-            raise ValueError("Unsupported scoring function '%s'. Options are: %s"
-                % (scoring_function, scoring_functions))
+            raise ValueError(
+                "Unsupported scoring function '%s'. Options are: %s"
+                % (scoring_function, scoring_functions)
+            )
 
     if _scoring_function == "RMSDFLEXALIGN" and _fkcombu_exe is None:
-        raise _MissingSoftwareError("'rmsd_flex_align' option requires the 'fkcombu' program: "
-                                    "https://pdbj.org/kcombu")
+        raise _MissingSoftwareError(
+            "'rmsd_flex_align' option requires the 'fkcombu' program: "
+            "https://pdbj.org/kcombu"
+        )
 
     if not type(matches) is int:
         raise TypeError("'matches' must be of type 'int'")
@@ -849,19 +922,23 @@ def matchAtoms(molecule0,
             # Note that the C++ function overloading seems to be broken, so we
             # need to pass all arguments by position, rather than keyword.
             # The arguments are: "filename", "sanitize", "removeHs", "flavor"
-            mols = [_Chem.MolFromPDBFile("tmp0.pdb", True, False, 0),
-                    _Chem.MolFromPDBFile("tmp1.pdb", True, False, 0)]
+            mols = [
+                _Chem.MolFromPDBFile("tmp0.pdb", True, False, 0),
+                _Chem.MolFromPDBFile("tmp1.pdb", True, False, 0),
+            ]
 
             # Generate the MCS match.
-            mcs = _rdFMCS.FindMCS(mols,
-                                  atomCompare=_rdFMCS.AtomCompare.CompareAny,
-                                  bondCompare=_rdFMCS.BondCompare.CompareAny,
-                                  completeRingsOnly=complete_rings_only,
-                                  ringMatchesRingOnly=True,
-                                  matchChiralTag=False,
-                                  matchValences=False,
-                                  maximizeBonds=False,
-                                  timeout=timeout)
+            mcs = _rdFMCS.FindMCS(
+                mols,
+                atomCompare=_rdFMCS.AtomCompare.CompareAny,
+                bondCompare=_rdFMCS.BondCompare.CompareAny,
+                completeRingsOnly=complete_rings_only,
+                ringMatchesRingOnly=True,
+                matchChiralTag=False,
+                matchValences=False,
+                maximizeBonds=False,
+                timeout=timeout,
+            )
 
             # Get the common substructure as a SMARTS string.
             mcs_smarts = _Chem.MolFromSmarts(mcs.smartsString)
@@ -870,9 +947,18 @@ def matchAtoms(molecule0,
         raise RuntimeError("RDKIT MCS mapping failed!")
 
     # Score the mappings and return them in sorted order (best to worst).
-    mappings, scores = _score_rdkit_mappings(mol0, mol1, mols[0], mols[1],
-        mcs_smarts, prematch, _scoring_function, max_scoring_matches,
-        property_map0, property_map1)
+    mappings, scores = _score_rdkit_mappings(
+        mol0,
+        mol1,
+        mols[0],
+        mols[1],
+        mcs_smarts,
+        prematch,
+        _scoring_function,
+        max_scoring_matches,
+        property_map0,
+        property_map1,
+    )
 
     # Sometimes RDKit fails to generate a mapping that includes the prematch.
     # If so, then try generating a mapping using the MCS routine from Sire.
@@ -884,20 +970,38 @@ def matchAtoms(molecule0,
 
         # Warn about unsupported options.
         if not complete_rings_only:
-            _warnings.warn("Using Sire MCS. Ignoring unsupported 'complete_rings_only' option!")
+            _warnings.warn(
+                "Using Sire MCS. Ignoring unsupported 'complete_rings_only' option!"
+            )
 
         # Convert timeout to a Sire Unit.
         timeout = timeout * _SireUnits.second
 
         # Regular match. Include light atoms, but don't allow matches between heavy
         # and light atoms.
-        m0 = mol0.evaluate().findMCSmatches(mol1, _SireMol.AtomResultMatcher(_to_sire_mapping(prematch)),
-                                            timeout, True, property_map0, property_map1, 6, False)
+        m0 = mol0.evaluate().findMCSmatches(
+            mol1,
+            _SireMol.AtomResultMatcher(_to_sire_mapping(prematch)),
+            timeout,
+            True,
+            property_map0,
+            property_map1,
+            6,
+            False,
+        )
 
         # Include light atoms, and allow matches between heavy and light atoms.
         # This captures mappings such as O --> H in methane to methanol.
-        m1 = mol0.evaluate().findMCSmatches(mol1, _SireMol.AtomResultMatcher(_to_sire_mapping(prematch)),
-                                            timeout, True, property_map0, property_map1, 0, False)
+        m1 = mol0.evaluate().findMCSmatches(
+            mol1,
+            _SireMol.AtomResultMatcher(_to_sire_mapping(prematch)),
+            timeout,
+            True,
+            property_map0,
+            property_map1,
+            0,
+            False,
+        )
 
         # Take the mapping with the larger number of matches.
         if len(m1) > 0:
@@ -912,8 +1016,15 @@ def matchAtoms(molecule0,
             mappings = m0
 
         # Score the mappings and return them in sorted order (best to worst).
-        mappings, scores = _score_sire_mappings(mol0, mol1, mappings, prematch,
-            _scoring_function, property_map0, property_map1)
+        mappings, scores = _score_sire_mappings(
+            mol0,
+            mol1,
+            mappings,
+            prematch,
+            _scoring_function,
+            property_map0,
+            property_map1,
+        )
 
     if matches == 1:
         if return_scores:
@@ -929,61 +1040,67 @@ def matchAtoms(molecule0,
         else:
             return mappings[0:matches]
 
+
 def rmsdAlign(molecule0, molecule1, mapping=None, property_map0={}, property_map1={}):
-    """Align atoms in molecule0 to those in molecule1 using the mapping
-       between matched atom indices. The molecule is aligned using rigid-body
-       translation and rotations, with a root mean squared displacement (RMSD)
-       fit to find the optimal translation vector (as opposed to merely taking
-       the difference of centroids).
+    """
+    Align atoms in molecule0 to those in molecule1 using the mapping
+    between matched atom indices. The molecule is aligned using rigid-body
+    translation and rotations, with a root mean squared displacement (RMSD)
+    fit to find the optimal translation vector (as opposed to merely taking
+    the difference of centroids).
 
-       Parameters
-       ----------
+    Parameters
+    ----------
 
-       molecule0 : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
-           The molecule to align.
+    molecule0 : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+        The molecule to align.
 
-       molecule1 : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
-           The reference molecule.
+    molecule1 : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+        The reference molecule.
 
-       mapping : dict
-           A dictionary mapping atoms in molecule0 to those in molecule1.
+    mapping : dict
+        A dictionary mapping atoms in molecule0 to those in molecule1.
 
-       property_map0 : dict
-           A dictionary that maps "properties" in molecule0 to their user
-           defined values. This allows the user to refer to properties
-           with their own naming scheme, e.g. { "charge" : "my-charge" }
+    property_map0 : dict
+        A dictionary that maps "properties" in molecule0 to their user
+        defined values. This allows the user to refer to properties
+        with their own naming scheme, e.g. { "charge" : "my-charge" }
 
-       property_map1 : dict
-           A dictionary that maps "properties" in molecule1 to their user
-           defined values.
+    property_map1 : dict
+        A dictionary that maps "properties" in molecule1 to their user
+        defined values.
 
-       Returns
-       -------
+    Returns
+    -------
 
-       molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
-           The aligned molecule.
+    molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+        The aligned molecule.
 
-       Examples
-       --------
+    Examples
+    --------
 
-       Align molecule0 to molecule1 based on a precomputed mapping.
+    Align molecule0 to molecule1 based on a precomputed mapping.
 
-       >>> import BioSimSpace as BSS
-       >>> molecule0 = BSS.Align.rmsdAlign(molecule0, molecule1, mapping)
+    >>> import BioSimSpace as BSS
+    >>> molecule0 = BSS.Align.rmsdAlign(molecule0, molecule1, mapping)
 
-       Align molecule0 to molecule1. Since no mapping is passed one will be
-       autogenerated using :class:`matchAtoms <BioSimSpace.Align.matchAtoms>`
-       with default options.
+    Align molecule0 to molecule1. Since no mapping is passed one will be
+    autogenerated using :class:`matchAtoms <BioSimSpace.Align.matchAtoms>`
+    with default options.
 
-       >>> import BioSimSpace as BSS
-       >>> molecule0 = BSS.Align.rmsdAlign(molecule0, molecule1)
+    >>> import BioSimSpace as BSS
+    >>> molecule0 = BSS.Align.rmsdAlign(molecule0, molecule1)
     """
 
     if not isinstance(molecule0, _Molecule):
-        raise TypeError("'molecule0' must be of type 'BioSimSpace._SireWrappers.Molecule'")
+        raise TypeError(
+            "'molecule0' must be of type 'BioSimSpace._SireWrappers.Molecule'"
+        )
 
     if not isinstance(molecule1, _Molecule):
-        raise TypeError("'molecule1' must be of type 'BioSimSpace._SireWrappers.Molecule'")
+        raise TypeError(
+            "'molecule1' must be of type 'BioSimSpace._SireWrappers.Molecule'"
+        )
 
     if not isinstance(property_map0, dict):
         raise TypeError("'property_map0' must be of type 'dict'")
@@ -1000,8 +1117,12 @@ def rmsdAlign(molecule0, molecule1, mapping=None, property_map0={}, property_map
 
     # Get the best match atom mapping.
     else:
-        mapping = matchAtoms(molecule0, molecule1, property_map0=property_map0,
-                             property_map1=property_map1)
+        mapping = matchAtoms(
+            molecule0,
+            molecule1,
+            property_map0=property_map0,
+            property_map1=property_map1,
+        )
 
     # Extract the Sire molecule from each BioSimSpace molecule.
     mol0 = molecule0._getSireObject()
@@ -1012,7 +1133,9 @@ def rmsdAlign(molecule0, molecule1, mapping=None, property_map0={}, property_map
 
     # Perform the alignment, mol0 to mol1.
     try:
-        mol0 = mol0.move().align(mol1, _SireMol.AtomResultMatcher(sire_mapping)).molecule()
+        mol0 = (
+            mol0.move().align(mol1, _SireMol.AtomResultMatcher(sire_mapping)).molecule()
+        )
     except Exception as e:
         msg = "Failed to align molecules based on mapping: %r" % mapping
         if "Could not calculate the single value decomposition" in str(e):
@@ -1025,63 +1148,73 @@ def rmsdAlign(molecule0, molecule1, mapping=None, property_map0={}, property_map
     # Return the aligned molecule.
     return _Molecule(mol0)
 
-def flexAlign(molecule0, molecule1, mapping=None, fkcombu_exe=None,
-        property_map0={}, property_map1={}):
-    """Flexibly align atoms in molecule0 to those in molecule1 using the
-       mapping between matched atom indices.
 
-       Parameters
-       ----------
+def flexAlign(
+    molecule0,
+    molecule1,
+    mapping=None,
+    fkcombu_exe=None,
+    property_map0={},
+    property_map1={},
+):
+    """
+    Flexibly align atoms in molecule0 to those in molecule1 using the
+    mapping between matched atom indices.
 
-       molecule0 : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
-           The molecule to align.
+    Parameters
+    ----------
 
-       molecule1 : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
-           The reference molecule.
+    molecule0 : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+        The molecule to align.
 
-       mapping : dict
-           A dictionary mapping atoms in molecule0 to those in molecule1.
+    molecule1 : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+        The reference molecule.
 
-       fkcombu_exe : str
-           Path to the fkcombu executable. If None is passed, then BioSimSpace
-           will attempt to find fkcombu by searching your PATH.
+    mapping : dict
+        A dictionary mapping atoms in molecule0 to those in molecule1.
 
-       property_map0 : dict
-           A dictionary that maps "properties" in molecule0 to their user
-           defined values. This allows the user to refer to properties
-           with their own naming scheme, e.g. { "charge" : "my-charge" }
+    fkcombu_exe : str
+        Path to the fkcombu executable. If None is passed, then BioSimSpace
+        will attempt to find fkcombu by searching your PATH.
 
-       property_map1 : dict
-           A dictionary that maps "properties" in molecule1 to their user
-           defined values.
+    property_map0 : dict
+        A dictionary that maps "properties" in molecule0 to their user
+        defined values. This allows the user to refer to properties
+        with their own naming scheme, e.g. { "charge" : "my-charge" }
 
-       Returns
-       -------
+    property_map1 : dict
+        A dictionary that maps "properties" in molecule1 to their user
+        defined values.
 
-       molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
-           The aligned molecule.
+    Returns
+    -------
 
-       Examples
-       --------
+    molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+        The aligned molecule.
 
-       Align molecule0 to molecule1 based on a precomputed mapping.
+    Examples
+    --------
 
-       >>> import BioSimSpace as BSS
-       >>> molecule0 = BSS.Align.flexAlign(molecule0, molecule1, mapping)
+    Align molecule0 to molecule1 based on a precomputed mapping.
 
-       Align molecule0 to molecule1. Since no mapping is passed one will be
-       autogenerated using :class:`matchAtoms <BioSimSpace.Align.matchAtoms>`
-       with default options.
+    >>> import BioSimSpace as BSS
+    >>> molecule0 = BSS.Align.flexAlign(molecule0, molecule1, mapping)
 
-       >>> import BioSimSpace as BSS
-       >>> molecule0 = BSS.Align.flexAlign(molecule0, molecule1)
+    Align molecule0 to molecule1. Since no mapping is passed one will be
+    autogenerated using :class:`matchAtoms <BioSimSpace.Align.matchAtoms>`
+    with default options.
+
+    >>> import BioSimSpace as BSS
+    >>> molecule0 = BSS.Align.flexAlign(molecule0, molecule1)
     """
 
     # Check that we found fkcombu in the PATH.
     if fkcombu_exe is None:
         if _fkcombu_exe is None:
-            raise _MissingSoftwareError("'BioSimSpace.Align.flexAlign' requires the 'fkcombu' program: "
-                                        "https://pdbj.org/kcombu")
+            raise _MissingSoftwareError(
+                "'BioSimSpace.Align.flexAlign' requires the 'fkcombu' program: "
+                "https://pdbj.org/kcombu"
+            )
         else:
             fkcombu_exe = _fkcombu_exe
     # Check that the user supplied executable exists.
@@ -1090,10 +1223,14 @@ def flexAlign(molecule0, molecule1, mapping=None, fkcombu_exe=None,
             raise IOError("'fkcombu' executable doesn't exist: '%s'" % fkcombu_exe)
 
     if not isinstance(molecule0, _Molecule):
-        raise TypeError("'molecule0' must be of type 'BioSimSpace._SireWrappers.Molecule'")
+        raise TypeError(
+            "'molecule0' must be of type 'BioSimSpace._SireWrappers.Molecule'"
+        )
 
     if not isinstance(molecule1, _Molecule):
-        raise TypeError("'molecule1' must be of type 'BioSimSpace._SireWrappers.Molecule'")
+        raise TypeError(
+            "'molecule1' must be of type 'BioSimSpace._SireWrappers.Molecule'"
+        )
 
     if not isinstance(property_map0, dict):
         raise TypeError("'property_map0' must be of type 'dict'")
@@ -1110,8 +1247,12 @@ def flexAlign(molecule0, molecule1, mapping=None, fkcombu_exe=None,
 
     # Get the best match atom mapping.
     else:
-        mapping = matchAtoms(molecule0, molecule1, property_map0=property_map0,
-                             property_map1=property_map1)
+        mapping = matchAtoms(
+            molecule0,
+            molecule1,
+            property_map0=property_map0,
+            property_map1=property_map1,
+        )
 
     # Convert the mapping to AtomIdx key:value pairs.
     sire_mapping = _to_sire_mapping(mapping)
@@ -1133,15 +1274,24 @@ def flexAlign(molecule0, molecule1, mapping=None, fkcombu_exe=None,
                 file.write("%d %d\n" % (idx0.value() + 1, idx1.value() + 1))
 
         # Create the fkcombu command string.
-        command = "%s -T molecule0.pdb -R molecule1.pdb -alg F -iam mapping.txt -opdbT aligned.pdb" % fkcombu_exe
+        command = (
+            "%s -T molecule0.pdb -R molecule1.pdb -alg F -iam mapping.txt -opdbT aligned.pdb"
+            % fkcombu_exe
+        )
 
         # Run the command as a subprocess.
-        proc = _subprocess.run(_Utils.command_split(command), shell=False,
-            stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
+        proc = _subprocess.run(
+            _Utils.command_split(command),
+            shell=False,
+            stdout=_subprocess.PIPE,
+            stderr=_subprocess.PIPE,
+        )
 
         # Check that the output file exists.
         if not _os.path.isfile("aligned.pdb"):
-            raise _AlignmentError("Failed to align molecules based on mapping: %r" % mapping) from None
+            raise _AlignmentError(
+                "Failed to align molecules based on mapping: %r" % mapping
+            ) from None
 
         # Load the aligned molecule.
         aligned = _IO.readMolecules("aligned.pdb")[0]
@@ -1150,84 +1300,100 @@ def flexAlign(molecule0, molecule1, mapping=None, fkcombu_exe=None,
         prop = property_map0.get("coordinates", "coordinates")
 
         # Copy the coordinates back into the original molecule.
-        molecule0._sire_object = molecule0._sire_object.edit() \
-            .setProperty(prop, aligned._sire_object.property("coordinates")).commit()
+        molecule0._sire_object = (
+            molecule0._sire_object.edit()
+            .setProperty(prop, aligned._sire_object.property("coordinates"))
+            .commit()
+        )
 
     # Return the aligned molecule.
     return _Molecule(molecule0)
 
-def merge(molecule0, molecule1, mapping=None, allow_ring_breaking=False,
-        allow_ring_size_change=False, force=False,
-        property_map0={}, property_map1={}):
-    """Create a merged molecule from 'molecule0' and 'molecule1' based on the
-       atom index 'mapping'. The merged molecule can be used in single topology
-       free-energy simulations.
 
-       Parameters
-       ----------
+def merge(
+    molecule0,
+    molecule1,
+    mapping=None,
+    allow_ring_breaking=False,
+    allow_ring_size_change=False,
+    force=False,
+    property_map0={},
+    property_map1={},
+):
+    """
+    Create a merged molecule from 'molecule0' and 'molecule1' based on the
+    atom index 'mapping'. The merged molecule can be used in single topology
+    free-energy simulations.
 
-       molecule0 : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
-           A molecule object.
+    Parameters
+    ----------
 
-       molecule1 : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
-           A second molecule object.
+    molecule0 : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+        A molecule object.
 
-       mapping : dict
-           The mapping between matching atom indices in the two molecules.
-           If no mapping is provided, then atoms in molecule0 will be mapped
-           to those in molecule1 using "matchAtoms", with "rmsdAlign" then
-           used to align molecule0 to molecule1 based on the resulting mapping.
+    molecule1 : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+        A second molecule object.
 
-       allow_ring_breaking : bool
-           Whether to allow the opening/closing of rings during a merge.
+    mapping : dict
+        The mapping between matching atom indices in the two molecules.
+        If no mapping is provided, then atoms in molecule0 will be mapped
+        to those in molecule1 using "matchAtoms", with "rmsdAlign" then
+        used to align molecule0 to molecule1 based on the resulting mapping.
 
-       allow_ring_size_change : bool
-           Whether to allow changes in ring size.
+    allow_ring_breaking : bool
+        Whether to allow the opening/closing of rings during a merge.
 
-       force : bool
-           Whether to try to force the merge, even when the molecular
-           connectivity changes not as the result of a ring transformation.
-           This will likely lead to an unstable perturbation. This option
-           takes precedence over 'allow_ring_breaking' and
-           'allow_ring_size_change'.
+    allow_ring_size_change : bool
+        Whether to allow changes in ring size.
 
-       property_map0 : dict
-           A dictionary that maps "properties" in molecule0 to their user
-           defined values. This allows the user to refer to properties
-           with their own naming scheme, e.g. { "charge" : "my-charge" }
+    force : bool
+        Whether to try to force the merge, even when the molecular
+        connectivity changes not as the result of a ring transformation.
+        This will likely lead to an unstable perturbation. This option
+        takes precedence over 'allow_ring_breaking' and
+        'allow_ring_size_change'.
 
-       property_map1 : dict
-           A dictionary that maps "properties" in molecule1 to their user
-           defined values.
+    property_map0 : dict
+        A dictionary that maps "properties" in molecule0 to their user
+        defined values. This allows the user to refer to properties
+        with their own naming scheme, e.g. { "charge" : "my-charge" }
 
-       Returns
-       -------
+    property_map1 : dict
+        A dictionary that maps "properties" in molecule1 to their user
+        defined values.
 
-       molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
-           The merged molecule.
+    Returns
+    -------
 
-       Examples
-       --------
+    molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+        The merged molecule.
 
-       Merge molecule0 and molecule1 based on a precomputed mapping.
+    Examples
+    --------
 
-       >>> import BioSimSpace as BSS
-       >>> merged = BSS.Align.merge(molecule0, molecule1, mapping)
+    Merge molecule0 and molecule1 based on a precomputed mapping.
 
-       Merge molecule0 with molecule1. Since no mapping is passed one will be
-       autogenerated using :class:`matchAtoms <BioSimSpace.Align.matchAtoms>`
-       with default options, following which :class:`rmsdAlign <BioSimSpace.Align.rmsdAlign>`
-       will be used to align molecule0 to molecule1 based on the resulting mapping.
+    >>> import BioSimSpace as BSS
+    >>> merged = BSS.Align.merge(molecule0, molecule1, mapping)
 
-       >>> import BioSimSpace as BSS
-       >>> molecule0 = BSS.Align.merge(molecule0, molecule1)
+    Merge molecule0 with molecule1. Since no mapping is passed one will be
+    autogenerated using :class:`matchAtoms <BioSimSpace.Align.matchAtoms>`
+    with default options, following which :class:`rmsdAlign <BioSimSpace.Align.rmsdAlign>`
+    will be used to align molecule0 to molecule1 based on the resulting mapping.
+
+    >>> import BioSimSpace as BSS
+    >>> molecule0 = BSS.Align.merge(molecule0, molecule1)
     """
 
     if not isinstance(molecule0, _Molecule):
-        raise TypeError("'molecule0' must be of type 'BioSimSpace._SireWrappers.Molecule'")
+        raise TypeError(
+            "'molecule0' must be of type 'BioSimSpace._SireWrappers.Molecule'"
+        )
 
     if not isinstance(molecule1, _Molecule):
-        raise TypeError("'molecule1' must be of type 'BioSimSpace._SireWrappers.Molecule'")
+        raise TypeError(
+            "'molecule1' must be of type 'BioSimSpace._SireWrappers.Molecule'"
+        )
 
     if not isinstance(property_map0, dict):
         raise TypeError("'property_map0' must be of type 'dict'")
@@ -1254,64 +1420,85 @@ def merge(molecule0, molecule1, mapping=None, allow_ring_breaking=False,
     # Get the best atom mapping and align molecule0 to molecule1 based on the
     # mapping.
     else:
-        mapping = matchAtoms(molecule0, molecule1,
-            property_map0=property_map0, property_map1=property_map1)
+        mapping = matchAtoms(
+            molecule0,
+            molecule1,
+            property_map0=property_map0,
+            property_map1=property_map1,
+        )
         molecule0 = rmsdAlign(molecule0, molecule1, mapping)
 
     # Convert the mapping to AtomIdx key:value pairs.
     sire_mapping = _to_sire_mapping(mapping)
 
     # Create and return the merged molecule.
-    return _merge(molecule0, molecule1, sire_mapping, allow_ring_breaking=allow_ring_breaking,
-            allow_ring_size_change=allow_ring_size_change, force=force,
-            property_map0=property_map0, property_map1=property_map1)
+    return _merge(
+        molecule0,
+        molecule1,
+        sire_mapping,
+        allow_ring_breaking=allow_ring_breaking,
+        allow_ring_size_change=allow_ring_size_change,
+        force=force,
+        property_map0=property_map0,
+        property_map1=property_map1,
+    )
 
-def viewMapping(molecule0, molecule1, mapping=None, property_map0={},
-        property_map1={}, style=None, orientation="horizontal", pixels=900):
-    """Visualise the mapping between molecule0 and molecule1. This draws a 3D
-       depiction of both molecules with the mapped atoms highlighted in green.
-       Labels specify the indices of the atoms, along with the indices of
-       the atoms to which they map in the other molecule.
 
-       Parameters
-       ----------
+def viewMapping(
+    molecule0,
+    molecule1,
+    mapping=None,
+    property_map0={},
+    property_map1={},
+    style=None,
+    orientation="horizontal",
+    pixels=900,
+):
+    """
+    Visualise the mapping between molecule0 and molecule1. This draws a 3D
+    depiction of both molecules with the mapped atoms highlighted in green.
+    Labels specify the indices of the atoms, along with the indices of
+    the atoms to which they map in the other molecule.
 
-       molecule0 : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
-           The first molecule.
+    Parameters
+    ----------
 
-       molecule1 : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
-           The second molecule.
+    molecule0 : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+        The first molecule.
 
-       mapping : dict
-           A dictionary mapping atoms in molecule0 to those in molecule1.
+    molecule1 : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+        The second molecule.
 
-       property_map0 : dict
-           A dictionary that maps "properties" in molecule0 to their user
-           defined values. This allows the user to refer to properties
-           with their own naming scheme, e.g. { "charge" : "my-charge" }
+    mapping : dict
+        A dictionary mapping atoms in molecule0 to those in molecule1.
 
-       property_map1 : dict
-           A dictionary that maps "properties" in molecule1 to their user
-           defined values.
+    property_map0 : dict
+        A dictionary that maps "properties" in molecule0 to their user
+        defined values. This allows the user to refer to properties
+        with their own naming scheme, e.g. { "charge" : "my-charge" }
 
-       style : dict
-           Drawing style. See https://3dmol.csb.pitt.edu/doc/$3Dmol.GLViewer.html
-           for some examples.
+    property_map1 : dict
+        A dictionary that maps "properties" in molecule1 to their user
+        defined values.
 
-       orientation : str
-           Whether to display the two molecules in a "horizontal" or "vertical"
-           arrangement.
+    style : dict
+        Drawing style. See https://3dmol.csb.pitt.edu/doc/$3Dmol.GLViewer.html
+        for some examples.
 
-       pixels : int
-           The size of the largest view dimension in pixel, i.e. either the
-           "horizontal" or "vertical" size.
+    orientation : str
+        Whether to display the two molecules in a "horizontal" or "vertical"
+        arrangement.
 
-       Returns
-       -------
+    pixels : int
+        The size of the largest view dimension in pixel, i.e. either the
+        "horizontal" or "vertical" size.
 
-       view : py3Dmol.view
-           A view of the two molecules with the mapped atoms highlighted and
-           labelled.
+    Returns
+    -------
+
+    view : py3Dmol.view
+        A view of the two molecules with the mapped atoms highlighted and
+        labelled.
     """
 
     # Adapted from: https://gist.github.com/cisert/d05664d4c98ac1cf86ee70b8700e56a9
@@ -1323,10 +1510,14 @@ def viewMapping(molecule0, molecule1, mapping=None, property_map0={},
     _assert_imported(_rdkit)
 
     if not isinstance(molecule0, _Molecule):
-        raise TypeError("'molecule0' must be of type 'BioSimSpace._SireWrappers.Molecule'")
+        raise TypeError(
+            "'molecule0' must be of type 'BioSimSpace._SireWrappers.Molecule'"
+        )
 
     if not isinstance(molecule1, _Molecule):
-        raise TypeError("'molecule1' must be of type 'BioSimSpace._SireWrappers.Molecule'")
+        raise TypeError(
+            "'molecule1' must be of type 'BioSimSpace._SireWrappers.Molecule'"
+        )
 
     if not isinstance(property_map0, dict):
         raise TypeError("'property_map0' must be of type 'dict'")
@@ -1345,8 +1536,9 @@ def viewMapping(molecule0, molecule1, mapping=None, property_map0={},
         orientation = orientation.lower().replace(" ", "")
 
         if orientation not in ["horizontal", "vertical"]:
-            raise ValueError("'orientation' must be equal to 'horizontal' "
-                             "or 'vertical'.")
+            raise ValueError(
+                "'orientation' must be equal to 'horizontal' " "or 'vertical'."
+            )
 
     if isinstance(pixels, float):
         pixels = int(pixels)
@@ -1365,8 +1557,12 @@ def viewMapping(molecule0, molecule1, mapping=None, property_map0={},
     # Get the best atom mapping and align molecule0 to molecule1 based on the
     # mapping.
     else:
-        mapping = matchAtoms(molecule0, molecule1,
-            property_map0=property_map0, property_map1=property_map1)
+        mapping = matchAtoms(
+            molecule0,
+            molecule1,
+            property_map0=property_map0,
+            property_map1=property_map1,
+        )
         molecule0 = rmsdAlign(molecule0, molecule1, mapping)
 
     # Create a temporary working directory and store the directory name.
@@ -1374,18 +1570,22 @@ def viewMapping(molecule0, molecule1, mapping=None, property_map0={},
     work_dir = tmp_dir.name
 
     # Write the molecules to PDB format.
-    _IO.saveMolecules(work_dir + "/molecule0",
-        molecule0, "pdb", property_map=property_map0)
-    _IO.saveMolecules(work_dir + "/molecule1",
-        molecule1, "pdb", property_map=property_map0)
+    _IO.saveMolecules(
+        work_dir + "/molecule0", molecule0, "pdb", property_map=property_map0
+    )
+    _IO.saveMolecules(
+        work_dir + "/molecule1", molecule1, "pdb", property_map=property_map0
+    )
 
     import py3Dmol as _py3Dmol
 
     # Load the molecules into RDKit.
-    rdmol0 = _Chem.MolFromPDBFile(work_dir + "/molecule0.pdb",
-        sanitize=False, removeHs=False)
-    rdmol1 = _Chem.MolFromPDBFile(work_dir + "/molecule1.pdb",
-        sanitize=False, removeHs=False)
+    rdmol0 = _Chem.MolFromPDBFile(
+        work_dir + "/molecule0.pdb", sanitize=False, removeHs=False
+    )
+    rdmol1 = _Chem.MolFromPDBFile(
+        work_dir + "/molecule1.pdb", sanitize=False, removeHs=False
+    )
 
     # Set grid view properties.
     viewer0 = (0, 0)
@@ -1401,12 +1601,13 @@ def viewMapping(molecule0, molecule1, mapping=None, property_map0={},
         height = pixels
 
     # Create the view.
-    view = _py3Dmol.view(linked=False, width=width,
-            height=height, viewergrid=viewergrid)
+    view = _py3Dmol.view(
+        linked=False, width=width, height=height, viewergrid=viewergrid
+    )
 
     # Set default drawing style.
     if style is None:
-        style = {"stick":{"colorscheme":"grayCarbon", "linewidth": 0.1}}
+        style = {"stick": {"colorscheme": "grayCarbon", "linewidth": 0.1}}
 
     # Add the molecules to the views.
     view.addModel(_Chem.MolToMolBlock(rdmol0), "mol0", viewer=viewer0)
@@ -1419,21 +1620,35 @@ def viewMapping(molecule0, molecule1, mapping=None, property_map0={},
     # Highlight the atoms from the mapping.
     for atom0, atom1 in mapping.items():
         p = rdmol0.GetConformer().GetAtomPosition(atom0)
-        view.addSphere({"center" : {"x" : p.x, "y" : p.y, "z" : p.z},
-                        "radius" : 0.5,
-                        "color"  : "green", "alpha": 0.8},
-                       viewer=viewer0)
-        view.addLabel(f"{atom0} \u2192 {atom1}",
-                      {"position" : {"x" : p.x, "y" : p.y, "z" : p.z}},
-                      viewer=viewer0)
+        view.addSphere(
+            {
+                "center": {"x": p.x, "y": p.y, "z": p.z},
+                "radius": 0.5,
+                "color": "green",
+                "alpha": 0.8,
+            },
+            viewer=viewer0,
+        )
+        view.addLabel(
+            f"{atom0} \u2192 {atom1}",
+            {"position": {"x": p.x, "y": p.y, "z": p.z}},
+            viewer=viewer0,
+        )
         p = rdmol1.GetConformer().GetAtomPosition(atom1)
-        view.addSphere({"center" : {"x" : p.x, "y" : p.y, "z" : p.z},
-                        "radius" : 0.5,
-                        "color"  : "green", "alpha": 0.8},
-                       viewer=viewer1)
-        view.addLabel(f"{atom1} \u2192 {atom0}",
-                      {"position" : {"x" : p.x, "y" : p.y, "z" : p.z}},
-                      viewer=viewer1)
+        view.addSphere(
+            {
+                "center": {"x": p.x, "y": p.y, "z": p.z},
+                "radius": 0.5,
+                "color": "green",
+                "alpha": 0.8,
+            },
+            viewer=viewer1,
+        )
+        view.addLabel(
+            f"{atom1} \u2192 {atom0}",
+            {"position": {"x": p.x, "y": p.y, "z": p.z}},
+            viewer=viewer1,
+        )
 
     # Set background colour.
     view.setBackgroundColor("white", viewer=viewer0)
@@ -1445,60 +1660,71 @@ def viewMapping(molecule0, molecule1, mapping=None, property_map0={},
 
     return view
 
-def _score_rdkit_mappings(molecule0, molecule1, rdkit_molecule0, rdkit_molecule1,
-        mcs_smarts, prematch, scoring_function, max_scoring_matches, property_map0,
-        property_map1):
-    """Internal function to score atom mappings based on the root mean squared
-       displacement (RMSD) between mapped atoms in two molecules. Optionally,
-       molecule0 can first be aligned to molecule1 based on the mapping prior
-       to computing the RMSD. The function returns the mappings sorted based
-       on their score from best to worst, along with a list containing the
-       scores for each mapping.
 
-       Parameters
-       ----------
+def _score_rdkit_mappings(
+    molecule0,
+    molecule1,
+    rdkit_molecule0,
+    rdkit_molecule1,
+    mcs_smarts,
+    prematch,
+    scoring_function,
+    max_scoring_matches,
+    property_map0,
+    property_map1,
+):
+    """
+    Internal function to score atom mappings based on the root mean squared
+    displacement (RMSD) between mapped atoms in two molecules. Optionally,
+    molecule0 can first be aligned to molecule1 based on the mapping prior
+    to computing the RMSD. The function returns the mappings sorted based
+    on their score from best to worst, along with a list containing the
+    scores for each mapping.
 
-       molecule0 : Sire.Molecule.Molecule
-           The first molecule (Sire representation).
+    Parameters
+    ----------
 
-       molecule0 : Sire.Molecule.Molecule
-           The second molecule (Sire representation).
+    molecule0 : Sire.Molecule.Molecule
+        The first molecule (Sire representation).
 
-       rdkit_mol0 : RDKit.Chem.Mol
-           The first molecule (RDKit representation).
+    molecule0 : Sire.Molecule.Molecule
+        The second molecule (Sire representation).
 
-       rdkit_mol1 : RDKit.Chem.Mol
-           The second molecule (RDKit representation).
+    rdkit_mol0 : RDKit.Chem.Mol
+        The first molecule (RDKit representation).
 
-       mcs_smarts : RDKit.Chem.MolFromSmarts
-           The smarts string representing the maximum common substructure of
-           the two molecules.
+    rdkit_mol1 : RDKit.Chem.Mol
+        The second molecule (RDKit representation).
 
-       prematch : dict
-           A dictionary of atom mappings that must be included in the match.
+    mcs_smarts : RDKit.Chem.MolFromSmarts
+        The smarts string representing the maximum common substructure of
+        the two molecules.
 
-       scoring_function : str
-           The RMSD scoring function.
+    prematch : dict
+        A dictionary of atom mappings that must be included in the match.
 
-       max_scoring_matches : int
-           The maximum number of matching MCS substructures to consider when
-           computing mapping scores. Consider reducing this if you find the
-           matchAtoms function to be taking an excessive amount of time.
+    scoring_function : str
+        The RMSD scoring function.
 
-       property_map0 : dict
-           A dictionary that maps "properties" in molecule0 to their user
-           defined values. This allows the user to refer to properties
-           with their own naming scheme, e.g. { "charge" : "my-charge" }
+    max_scoring_matches : int
+        The maximum number of matching MCS substructures to consider when
+        computing mapping scores. Consider reducing this if you find the
+        matchAtoms function to be taking an excessive amount of time.
 
-       property_map1 : dict
-           A dictionary that maps "properties" in molecule1 to their user
-           defined values.
+    property_map0 : dict
+        A dictionary that maps "properties" in molecule0 to their user
+        defined values. This allows the user to refer to properties
+        with their own naming scheme, e.g. { "charge" : "my-charge" }
 
-       Returns
-       -------
+    property_map1 : dict
+        A dictionary that maps "properties" in molecule1 to their user
+        defined values.
 
-       mapping, scores : ([dict], list)
-           The ranked mappings and corresponding scores.
+    Returns
+    -------
+
+    mapping, scores : ([dict], list)
+        The ranked mappings and corresponding scores.
     """
 
     # Adapted from FESetup: https://github.com/CCPBioSim/fesetup
@@ -1509,19 +1735,29 @@ def _score_rdkit_mappings(molecule0, molecule1, rdkit_molecule0, rdkit_molecule1
     prop1 = property_map1.get("coordinates", "coordinates")
 
     if prop0 != "coordinates":
-        molecule0 = molecule0.edit().setProperty("coordinates", molecule0.property(prop0)).commit()
+        molecule0 = (
+            molecule0.edit()
+            .setProperty("coordinates", molecule0.property(prop0))
+            .commit()
+        )
     if prop1 != "coordinates":
-        molecule1 = molecule1.edit().setProperty("coordinates", molecule1.property(prop1)).commit()
+        molecule1 = (
+            molecule1.edit()
+            .setProperty("coordinates", molecule1.property(prop1))
+            .commit()
+        )
 
     # Get the set of matching substructures in each molecule. For some reason
     # setting uniquify to True removes valid matches, in some cases even the
     # best match! As such, we set uniquify to False and account for duplicate
     # mappings in the code below.
 
-    matches0 = rdkit_molecule0.GetSubstructMatches(mcs_smarts, uniquify=False,
-        maxMatches=max_scoring_matches, useChirality=False)
-    matches1 = rdkit_molecule1.GetSubstructMatches(mcs_smarts, uniquify=False,
-        maxMatches=max_scoring_matches, useChirality=False)
+    matches0 = rdkit_molecule0.GetSubstructMatches(
+        mcs_smarts, uniquify=False, maxMatches=max_scoring_matches, useChirality=False
+    )
+    matches1 = rdkit_molecule1.GetSubstructMatches(
+        mcs_smarts, uniquify=False, maxMatches=max_scoring_matches, useChirality=False
+    )
 
     # Swap the order of the matches.
     if len(matches0) < len(matches1):
@@ -1577,21 +1813,38 @@ def _score_rdkit_mappings(molecule0, molecule1, rdkit_molecule0, rdkit_molecule1
                     # Rigidly align molecule0 to molecule1 based on the mapping.
                     if scoring_function == "RMSDALIGN":
                         try:
-                            molecule0 = molecule0.move().align(molecule1, _SireMol.AtomResultMatcher(sire_mapping)).molecule()
+                            molecule0 = (
+                                molecule0.move()
+                                .align(
+                                    molecule1, _SireMol.AtomResultMatcher(sire_mapping)
+                                )
+                                .molecule()
+                            )
                         except Exception as e:
-                            if "Could not calculate the single value decomposition" in str(e):
+                            if (
+                                "Could not calculate the single value decomposition"
+                                in str(e)
+                            ):
                                 is_gsl_error = True
                                 gsl_exception = e
                             else:
-                                msg = "Failed to align molecules when scoring based on mapping: %r" % mapping
+                                msg = (
+                                    "Failed to align molecules when scoring based on mapping: %r"
+                                    % mapping
+                                )
                                 if _isVerbose():
                                     raise _AlignmentError(msg) from e
                                 else:
                                     raise _AlignmentError(msg) from None
                     # Flexibly align molecule0 to molecule1 based on the mapping.
                     elif scoring_function == "RMSDFLEXALIGN":
-                        molecule0 = flexAlign(_Molecule(molecule0), _Molecule(molecule1), mapping,
-                            property_map0=property_map0, property_map1=property_map1)._sire_object
+                        molecule0 = flexAlign(
+                            _Molecule(molecule0),
+                            _Molecule(molecule1),
+                            mapping,
+                            property_map0=property_map0,
+                            property_map1=property_map1,
+                        )._sire_object
 
                     # Append the mapping to the list.
                     mappings.append(mapping)
@@ -1618,8 +1871,10 @@ def _score_rdkit_mappings(molecule0, molecule1, rdkit_molecule0, rdkit_molecule1
         # We failed to align mappings during scoring due to convergence issues
         # during the GSL single value decomposition routine.
         if is_gsl_error:
-            msg = "Failed to align molecules when scoring. " \
-                  "Try minimising your molecular coordinates prior calling matchAtoms."
+            msg = (
+                "Failed to align molecules when scoring. "
+                "Try minimising your molecular coordinates prior calling matchAtoms."
+            )
             if _isVerbose():
                 raise _AlignmentError(msg) from gsl_exception
             else:
@@ -1642,47 +1897,56 @@ def _score_rdkit_mappings(molecule0, molecule1, rdkit_molecule0, rdkit_molecule1
     # Return the sorted mappings and their scores.
     return (mappings, scores)
 
-def _score_sire_mappings(molecule0, molecule1, sire_mappings, prematch,
-        scoring_function, property_map0, property_map1):
-    """Internal function to score atom mappings based on the root mean squared
-       displacement (RMSD) between mapped atoms in two molecules. Optionally,
-       molecule0 can first be aligned to molecule1 based on the mapping prior
-       to computing the RMSD. The function returns the mappings sorted based
-       on their score from best to worst, along with a list containing the
-       scores for each mapping.
 
-       Parameters
-       ----------
+def _score_sire_mappings(
+    molecule0,
+    molecule1,
+    sire_mappings,
+    prematch,
+    scoring_function,
+    property_map0,
+    property_map1,
+):
+    """
+    Internal function to score atom mappings based on the root mean squared
+    displacement (RMSD) between mapped atoms in two molecules. Optionally,
+    molecule0 can first be aligned to molecule1 based on the mapping prior
+    to computing the RMSD. The function returns the mappings sorted based
+    on their score from best to worst, along with a list containing the
+    scores for each mapping.
 
-       molecule0 : Sire.Molecule.Molecule
-           The first molecule (Sire representation).
+    Parameters
+    ----------
 
-       molecule0 : Sire.Molecule.Molecule
-           The second molecule (Sire representation).
+    molecule0 : Sire.Molecule.Molecule
+        The first molecule (Sire representation).
 
-       sire_mappings : [{}]
-           The list of mappings generated by Sire.
+    molecule0 : Sire.Molecule.Molecule
+        The second molecule (Sire representation).
 
-       prematch : dict
-           A dictionary of atom mappings that must be included in the match.
+    sire_mappings : [{}]
+        The list of mappings generated by Sire.
 
-       scoring_function : str
-           The RMSD scoring function.
+    prematch : dict
+        A dictionary of atom mappings that must be included in the match.
 
-       property_map0 : dict
-           A dictionary that maps "properties" in molecule0 to their user
-           defined values. This allows the user to refer to properties
-           with their own naming scheme, e.g. { "charge" : "my-charge" }
+    scoring_function : str
+        The RMSD scoring function.
 
-       property_map1 : dict
-           A dictionary that maps "properties" in molecule1 to their user
-           defined values.
+    property_map0 : dict
+        A dictionary that maps "properties" in molecule0 to their user
+        defined values. This allows the user to refer to properties
+        with their own naming scheme, e.g. { "charge" : "my-charge" }
 
-       Returns
-       -------
+    property_map1 : dict
+        A dictionary that maps "properties" in molecule1 to their user
+        defined values.
 
-       mapping, scores : ([dict], list)
-           The ranked mappings and corresponding scores.
+    Returns
+    -------
+
+    mapping, scores : ([dict], list)
+        The ranked mappings and corresponding scores.
     """
 
     # Make sure to re-map the coordinates property in both molecules, otherwise
@@ -1691,9 +1955,17 @@ def _score_sire_mappings(molecule0, molecule1, sire_mappings, prematch,
     prop1 = property_map1.get("coordinates", "coordinates")
 
     if prop0 != "coordinates":
-        molecule0 = molecule0.edit().setProperty("coordinates", molecule0.property(prop0)).commit()
+        molecule0 = (
+            molecule0.edit()
+            .setProperty("coordinates", molecule0.property(prop0))
+            .commit()
+        )
     if prop1 != "coordinates":
-        molecule1 = molecule1.edit().setProperty("coordinates", molecule1.property(prop1)).commit()
+        molecule1 = (
+            molecule1.edit()
+            .setProperty("coordinates", molecule1.property(prop1))
+            .commit()
+        )
 
     # Initialise a list to hold the mappings.
     mappings = []
@@ -1708,7 +1980,9 @@ def _score_sire_mappings(molecule0, molecule1, sire_mappings, prematch,
         is_valid = True
         for idx0, idx1 in prematch.items():
             # Pre-match isn't found, return to top of loop.
-            if _SireMol.AtomIdx(idx0) not in mapping or mapping[_SireMol.AtomIdx(idx0)] != _SireMol.AtomIdx(idx1):
+            if _SireMol.AtomIdx(idx0) not in mapping or mapping[
+                _SireMol.AtomIdx(idx0)
+            ] != _SireMol.AtomIdx(idx1):
                 is_valid = False
                 break
 
@@ -1716,17 +1990,29 @@ def _score_sire_mappings(molecule0, molecule1, sire_mappings, prematch,
             # Rigidly align molecule0 to molecule1 based on the mapping.
             if scoring_function == "RMSDALIGN":
                 try:
-                    molecule0 = molecule0.move().align(molecule1, _SireMol.AtomResultMatcher(mapping)).molecule()
+                    molecule0 = (
+                        molecule0.move()
+                        .align(molecule1, _SireMol.AtomResultMatcher(mapping))
+                        .molecule()
+                    )
                 except Exception as e:
-                    msg = "Failed to align molecules when scoring based on mapping: %r" % mapping
+                    msg = (
+                        "Failed to align molecules when scoring based on mapping: %r"
+                        % mapping
+                    )
                     if _isVerbose():
                         raise _AlignmentError(msg) from e
                     else:
                         raise _AlignmentError(msg) from None
             # Flexibly align molecule0 to molecule1 based on the mapping.
             elif scoring_function == "RMSDFLEXALIGN":
-                molecule0 = flexAlign(_Molecule(molecule0), _Molecule(molecule1), _from_sire_mapping(mapping),
-                    property_map0=property_map0, property_map1=property_map1)._sire_object
+                molecule0 = flexAlign(
+                    _Molecule(molecule0),
+                    _Molecule(molecule1),
+                    _from_sire_mapping(mapping),
+                    property_map0=property_map0,
+                    property_map1=property_map1,
+                )._sire_object
 
             # Append the mapping to the list.
             mappings.append(_from_sire_mapping(mapping))
@@ -1767,55 +2053,67 @@ def _score_sire_mappings(molecule0, molecule1, sire_mappings, prematch,
     # Return the sorted mappings and their scores.
     return (mappings, scores)
 
+
 def _validate_mapping(molecule0, molecule1, mapping, name):
-    """Internal function to validate that a mapping contains key:value pairs
-       of the correct type.
+    """
+    Internal function to validate that a mapping contains key:value pairs
+    of the correct type.
 
-       Parameters
-       ----------
+    Parameters
+    ----------
 
-       molecule0 : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
-           The molecule of interest.
+    molecule0 : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+        The molecule of interest.
 
-       molecule1 : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
-           The reference molecule.
+    molecule1 : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+        The reference molecule.
 
-       mapping : dict
-           The mapping between matching atom indices in the two molecules.
+    mapping : dict
+        The mapping between matching atom indices in the two molecules.
 
-       name : str
-           The name of the mapping. (Used when raising exceptions.)
+    name : str
+        The name of the mapping. (Used when raising exceptions.)
     """
 
     for idx0, idx1 in mapping.items():
-            if type(idx0) is int and type(idx1) is int:
-                pass
-            elif isinstance(idx0, _SireMol.AtomIdx) and isinstance(idx1, _SireMol.AtomIdx):
-                idx0 = idx0.value()
-                idx1 = idx1.value()
-            else:
-                raise TypeError("%r dictionary key:value pairs must be of type 'int' or "
-                                "'Sire.Mol.AtomIdx'" % name)
-            if idx0 < 0 or idx0 >= molecule0.nAtoms() or \
-               idx1 < 0 or idx1 >= molecule1.nAtoms():
-                raise ValueError("%r dictionary key:value pair '%s : %s' is out of range! "
-                                 "The molecules contain %d and %d atoms."
-                                 % (name, idx0, idx1, molecule0.nAtoms(), molecule1.nAtoms()))
+        if type(idx0) is int and type(idx1) is int:
+            pass
+        elif isinstance(idx0, _SireMol.AtomIdx) and isinstance(idx1, _SireMol.AtomIdx):
+            idx0 = idx0.value()
+            idx1 = idx1.value()
+        else:
+            raise TypeError(
+                "%r dictionary key:value pairs must be of type 'int' or "
+                "'Sire.Mol.AtomIdx'" % name
+            )
+        if (
+            idx0 < 0
+            or idx0 >= molecule0.nAtoms()
+            or idx1 < 0
+            or idx1 >= molecule1.nAtoms()
+        ):
+            raise ValueError(
+                "%r dictionary key:value pair '%s : %s' is out of range! "
+                "The molecules contain %d and %d atoms."
+                % (name, idx0, idx1, molecule0.nAtoms(), molecule1.nAtoms())
+            )
+
 
 def _to_sire_mapping(mapping):
-    """Internal function to convert a regular mapping to Sire AtomIdx format.
+    """
+    Internal function to convert a regular mapping to Sire AtomIdx format.
 
-       Parameters
-       ----------
+    Parameters
+    ----------
 
-       mapping : {int:int}
-           The regular mapping.
+    mapping : {int:int}
+        The regular mapping.
 
-       Returns
-       -------
+    Returns
+    -------
 
-       sire_mapping : {Sire.Mol.AtomIdx:Sire.Mol.AtomIdx}
-           The Sire mapping.
+    sire_mapping : {Sire.Mol.AtomIdx:Sire.Mol.AtomIdx}
+        The Sire mapping.
     """
 
     sire_mapping = {}
@@ -1830,20 +2128,22 @@ def _to_sire_mapping(mapping):
 
     return sire_mapping
 
+
 def _from_sire_mapping(sire_mapping):
-    """Internal function to convert from a Sire mapping to regular format.
+    """
+    Internal function to convert from a Sire mapping to regular format.
 
-       Parameters
-       ----------
+    Parameters
+    ----------
 
-       sire_mapping : {Sire.Mol.AtomIdx:Sire.Mol.AtomIdx}
-           The Sire mapping.
+    sire_mapping : {Sire.Mol.AtomIdx:Sire.Mol.AtomIdx}
+        The Sire mapping.
 
-       Returns
-       -------
+    Returns
+    -------
 
-       mapping : {int:int}
-           The regular mapping.
+    mapping : {int:int}
+        The regular mapping.
     """
 
     mapping = {}

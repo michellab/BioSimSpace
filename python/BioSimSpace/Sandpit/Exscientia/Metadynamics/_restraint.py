@@ -1,13 +1,13 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2022
+# Copyright: 2017-2023
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
 # BioSimSpace is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 2 of the License, or
+# the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
 # BioSimSpace is distributed in the hope that it will be useful,
@@ -19,9 +19,7 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-"""
-Functionality for configuring restraints on collective variables.
-"""
+"""Functionality for configuring restraints on collective variables."""
 
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
@@ -30,32 +28,34 @@ __all__ = ["Restraint"]
 
 from ..Types._type import Type as _Type
 
-class Restraint():
+
+class Restraint:
     def __init__(self, value, force_constant=100.0, slope=0.0):
-        """Constructor.
+        """
+        Constructor.
 
-           Set a restraint on the value of a collective variable.
+        Set a restraint on the value of a collective variable.
 
-           The expression for the bias is:
+        The expression for the bias is:
 
-           .. math::
+        .. math::
 
-               k/2 (x - a)^2 + m (x - a)
+            k/2 (x - a)^2 + m (x - a)
 
-           The default restraint is purely harmonic.
+        The default restraint is purely harmonic.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           value : int, float, :class:`Type <BioSimSpace.Types>`
-               The value of the restraint. Use 'int' or 'float' for dimensionless
-               collective variables.
+        value : int, float, :class:`Type <BioSimSpace.Types>`
+            The value of the restraint. Use 'int' or 'float' for dimensionless
+            collective variables.
 
-           force_constant : float
-               The force constant (k) for the harmonic term of the restraint.
+        force_constant : float
+            The force constant (k) for the harmonic term of the restraint.
 
-           slope : float
-               The slope (m) for the linar term of the restraint.
+        slope : float
+            The slope (m) for the linar term of the restraint.
         """
 
         self.setValue(value)
@@ -64,45 +64,52 @@ class Restraint():
 
     def __str__(self):
         """Return a human readable string representation of the object."""
-        return "<BioSimSpace.Metadynamics.Restraint: value=%s, force_constant=%s, slope=%s>" \
+        return (
+            "<BioSimSpace.Metadynamics.Restraint: value=%s, force_constant=%s, slope=%s>"
             % (self._value, self._force_constant, self._slope)
+        )
 
     def __repr__(self):
         """Return a human readable string representation of the object."""
         return self.__str__()
 
     def setValue(self, value):
-        """Set the value of the bound.
+        """
+        Set the value of the bound.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           value : int, float, :class:`Type <BioSimSpace.Types>`
-               The value of the bound.
+        value : int, float, :class:`Type <BioSimSpace.Types>`
+            The value of the bound.
         """
         if not isinstance(value, (float, _Type)) and not type(value) is int:
-            raise TypeError("'value' must be of type 'int', 'float', or 'BioSimSpace.Types._type.Type'")
+            raise TypeError(
+                "'value' must be of type 'int', 'float', or 'BioSimSpace.Types._type.Type'"
+            )
         self._value = value
 
     def getValue(self):
-        """Get the value of the bound.
+        """
+        Get the value of the bound.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           value : int, float, :class:`Type <BioSimSpace.Types>`
-               The value of the bound.
+        value : int, float, :class:`Type <BioSimSpace.Types>`
+            The value of the bound.
         """
         return self._value
 
     def setForceConstant(self, force_constant):
-        """Set the force constant (k) for the harmonic term of the restraint.
+        """
+        Set the force constant (k) for the harmonic term of the restraint.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           force_constant : float
-               The force constant for the harmonic term of the restraint.
+        force_constant : float
+            The force constant for the harmonic term of the restraint.
         """
         try:
             self._force_constant = float(force_constant)
@@ -110,24 +117,26 @@ class Restraint():
             raise TypeError("'force_constant' must be of type 'float'")
 
     def getForceConstant(self):
-        """Get the force constant (k) for the harmonic term of the restraint.
+        """
+        Get the force constant (k) for the harmonic term of the restraint.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           force_constant : float
-               The force constant for the harmonic term of the restraint.
+        force_constant : float
+            The force constant for the harmonic term of the restraint.
         """
         return self._force_constant
 
     def setSlope(self, slope):
-        """Set the slope (m) for the linear term of the restraint.
+        """
+        Set the slope (m) for the linear term of the restraint.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           slope : float
-               The slope for the linear term of the restraint.
+        slope : float
+            The slope for the linear term of the restraint.
         """
         try:
             self._slope = float(slope)
@@ -135,12 +144,13 @@ class Restraint():
             raise TypeError("'slope' must be of type 'float'")
 
     def getSlope(self):
-        """Get the slope (m) for the linear term of the restraint.
+        """
+        Get the slope (m) for the linear term of the restraint.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           slope : float
-               The slope for the linear term of the restraint.
+        slope : float
+            The slope for the linear term of the restraint.
         """
         return self._slope

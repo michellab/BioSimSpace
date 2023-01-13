@@ -1,13 +1,13 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2022
+# Copyright: 2017-2023
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
 # BioSimSpace is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 2 of the License, or
+# the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
 # This program is distributed in the hope that it will be useful,
@@ -19,9 +19,7 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-"""
-Functionality for running simulations with GROMACS.
-"""
+"""Functionality for running simulations with GROMACS."""
 
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
@@ -32,6 +30,7 @@ from .._Utils import _try_import
 
 import math as _math
 import os as _os
+
 _pygtail = _try_import("pygtail")
 import shutil as _shutil
 import shlex as _shlex
@@ -42,9 +41,8 @@ import warnings as _warnings
 from sire.legacy import Base as _SireBase
 from sire.legacy import IO as _SireIO
 from sire.legacy import Maths as _SireMaths
+from sire.legacy import Units as _SireUnits
 from sire.legacy import Vol as _SireVol
-
-from sire import units as _SireUnits
 
 from .. import _gmx_exe, _gmx_version
 from .. import _isVerbose
@@ -63,53 +61,65 @@ from . import _process
 
 from ._plumed import Plumed as _Plumed
 
+
 class Gromacs(_process.Process):
     """A class for running simulations using GROMACS."""
 
-    def __init__(self, system, protocol, exe=None, name="gromacs",
-            work_dir=None, seed=None, property_map={}, ignore_warnings=False,
-            show_errors=True, checkpoint_file=None):
-        """Constructor.
+    def __init__(
+        self,
+        system,
+        protocol,
+        exe=None,
+        name="gromacs",
+        work_dir=None,
+        seed=None,
+        property_map={},
+        ignore_warnings=False,
+        show_errors=True,
+        checkpoint_file=None,
+    ):
+        """
+        Constructor.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           system : :class:`System <BioSimSpace._SireWrappers.System>`
-               The molecular system.
+        system : :class:`System <BioSimSpace._SireWrappers.System>`
+            The molecular system.
 
-           protocol : :class:`Protocol <BioSimSpace.Protocol>`
-               The protocol for the GROMACS process.
+        protocol : :class:`Protocol <BioSimSpace.Protocol>`
+            The protocol for the GROMACS process.
 
-           exe : str
-               The full path to the GROMACS executable.
+        exe : str
+            The full path to the GROMACS executable.
 
-           name : str
-               The name of the process.
+        name : str
+            The name of the process.
 
-           work_dir :
-               The working directory for the process.
+        work_dir :
+            The working directory for the process.
 
-           seed : int
-               A random number seed.
+        seed : int
+            A random number seed.
 
-           property_map : dict
-               A dictionary that maps system "properties" to their user defined
-               values. This allows the user to refer to properties with their
-               own naming scheme, e.g. { "charge" : "my-charge" }
+        property_map : dict
+            A dictionary that maps system "properties" to their user defined
+            values. This allows the user to refer to properties with their
+            own naming scheme, e.g. { "charge" : "my-charge" }
 
-           ignore_warnings : bool
-               Whether to ignore warnings when generating the binary run file
-               with 'gmx grompp'. By default, these warnings are elevated to
-               errors and will halt the program.
+        ignore_warnings : bool
+            Whether to ignore warnings when generating the binary run file
+            with 'gmx grompp'. By default, these warnings are elevated to
+            errors and will halt the program.
 
-           show_errors : bool
-               Whether to show warning/error messages when generating the binary
-               run file.
+        show_errors : bool
+            Whether to show warning/error messages when generating the binary
+            run file.
 
-           checkpoint_file : str
-              The path to a checkpoint file from a previous run. This can be used
-              to continue an existing simulation. Currently we only support the
-              use of checkpoint files for Equilibration protocols.
+        checkpoint_file : str
+           The path to a checkpoint file from a previous run. This can be used
+           to continue an existing simulation. Currently we only support the
+           use of checkpoint files for Equilibration protocols.
         """
 
         # Call the base class constructor.
@@ -126,8 +136,10 @@ class Gromacs(_process.Process):
             if _gmx_exe is not None:
                 self._exe = _gmx_exe
             else:
-                raise _MissingSoftwareError("'BioSimSpace.Process.Gromacs' is not supported. "
-                                            "Please install GROMACS (http://www.gromacs.org).")
+                raise _MissingSoftwareError(
+                    "'BioSimSpace.Process.Gromacs' is not supported. "
+                    "Please install GROMACS (http://www.gromacs.org)."
+                )
         # Use user-specified executable.
         else:
             # Make sure executable exists.
@@ -166,7 +178,7 @@ class Gromacs(_process.Process):
         # Initialise the PLUMED interface object.
         self._plumed = None
 
-		# Set the path of Gromacs checkpoint file.
+        # Set the path of Gromacs checkpoint file.
         self._checkpoint_file = None
         if checkpoint_file is not None:
             if not isinstance(checkpoint_file, str):
@@ -175,7 +187,9 @@ class Gromacs(_process.Process):
                 if _os.path.isfile(checkpoint_file):
                     self._checkpoint_file = checkpoint_file
                 else:
-                    raise IOError("GROMACS checkpoint file doesn't exist: '%s'" % checkpoint_file)
+                    raise IOError(
+                        "GROMACS checkpoint file doesn't exist: '%s'" % checkpoint_file
+                    )
 
         # Now set up the working directory for the process.
         self._setup()
@@ -191,14 +205,18 @@ class Gromacs(_process.Process):
         if isinstance(self._protocol, _Protocol.FreeEnergy):
             # Check that the system contains a perturbable molecule.
             if self._system.nPerturbableMolecules() == 0:
-                raise ValueError("'BioSimSpace.Protocol.FreeEnergy' requires a "
-                                 "perturbable molecule!")
+                raise ValueError(
+                    "'BioSimSpace.Protocol.FreeEnergy' requires a "
+                    "perturbable molecule!"
+                )
 
             # Check that the perturbation type is supported..
             if self._protocol.getPerturbationType() != "full":
-                msg = ("'BioSimSpace.Process.Gromacs' currently only supports the 'full' "
-                       "perturbation type. Please use 'BioSimSpace.Process.Somd' "
-                       "for multistep perturbation types.")
+                msg = (
+                    "'BioSimSpace.Process.Gromacs' currently only supports the 'full' "
+                    "perturbation type. Please use 'BioSimSpace.Process.Somd' "
+                    "for multistep perturbation types."
+                )
                 raise NotImplementedError(msg)
 
         else:
@@ -260,20 +278,24 @@ class Gromacs(_process.Process):
 
         # Add configuration variables for a minimisation simulation.
         if isinstance(self._protocol, _Protocol.Minimisation):
-            config.append("integrator = steep")             # Use steepest descent.
-            config.append("nsteps = %d"
-                % self._protocol.getSteps())                # Set the number of steps.
-            config.append("nstxout = %d"
-                % self._protocol.getSteps())                # Only write the final coordinates.
+            config.append("integrator = steep")  # Use steepest descent.
+            config.append(
+                "nsteps = %d" % self._protocol.getSteps()
+            )  # Set the number of steps.
+            config.append(
+                "nstxout = %d" % self._protocol.getSteps()
+            )  # Only write the final coordinates.
             if has_box and self._has_water:
-                config.append("pbc = xyz")                  # Simulate a fully periodic box.
-                config.append("cutoff-scheme = Verlet")     # Use Verlet pair lists.
-                config.append("ns-type = grid")             # Use a grid to search for neighbours.
-                config.append("rlist = 1.2")                # Set short-range cutoff.
-                config.append("rvdw = 1.2")                 # Set van der Waals cutoff.
-                config.append("rcoulomb = 1.2")             # Set Coulomb cutoff.
-                config.append("coulombtype = PME")          # Fast smooth Particle-Mesh Ewald.
-                config.append("DispCorr = EnerPres")        # Dispersion corrections for energy and pressure.
+                config.append("pbc = xyz")  # Simulate a fully periodic box.
+                config.append("cutoff-scheme = Verlet")  # Use Verlet pair lists.
+                config.append("ns-type = grid")  # Use a grid to search for neighbours.
+                config.append("rlist = 1.2")  # Set short-range cutoff.
+                config.append("rvdw = 1.2")  # Set van der Waals cutoff.
+                config.append("rcoulomb = 1.2")  # Set Coulomb cutoff.
+                config.append("coulombtype = PME")  # Fast smooth Particle-Mesh Ewald.
+                config.append(
+                    "DispCorr = EnerPres"
+                )  # Dispersion corrections for energy and pressure.
             else:
                 # Perform vacuum simulations by implementing pseudo-PBC conditions,
                 # i.e. run calculation in a near-infinite box (333.3 nm).
@@ -287,26 +309,32 @@ class Gromacs(_process.Process):
 
                 # Create a 999.9 nm periodic box and apply to the system.
                 space = _SireVol.PeriodicBox(_SireMaths.Vector(9999, 9999, 9999))
-                system._sire_object.setProperty(self._property_map.get("space", "space"), space)
+                system._sire_object.setProperty(
+                    self._property_map.get("space", "space"), space
+                )
 
                 # Re-write the GRO file.
                 gro = _SireIO.Gro87(system._sire_object, self._property_map)
                 gro.writeToFile(self._gro_file)
 
-                config.append("pbc = xyz")                  # Simulate a fully periodic box.
-                config.append("cutoff-scheme = Verlet")     # Use Verlet pair lists.
-                config.append("nstlist = 1")                # Single neighbour list (all particles interact).
-                config.append("rlist = 333.3")              # "Infinite" short-range cutoff.
-                config.append("rvdw = 333.3")               # "Infinite" van der Waals cutoff.
-                config.append("rcoulomb = 333.3")           # "Infinite" Coulomb cutoff.
-                config.append("coulombtype = Cut-off")      # Plain cut-off.
-            config.append("vdwtype = Cut-off")              # Twin-range van der Waals cut-off.
+                config.append("pbc = xyz")  # Simulate a fully periodic box.
+                config.append("cutoff-scheme = Verlet")  # Use Verlet pair lists.
+                config.append(
+                    "nstlist = 1"
+                )  # Single neighbour list (all particles interact).
+                config.append("rlist = 333.3")  # "Infinite" short-range cutoff.
+                config.append("rvdw = 333.3")  # "Infinite" van der Waals cutoff.
+                config.append("rcoulomb = 333.3")  # "Infinite" Coulomb cutoff.
+                config.append("coulombtype = Cut-off")  # Plain cut-off.
+            config.append("vdwtype = Cut-off")  # Twin-range van der Waals cut-off.
 
         # Add configuration variables for an equilibration simulation.
         elif isinstance(self._protocol, _Protocol.Equilibration):
 
             # Work out the number of integration steps.
-            steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
+            steps = _math.ceil(
+                self._protocol.getRunTime() / self._protocol.getTimeStep()
+            )
 
             # Get the report and restart intervals.
             report_interval = self._protocol.getReportInterval()
@@ -327,24 +355,32 @@ class Gromacs(_process.Process):
             # Convert the timestep to picoseconds.
             timestep = self._protocol.getTimeStep().picoseconds().value()
 
-            config.append("integrator = sd")                    # Leap-frog stochastic dynamics.
-            config.append("ld-seed = %d" % seed)                # Random number seed.
-            config.append("dt = %.3f" % timestep)               # Integration time step.
-            config.append("nsteps = %d" % steps)                # Number of integration steps.
-            config.append("nstlog = %d" % report_interval)      # Interval between writing to the log file.
-            config.append("nstenergy = %d" % report_interval)   # Interval between writing to the energy file.
-            config.append("nstxout = %d" % restart_interval)    # Interval between writing to the trajectory file.
+            config.append("integrator = sd")  # Leap-frog stochastic dynamics.
+            config.append("ld-seed = %d" % seed)  # Random number seed.
+            config.append("dt = %.3f" % timestep)  # Integration time step.
+            config.append("nsteps = %d" % steps)  # Number of integration steps.
+            config.append(
+                "nstlog = %d" % report_interval
+            )  # Interval between writing to the log file.
+            config.append(
+                "nstenergy = %d" % report_interval
+            )  # Interval between writing to the energy file.
+            config.append(
+                "nstxout = %d" % restart_interval
+            )  # Interval between writing to the trajectory file.
             if self._checkpoint_file is not None:
                 config.append("continuation=yes")
             if has_box and self._has_water:
-                config.append("pbc = xyz")                      # Simulate a fully periodic box.
-                config.append("cutoff-scheme = Verlet")         # Use Verlet pair lists.
-                config.append("ns-type = grid")                 # Use a grid to search for neighbours.
-                config.append("rlist = 1.2")                    # Set short-range cutoff.
-                config.append("rvdw = 1.2")                     # Set van der Waals cutoff.
-                config.append("rcoulomb = 1.2")                 # Set Coulomb cutoff.
-                config.append("coulombtype = PME")              # Fast smooth Particle-Mesh Ewald.
-                config.append("DispCorr = EnerPres")            # Dispersion corrections for energy and pressure.
+                config.append("pbc = xyz")  # Simulate a fully periodic box.
+                config.append("cutoff-scheme = Verlet")  # Use Verlet pair lists.
+                config.append("ns-type = grid")  # Use a grid to search for neighbours.
+                config.append("rlist = 1.2")  # Set short-range cutoff.
+                config.append("rvdw = 1.2")  # Set van der Waals cutoff.
+                config.append("rcoulomb = 1.2")  # Set Coulomb cutoff.
+                config.append("coulombtype = PME")  # Fast smooth Particle-Mesh Ewald.
+                config.append(
+                    "DispCorr = EnerPres"
+                )  # Dispersion corrections for energy and pressure.
             else:
                 # Perform vacuum simulations by implementing pseudo-PBC conditions,
                 # i.e. run calculation in a near-infinite box (333.3 nm).
@@ -358,54 +394,72 @@ class Gromacs(_process.Process):
 
                 # Create a 999.9 nm periodic box and apply to the system.
                 space = _SireVol.PeriodicBox(_SireMaths.Vector(9999, 9999, 9999))
-                system._sire_object.setProperty(self._property_map.get("space", "space"), space)
+                system._sire_object.setProperty(
+                    self._property_map.get("space", "space"), space
+                )
 
                 # Re-write the GRO file.
                 gro = _SireIO.Gro87(system._sire_object, self._property_map)
                 gro.writeToFile(self._gro_file)
 
-                config.append("pbc = xyz")                  # Simulate a fully periodic box.
-                config.append("cutoff-scheme = Verlet")     # Use Verlet pair lists.
-                config.append("nstlist = 1")                # Single neighbour list (all particles interact).
-                config.append("rlist = 333.3")              # "Infinite" short-range cutoff.
-                config.append("rvdw = 333.3")               # "Infinite" van der Waals cutoff.
-                config.append("rcoulomb = 333.3")           # "Infinite" Coulomb cutoff.
-                config.append("coulombtype = Cut-off")      # Plain cut-off.
-            config.append("vdwtype = Cut-off")              # Twin-range van der Waals cut-off.
-            config.append("constraints = h-bonds")          # Rigid water molecules.
-            config.append("constraint-algorithm = LINCS")   # Linear constraint solver.
+                config.append("pbc = xyz")  # Simulate a fully periodic box.
+                config.append("cutoff-scheme = Verlet")  # Use Verlet pair lists.
+                config.append(
+                    "nstlist = 1"
+                )  # Single neighbour list (all particles interact).
+                config.append("rlist = 333.3")  # "Infinite" short-range cutoff.
+                config.append("rvdw = 333.3")  # "Infinite" van der Waals cutoff.
+                config.append("rcoulomb = 333.3")  # "Infinite" Coulomb cutoff.
+                config.append("coulombtype = Cut-off")  # Plain cut-off.
+            config.append("vdwtype = Cut-off")  # Twin-range van der Waals cut-off.
+            config.append("constraints = h-bonds")  # Rigid water molecules.
+            config.append("constraint-algorithm = LINCS")  # Linear constraint solver.
 
             # Temperature control.
             # No need for "berendsen" with integrator "sd".
-            config.append("tc-grps = system")               # A single temperature group for the entire system.
-            config.append("tau-t = 2.0")                    # 2ps time constant for temperature coupling.
-                                                            # Set the reference temperature.
-            config.append("ref-t = %.2f" % self._protocol.getEndTemperature().kelvin().value())
+            config.append(
+                "tc-grps = system"
+            )  # A single temperature group for the entire system.
+            config.append("tau-t = 2.0")  # 2ps time constant for temperature coupling.
+            # Set the reference temperature.
+            config.append(
+                "ref-t = %.2f" % self._protocol.getEndTemperature().kelvin().value()
+            )
 
             # Heating/cooling protocol.
             if not self._protocol.isConstantTemp():
                 # Work out the final time of the simulation.
-                end_time = _math.floor(timestep*steps)
+                end_time = _math.floor(timestep * steps)
 
-                config.append("annealing = single")         # Single sequence of annealing points.
-                config.append("annealing-npoints = 2")      # Two annealing points for "system" temperature group.
+                config.append(
+                    "annealing = single"
+                )  # Single sequence of annealing points.
+                config.append(
+                    "annealing-npoints = 2"
+                )  # Two annealing points for "system" temperature group.
 
                 # Linearly change temperature between start and end times.
                 config.append("annealing-time = 0 %d" % end_time)
-                config.append("annealing-temp = %.2f %.2f"
-                    % (self._protocol.getStartTemperature().kelvin().value(),
-                       self._protocol.getEndTemperature().kelvin().value()))
+                config.append(
+                    "annealing-temp = %.2f %.2f"
+                    % (
+                        self._protocol.getStartTemperature().kelvin().value(),
+                        self._protocol.getEndTemperature().kelvin().value(),
+                    )
+                )
 
             # Pressure control.
             if self._protocol.getPressure() is not None and has_box and self._has_water:
                 if _gmx_version >= 2021:
-                    config.append("pcoupl = C-rescale")     # C-rescale barostat.
+                    config.append("pcoupl = C-rescale")  # C-rescale barostat.
                 else:
-                    config.append("pcoupl = Berendsen")     # C-rescale barostat.
-                config.append("tau-p = 1.0")                # 1ps time constant for pressure coupling.
-                config.append("ref-p = %.5f"                # Pressure in bar.
-                    % self._protocol.getPressure().bar().value())
-                config.append("compressibility = 4.5e-5")   # Compressibility of water.
+                    config.append("pcoupl = Berendsen")  # C-rescale barostat.
+                config.append("tau-p = 1.0")  # 1ps time constant for pressure coupling.
+                config.append(
+                    "ref-p = %.5f"  # Pressure in bar.
+                    % self._protocol.getPressure().bar().value()
+                )
+                config.append("compressibility = 4.5e-5")  # Compressibility of water.
 
             # Add any position restraints.
             self._add_position_restraints(config)
@@ -414,7 +468,9 @@ class Gromacs(_process.Process):
         elif isinstance(self._protocol, _Protocol.Production):
 
             # Work out the number of integration steps.
-            steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
+            steps = _math.ceil(
+                self._protocol.getRunTime() / self._protocol.getTimeStep()
+            )
 
             # Get the report and restart intervals.
             report_interval = self._protocol.getReportInterval()
@@ -435,25 +491,34 @@ class Gromacs(_process.Process):
             # Convert the timestep to picoseconds.
             timestep = self._protocol.getTimeStep().picoseconds().value()
 
-            config.append("integrator = sd")                    # Leap-frog stochastic dynamics.
-            config.append("ld-seed = %d" % seed)                # Random number seed.
-            config.append("dt = %.3f" % timestep)               # Integration time step.
-            config.append("nsteps = %d" % steps)                # Number of integration steps.
-            config.append("init-step = %d"
-                % self._protocol.getFirstStep())                # First time step.
-            config.append("nstlog = %d" % report_interval)      # Interval between writing to the log file.
-            config.append("nstenergy = %d" % report_interval)   # Interval between writing to the energy file.
-            config.append("nstxout = %d" % restart_interval)    # Interval between writing to the trajectory file.
+            config.append("integrator = sd")  # Leap-frog stochastic dynamics.
+            config.append("ld-seed = %d" % seed)  # Random number seed.
+            config.append("dt = %.3f" % timestep)  # Integration time step.
+            config.append("nsteps = %d" % steps)  # Number of integration steps.
+            config.append(
+                "init-step = %d" % self._protocol.getFirstStep()
+            )  # First time step.
+            config.append(
+                "nstlog = %d" % report_interval
+            )  # Interval between writing to the log file.
+            config.append(
+                "nstenergy = %d" % report_interval
+            )  # Interval between writing to the energy file.
+            config.append(
+                "nstxout = %d" % restart_interval
+            )  # Interval between writing to the trajectory file.
             if has_box and self._has_water:
-                config.append("pbc = xyz")                      # Simulate a fully periodic box.
-                config.append("cutoff-scheme = Verlet")         # Use Verlet pair lists.
-                config.append("ns-type = grid")                 # Use a grid to search for neighbours.
-                config.append("nstlist = 10")                   # Rebuild neighbour list every 10 steps.
-                config.append("rlist = 1.2")                    # Set short-range cutoff.
-                config.append("rvdw = 1.2")                     # Set van der Waals cutoff.
-                config.append("rcoulomb = 1.2")                 # Set Coulomb cutoff.
-                config.append("coulombtype = PME")              # Fast smooth Particle-Mesh Ewald.
-                config.append("DispCorr = EnerPres")            # Dispersion corrections for energy and pressure.
+                config.append("pbc = xyz")  # Simulate a fully periodic box.
+                config.append("cutoff-scheme = Verlet")  # Use Verlet pair lists.
+                config.append("ns-type = grid")  # Use a grid to search for neighbours.
+                config.append("nstlist = 10")  # Rebuild neighbour list every 10 steps.
+                config.append("rlist = 1.2")  # Set short-range cutoff.
+                config.append("rvdw = 1.2")  # Set van der Waals cutoff.
+                config.append("rcoulomb = 1.2")  # Set Coulomb cutoff.
+                config.append("coulombtype = PME")  # Fast smooth Particle-Mesh Ewald.
+                config.append(
+                    "DispCorr = EnerPres"
+                )  # Dispersion corrections for energy and pressure.
             else:
                 # Perform vacuum simulations by implementing pseudo-PBC conditions,
                 # i.e. run calculation in a near-infinite box (333.3 nm).
@@ -467,45 +532,57 @@ class Gromacs(_process.Process):
 
                 # Create a 999.9 nm periodic box and apply to the system.
                 space = _SireVol.PeriodicBox(_SireMaths.Vector(9999, 9999, 9999))
-                system._sire_object.setProperty(self._property_map.get("space", "space"), space)
+                system._sire_object.setProperty(
+                    self._property_map.get("space", "space"), space
+                )
 
                 # Re-write the GRO file.
                 gro = _SireIO.Gro87(system._sire_object, self._property_map)
                 gro.writeToFile(self._gro_file)
 
-                config.append("pbc = xyz")                  # Simulate a fully periodic box.
-                config.append("cutoff-scheme = Verlet")     # Use Verlet pair lists.
-                config.append("nstlist = 1")                # Single neighbour list (all particles interact).
-                config.append("rlist = 333.3")              # "Infinite" short-range cutoff.
-                config.append("rvdw = 333.3")               # "Infinite" van der Waals cutoff.
-                config.append("rcoulomb = 333.3")           # "Infinite" Coulomb cutoff.
-                config.append("coulombtype = Cut-off")      # Plain cut-off.
-            config.append("vdwtype = Cut-off")              # Twin-range van der Waals cut-off.
-            config.append("constraints = h-bonds")          # Rigid water molecules.
-            config.append("constraint-algorithm = LINCS")   # Linear constraint solver.
+                config.append("pbc = xyz")  # Simulate a fully periodic box.
+                config.append("cutoff-scheme = Verlet")  # Use Verlet pair lists.
+                config.append(
+                    "nstlist = 1"
+                )  # Single neighbour list (all particles interact).
+                config.append("rlist = 333.3")  # "Infinite" short-range cutoff.
+                config.append("rvdw = 333.3")  # "Infinite" van der Waals cutoff.
+                config.append("rcoulomb = 333.3")  # "Infinite" Coulomb cutoff.
+                config.append("coulombtype = Cut-off")  # Plain cut-off.
+            config.append("vdwtype = Cut-off")  # Twin-range van der Waals cut-off.
+            config.append("constraints = h-bonds")  # Rigid water molecules.
+            config.append("constraint-algorithm = LINCS")  # Linear constraint solver.
 
             # Temperature control.
             # No need for "berendsen" with integrator "sd".
-            config.append("tc-grps = system")               # A single temperature group for the entire system.
-            config.append("tau-t = 2.0")                    # 2ps time constant for temperature coupling.
-                                                            # Set the reference temperature.
-            config.append("ref-t = %.2f" % self._protocol.getTemperature().kelvin().value())
+            config.append(
+                "tc-grps = system"
+            )  # A single temperature group for the entire system.
+            config.append("tau-t = 2.0")  # 2ps time constant for temperature coupling.
+            # Set the reference temperature.
+            config.append(
+                "ref-t = %.2f" % self._protocol.getTemperature().kelvin().value()
+            )
 
             # Pressure control.
             if self._protocol.getPressure() is not None and has_box and self._has_water:
                 if _gmx_version >= 2021:
-                    config.append("pcoupl = C-rescale")     # C-rescale barostat.
+                    config.append("pcoupl = C-rescale")  # C-rescale barostat.
                 else:
-                    config.append("pcoupl = Berendsen")     # C-rescale barostat.
-                config.append("tau-p = 1.0")                # 1ps time constant for pressure coupling.
-                config.append("ref-p = %.5f"                # Pressure in bar.
-                    % self._protocol.getPressure().bar().value())
-                config.append("compressibility = 4.5e-5")   # Compressibility of water.
+                    config.append("pcoupl = Berendsen")  # C-rescale barostat.
+                config.append("tau-p = 1.0")  # 1ps time constant for pressure coupling.
+                config.append(
+                    "ref-p = %.5f"  # Pressure in bar.
+                    % self._protocol.getPressure().bar().value()
+                )
+                config.append("compressibility = 4.5e-5")  # Compressibility of water.
 
         elif isinstance(self._protocol, _Protocol.FreeEnergy):
 
             # Work out the number of integration steps.
-            steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
+            steps = _math.ceil(
+                self._protocol.getRunTime() / self._protocol.getTimeStep()
+            )
 
             # Get the report and restart intervals.
             report_interval = self._protocol.getReportInterval()
@@ -526,23 +603,31 @@ class Gromacs(_process.Process):
             # Convert the timestep to picoseconds.
             timestep = self._protocol.getTimeStep().picoseconds().value()
 
-            config.append("integrator = sd")                    # Leap-frog stochastic dynamics.
-            config.append("ld-seed = %d" % seed)                # Random number seed.
-            config.append("dt = %.3f" % timestep)               # Integration time step.
-            config.append("nsteps = %d" % steps)                # Number of integration steps.
-            config.append("nstlog = %d" % report_interval)      # Interval between writing to the log file.
-            config.append("nstenergy = %d" % report_interval)   # Interval between writing to the energy file.
-            config.append("nstxout = %d" % restart_interval)    # Interval between writing to the trajectory file.
+            config.append("integrator = sd")  # Leap-frog stochastic dynamics.
+            config.append("ld-seed = %d" % seed)  # Random number seed.
+            config.append("dt = %.3f" % timestep)  # Integration time step.
+            config.append("nsteps = %d" % steps)  # Number of integration steps.
+            config.append(
+                "nstlog = %d" % report_interval
+            )  # Interval between writing to the log file.
+            config.append(
+                "nstenergy = %d" % report_interval
+            )  # Interval between writing to the energy file.
+            config.append(
+                "nstxout = %d" % restart_interval
+            )  # Interval between writing to the trajectory file.
             if has_box and self._has_water:
-                config.append("pbc = xyz")                      # Simulate a fully periodic box.
-                config.append("cutoff-scheme = Verlet")         # Use Verlet pair lists.
-                config.append("ns-type = grid")                 # Use a grid to search for neighbours.
-                config.append("nstlist = 10")                   # Rebuild neighbour list every 10 steps.
-                config.append("rlist = 1.2")                    # Set short-range cutoff.
-                config.append("rvdw = 1.2")                     # Set van der Waals cutoff.
-                config.append("rcoulomb = 1.2")                 # Set Coulomb cutoff.
-                config.append("coulombtype = PME")              # Fast smooth Particle-Mesh Ewald.
-                config.append("DispCorr = EnerPres")            # Dispersion corrections for energy and pressure.
+                config.append("pbc = xyz")  # Simulate a fully periodic box.
+                config.append("cutoff-scheme = Verlet")  # Use Verlet pair lists.
+                config.append("ns-type = grid")  # Use a grid to search for neighbours.
+                config.append("nstlist = 10")  # Rebuild neighbour list every 10 steps.
+                config.append("rlist = 1.2")  # Set short-range cutoff.
+                config.append("rvdw = 1.2")  # Set van der Waals cutoff.
+                config.append("rcoulomb = 1.2")  # Set Coulomb cutoff.
+                config.append("coulombtype = PME")  # Fast smooth Particle-Mesh Ewald.
+                config.append(
+                    "DispCorr = EnerPres"
+                )  # Dispersion corrections for energy and pressure.
             else:
                 # Perform vacuum simulations by implementing pseudo-PBC conditions,
                 # i.e. run calculation in a near-infinite box (333.3 nm).
@@ -556,40 +641,50 @@ class Gromacs(_process.Process):
 
                 # Create a 999.9 nm periodic box and apply to the system.
                 space = _SireVol.PeriodicBox(_SireMaths.Vector(9999, 9999, 9999))
-                system._sire_object.setProperty(self._property_map.get("space", "space"), space)
+                system._sire_object.setProperty(
+                    self._property_map.get("space", "space"), space
+                )
 
                 # Re-write the GRO file.
                 gro = _SireIO.Gro87(system._sire_object, self._property_map)
                 gro.writeToFile(self._gro_file)
 
-                config.append("pbc = xyz")                  # Simulate a fully periodic box.
-                config.append("cutoff-scheme = Verlet")     # Use Verlet pair lists.
-                config.append("nstlist = 1")                # Single neighbour list (all particles interact).
-                config.append("rlist = 333.3")              # "Infinite" short-range cutoff.
-                config.append("rvdw = 333.3")               # "Infinite" van der Waals cutoff.
-                config.append("rcoulomb = 333.3")           # "Infinite" Coulomb cutoff.
-                config.append("coulombtype = Cut-off")      # Plain cut-off.
-            config.append("vdwtype = Cut-off")              # Twin-range van der Waals cut-off.
-            config.append("constraints = h-bonds")          # Rigid water molecules.
-            config.append("constraint-algorithm = LINCS")   # Linear constraint solver.
+                config.append("pbc = xyz")  # Simulate a fully periodic box.
+                config.append("cutoff-scheme = Verlet")  # Use Verlet pair lists.
+                config.append(
+                    "nstlist = 1"
+                )  # Single neighbour list (all particles interact).
+                config.append("rlist = 333.3")  # "Infinite" short-range cutoff.
+                config.append("rvdw = 333.3")  # "Infinite" van der Waals cutoff.
+                config.append("rcoulomb = 333.3")  # "Infinite" Coulomb cutoff.
+                config.append("coulombtype = Cut-off")  # Plain cut-off.
+            config.append("vdwtype = Cut-off")  # Twin-range van der Waals cut-off.
+            config.append("constraints = h-bonds")  # Rigid water molecules.
+            config.append("constraint-algorithm = LINCS")  # Linear constraint solver.
 
             # Temperature control.
             # No need for "berendsen" with integrator "sd".
-            config.append("tc-grps = system")               # A single temperature group for the entire system.
-            config.append("tau-t = 2.0")                    # 2ps time constant for temperature coupling.
-                                                            # Set the reference temperature.
-            config.append("ref-t = %.2f" % self._protocol.getTemperature().kelvin().value())
+            config.append(
+                "tc-grps = system"
+            )  # A single temperature group for the entire system.
+            config.append("tau-t = 2.0")  # 2ps time constant for temperature coupling.
+            # Set the reference temperature.
+            config.append(
+                "ref-t = %.2f" % self._protocol.getTemperature().kelvin().value()
+            )
 
             # Pressure control.
             if self._protocol.getPressure() is not None and has_box and self._has_water:
                 if _gmx_version >= 2021:
-                    config.append("pcoupl = C-rescale")     # C-rescale barostat.
+                    config.append("pcoupl = C-rescale")  # C-rescale barostat.
                 else:
-                    config.append("pcoupl = Berendsen")     # C-rescale barostat.
-                config.append("tau-p = 1.0")                # 1ps time constant for pressure coupling.
-                config.append("ref-p = %.5f"                # Pressure in bar.
-                    % self._protocol.getPressure().bar().value())
-                config.append("compressibility = 4.5e-5")   # Compressibility of water.
+                    config.append("pcoupl = Berendsen")  # C-rescale barostat.
+                config.append("tau-p = 1.0")  # 1ps time constant for pressure coupling.
+                config.append(
+                    "ref-p = %.5f"  # Pressure in bar.
+                    % self._protocol.getPressure().bar().value()
+                )
+                config.append("compressibility = 4.5e-5")  # Compressibility of water.
 
             # Extract the lambda array.
             lam_vals = self._protocol.getLambdaValues()
@@ -598,21 +693,22 @@ class Gromacs(_process.Process):
             idx = self._protocol.getLambdaIndex()
 
             # Free energy parameters.
-            config.append("free-energy = yes")              # Free energy simulation.
-            config.append("init-lambda-state = %d" % idx)   # Index of the lambda value.
-            config.append("fep-lambdas = %s" \
-                % " ".join([str(x) for x in lam_vals]))
-            config.append("couple-lambda0 = vdw-q")         # All interactions on at lambda = 0
-            config.append("couple-lambda1 = vdw-q")         # All interactions on at lambda = 1
-            config.append("calc-lambda-neighbors = -1")     # Write all lambda values.
-            config.append("nstcalcenergy = 250")            # Calculate energies every 250 steps.
-            config.append("nstdhdl = 250")                  # Write gradients every 250 steps.
+            config.append("free-energy = yes")  # Free energy simulation.
+            config.append("init-lambda-state = %d" % idx)  # Index of the lambda value.
+            config.append("fep-lambdas = %s" % " ".join([str(x) for x in lam_vals]))
+            config.append("couple-lambda0 = vdw-q")  # All interactions on at lambda = 0
+            config.append("couple-lambda1 = vdw-q")  # All interactions on at lambda = 1
+            config.append("calc-lambda-neighbors = -1")  # Write all lambda values.
+            config.append("nstcalcenergy = 250")  # Calculate energies every 250 steps.
+            config.append("nstdhdl = 250")  # Write gradients every 250 steps.
 
         # Add configuration variables for a metadynamics simulation.
         elif isinstance(self._protocol, _Protocol.Metadynamics):
 
             # Work out the number of integration steps.
-            steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
+            steps = _math.ceil(
+                self._protocol.getRunTime() / self._protocol.getTimeStep()
+            )
 
             # Get the report and restart intervals.
             report_interval = self._protocol.getReportInterval()
@@ -633,23 +729,31 @@ class Gromacs(_process.Process):
             # Convert the timestep to picoseconds.
             timestep = self._protocol.getTimeStep().picoseconds().value()
 
-            config.append("integrator = sd")                    # Leap-frog stochastic dynamics.
-            config.append("ld-seed = %d" % seed)                # Random number seed.
-            config.append("dt = %.3f" % timestep)               # Integration time step.
-            config.append("nsteps = %d" % steps)                # Number of integration steps.
-            config.append("nstlog = %d" % report_interval)      # Interval between writing to the log file.
-            config.append("nstenergy = %d" % report_interval)   # Interval between writing to the energy file.
-            config.append("nstxout = %d" % restart_interval)    # Interval between writing to the trajectory file.
+            config.append("integrator = sd")  # Leap-frog stochastic dynamics.
+            config.append("ld-seed = %d" % seed)  # Random number seed.
+            config.append("dt = %.3f" % timestep)  # Integration time step.
+            config.append("nsteps = %d" % steps)  # Number of integration steps.
+            config.append(
+                "nstlog = %d" % report_interval
+            )  # Interval between writing to the log file.
+            config.append(
+                "nstenergy = %d" % report_interval
+            )  # Interval between writing to the energy file.
+            config.append(
+                "nstxout = %d" % restart_interval
+            )  # Interval between writing to the trajectory file.
             if has_box and self._has_water:
-                config.append("pbc = xyz")                      # Simulate a fully periodic box.
-                config.append("cutoff-scheme = Verlet")         # Use Verlet pair lists.
-                config.append("ns-type = grid")                 # Use a grid to search for neighbours.
-                config.append("nstlist = 10")                   # Rebuild neighbour list every 10 steps.
-                config.append("rlist = 1.2")                    # Set short-range cutoff.
-                config.append("rvdw = 1.2")                     # Set van der Waals cutoff.
-                config.append("rcoulomb = 1.2")                 # Set Coulomb cutoff.
-                config.append("coulombtype = PME")              # Fast smooth Particle-Mesh Ewald.
-                config.append("DispCorr = EnerPres")            # Dispersion corrections for energy and pressure.
+                config.append("pbc = xyz")  # Simulate a fully periodic box.
+                config.append("cutoff-scheme = Verlet")  # Use Verlet pair lists.
+                config.append("ns-type = grid")  # Use a grid to search for neighbours.
+                config.append("nstlist = 10")  # Rebuild neighbour list every 10 steps.
+                config.append("rlist = 1.2")  # Set short-range cutoff.
+                config.append("rvdw = 1.2")  # Set van der Waals cutoff.
+                config.append("rcoulomb = 1.2")  # Set Coulomb cutoff.
+                config.append("coulombtype = PME")  # Fast smooth Particle-Mesh Ewald.
+                config.append(
+                    "DispCorr = EnerPres"
+                )  # Dispersion corrections for energy and pressure.
             else:
                 # Perform vacuum simulations by implementing pseudo-PBC conditions,
                 # i.e. run calculation in a near-infinite box (333.3 nm).
@@ -663,46 +767,56 @@ class Gromacs(_process.Process):
 
                 # Create a 999.9 nm periodic box and apply to the system.
                 space = _SireVol.PeriodicBox(_SireMaths.Vector(9999, 9999, 9999))
-                system._sire_object.setProperty(self._property_map.get("space", "space"), space)
+                system._sire_object.setProperty(
+                    self._property_map.get("space", "space"), space
+                )
 
                 # Re-write the GRO file.
                 gro = _SireIO.Gro87(system._sire_object, self._property_map)
                 gro.writeToFile(self._gro_file)
 
-                config.append("pbc = xyz")                  # Simulate a fully periodic box.
-                config.append("cutoff-scheme = Verlet")     # Use Verlet pair lists.
-                config.append("nstlist = 1")                # Single neighbour list (all particles interact).
-                config.append("rlist = 333.3")              # "Infinite" short-range cutoff.
-                config.append("rvdw = 333.3")               # "Infinite" van der Waals cutoff.
-                config.append("rcoulomb = 333.3")           # "Infinite" Coulomb cutoff.
-                config.append("coulombtype = Cut-off")      # Plain cut-off.
-            config.append("vdwtype = Cut-off")              # Twin-range van der Waals cut-off.
-            config.append("constraints = h-bonds")          # Rigid water molecules.
-            config.append("constraint-algorithm = LINCS")   # Linear constraint solver.
+                config.append("pbc = xyz")  # Simulate a fully periodic box.
+                config.append("cutoff-scheme = Verlet")  # Use Verlet pair lists.
+                config.append(
+                    "nstlist = 1"
+                )  # Single neighbour list (all particles interact).
+                config.append("rlist = 333.3")  # "Infinite" short-range cutoff.
+                config.append("rvdw = 333.3")  # "Infinite" van der Waals cutoff.
+                config.append("rcoulomb = 333.3")  # "Infinite" Coulomb cutoff.
+                config.append("coulombtype = Cut-off")  # Plain cut-off.
+            config.append("vdwtype = Cut-off")  # Twin-range van der Waals cut-off.
+            config.append("constraints = h-bonds")  # Rigid water molecules.
+            config.append("constraint-algorithm = LINCS")  # Linear constraint solver.
 
             # Temperature control.
             # No need for "berendsen" with integrator "sd".
-            config.append("tc-grps = system")               # A single temperature group for the entire system.
-            config.append("tau-t = 2.0")                    # 2ps time constant for temperature coupling.
-                                                            # Set the reference temperature.
-            config.append("ref-t = %.2f" % self._protocol.getTemperature().kelvin().value())
+            config.append(
+                "tc-grps = system"
+            )  # A single temperature group for the entire system.
+            config.append("tau-t = 2.0")  # 2ps time constant for temperature coupling.
+            # Set the reference temperature.
+            config.append(
+                "ref-t = %.2f" % self._protocol.getTemperature().kelvin().value()
+            )
 
             # Pressure control.
             if self._protocol.getPressure() is not None and has_box and self._has_water:
                 if _gmx_version >= 2021:
-                    config.append("pcoupl = C-rescale")     # C-rescale barostat.
+                    config.append("pcoupl = C-rescale")  # C-rescale barostat.
                 else:
-                    config.append("pcoupl = Berendsen")     # C-rescale barostat.
-                config.append("tau-p = 1.0")                # 1ps time constant for pressure coupling.
-                config.append("ref-p = %.5f"                # Pressure in bar.
-                    % self._protocol.getPressure().bar().value())
-                config.append("compressibility = 4.5e-5")   # Compressibility of water.
+                    config.append("pcoupl = Berendsen")  # C-rescale barostat.
+                config.append("tau-p = 1.0")  # 1ps time constant for pressure coupling.
+                config.append(
+                    "ref-p = %.5f"  # Pressure in bar.
+                    % self._protocol.getPressure().bar().value()
+                )
+                config.append("compressibility = 4.5e-5")  # Compressibility of water.
 
             # Create the PLUMED input file and copy auxiliary files to the working directory.
             self._plumed = _Plumed(self._work_dir)
-            plumed_config, auxiliary_files = self._plumed.createConfig(self._system,
-                                                                       self._protocol,
-                                                                       self._property_map)
+            plumed_config, auxiliary_files = self._plumed.createConfig(
+                self._system, self._protocol, self._property_map
+            )
             self._setPlumedConfig(plumed_config)
             if auxiliary_files is not None:
                 for file in auxiliary_files:
@@ -723,7 +837,9 @@ class Gromacs(_process.Process):
         elif isinstance(self._protocol, _Protocol.Steering):
 
             # Work out the number of integration steps.
-            steps = _math.ceil(self._protocol.getRunTime() / self._protocol.getTimeStep())
+            steps = _math.ceil(
+                self._protocol.getRunTime() / self._protocol.getTimeStep()
+            )
 
             # Get the report and restart intervals.
             report_interval = self._protocol.getReportInterval()
@@ -744,23 +860,31 @@ class Gromacs(_process.Process):
             # Convert the timestep to picoseconds.
             timestep = self._protocol.getTimeStep().picoseconds().value()
 
-            config.append("integrator = sd")                    # Leap-frog stochastic dynamics.
-            config.append("ld-seed = %d" % seed)                # Random number seed.
-            config.append("dt = %.3f" % timestep)               # Integration time step.
-            config.append("nsteps = %d" % steps)                # Number of integration steps.
-            config.append("nstlog = %d" % report_interval)      # Interval between writing to the log file.
-            config.append("nstenergy = %d" % report_interval)   # Interval between writing to the energy file.
-            config.append("nstxout = %d" % restart_interval)    # Interval between writing to the trajectory file.
+            config.append("integrator = sd")  # Leap-frog stochastic dynamics.
+            config.append("ld-seed = %d" % seed)  # Random number seed.
+            config.append("dt = %.3f" % timestep)  # Integration time step.
+            config.append("nsteps = %d" % steps)  # Number of integration steps.
+            config.append(
+                "nstlog = %d" % report_interval
+            )  # Interval between writing to the log file.
+            config.append(
+                "nstenergy = %d" % report_interval
+            )  # Interval between writing to the energy file.
+            config.append(
+                "nstxout = %d" % restart_interval
+            )  # Interval between writing to the trajectory file.
             if has_box and self._has_water:
-                config.append("pbc = xyz")                      # Simulate a fully periodic box.
-                config.append("cutoff-scheme = Verlet")         # Use Verlet pair lists.
-                config.append("ns-type = grid")                 # Use a grid to search for neighbours.
-                config.append("nstlist = 10")                   # Rebuild neighbour list every 10 steps.
-                config.append("rlist = 1.2")                    # Set short-range cutoff.
-                config.append("rvdw = 1.2")                     # Set van der Waals cutoff.
-                config.append("rcoulomb = 1.2")                 # Set Coulomb cutoff.
-                config.append("coulombtype = PME")              # Fast smooth Particle-Mesh Ewald.
-                config.append("DispCorr = EnerPres")            # Dispersion corrections for energy and pressure.
+                config.append("pbc = xyz")  # Simulate a fully periodic box.
+                config.append("cutoff-scheme = Verlet")  # Use Verlet pair lists.
+                config.append("ns-type = grid")  # Use a grid to search for neighbours.
+                config.append("nstlist = 10")  # Rebuild neighbour list every 10 steps.
+                config.append("rlist = 1.2")  # Set short-range cutoff.
+                config.append("rvdw = 1.2")  # Set van der Waals cutoff.
+                config.append("rcoulomb = 1.2")  # Set Coulomb cutoff.
+                config.append("coulombtype = PME")  # Fast smooth Particle-Mesh Ewald.
+                config.append(
+                    "DispCorr = EnerPres"
+                )  # Dispersion corrections for energy and pressure.
             else:
                 # Perform vacuum simulations by implementing pseudo-PBC conditions,
                 # i.e. run calculation in a near-infinite box (333.3 nm).
@@ -774,46 +898,56 @@ class Gromacs(_process.Process):
 
                 # Create a 999.9 nm periodic box and apply to the system.
                 space = _SireVol.PeriodicBox(_SireMaths.Vector(9999, 9999, 9999))
-                system._sire_object.setProperty(self._property_map.get("space", "space"), space)
+                system._sire_object.setProperty(
+                    self._property_map.get("space", "space"), space
+                )
 
                 # Re-write the GRO file.
                 gro = _SireIO.Gro87(system._sire_object, self._property_map)
                 gro.writeToFile(self._gro_file)
 
-                config.append("pbc = xyz")                  # Simulate a fully periodic box.
-                config.append("cutoff-scheme = Verlet")     # Use Verlet pair lists.
-                config.append("nstlist = 1")                # Single neighbour list (all particles interact).
-                config.append("rlist = 333.3")              # "Infinite" short-range cutoff.
-                config.append("rvdw = 333.3")               # "Infinite" van der Waals cutoff.
-                config.append("rcoulomb = 333.3")           # "Infinite" Coulomb cutoff.
-                config.append("coulombtype = Cut-off")      # Plain cut-off.
-            config.append("vdwtype = Cut-off")              # Twin-range van der Waals cut-off.
-            config.append("constraints = h-bonds")          # Rigid water molecules.
-            config.append("constraint-algorithm = LINCS")   # Linear constraint solver.
+                config.append("pbc = xyz")  # Simulate a fully periodic box.
+                config.append("cutoff-scheme = Verlet")  # Use Verlet pair lists.
+                config.append(
+                    "nstlist = 1"
+                )  # Single neighbour list (all particles interact).
+                config.append("rlist = 333.3")  # "Infinite" short-range cutoff.
+                config.append("rvdw = 333.3")  # "Infinite" van der Waals cutoff.
+                config.append("rcoulomb = 333.3")  # "Infinite" Coulomb cutoff.
+                config.append("coulombtype = Cut-off")  # Plain cut-off.
+            config.append("vdwtype = Cut-off")  # Twin-range van der Waals cut-off.
+            config.append("constraints = h-bonds")  # Rigid water molecules.
+            config.append("constraint-algorithm = LINCS")  # Linear constraint solver.
 
             # Temperature control.
             # No need for "berendsen" with integrator "sd".
-            config.append("tc-grps = system")               # A single temperature group for the entire system.
-            config.append("tau-t = 2.0")                    # 2ps time constant for temperature coupling.
-                                                            # Set the reference temperature.
-            config.append("ref-t = %.2f" % self._protocol.getTemperature().kelvin().value())
+            config.append(
+                "tc-grps = system"
+            )  # A single temperature group for the entire system.
+            config.append("tau-t = 2.0")  # 2ps time constant for temperature coupling.
+            # Set the reference temperature.
+            config.append(
+                "ref-t = %.2f" % self._protocol.getTemperature().kelvin().value()
+            )
 
             # Pressure control.
             if self._protocol.getPressure() is not None and has_box and self._has_water:
                 if _gmx_version >= 2021:
-                    config.append("pcoupl = C-rescale")     # C-rescale barostat.
+                    config.append("pcoupl = C-rescale")  # C-rescale barostat.
                 else:
-                    config.append("pcoupl = Berendsen")     # C-rescale barostat.
-                config.append("tau-p = 1.0")                # 1ps time constant for pressure coupling.
-                config.append("ref-p = %.5f"                # Pressure in bar.
-                    % self._protocol.getPressure().bar().value())
-                config.append("compressibility = 4.5e-5")   # Compressibility of water.
+                    config.append("pcoupl = Berendsen")  # C-rescale barostat.
+                config.append("tau-p = 1.0")  # 1ps time constant for pressure coupling.
+                config.append(
+                    "ref-p = %.5f"  # Pressure in bar.
+                    % self._protocol.getPressure().bar().value()
+                )
+                config.append("compressibility = 4.5e-5")  # Compressibility of water.
 
             # Create the PLUMED input file and copy auxiliary files to the working directory.
             self._plumed = _Plumed(self._work_dir)
-            plumed_config, auxiliary_files = self._plumed.createConfig(self._system,
-                                                                       self._protocol,
-                                                                       self._property_map)
+            plumed_config, auxiliary_files = self._plumed.createConfig(
+                self._system, self._protocol, self._property_map
+            )
             self._setPlumedConfig(plumed_config)
             if auxiliary_files is not None:
                 for file in auxiliary_files:
@@ -841,7 +975,7 @@ class Gromacs(_process.Process):
         self.clearArgs()
 
         # Add the default arguments.
-        self.setArg("mdrun", True)          # Use mdrun.
+        self.setArg("mdrun", True)  # Use mdrun.
         self.setArg("-deffnm", self._name)  # Output file prefix.
 
         # Metadynamics and steered MD arguments.
@@ -852,26 +986,46 @@ class Gromacs(_process.Process):
         """Use grommp to generate the binary run input file."""
 
         # Create the name of the output mdp file.
-        mdp_out = _os.path.dirname(self._config_file) + \
-                  "/%s.out.mdp" % _os.path.basename(self._config_file).split(".")[0]
+        mdp_out = (
+            _os.path.dirname(self._config_file)
+            + "/%s.out.mdp" % _os.path.basename(self._config_file).split(".")[0]
+        )
 
         # Use grompp to generate the portable binary run input file.
         if self._checkpoint_file is not None:
-            command = "%s grompp -f %s -po %s -c %s -p %s -r %s -t %s -o %s" \
-            % (self._exe, self._config_file, mdp_out, self._gro_file,
-               self._top_file, self._gro_file, self._checkpoint_file, self._tpr_file)
+            command = "%s grompp -f %s -po %s -c %s -p %s -r %s -t %s -o %s" % (
+                self._exe,
+                self._config_file,
+                mdp_out,
+                self._gro_file,
+                self._top_file,
+                self._gro_file,
+                self._checkpoint_file,
+                self._tpr_file,
+            )
         else:
-            command = "%s grompp -f %s -po %s -c %s -p %s -r %s -o %s" \
-            % (self._exe, self._config_file, mdp_out, self._gro_file,
-               self._top_file, self._gro_file, self._tpr_file)
+            command = "%s grompp -f %s -po %s -c %s -p %s -r %s -o %s" % (
+                self._exe,
+                self._config_file,
+                mdp_out,
+                self._gro_file,
+                self._top_file,
+                self._gro_file,
+                self._tpr_file,
+            )
 
         # Warnings don't trigger an error. Set to a suitably large number.
         if self._ignore_warnings:
             command += " --maxwarn 1000"
 
         # Run the command.
-        proc = _subprocess.run(_Utils.command_split(command), shell=False,
-            text=True, stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
+        proc = _subprocess.run(
+            _Utils.command_split(command),
+            shell=False,
+            text=True,
+            stdout=_subprocess.PIPE,
+            stderr=_subprocess.PIPE,
+        )
 
         # Check that grompp ran successfully.
         if proc.returncode != 0:
@@ -903,28 +1057,35 @@ class Gromacs(_process.Process):
 
                 exception_string = "Unable to generate GROMACS binary run input file.\n"
                 if len(errors) > 0:
-                    exception_string += "\n'gmx grompp' reported the following errors:\n"   \
-                                     + f"{error_string}\n"
+                    exception_string += (
+                        "\n'gmx grompp' reported the following errors:\n"
+                        + f"{error_string}\n"
+                    )
                 if len(warnings) > 0:
-                    exception_string += "\n'gmx grompp' reported the following warnings:\n" \
-                                     + f"{warning_string}\n"                                \
-                                     +  "\nUse 'ignore_warnings' to ignore warnings."
+                    exception_string += (
+                        "\n'gmx grompp' reported the following warnings:\n"
+                        + f"{warning_string}\n"
+                        + "\nUse 'ignore_warnings' to ignore warnings."
+                    )
 
                 raise RuntimeError(exception_string)
 
             else:
-                raise RuntimeError("Unable to generate GROMACS binary run input file. "
-                                   "Use 'show_errors=True' to display errors/warnings.")
+                raise RuntimeError(
+                    "Unable to generate GROMACS binary run input file. "
+                    "Use 'show_errors=True' to display errors/warnings."
+                )
 
     def addToConfig(self, config):
-        """Add a string to the configuration list.
+        """
+        Add a string to the configuration list.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           config : str, [str]
-               A configuration string, a list of configuration strings, or a
-               path to a configuration file.
+        config : str, [str]
+            A configuration string, a list of configuration strings, or a
+            path to a configuration file.
         """
 
         # Call the base class method.
@@ -941,14 +1102,15 @@ class Gromacs(_process.Process):
         self._generate_binary_run_file()
 
     def setConfig(self, config):
-        """Set the list of configuration file strings.
+        """
+        Set the list of configuration file strings.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           config : str, [str]
-               The list of configuration strings, or a path to a configuration
-               file.
+        config : str, [str]
+            The list of configuration strings, or a path to a configuration
+            file.
         """
 
         # Call the base class method.
@@ -958,13 +1120,14 @@ class Gromacs(_process.Process):
         self._generate_binary_run_file()
 
     def start(self):
-        """Start the GROMACS process.
+        """
+        Start the GROMACS process.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           process : :class:`Process.Gromacs <BioSimSpace.Process.Gromacs>`
-               A handle to the GROMACS process.
+        process : :class:`Process.Gromacs <BioSimSpace.Process.Gromacs>`
+            A handle to the GROMACS process.
         """
 
         # The process is currently queued.
@@ -999,8 +1162,9 @@ class Gromacs(_process.Process):
             self._timer = _timeit.default_timer()
 
             # Start the simulation.
-            self._process = _SireBase.Process.run(self._exe, args,
-                "%s.out" % self._name, "%s.out" % self._name)
+            self._process = _SireBase.Process.run(
+                self._exe, args, "%s.out" % self._name, "%s.out" % self._name
+            )
 
             # For historical reasons (console message aggregation with MPI), Gromacs
             # writes the majority of its output to stderr. For user convenience, we
@@ -1012,19 +1176,20 @@ class Gromacs(_process.Process):
         return self
 
     def getSystem(self, block="AUTO"):
-        """Get the latest molecular system.
+        """
+        Get the latest molecular system.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           block : bool
-               Whether to block until the process has finished running.
+        block : bool
+            Whether to block until the process has finished running.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           system : :class:`System <BioSimSpace._SireWrappers.System>`
-               The latest molecular system.
+        system : :class:`System <BioSimSpace._SireWrappers.System>`
+            The latest molecular system.
         """
 
         # Wait for the process to finish.
@@ -1039,7 +1204,7 @@ class Gromacs(_process.Process):
 
         # Minimisation trajectories have a single frame, i.e. the final state.
         if isinstance(self._protocol, _Protocol.Minimisation):
-            time = 0*_Units.Time.nanosecond
+            time = 0 * _Units.Time.nanosecond
         # Get the current simulation time.
         else:
             time = self.getTime()
@@ -1048,30 +1213,32 @@ class Gromacs(_process.Process):
         return self._getFrame(time)
 
     def getCurrentSystem(self):
-        """Get the latest molecular system.
+        """
+        Get the latest molecular system.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           system : :class:`System <BioSimSpace._SireWrappers.System>`
-               The latest molecular system.
+        system : :class:`System <BioSimSpace._SireWrappers.System>`
+            The latest molecular system.
         """
         return self.getSystem(block=False)
 
     def getTrajectory(self, block="AUTO"):
-        """Return a trajectory object.
+        """
+        Return a trajectory object.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           block : bool
-               Whether to block until the process has finished running.
+        block : bool
+            Whether to block until the process has finished running.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           trajectory : :class:`System <BioSimSpace.Trajectory.Trajectory>`
-               The latest trajectory object.
+        trajectory : :class:`System <BioSimSpace.Trajectory.Trajectory>`
+            The latest trajectory object.
         """
 
         # Wait for the process to finish.
@@ -1099,33 +1266,42 @@ class Gromacs(_process.Process):
             return None
 
     def getFrame(self, index):
-        """Return a specific trajectory frame.
+        """
+        Return a specific trajectory frame.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           index : int
-               The index of the frame.
+        index : int
+            The index of the frame.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           frame : :class:`System <BioSimSpace._SireWrappers.System>`
-               The System object of the corresponding frame.
+        frame : :class:`System <BioSimSpace._SireWrappers.System>`
+            The System object of the corresponding frame.
         """
 
         if not type(index) is int:
             raise TypeError("'index' must be of type 'int'")
 
-        max_index = int((self._protocol.getRunTime() / self._protocol.getTimeStep())
-                  / self._protocol.getRestartInterval()) - 1
+        max_index = (
+            int(
+                (self._protocol.getRunTime() / self._protocol.getTimeStep())
+                / self._protocol.getRestartInterval()
+            )
+            - 1
+        )
 
         if index < 0 or index > max_index:
             raise ValueError(f"'index' must be in range [0, {max_index}].")
 
         try:
-            time = index * self._protocol.getRestartInterval() \
-                 * self._protocol.getTimeStep()
+            time = (
+                index
+                * self._protocol.getRestartInterval()
+                * self._protocol.getTimeStep()
+            )
 
             with _warnings.catch_warnings():
                 system = self._getFrame(time)
@@ -1136,28 +1312,29 @@ class Gromacs(_process.Process):
             return None
 
     def getRecord(self, record, time_series=False, unit=None, block="AUTO"):
-        """Get a record from the stdout dictionary.
+        """
+        Get a record from the stdout dictionary.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           record : str
-               The record key.
+        record : str
+            The record key.
 
-           time_series : bool
-               Whether to return a list of time series records.
+        time_series : bool
+            Whether to return a list of time series records.
 
-           unit : :class:`Unit <BioSimSpace.Units>`
-               The unit to convert the record to.
+        unit : :class:`Unit <BioSimSpace.Units>`
+            The unit to convert the record to.
 
-           block : bool
-               Whether to block until the process has finished running.
+        block : bool
+            Whether to block until the process has finished running.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           record : :class:`Type <BioSimSpace.Types>`
-               The matching record.
+        record : :class:`Type <BioSimSpace.Types>`
+            The matching record.
         """
 
         # Wait for the process to finish.
@@ -1174,25 +1351,26 @@ class Gromacs(_process.Process):
         return self._get_stdout_record(record, time_series, unit)
 
     def getCurrentRecord(self, record, time_series=False, unit=None):
-        """Get a current record from the stdout dictionary.
+        """
+        Get a current record from the stdout dictionary.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           record : str
-               The record key.
+        record : str
+            The record key.
 
-           time_series : bool
-               Whether to return a list of time series records.
+        time_series : bool
+            Whether to return a list of time series records.
 
-           unit : :class:`Unit <BioSimSpace.Units>`
-               The unit to convert the record to.
+        unit : :class:`Unit <BioSimSpace.Units>`
+            The unit to convert the record to.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           record : :class:`Type <BioSimSpace.Types>`
-               The matching record.
+        record : :class:`Type <BioSimSpace.Types>`
+            The matching record.
         """
         # Warn the user if the process has exited with an error.
         if self.isError():
@@ -1202,19 +1380,20 @@ class Gromacs(_process.Process):
         return self._get_stdout_record(record, time_series, unit)
 
     def getRecords(self, block="AUTO"):
-        """Return the dictionary of stdout time-series records.
+        """
+        Return the dictionary of stdout time-series records.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           block : bool
-               Whether to block until the process has finished running.
+        block : bool
+            Whether to block until the process has finished running.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           records : :class:`MultiDict <BioSimSpace.Process._process._MultiDict>`
-              The dictionary of time-series records.
+        records : :class:`MultiDict <BioSimSpace.Process._process._MultiDict>`
+           The dictionary of time-series records.
         """
         # Wait for the process to finish.
         if block is True:
@@ -1229,39 +1408,41 @@ class Gromacs(_process.Process):
         return self._stdout_dict.copy()
 
     def getCurrentRecords(self):
-        """Return the current dictionary of stdout time-series records.
+        """
+        Return the current dictionary of stdout time-series records.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           block : bool
-               Whether to block until the process has finished running.
+        block : bool
+            Whether to block until the process has finished running.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           records : :class:`MultiDict <BioSimSpace.Process._process._MultiDict>`
-              The dictionary of time-series records.
+        records : :class:`MultiDict <BioSimSpace.Process._process._MultiDict>`
+           The dictionary of time-series records.
         """
         return self.getRecords(block=False)
 
     def getTime(self, time_series=False, block="AUTO"):
-        """Get the simulation time.
+        """
+        Get the simulation time.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           time_series : bool
-               Whether to return a list of time series records.
+        time_series : bool
+            Whether to return a list of time series records.
 
-           block : bool
-               Whether to block until the process has finished running.
+        block : bool
+            Whether to block until the process has finished running.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           time : :class:`Time <BioSimSpace.Types.Time>`
-               The current simulation time in nanoseconds.
+        time : :class:`Time <BioSimSpace.Types.Time>`
+            The current simulation time in nanoseconds.
         """
 
         if isinstance(self._protocol, _Protocol.Minimisation):
@@ -1271,157 +1452,169 @@ class Gromacs(_process.Process):
             return self.getRecord("TIME", time_series, _Units.Time.picosecond, block)
 
     def getCurrentTime(self, time_series=False):
-        """Get the current simulation time.
+        """
+        Get the current simulation time.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           time_series : bool
-               Whether to return a list of time series records.
+        time_series : bool
+            Whether to return a list of time series records.
 
-           block : bool
-               Whether to block until the process has finished running.
+        block : bool
+            Whether to block until the process has finished running.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           time : :class:`Time <BioSimSpace.Types.Time>`
-               The current simulation time in nanoseconds.
+        time : :class:`Time <BioSimSpace.Types.Time>`
+            The current simulation time in nanoseconds.
         """
         return self.getTime(time_series, block=False)
 
     def getStep(self, time_series=False, block="AUTO"):
-        """Get the number of integration steps.
+        """
+        Get the number of integration steps.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           time_series : bool
-               Whether to return a list of time series records.
+        time_series : bool
+            Whether to return a list of time series records.
 
-           block : bool
-               Whether to block until the process has finished running.
+        block : bool
+            Whether to block until the process has finished running.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           step : int
-               The current number of integration steps.
+        step : int
+            The current number of integration steps.
         """
         return self.getRecord("STEP", time_series, None, block)
 
     def getCurrentStep(self, time_series=False):
-        """Get the current number of integration steps.
+        """
+        Get the current number of integration steps.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           time_series : bool
-               Whether to return a list of time series records.
+        time_series : bool
+            Whether to return a list of time series records.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           step : int
-               The current number of integration steps.
+        step : int
+            The current number of integration steps.
         """
         return self.getStep(time_series, block=False)
 
     def getBondEnergy(self, time_series=False, block="AUTO"):
-        """Get the bond energy.
+        """
+        Get the bond energy.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           time_series : bool
-               Whether to return a list of time series records.
+        time_series : bool
+            Whether to return a list of time series records.
 
-           block : bool
-               Whether to block until the process has finished running.
+        block : bool
+            Whether to block until the process has finished running.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           energy : :class:`Energy <BioSimSpace.Types.Energy>`
-               The bond energy.
+        energy : :class:`Energy <BioSimSpace.Types.Energy>`
+            The bond energy.
         """
         return self.getRecord("BOND", time_series, _Units.Energy.kj_per_mol, block)
 
     def getCurrentBondEnergy(self, time_series=False):
-        """Get the current bond energy.
+        """
+        Get the current bond energy.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           time_series : bool
-               Whether to return a list of time series records.
+        time_series : bool
+            Whether to return a list of time series records.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           energy : :class:`Energy <BioSimSpace.Types.Energy>`
-               The bond energy.
+        energy : :class:`Energy <BioSimSpace.Types.Energy>`
+            The bond energy.
         """
         return self.getBondEnergy(time_series, block=False)
 
     def getAngleEnergy(self, time_series=False, block="AUTO"):
-        """Get the angle energy.
+        """
+        Get the angle energy.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           time_series : bool
-               Whether to return a list of time series records.
+        time_series : bool
+            Whether to return a list of time series records.
 
-           block : bool
-               Whether to block until the process has finished running.
+        block : bool
+            Whether to block until the process has finished running.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           energy : :class:`Energy <BioSimSpace.Types.Energy>`
-               The angle energy.
+        energy : :class:`Energy <BioSimSpace.Types.Energy>`
+            The angle energy.
         """
         return self.getRecord("ANGLE", time_series, _Units.Energy.kj_per_mol, block)
 
     def getCurrentAngleEnergy(self, time_series=False):
-        """Get the current angle energy.
+        """
+        Get the current angle energy.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           time_series : bool
-               Whether to return a list of time series records.
+        time_series : bool
+            Whether to return a list of time series records.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           energy : :class:`Energy <BioSimSpace.Types.Energy>`
-               The angle energy.
+        energy : :class:`Energy <BioSimSpace.Types.Energy>`
+            The angle energy.
         """
         return self.getAngleEnergy(time_series, block=False)
 
     def getDihedralEnergy(self, time_series=False, block="AUTO"):
-        """Get the total dihedral energy (proper + improper).
+        """
+        Get the total dihedral energy (proper + improper).
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           time_series : bool
-               Whether to return a list of time series records.
+        time_series : bool
+            Whether to return a list of time series records.
 
-           block : bool
-               Whether to block until the process has finished running.
+        block : bool
+            Whether to block until the process has finished running.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           energy : :class:`Energy <BioSimSpace.Types.Energy>`
-               The total dihedral energy.
+        energy : :class:`Energy <BioSimSpace.Types.Energy>`
+            The total dihedral energy.
         """
         # Get the proper and improper energies.
-        proper = self.getRecord("PROPERDIH", time_series, _Units.Energy.kj_per_mol, block)
-        improper = self.getRecord("IMPROPERDIH", time_series, _Units.Energy.kj_per_mol, block)
+        proper = self.getRecord(
+            "PROPERDIH", time_series, _Units.Energy.kj_per_mol, block
+        )
+        improper = self.getRecord(
+            "IMPROPERDIH", time_series, _Units.Energy.kj_per_mol, block
+        )
 
         # No records.
         if proper is None and improper is None:
@@ -1437,659 +1630,707 @@ class Gromacs(_process.Process):
                 return proper + improper
 
     def getCurrentDihedralEnergy(self, time_series=False):
-        """Get the current total dihedral energy (proper + improper).
+        """
+        Get the current total dihedral energy (proper + improper).
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           time_series : bool
-               Whether to return a list of time series records.
+        time_series : bool
+            Whether to return a list of time series records.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           energy : :class:`Energy <BioSimSpace.Types.Energy>`
-               The dihedral energy.
+        energy : :class:`Energy <BioSimSpace.Types.Energy>`
+            The dihedral energy.
         """
         return self.getDihedralEnergy(time_series, block=False)
 
     def getProperEnergy(self, time_series=False, block="AUTO"):
-        """Get the proper dihedral energy.
+        """
+        Get the proper dihedral energy.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           time_series : bool
-               Whether to return a list of time series records.
+        time_series : bool
+            Whether to return a list of time series records.
 
-           block : bool
-               Whether to block until the process has finished running.
+        block : bool
+            Whether to block until the process has finished running.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           energy : :class:`Energy <BioSimSpace.Types.Energy>`
-               The proper dihedral energy.
+        energy : :class:`Energy <BioSimSpace.Types.Energy>`
+            The proper dihedral energy.
         """
         return self.getRecord("PROPERDIH", time_series, _Units.Energy.kj_per_mol, block)
 
     def getCurrentProperEnergy(self, time_series=False):
-        """Get the current proper dihedral energy.
+        """
+        Get the current proper dihedral energy.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           time_series : bool
-               Whether to return a list of time series records.
+        time_series : bool
+            Whether to return a list of time series records.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           energy : :class:`Energy <BioSimSpace.Types.Energy>`
-               The proper dihedral energy.
+        energy : :class:`Energy <BioSimSpace.Types.Energy>`
+            The proper dihedral energy.
         """
         return self.getProperEnergy(time_series, block=False)
 
     def getImproperEnergy(self, time_series=False, block="AUTO"):
-        """Get the improper energy.
-
-           Parameters
-           ----------
-
-           time_series : bool
-               Whether to return a list of time series records.
-
-           block : bool
-               Whether to block until the process has finished running.
-
-           Returns
-           -------
-
-           energy : :class:`Energy <BioSimSpace.Types.Energy>`
-               The improper energy.
         """
-        return self.getRecord("IMPROPERDIH", time_series, _Units.Energy.kj_per_mol, block)
+        Get the improper energy.
+
+        Parameters
+        ----------
+
+        time_series : bool
+            Whether to return a list of time series records.
+
+        block : bool
+            Whether to block until the process has finished running.
+
+        Returns
+        -------
+
+        energy : :class:`Energy <BioSimSpace.Types.Energy>`
+            The improper energy.
+        """
+        return self.getRecord(
+            "IMPROPERDIH", time_series, _Units.Energy.kj_per_mol, block
+        )
 
     def getCurrentImproperEnergy(self, time_series=False):
-        """Get the current improper energy.
+        """
+        Get the current improper energy.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           time_series : bool
-               Whether to return a list of time series records.
+        time_series : bool
+            Whether to return a list of time series records.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           energy : :class:`Energy <BioSimSpace.Types.Energy>`
-               The improper energy.
+        energy : :class:`Energy <BioSimSpace.Types.Energy>`
+            The improper energy.
         """
         return self.getImproperEnergy(time_series, block=False)
 
     def getLennardJones14(self, time_series=False, block="AUTO"):
-        """Get the Lennard-Jones energy between atoms 1 and 4.
+        """
+        Get the Lennard-Jones energy between atoms 1 and 4.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           time_series : bool
-               Whether to return a list of time series records.
+        time_series : bool
+            Whether to return a list of time series records.
 
-           block : bool
-               Whether to block until the process has finished running.
+        block : bool
+            Whether to block until the process has finished running.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           energy : :class:`Energy <BioSimSpace.Types.Energy>`
-               The Lennard-Jones energy.
+        energy : :class:`Energy <BioSimSpace.Types.Energy>`
+            The Lennard-Jones energy.
         """
         return self.getRecord("LJ14", time_series, _Units.Energy.kj_per_mol, block)
 
     def getCurrentLennardJones14(self, time_series=False):
-        """Get the current Lennard-Jones energy between atoms 1 and 4.
+        """
+        Get the current Lennard-Jones energy between atoms 1 and 4.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           time_series : bool
-               Whether to return a list of time series records.
+        time_series : bool
+            Whether to return a list of time series records.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           energy : :class:`Energy <BioSimSpace.Types.Energy>`
-               The Lennard-Jones energy.
+        energy : :class:`Energy <BioSimSpace.Types.Energy>`
+            The Lennard-Jones energy.
         """
         return self.getLennardJones14(time_series, block=False)
 
     def getLennardJonesSR(self, time_series=False, block="AUTO"):
-        """Get the short-range Lennard-Jones energy.
+        """
+        Get the short-range Lennard-Jones energy.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           time_series : bool
-               Whether to return a list of time series records.
+        time_series : bool
+            Whether to return a list of time series records.
 
-           block : bool
-               Whether to block until the process has finished running.
+        block : bool
+            Whether to block until the process has finished running.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           energy : :class:`Energy <BioSimSpace.Types.Energy>`
-               The short-range Lennard-Jones energy.
+        energy : :class:`Energy <BioSimSpace.Types.Energy>`
+            The short-range Lennard-Jones energy.
         """
         return self.getRecord("LJSR", time_series, _Units.Energy.kj_per_mol, block)
 
     def getCurrentLennardJonesSR(self, time_series=False):
-        """Get the current short-range Lennard-Jones energy.
+        """
+        Get the current short-range Lennard-Jones energy.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           time_series : bool
-               Whether to return a list of time series records.
+        time_series : bool
+            Whether to return a list of time series records.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           energy : :class:`Energy <BioSimSpace.Types.Energy>`
-               The Lennard-Jones energy.
+        energy : :class:`Energy <BioSimSpace.Types.Energy>`
+            The Lennard-Jones energy.
         """
         return self.getLennardJonesSR(time_series, block=False)
 
     def getCoulomb14(self, time_series=False, block="AUTO"):
-        """Get the Coulomb energy between atoms 1 and 4.
+        """
+        Get the Coulomb energy between atoms 1 and 4.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           time_series : bool
-               Whether to return a list of time series records.
+        time_series : bool
+            Whether to return a list of time series records.
 
-           block : bool
-               Whether to block until the process has finished running.
+        block : bool
+            Whether to block until the process has finished running.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           energy : :class:`Energy <BioSimSpace.Types.Energy>`
-               The Coulomb energy.
+        energy : :class:`Energy <BioSimSpace.Types.Energy>`
+            The Coulomb energy.
         """
         return self.getRecord("COULOMB14", time_series, _Units.Energy.kj_per_mol, block)
 
     def getCurrentCoulomb14(self, time_series=False):
-        """Get the current Coulomb energy between atoms 1 and 4.
+        """
+        Get the current Coulomb energy between atoms 1 and 4.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           time_series : bool
-               Whether to return a list of time series records.
+        time_series : bool
+            Whether to return a list of time series records.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           energy : :class:`Energy <BioSimSpace.Types.Energy>`
-               The Coulomb energy.
+        energy : :class:`Energy <BioSimSpace.Types.Energy>`
+            The Coulomb energy.
         """
         return self.getCoulomb14(time_series, block=False)
 
     def getCoulombSR(self, time_series=False, block="AUTO"):
-        """Get the short-range Coulomb energy.
+        """
+        Get the short-range Coulomb energy.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           time_series : bool
-               Whether to return a list of time series records.
+        time_series : bool
+            Whether to return a list of time series records.
 
-           block : bool
-               Whether to block until the process has finished running.
+        block : bool
+            Whether to block until the process has finished running.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           energy : :class:`Energy <BioSimSpace.Types.Energy>`
-               The Coulomb energy.
+        energy : :class:`Energy <BioSimSpace.Types.Energy>`
+            The Coulomb energy.
         """
         return self.getRecord("COULOMBSR", time_series, _Units.Energy.kj_per_mol, block)
 
     def getCurrentCoulombSR(self, time_series=False):
-        """Get the current short-range Coulomb energy.
+        """
+        Get the current short-range Coulomb energy.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           time_series : bool
-               Whether to return a list of time series records.
+        time_series : bool
+            Whether to return a list of time series records.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           energy : :class:`Energy <BioSimSpace.Types.Energy>`
-               The Coulomb energy.
+        energy : :class:`Energy <BioSimSpace.Types.Energy>`
+            The Coulomb energy.
         """
         return self.getCoulombSR(time_series, block=False)
 
     def getCoulombReciprocal(self, time_series=False, block="AUTO"):
-        """Get the reciprocal space Coulomb energy.
+        """
+        Get the reciprocal space Coulomb energy.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           time_series : bool
-               Whether to return a list of time series records.
+        time_series : bool
+            Whether to return a list of time series records.
 
-           block : bool
-               Whether to block until the process has finished running.
+        block : bool
+            Whether to block until the process has finished running.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           energy : :class:`Energy <BioSimSpace.Types.Energy>`
-               The Coulomb energy.
+        energy : :class:`Energy <BioSimSpace.Types.Energy>`
+            The Coulomb energy.
         """
         return self.getRecord("COULRECIP", time_series, _Units.Energy.kj_per_mol, block)
 
     def getCurrentCoulombReciprocal(self, time_series=False):
-        """Get the current reciprocal space Coulomb energy.
+        """
+        Get the current reciprocal space Coulomb energy.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           time_series : bool
-               Whether to return a list of time series records.
+        time_series : bool
+            Whether to return a list of time series records.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           energy : :class:`Energy <BioSimSpace.Types.Energy>`
-               The Coulomb energy.
+        energy : :class:`Energy <BioSimSpace.Types.Energy>`
+            The Coulomb energy.
         """
         return self.getCoulombReciprocal(time_series, block=False)
 
     def getDispersionCorrection(self, time_series=False, block="AUTO"):
-        """Get the dispersion correction.
-
-           Parameters
-           ----------
-
-           time_series : bool
-               Whether to return a list of time series records.
-
-           block : bool
-               Whether to block until the process has finished running.
-
-           Returns
-           -------
-
-           energy : :class:`Energy <BioSimSpace.Types.Energy>`
-               The dispersion correction.
         """
-        return self.getRecord("DISPERCORR", time_series, _Units.Energy.kj_per_mol, block)
+        Get the dispersion correction.
+
+        Parameters
+        ----------
+
+        time_series : bool
+            Whether to return a list of time series records.
+
+        block : bool
+            Whether to block until the process has finished running.
+
+        Returns
+        -------
+
+        energy : :class:`Energy <BioSimSpace.Types.Energy>`
+            The dispersion correction.
+        """
+        return self.getRecord(
+            "DISPERCORR", time_series, _Units.Energy.kj_per_mol, block
+        )
 
     def getCurrentDispersionCorrection(self, time_series=False):
-        """Get the current dispersion correction.
+        """
+        Get the current dispersion correction.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           time_series : bool
-               Whether to return a list of time series records.
+        time_series : bool
+            Whether to return a list of time series records.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           energy : :class:`Energy <BioSimSpace.Types.Energy>`
-               The dispersion correction.
+        energy : :class:`Energy <BioSimSpace.Types.Energy>`
+            The dispersion correction.
         """
         return self.getDispersionCorrection(time_series, block=False)
 
     def getRestraintEnergy(self, time_series=False, block="AUTO"):
-        """Get the position restraint energy.
-
-           Parameters
-           ----------
-
-           time_series : bool
-               Whether to return a list of time series records.
-
-           block : bool
-               Whether to block until the process has finished running.
-
-           Returns
-           -------
-
-           energy : :class:`Energy <BioSimSpace.Types.Energy>`
-               The dispersion correction.
         """
-        return self.getRecord("POSITIONREST", time_series, _Units.Energy.kj_per_mol, block)
+        Get the position restraint energy.
+
+        Parameters
+        ----------
+
+        time_series : bool
+            Whether to return a list of time series records.
+
+        block : bool
+            Whether to block until the process has finished running.
+
+        Returns
+        -------
+
+        energy : :class:`Energy <BioSimSpace.Types.Energy>`
+            The dispersion correction.
+        """
+        return self.getRecord(
+            "POSITIONREST", time_series, _Units.Energy.kj_per_mol, block
+        )
 
     def getCurrentRestraintEnergy(self, time_series=False):
-        """Get the current position restraint energy.
+        """
+        Get the current position restraint energy.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           time_series : bool
-               Whether to return a list of time series records.
+        time_series : bool
+            Whether to return a list of time series records.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           energy : :class:`Energy <BioSimSpace.Types.Energy>`
-               The dispersion correction.
+        energy : :class:`Energy <BioSimSpace.Types.Energy>`
+            The dispersion correction.
         """
         return self.getRestraintEnergy(time_series, block=False)
 
     def getPotentialEnergy(self, time_series=False, block="AUTO"):
-        """Get the potential energy.
+        """
+        Get the potential energy.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           time_series : bool
-               Whether to return a list of time series records.
+        time_series : bool
+            Whether to return a list of time series records.
 
-           block : bool
-               Whether to block until the process has finished running.
+        block : bool
+            Whether to block until the process has finished running.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           energy : :class:`Energy <BioSimSpace.Types.Energy>`
-               The potential energy.
+        energy : :class:`Energy <BioSimSpace.Types.Energy>`
+            The potential energy.
         """
         return self.getRecord("POTENTIAL", time_series, _Units.Energy.kj_per_mol, block)
 
     def getCurrentPotentialEnergy(self, time_series=False):
-        """Get the current potential energy.
+        """
+        Get the current potential energy.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           time_series : bool
-               Whether to return a list of time series records.
+        time_series : bool
+            Whether to return a list of time series records.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           energy : :class:`Energy <BioSimSpace.Types.Energy>`
-               The potential energy.
+        energy : :class:`Energy <BioSimSpace.Types.Energy>`
+            The potential energy.
         """
         return self.getPotentialEnergy(time_series, block=False)
 
     def getKineticEnergy(self, time_series=False, block="AUTO"):
-        """Get the kinetic energy.
+        """
+        Get the kinetic energy.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           time_series : bool
-               Whether to return a list of time series records.
+        time_series : bool
+            Whether to return a list of time series records.
 
-           block : bool
-               Whether to block until the process has finished running.
+        block : bool
+            Whether to block until the process has finished running.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           energy : :class:`Energy <BioSimSpace.Types.Energy>`
-               The kinetic energy.
+        energy : :class:`Energy <BioSimSpace.Types.Energy>`
+            The kinetic energy.
         """
         return self.getRecord("KINETICEN", time_series, _Units.Energy.kj_per_mol, block)
 
     def getCurrentKineticEnergy(self, time_series=False):
-        """Get the current kinetic energy.
+        """
+        Get the current kinetic energy.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           time_series : bool
-               Whether to return a list of time series records.
+        time_series : bool
+            Whether to return a list of time series records.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           energy : :class:`Energy <BioSimSpace.Types.Energy>`
-               The kinetic energy.
+        energy : :class:`Energy <BioSimSpace.Types.Energy>`
+            The kinetic energy.
         """
         return self.getKineticEnergy(time_series, block=False)
 
     def getTotalEnergy(self, time_series=False, block="AUTO"):
-        """Get the total energy.
-
-           Parameters
-           ----------
-
-           time_series : bool
-               Whether to return a list of time series records.
-
-           block : bool
-               Whether to block until the process has finished running.
-
-           Returns
-           -------
-
-           energy : :class:`Energy <BioSimSpace.Types.Energy>`
-               The total energy.
         """
-        return self.getRecord("TOTALENERGY", time_series, _Units.Energy.kj_per_mol, block)
+        Get the total energy.
+
+        Parameters
+        ----------
+
+        time_series : bool
+            Whether to return a list of time series records.
+
+        block : bool
+            Whether to block until the process has finished running.
+
+        Returns
+        -------
+
+        energy : :class:`Energy <BioSimSpace.Types.Energy>`
+            The total energy.
+        """
+        return self.getRecord(
+            "TOTALENERGY", time_series, _Units.Energy.kj_per_mol, block
+        )
 
     def getCurrentTotalEnergy(self, time_series=False):
-        """Get the current total energy.
+        """
+        Get the current total energy.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           time_series : bool
-               Whether to return a list of time series records.
+        time_series : bool
+            Whether to return a list of time series records.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           energy : :class:`Energy <BioSimSpace.Types.Energy>`
-               The total energy.
+        energy : :class:`Energy <BioSimSpace.Types.Energy>`
+            The total energy.
         """
         return self.getTotalEnergy(time_series, block=False)
 
     def getConservedEnergy(self, time_series=False, block="AUTO"):
-        """Get the conserved energy.
-
-           Parameters
-           ----------
-
-           time_series : bool
-               Whether to return a list of time series records.
-
-           block : bool
-               Whether to block until the process has finished running.
-
-           Returns
-           -------
-
-           energy : :class:`Energy <BioSimSpace.Types.Energy>`
-               The conserved energy.
         """
-        return self.getRecord("CONSERVEDEN", time_series, _Units.Energy.kj_per_mol, block)
+        Get the conserved energy.
+
+        Parameters
+        ----------
+
+        time_series : bool
+            Whether to return a list of time series records.
+
+        block : bool
+            Whether to block until the process has finished running.
+
+        Returns
+        -------
+
+        energy : :class:`Energy <BioSimSpace.Types.Energy>`
+            The conserved energy.
+        """
+        return self.getRecord(
+            "CONSERVEDEN", time_series, _Units.Energy.kj_per_mol, block
+        )
 
     def getCurrentConservedEnergy(self, time_series=False):
-        """Get the current conserved energy.
+        """
+        Get the current conserved energy.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           time_series : bool
-               Whether to return a list of time series records.
+        time_series : bool
+            Whether to return a list of time series records.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           energy : :class:`Energy <BioSimSpace.Types.Energy>`
-               The conserved energy.
+        energy : :class:`Energy <BioSimSpace.Types.Energy>`
+            The conserved energy.
         """
         return self.getConservedEnergy(time_series, block=False)
 
     def getTemperature(self, time_series=False, block="AUTO"):
-        """Get the temperature.
-
-           Parameters
-           ----------
-
-           time_series : bool
-               Whether to return a list of time series records.
-
-           block : bool
-               Whether to block until the process has finished running.
-
-           Returns
-           -------
-
-           temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
-               The temperature.
         """
-        return self.getRecord("TEMPERATURE", time_series, _Units.Temperature.kelvin, block)
+        Get the temperature.
+
+        Parameters
+        ----------
+
+        time_series : bool
+            Whether to return a list of time series records.
+
+        block : bool
+            Whether to block until the process has finished running.
+
+        Returns
+        -------
+
+        temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
+            The temperature.
+        """
+        return self.getRecord(
+            "TEMPERATURE", time_series, _Units.Temperature.kelvin, block
+        )
 
     def getCurrentTemperature(self, time_series=False):
-        """Get the current temperature.
+        """
+        Get the current temperature.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           time_series : bool
-               Whether to return a list of time series records.
+        time_series : bool
+            Whether to return a list of time series records.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
-               The current temperature.
+        temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
+            The current temperature.
         """
         return self.getTemperature(time_series, block=False)
 
     def getPressure(self, time_series=False, block="AUTO"):
-        """Get the pressure.
+        """
+        Get the pressure.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           time_series : bool
-               Whether to return a list of time series records.
+        time_series : bool
+            Whether to return a list of time series records.
 
-           block : bool
-               Whether to block until the process has finished running.
+        block : bool
+            Whether to block until the process has finished running.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
-               The pressure.
+        pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
+            The pressure.
         """
         return self.getRecord("PRESSURE", time_series, _Units.Pressure.bar, block)
 
     def getCurrentPressure(self, time_series=False):
-        """Get the current pressure.
+        """
+        Get the current pressure.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           time_series : bool
-               Whether to return a list of time series records.
+        time_series : bool
+            Whether to return a list of time series records.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
-               The current pressure.
+        pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
+            The current pressure.
         """
         return self.getPressure(time_series, block=False)
 
     def getPressureDC(self, time_series=False, block="AUTO"):
-        """Get the DC pressure.
+        """
+        Get the DC pressure.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           time_series : bool
-               Whether to return a list of time series records.
+        time_series : bool
+            Whether to return a list of time series records.
 
-           block : bool
-               Whether to block until the process has finished running.
+        block : bool
+            Whether to block until the process has finished running.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
-               The DC pressure.
+        pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
+            The DC pressure.
         """
         return self.getRecord("PRESDC", time_series, _Units.Pressure.bar, block)
 
     def getCurrentPressureDC(self, time_series=False):
-        """Get the current DC pressure.
+        """
+        Get the current DC pressure.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           time_series : bool
-               Whether to return a list of time series records.
+        time_series : bool
+            Whether to return a list of time series records.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
-               The current pressure.
+        pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
+            The current pressure.
         """
         return self.getPressureDC(time_series, block=False)
 
     def getConstraintRMSD(self, time_series=False, block="AUTO"):
-        """Get the RMSD of the constrained atoms.
+        """
+        Get the RMSD of the constrained atoms.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           time_series : bool
-               Whether to return a list of time series records.
+        time_series : bool
+            Whether to return a list of time series records.
 
-           block : bool
-               Whether to block until the process has finished running.
+        block : bool
+            Whether to block until the process has finished running.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           length : :class:`Length <BioSimSpace.Types.Length>`
-               The constrained RMSD.
+        length : :class:`Length <BioSimSpace.Types.Length>`
+            The constrained RMSD.
         """
         return self.getRecord("CONSTRRMSD", time_series, _Units.Length.nanometer, block)
 
     def getCurrentConstraintRMSD(self, time_series=False):
-        """Get the current RMSD of the constrained atoms.
+        """
+        Get the current RMSD of the constrained atoms.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           time_series : bool
-               Whether to return a list of time series records.
+        time_series : bool
+            Whether to return a list of time series records.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           length : :class:`Length <BioSimSpace.Types.Length>`
-               The current constrained RMSD.
+        length : :class:`Length <BioSimSpace.Types.Length>`
+            The current constrained RMSD.
         """
         return self.getConstraintRMSD(time_series, block=False)
 
     def stdout(self, n=10):
-        """Print the last n lines of the stdout buffer.
+        """
+        Print the last n lines of the stdout buffer.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           n : int
-               The number of lines to print.
+        n : int
+            The number of lines to print.
         """
 
         # Note that thermodynamic records, e.g. energy, pressure, temperature,
@@ -2117,13 +2358,14 @@ class Gromacs(_process.Process):
             print(self._stdout[x])
 
     def _add_position_restraints(self, config):
-        """Helper function to add position restraints.
+        """
+        Helper function to add position restraints.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           config : [str]
-               The list of configuration strings.
+        config : [str]
+            The list of configuration strings.
         """
 
         # Get the restraint type.
@@ -2133,7 +2375,9 @@ class Gromacs(_process.Process):
 
             # Get the force constant in units of kJ_per_mol/nanometer**2
             force_constant = self._protocol.getForceConstant()._sire_unit
-            force_constant = force_constant.to(_SireUnits.kJ_per_mol/_SireUnits.nanometer2)
+            force_constant = force_constant.to(
+                _SireUnits.kJ_per_mol / _SireUnits.nanometer2
+            )
 
             # Scale reference coordinates with the scaling matrix of the pressure coupling.
             config.append("refcoord-scaling = all")
@@ -2196,7 +2440,9 @@ class Gromacs(_process.Process):
 
                 # Loop over all of the molecule types and create a position
                 # restraint file for each.
-                for mol_type_idx, (mol_type, mol_idxs) in enumerate(moltypes_sys_idx.items()):
+                for mol_type_idx, (mol_type, mol_idxs) in enumerate(
+                    moltypes_sys_idx.items()
+                ):
 
                     # Initialise a list of restrained atom indices.
                     restrained_atoms = []
@@ -2207,10 +2453,12 @@ class Gromacs(_process.Process):
 
                         # Get the indices of any restrained atoms in this molecule,
                         # making sure that indices are relative to the molecule.
-                        atom_idxs = self._system.getRestraintAtoms(restraint,
-                                                                   mol_index=mol_idx,
-                                                                   is_absolute=False,
-                                                                   allow_zero_matches=True)
+                        atom_idxs = self._system.getRestraintAtoms(
+                            restraint,
+                            mol_index=mol_idx,
+                            is_absolute=False,
+                            allow_zero_matches=True,
+                        )
 
                         # Store the atom index if it hasn't already been recorded.
                         for atom_idx in atom_idxs:
@@ -2230,7 +2478,9 @@ class Gromacs(_process.Process):
 
                             # Write restraints for each atom.
                             for atom_idx in restrained_atoms:
-                                file.write(f"{atom_idx+1:4}    1       {force_constant}       {force_constant}       {force_constant}\n")
+                                file.write(
+                                    f"{atom_idx+1:4}    1       {force_constant}       {force_constant}       {force_constant}\n"
+                                )
 
                         # Work out the offset.
                         offset = num_restraint - 1
@@ -2239,14 +2489,18 @@ class Gromacs(_process.Process):
                         # the topology file. We put the additional include directive at the
                         # end of the block so we move to the line before the next moleculetype
                         # record.
-                        new_top_lines = top_lines[:moltypes_top_idx[mol_type_idx+1] + offset - 1]
+                        new_top_lines = top_lines[
+                            : moltypes_top_idx[mol_type_idx + 1] + offset - 1
+                        ]
 
                         # Append the additional information.
                         new_top_lines.append('#include "%s"' % include_file)
                         new_top_lines.append("")
 
                         # Now extend with the remainder of the file.
-                        new_top_lines.extend(top_lines[moltypes_top_idx[mol_type_idx+1] + offset:])
+                        new_top_lines.extend(
+                            top_lines[moltypes_top_idx[mol_type_idx + 1] + offset :]
+                        )
 
                         # Overwrite the topology file lines.
                         top_lines = new_top_lines
@@ -2310,7 +2564,9 @@ class Gromacs(_process.Process):
 
                             # Write restraints for each atom.
                             for atom_idx in atom_idxs:
-                                file.write(f"{atom_idx+1:4}    1       {force_constant}       {force_constant}       {force_constant}\n")
+                                file.write(
+                                    f"{atom_idx+1:4}    1       {force_constant}       {force_constant}       {force_constant}\n"
+                                )
 
                         # Work out the offset.
                         offset = num_restraint - 1
@@ -2319,14 +2575,18 @@ class Gromacs(_process.Process):
                         # the topology file. We put the additional include directive at the
                         # end of the block so we move to the line before the next moleculetype
                         # record.
-                        new_top_lines = top_lines[:moltypes_top_idx[mol_type_idx+1] + offset - 1]
+                        new_top_lines = top_lines[
+                            : moltypes_top_idx[mol_type_idx + 1] + offset - 1
+                        ]
 
                         # Append the additional information.
                         new_top_lines.append('#include "%s"' % include_file)
                         new_top_lines.append("")
 
                         # Now extend with the remainder of the file.
-                        new_top_lines.extend(top_lines[moltypes_top_idx[mol_type_idx+1] + offset:])
+                        new_top_lines.extend(
+                            top_lines[moltypes_top_idx[mol_type_idx + 1] + offset :]
+                        )
 
                         # Overwrite the topology file lines.
                         top_lines = new_top_lines
@@ -2380,8 +2640,8 @@ class Gromacs(_process.Process):
                         break
 
                     # Extract the lines with the keys and values.
-                    k_line = lines[x+1]
-                    v_line = lines[x+2]
+                    k_line = lines[x + 1]
+                    v_line = lines[x + 2]
 
                     # Empty line:
                     if len(k_line.strip()) == 0 or len(v_line.strip()) == 0:
@@ -2409,21 +2669,21 @@ class Gromacs(_process.Process):
                         # This is the end of a record, i.e. we've gone from a
                         # character to whitespace. Record the key and value and
                         # update the start index for the next record.
-                        if val != " " and v_line[idx+1] == " ":
-                            k.append(k_line[start_idx:idx+1])
-                            v.append(v_line[start_idx:idx+1])
-                            start_idx=idx+1
+                        if val != " " and v_line[idx + 1] == " ":
+                            k.append(k_line[start_idx : idx + 1])
+                            v.append(v_line[start_idx : idx + 1])
+                            start_idx = idx + 1
 
                     # Update the keys and values, making sure the number of
                     # values matches the number of keys.
                     keys.extend(k)
-                    values.extend(v[:len(k)])
+                    values.extend(v[: len(k)])
 
                     # Update the line index.
                     x = x + 2
 
                 # Add the records to the dictionary.
-                if (len(keys) == len(values)):
+                if len(keys) == len(values):
                     for key, value in zip(keys, values):
                         # Replace certain characters in the key in order to make
                         # the formatting consistent.
@@ -2456,7 +2716,7 @@ class Gromacs(_process.Process):
             # This is a time record.
             elif "Step" in lines[x].strip():
                 if x + 1 < num_lines:
-                    records = lines[x+1].split()
+                    records = lines[x + 1].split()
 
                     # There should be two records, 'Step' and 'Time'.
                     if len(records) == 2:
@@ -2475,25 +2735,26 @@ class Gromacs(_process.Process):
                 x += 1
 
     def _get_stdout_record(self, key, time_series=False, unit=None):
-        """Helper function to get a stdout record from the dictionary.
+        """
+        Helper function to get a stdout record from the dictionary.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           key : str
-               The record key.
+        key : str
+            The record key.
 
-           time_series : bool
-               Whether to return a time series of records.
+        time_series : bool
+            Whether to return a time series of records.
 
-           unit : BioSimSpace.Types._type.Type
-               The unit to convert the record to.
+        unit : BioSimSpace.Types._type.Type
+            The unit to convert the record to.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           record :
-               The matching stdout record.
+        record :
+            The matching stdout record.
         """
 
         # No data!
@@ -2518,7 +2779,10 @@ class Gromacs(_process.Process):
                     if unit is None:
                         return [float(x) for x in self._stdout_dict[key]]
                     else:
-                        return [(float(x) * unit)._to_default_unit() for x in self._stdout_dict[key]]
+                        return [
+                            (float(x) * unit)._to_default_unit()
+                            for x in self._stdout_dict[key]
+                        ]
 
             except KeyError:
                 return None
@@ -2532,25 +2796,28 @@ class Gromacs(_process.Process):
                     if unit is None:
                         return float(self._stdout_dict[key][-1])
                     else:
-                        return (float(self._stdout_dict[key][-1]) * unit)._to_default_unit()
+                        return (
+                            float(self._stdout_dict[key][-1]) * unit
+                        )._to_default_unit()
 
             except KeyError:
                 return None
 
     def _getFrame(self, time):
-        """Get the trajectory frame closest to a specific time value.
+        """
+        Get the trajectory frame closest to a specific time value.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           time : :class:`Time <BioSimSpace.Types.Time>`
-               The time value.
+        time : :class:`Time <BioSimSpace.Types.Time>`
+            The time value.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           system : :class:`System <BioSimSpace._SireWrappers.System>`
-               The molecular system from the closest trajectory frame.
+        system : :class:`System <BioSimSpace._SireWrappers.System>`
+            The molecular system from the closest trajectory frame.
         """
 
         if not isinstance(time, _Types.Time):
@@ -2575,19 +2842,31 @@ class Gromacs(_process.Process):
                     self._traj_file = traj_file
 
                 # Use trjconv to get the frame closest to the current simulation time.
-                command = "%s trjconv -f %s -s %s -dump %f -pbc mol -o frame.gro" \
-                    % (self._exe, self._traj_file, self._tpr_file, time.picoseconds().value())
+                command = "%s trjconv -f %s -s %s -dump %f -pbc mol -o frame.gro" % (
+                    self._exe,
+                    self._traj_file,
+                    self._tpr_file,
+                    time.picoseconds().value(),
+                )
 
                 # Run the command as a pipeline.
-                proc_echo = _subprocess.Popen(["echo", "0"], shell=False, stdout=_subprocess.PIPE)
-                proc = _subprocess.Popen(_Utils.command_split(command), shell=False,
-                    stdin=proc_echo.stdout, stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
+                proc_echo = _subprocess.Popen(
+                    ["echo", "0"], shell=False, stdout=_subprocess.PIPE
+                )
+                proc = _subprocess.Popen(
+                    _Utils.command_split(command),
+                    shell=False,
+                    stdin=proc_echo.stdout,
+                    stdout=_subprocess.PIPE,
+                    stderr=_subprocess.PIPE,
+                )
                 proc.wait()
                 proc_echo.stdout.close()
 
                 # Read the frame file.
-                new_system = _IO.readMolecules(["frame.gro", self._top_file],
-                                               property_map=self._property_map)
+                new_system = _IO.readMolecules(
+                    ["frame.gro", self._top_file], property_map=self._property_map
+                )
 
                 # Delete the frame file.
                 _os.remove("frame.gro")
@@ -2598,12 +2877,13 @@ class Gromacs(_process.Process):
                 # Update the coordinates and velocities and return a mapping between
                 # the molecule indices in the two systems.
                 sire_system, mapping = _SireIO.updateCoordinatesAndVelocities(
-                        old_system._sire_object,
-                        new_system._sire_object,
-                        self._mapping,
-                        is_lambda1,
-                        self._property_map,
-                        self._property_map)
+                    old_system._sire_object,
+                    new_system._sire_object,
+                    self._mapping,
+                    is_lambda1,
+                    self._property_map,
+                    self._property_map,
+                )
 
                 # Update the underlying Sire object.
                 old_system._sire_object = sire_system
@@ -2615,27 +2895,32 @@ class Gromacs(_process.Process):
                 # Update the box information in the original system.
                 if "space" in new_system._sire_object.propertyKeys():
                     box = new_system._sire_object.property("space")
-                    old_system._sire_object.setProperty(self._property_map.get("space", "space"), box)
+                    old_system._sire_object.setProperty(
+                        self._property_map.get("space", "space"), box
+                    )
 
                 return old_system
 
         except:
-            _warnings.warn("Failed to extract trajectory frame with trjconv. "
-                           "Try running 'getSystem' again.")
+            _warnings.warn(
+                "Failed to extract trajectory frame with trjconv. "
+                "Try running 'getSystem' again."
+            )
             frame = "%s/frame.gro" % self._work_dir
             if _os.path.isfile(frame):
                 _os.remove(frame)
             return None
 
     def _find_trajectory_file(self):
-        """Helper function to find the trajectory file associated with the
-           process.
+        """
+        Helper function to find the trajectory file associated with the
+        process.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           traj_file : str
-               The path to the trajectory file.
+        traj_file : str
+            The path to the trajectory file.
         """
 
         # Check that the current trajectory file is found.
@@ -2656,28 +2941,32 @@ class Gromacs(_process.Process):
                 if len(traj_file) == 1:
                     return traj_file[0]
                 else:
-                    _warnings.warn("Invalid trajectory file! "
-                                   "%d trr files found, %d xtc files found."
-                                   % (num_trr, len(traj_file)))
+                    _warnings.warn(
+                        "Invalid trajectory file! "
+                        "%d trr files found, %d xtc files found."
+                        % (num_trr, len(traj_file))
+                    )
                     return None
         else:
             return self._traj_file
 
+
 def _is_minimisation(config):
-    """Helper function to check whether a custom configuration
-       is a minimisation.
+    """
+    Helper function to check whether a custom configuration
+    is a minimisation.
 
-       Parameters
-       ----------
+    Parameters
+    ----------
 
-       config : [str]
-           A list of configuration strings.
+    config : [str]
+        A list of configuration strings.
 
-       Returns
-       -------
+    Returns
+    -------
 
-       is_minimisation : bool
-           Whether this is a minimisation configuration.
+    is_minimisation : bool
+        Whether this is a minimisation configuration.
     """
 
     for line in config:
@@ -2685,28 +2974,32 @@ def _is_minimisation(config):
         line = line.lower().replace(" ", "")
 
         # Check for integrators used for minimisation.
-        if "integrator=steep" in line or \
-           "integrator=cg" in line    or \
-           "integrator=l-bfgs" in line:
-               return True
+        if (
+            "integrator=steep" in line
+            or "integrator=cg" in line
+            or "integrator=l-bfgs" in line
+        ):
+            return True
 
     return False
 
+
 def _is_vacuum(config):
-    """Helper function to check whether a configuration corresponds to a
-       vacuum simulation.
+    """
+    Helper function to check whether a configuration corresponds to a
+    vacuum simulation.
 
-       Parameters
-       ----------
+    Parameters
+    ----------
 
-       config : [str]
-           A list of configuration strings.
+    config : [str]
+        A list of configuration strings.
 
-       Returns
-       -------
+    Returns
+    -------
 
-       is_vacuum : bool
-           Whether this is (likely) a vacuum configuration.
+    is_vacuum : bool
+        Whether this is (likely) a vacuum configuration.
     """
 
     # Join all of the config strings together.
@@ -2718,11 +3011,13 @@ def _is_vacuum(config):
     # Check for likely indicators of a vacuum simulation.
     # These can be adapted as we think of more, or options
     # change.
-    if "pbc=no"     in config and \
-       "nstlist=0"  in config and \
-       "rlist=0"    in config and \
-       "rvdw=0"     in config and \
-       "rcoulomb=0" in config:
-           return True
+    if (
+        "pbc=no" in config
+        and "nstlist=0" in config
+        and "rlist=0" in config
+        and "rvdw=0" in config
+        and "rcoulomb=0" in config
+    ):
+        return True
     else:
         return False

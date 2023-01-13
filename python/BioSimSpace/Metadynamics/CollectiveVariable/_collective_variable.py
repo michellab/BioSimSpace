@@ -1,13 +1,13 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2022
+# Copyright: 2017-2023
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
 # BioSimSpace is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 2 of the License, or
+# the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
 # BioSimSpace is distributed in the hope that it will be useful,
@@ -19,9 +19,7 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-"""
-Functionality for handling collective variables for metadynamics simulations.
-"""
+"""Functionality for handling collective variables for metadynamics simulations."""
 
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
@@ -31,12 +29,12 @@ __all__ = ["CollectiveVariable"]
 from .._bound import Bound as _Bound
 from .._grid import Grid as _Grid
 
-class CollectiveVariable():
+
+class CollectiveVariable:
     """A base class for holding collective variables."""
 
     def __init__(self):
-        """Constructor.
-        """
+        """Constructor."""
 
         # Don't allow user to create an instance of this base class.
         if type(self) is CollectiveVariable:
@@ -56,13 +54,14 @@ class CollectiveVariable():
         return self._num_components
 
     def setLowerBound(self, lower_bound=None):
-        """Set a lower bound on the value of the collective variable.
+        """
+        Set a lower bound on the value of the collective variable.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           lower_bound : :class:`Bound <BioSimSpace.Metadynamics.Bound>`
-               A lower bound on the value of the collective variable.
+        lower_bound : :class:`Bound <BioSimSpace.Metadynamics.Bound>`
+            A lower bound on the value of the collective variable.
         """
 
         if lower_bound is None:
@@ -70,7 +69,9 @@ class CollectiveVariable():
             return
 
         if not isinstance(lower_bound, _Bound):
-            raise TypeError("'lower_bound' must be of type 'BioSimSpace.Metadynamics.Bound'")
+            raise TypeError(
+                "'lower_bound' must be of type 'BioSimSpace.Metadynamics.Bound'"
+            )
 
         # Store the existing value.
         old_value = self._lower_bound
@@ -87,24 +88,26 @@ class CollectiveVariable():
                 raise
 
     def getLowerBound(self):
-        """Get the lower bound on the collective variable.
+        """
+        Get the lower bound on the collective variable.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           lower_bound : :class:`Bound <BioSimSpace.Metadynamics.Bound>`
-               The lower bound on the value of the collective variable.
+        lower_bound : :class:`Bound <BioSimSpace.Metadynamics.Bound>`
+            The lower bound on the value of the collective variable.
         """
         return self._lower_bound
 
     def setUpperBound(self, upper_bound=None):
-        """Set an upper bound on the value of the collective variable.
+        """
+        Set an upper bound on the value of the collective variable.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           upper_bound : :class:`Bound <BioSimSpace.Metadynamics.Bound>`
-               An upper bound on the value of the collective variable.
+        upper_bound : :class:`Bound <BioSimSpace.Metadynamics.Bound>`
+            An upper bound on the value of the collective variable.
         """
 
         if upper_bound is None:
@@ -112,7 +115,9 @@ class CollectiveVariable():
             return
 
         if not isinstance(upper_bound, _Bound):
-            raise TypeError("'upper_bound' must be of type 'BioSimSpace.Metadynamics.Bound'")
+            raise TypeError(
+                "'upper_bound' must be of type 'BioSimSpace.Metadynamics.Bound'"
+            )
 
         # Store the existing value.
         old_value = self._upper_bound
@@ -129,25 +134,27 @@ class CollectiveVariable():
                 raise
 
     def getUpperBound(self):
-        """Get the upper bound on the collective variable.
+        """
+        Get the upper bound on the collective variable.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           upper_bound : :class:`Bound <BioSimSpace.Metadynamics.Bound>`
-               The upper bound on the value of the collective variable.
+        upper_bound : :class:`Bound <BioSimSpace.Metadynamics.Bound>`
+            The upper bound on the value of the collective variable.
         """
         return self._upper_bound
 
     def setGrid(self, grid=None):
-        """Set a grid on which the collective variable will be sampled.
-           Call with no arguments to clear the grid.
+        """
+        Set a grid on which the collective variable will be sampled.
+        Call with no arguments to clear the grid.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           grid : :class:`Grid <BioSimSpace.Metadynamics.Grid>`
-               A grid for the collective variable.
+        grid : :class:`Grid <BioSimSpace.Metadynamics.Grid>`
+            A grid for the collective variable.
         """
 
         if grid is None:
@@ -172,18 +179,20 @@ class CollectiveVariable():
                 raise
 
     def getGrid(self):
-        """Get the grid on which the collective variable is sampled.
+        """
+        Get the grid on which the collective variable is sampled.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           grid : :class:`Grid <BioSimSpace.Metadynamics.Grid>`
-               The grid on which the collective variable is sampled.
+        grid : :class:`Grid <BioSimSpace.Metadynamics.Grid>`
+            The grid on which the collective variable is sampled.
         """
         return self._grid
 
     def _validate(self):
-        """Internal function to validate that the object is in a consistent
-           state.
+        """
+        Internal function to validate that the object is in a consistent
+        state.
         """
         raise NotImplementedError("'_validate' must be overloaded in derived classes!")
