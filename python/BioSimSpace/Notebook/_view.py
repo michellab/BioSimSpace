@@ -226,7 +226,7 @@ class View:
         molnums = system.molNums()
 
         # Create a new system.
-        s = _SireSystem.System("BioSimSpace System")
+        s = _SireSystem.System("BioSimSpace_System")
         m = _SireMol.MoleculeGroup("all")
 
         # Loop over all of the indices.
@@ -292,7 +292,7 @@ class View:
             raise ValueError("Molecule index is out of range!")
 
         # Create a new system and add a single molecule.
-        s = _SireSystem.System("BioSimSpace System")
+        s = _SireSystem.System("BioSimSpace_System")
         m = _SireMol.MoleculeGroup("all")
         m.add(system[molnums[index]])
         s.add(m)

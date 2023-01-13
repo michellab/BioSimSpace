@@ -81,19 +81,19 @@ class System(_SireWrapper):
 
         # A Sire Molecule object.
         elif isinstance(system, _SireMol.Molecule):
-            sire_object = _SireSystem.System("BioSimSpace System.")
+            sire_object = _SireSystem.System("BioSimSpace_System.")
             super().__init__(sire_object)
             self.addMolecules(_Molecule(system))
 
         # A BioSimSpace Molecule object.
         elif isinstance(system, _Molecule):
-            sire_object = _SireSystem.System("BioSimSpace System.")
+            sire_object = _SireSystem.System("BioSimSpace_System.")
             super().__init__(sire_object)
             self.addMolecules(system)
 
         # A BioSimSpace Molecules object.
         elif isinstance(system, _Molecules):
-            sire_object = _SireSystem.System("BioSimSpace System.")
+            sire_object = _SireSystem.System("BioSimSpace_System.")
             super().__init__(sire_object)
             self.addMolecules(system)
 
@@ -104,7 +104,7 @@ class System(_SireWrapper):
                     "'system' must contain a list of 'BioSimSpace._SireWrappers.Molecule' types."
                 )
             else:
-                sire_object = _SireSystem.System("BioSimSpace System.")
+                sire_object = _SireSystem.System("BioSimSpace_System.")
                 super().__init__(sire_object)
                 self.addMolecules(system)
 
@@ -1906,7 +1906,7 @@ class System(_SireWrapper):
         """
 
         # Create an empty Sire System.
-        system = _SireSystem.System("BioSimSpace System")
+        system = _SireSystem.System("BioSimSpace_System")
 
         # Create a new "all" molecule group.
         molgrp = _SireMol.MoleculeGroup("all")
