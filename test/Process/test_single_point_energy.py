@@ -16,11 +16,16 @@ else:
 # Check whether GROMACS is installed.
 has_gromacs = BSS._gmx_exe is not None
 
+# Store the tutorial URL.
+url = BSS.tutorialUrl()
+
 
 @pytest.fixture
 def system(scope="session"):
     """Re-use the same molecuar system for each test."""
-    return BSS.IO.readMolecules("test/input/amber/ubiquitin/*")
+    return BSS.IO.readMolecules(
+        [f"{url}/ubiquitin.prm7.bz2", f"{url}/ubiquitin.rst7.bz2"]
+    )
 
 
 @pytest.mark.skipif(

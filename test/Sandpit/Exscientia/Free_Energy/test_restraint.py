@@ -10,17 +10,20 @@ from BioSimSpace.Sandpit.Exscientia.Units.Angle import radian, degree
 from BioSimSpace.Sandpit.Exscientia.Units.Energy import kcal_per_mol
 from BioSimSpace.Sandpit.Exscientia.Units.Temperature import kelvin
 
+# Store the tutorial URL.
+url = BSS.tutorialUrl()
+
 
 @pytest.fixture(scope="session")
 def restraint():
     """Generate the Boresch restaint object."""
     ligand = BSS.IO.readMolecules(
-        BSS.IO.glob("test/input/ligands/ligand01*")
+        [f"{url}/ligand01.prm7.bz2", f"{url}/ligand01.rst7.bz2"]
     ).getMolecule(0)
     decoupled_ligand = decouple(ligand)
 
     protein = BSS.IO.readMolecules(
-        ["test/input/molecules/1jr5.crd", "test/input/molecules/1jr5.top"]
+        [f"{url}/1jr5.crd.bz2", f"{url}/1jr5.top.bz2"]
     ).getMolecule(0)
 
     system = (protein + decoupled_ligand).toSystem()

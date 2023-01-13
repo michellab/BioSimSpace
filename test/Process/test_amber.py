@@ -15,11 +15,14 @@ if BSS._amber_home is not None:
 else:
     has_amber = False
 
+# Store the tutorial URL.
+url = BSS.tutorialUrl()
 
-@pytest.fixture
+
+@pytest.fixture(scope="session")
 def system(scope="session"):
     """Re-use the same molecuar system for each test."""
-    return BSS.IO.readMolecules("test/input/amber/ala/*")
+    return BSS.IO.readMolecules(["test/input/ala.top", "test/input/ala.crd"])
 
 
 @pytest.mark.skipif(has_amber is False, reason="Requires AMBER to be installed.")

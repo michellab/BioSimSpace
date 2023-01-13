@@ -1,8 +1,11 @@
 import BioSimSpace as BSS
 
+# Store the tutorial URL.
+url = BSS.tutorialUrl()
+
 
 def test_sire_properties():
-    s = BSS.IO.readMolecules("test/input/amber/ala/*")
+    s = BSS.IO.readMolecules(["test/input/ala.top", "test/input/ala.crd"])
 
     m = s[0]._sire_object
 

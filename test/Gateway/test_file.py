@@ -12,9 +12,7 @@ def test_no_arguments():
         f = File()
 
 
-@pytest.mark.parametrize(
-    "value", ["test/input/amber/ala/ala.crd", "test/input/amber/ala/ala.top"]
-)
+@pytest.mark.parametrize("value", ["test/input/ala.crd", "test/input/ala.top"])
 def test_value(value):
     """Test whether object is initialised correctly and value is set."""
 

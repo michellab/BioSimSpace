@@ -5,11 +5,25 @@ import pytest
 # Make sure GROMSCS is installed.
 has_gromacs = BSS._gmx_exe is not None
 
+# Store the tutorial URL.
+url = BSS.tutorialUrl()
 
-@pytest.fixture
+
+@pytest.fixture(scope="session")
 def system(scope="session"):
     """Re-use the same molecuar system for each test."""
-    return BSS.IO.readMolecules("test/input/amber/ala/*")
+    return BSS.IO.readMolecules(["test/input/ala.top", "test/input/ala.crd"])
+
+
+@pytest.fixture(scope="session")
+def perturbable_system():
+    """Re-use the same perturbable system for each test."""
+    return BSS.IO.readPerturbableSystem(
+        f"{url}/complex_vac0.prm7.bz2",
+        f"{url}/complex_vac0.rst7.bz2",
+        f"{url}/complex_vac1.prm7.bz2",
+        f"{url}/complex_vac1.rst7.bz2",
+    )
 
 
 @pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
@@ -92,22 +106,14 @@ def test_vacuum_water(system):
 
 @pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
 @pytest.mark.parametrize("restraint", ["backbone", "heavy"])
-def test_restraints(restraint):
+def test_restraints(perturbable_system, restraint):
     """Regression test for correct injection of restraint file into GROMACS topology."""
-
-    # Load the perturbable system.
-    system = BSS.IO.readPerturbableSystem(
-        "test/input/morphs/complex_vac0.prm7",
-        "test/input/morphs/complex_vac0.rst7",
-        "test/input/morphs/complex_vac1.prm7",
-        "test/input/morphs/complex_vac1.rst7",
-    )
 
     # Create an equilibration protocol with backbone restraints.
     protocol = BSS.Protocol.Equilibration(restraint=restraint)
 
     # Create the simulation process.
-    process = BSS.Process.Gromacs(system, protocol)
+    process = BSS.Process.Gromacs(perturbable_system, protocol)
 
 
 def run_process(system, protocol):

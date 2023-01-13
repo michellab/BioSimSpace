@@ -2,21 +2,24 @@ import BioSimSpace as BSS
 
 import pytest
 
+# Store the tutorial URL.
+url = BSS.tutorialUrl()
 
-@pytest.fixture
-def system(scope="session"):
+
+@pytest.fixture(scope="session")
+def system():
     """Re-use the same molecuar system for each test."""
-    return BSS.IO.readMolecules("test/input/amber/ala/*")
+    return BSS.IO.readMolecules(["test/input/ala.top", "test/input/ala.crd"])
 
 
-@pytest.fixture
-def molecule(system, scope="session"):
+@pytest.fixture(scope="session")
+def molecule(system):
     """Re-use the same molecule for each test."""
     return system[0]
 
 
-@pytest.fixture
-def residue(molecule, scope="session"):
+@pytest.fixture(scope="session")
+def residue(molecule):
     """Re-use the same residue for each test."""
     return molecule.getResidues()[0]
 

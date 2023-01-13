@@ -28,6 +28,9 @@ from BioSimSpace.Sandpit.Exscientia import Types as _Types
 # Make sure GROMSCS is installed.
 has_gromacs = BSS._gmx_exe is not None
 
+# Store the tutorial URL.
+url = BSS.tutorialUrl()
+
 
 @pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
 @pytest.mark.skipif(is_alchemlyb is False, reason="Requires alchemlyb to be installed.")
@@ -35,7 +38,7 @@ class Test_gmx_ABFE:
     @staticmethod
     @pytest.fixture(scope="class")
     def freenrg():
-        m = BSS.IO.readMolecules("test/input/amber/ala/*").getMolecule(0)
+        m = BSS.IO.readMolecules(["test/input/ala.top", "test/input/ala.crd"])[0]
         decouple_m = decouple(m)
         solvated = BSS.Solvent.tip3p(
             molecule=decouple_m, box=3 * [3 * BSS.Units.Length.nanometer]

@@ -21,12 +21,18 @@ is_MDRestraintsGenerator = _have_imported(_MDRestraintsGenerator)
 # Make sure GROMSCS is installed.
 has_gromacs = BSS._gmx_exe is not None
 
+# Store the tutorial URL.
+url = BSS.tutorialUrl()
+
 
 @pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
 def test_run_Gromacs():
     "Test if the normal run works on Gromacs"
     ligand = BSS.IO.readMolecules(
-        BSS.IO.glob("test/input/ligands/ligand04*")
+        [
+            f"{url}/ligand04.prm7.bz2",
+            f"{url}/ligand04.rst7.bz2",
+        ]
     ).getMolecule(0)
     decouple_ligand = decouple(ligand)
     protocol = BSS.Protocol.Production(runtime=BSS.Types.Time(8, "FEMTOSECOND"))
@@ -60,8 +66,8 @@ class TestMDRestraintsGenerator_analysis:
         outdir = tmp_path_factory.mktemp("out")
         system = BSS.IO.readMolecules(
             [
-                "test/Sandpit/Exscientia/input/protein_ligand/crd.gro",
-                "test/Sandpit/Exscientia/input/protein_ligand/complex.top",
+                f"{url}/crd.gro.bz2",
+                f"{url}/complex.top.bz2",
             ]
         )
         ligand = system.getMolecule(1)

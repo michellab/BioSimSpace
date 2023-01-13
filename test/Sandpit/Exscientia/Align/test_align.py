@@ -5,15 +5,14 @@ import BioSimSpace.Sandpit.Exscientia as BSS
 
 import pytest
 
+# Store the tutorial URL.
+url = BSS.tutorialUrl()
+
 
 def test_flex_align():
     # Load the ligands.
-    s0 = BSS.IO.readMolecules(
-        BSS.IO.glob("test/Sandpit/Exscientia/input/ligands/ligand01*")
-    )
-    s1 = BSS.IO.readMolecules(
-        BSS.IO.glob("test/Sandpit/Exscientia/input/ligands/ligand02*")
-    )
+    s0 = BSS.IO.readMolecules([f"{url}/ligand01.prm7.bz2", f"{url}/ligand01.rst7.bz2"])
+    s1 = BSS.IO.readMolecules([f"{url}/ligand02.prm7.bz2", f"{url}/ligand02.rst7.bz2"])
 
     # Extract the molecules.
     m0 = s0.getMolecules()[0]
@@ -52,12 +51,8 @@ def test_flex_align():
 @pytest.mark.parametrize("prematch", [{3: 1}, {5: 9}, {4: 5}, {1: 0}])
 def test_prematch(prematch):
     # Load the ligands.
-    s0 = BSS.IO.readMolecules(
-        BSS.IO.glob("test/Sandpit/Exscientia/input/ligands/ligand01*")
-    )
-    s1 = BSS.IO.readMolecules(
-        BSS.IO.glob("test/Sandpit/Exscientia/input/ligands/ligand02*")
-    )
+    s0 = BSS.IO.readMolecules([f"{url}/ligand01.prm7.bz2", f"{url}/ligand01.rst7.bz2"])
+    s1 = BSS.IO.readMolecules([f"{url}/ligand02.prm7.bz2", f"{url}/ligand02.rst7.bz2"])
 
     # Extract the molecules.
     m0 = s0.getMolecules()[0]
@@ -77,12 +72,8 @@ def test_prematch(prematch):
 @pytest.mark.parametrize("prematch", [{-1: 1}, {50: 9}, {4: 48}, {1: -1}])
 def test_invalid_prematch(prematch):
     # Load the ligands.
-    s0 = BSS.IO.readMolecules(
-        BSS.IO.glob("test/Sandpit/Exscientia/input/ligands/ligand01*")
-    )
-    s1 = BSS.IO.readMolecules(
-        BSS.IO.glob("test/Sandpit/Exscientia/input/ligands/ligand02*")
-    )
+    s0 = BSS.IO.readMolecules([f"{url}/ligand01.prm7.bz2", f"{url}/ligand01.rst7.bz2"])
+    s1 = BSS.IO.readMolecules([f"{url}/ligand02.prm7.bz2", f"{url}/ligand02.rst7.bz2"])
 
     # Extract the molecules.
     m0 = s0.getMolecules()[0]
@@ -97,12 +88,8 @@ def test_invalid_prematch(prematch):
 
 def test_merge():
     # Load the ligands.
-    s0 = BSS.IO.readMolecules(
-        BSS.IO.glob("test/Sandpit/Exscientia/input/ligands/ligand31*")
-    )
-    s1 = BSS.IO.readMolecules(
-        BSS.IO.glob("test/Sandpit/Exscientia/input/ligands/ligand38*")
-    )
+    s0 = BSS.IO.readMolecules([f"{url}/ligand31.prm7.bz2", f"{url}/ligand31.rst7.bz2"])
+    s1 = BSS.IO.readMolecules([f"{url}/ligand38.prm7.bz2", f"{url}/ligand38.rst7.bz2"])
 
     # Extract the molecules.
     m0 = s0.getMolecules()[0]
@@ -233,12 +220,8 @@ def test_merge():
 )
 def test_ring_breaking_three_membered():
     # Load the ligands.
-    s0 = BSS.IO.readMolecules(
-        BSS.IO.glob("test/Sandpit/Exscientia/input/ligands/CAT-13a*")
-    )
-    s1 = BSS.IO.readMolecules(
-        BSS.IO.glob("test/Sandpit/Exscientia/input/ligands/CAT-17g*")
-    )
+    s0 = BSS.IO.readMolecules([f"{url}/CAT-13a.prm7.bz2", f"{url}/CAT-13a.rst7.bz2"])
+    s1 = BSS.IO.readMolecules([f"{url}/CAT-17g.prm7.bz2", f"{url}/CAT-17g.rst7.bz2"])
 
     # Extract the molecules.
     m0 = s0.getMolecules()[0]
@@ -263,12 +246,8 @@ def test_ring_breaking_three_membered():
 )
 def test_ring_breaking_five_membered():
     # Load the ligands.
-    s0 = BSS.IO.readMolecules(
-        BSS.IO.glob("test/Sandpit/Exscientia/input/ligands/ligand31*")
-    )
-    s1 = BSS.IO.readMolecules(
-        BSS.IO.glob("test/Sandpit/Exscientia/input/ligands/ligand04*")
-    )
+    s0 = BSS.IO.readMolecules([f"{url}/ligand31.prm7.bz2", f"{url}/ligand31.rst7.bz2"])
+    s1 = BSS.IO.readMolecules([f"{url}/ligand04.prm7.bz2", f"{url}/ligand04.rst7.bz2"])
 
     # Extract the molecules.
     m0 = s0.getMolecules()[0]
@@ -293,12 +272,8 @@ def test_ring_breaking_five_membered():
 )
 def test_ring_breaking_six_membered():
     # Load the ligands.
-    s0 = BSS.IO.readMolecules(
-        BSS.IO.glob("test/Sandpit/Exscientia/input/ligands/ligand31*")
-    )
-    s1 = BSS.IO.readMolecules(
-        BSS.IO.glob("test/Sandpit/Exscientia/input/ligands/ligand38*")
-    )
+    s0 = BSS.IO.readMolecules([f"{url}/ligand31.prm7.bz2", f"{url}/ligand31.rst7.bz2"])
+    s1 = BSS.IO.readMolecules([f"{url}/ligand38.prm7.bz2", f"{url}/ligand38.rst7.bz2"])
 
     # Extract the molecules.
     m0 = s0.getMolecules()[0]
@@ -338,10 +313,10 @@ def test_ring_breaking_six_membered():
 def test_ring_size_change(ligands):
     # Load the ligands.
     s0 = BSS.IO.readMolecules(
-        BSS.IO.glob("test/Sandpit/Exscientia/input/ligands/%s.*" % ligands[0])
+        [f"{url}/{ligands[0]}.prm7.bz2", f"{url}/{ligands[0]}.rst7.bz2"]
     )
     s1 = BSS.IO.readMolecules(
-        BSS.IO.glob("test/Sandpit/Exscientia/input/ligands/%s.*" % ligands[1])
+        [f"{url}/{ligands[1]}.prm7.bz2", f"{url}/{ligands[1]}.rst7.bz2"]
     )
 
     # Extract the molecules.
@@ -422,10 +397,10 @@ def test_ring_size_change(ligands):
 def test_grow_whole_ring(ligands, mapping):
     # Load the ligands.
     s0 = BSS.IO.readMolecules(
-        BSS.IO.glob(f"test/Sandpit/Exscientia/input/ligands/{ligands[0]}*")
+        [f"{url}/{ligands[0]}.prm7.bz2", f"{url}/{ligands[0]}.rst7.bz2"]
     )
     s1 = BSS.IO.readMolecules(
-        BSS.IO.glob(f"test/Sandpit/Exscientia/input/ligands/{ligands[1]}*")
+        [f"{url}/{ligands[1]}.prm7.bz2", f"{url}/{ligands[1]}.rst7.bz2"]
     )
 
     # Extract the molecules.
@@ -441,12 +416,8 @@ def test_grow_whole_ring(ligands, mapping):
 
 def test_hydrogen_mass_repartitioning():
     # Load the ligands.
-    s0 = BSS.IO.readMolecules(
-        BSS.IO.glob("test/Sandpit/Exscientia/input/ligands/ligand31*")
-    )
-    s1 = BSS.IO.readMolecules(
-        BSS.IO.glob("test/Sandpit/Exscientia/input/ligands/ligand38*")
-    )
+    s0 = BSS.IO.readMolecules([f"{url}/ligand31.prm7.bz2", f"{url}/ligand31.rst7.bz2"])
+    s1 = BSS.IO.readMolecules([f"{url}/ligand38.prm7.bz2", f"{url}/ligand38.rst7.bz2"])
 
     # Extract the molecules.
     m0 = s0.getMolecules()[0]

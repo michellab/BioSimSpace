@@ -28,6 +28,9 @@ try:
 except:
     has_namd = False
 
+# Store the tutorial URL.
+url = BSS.tutorialUrl()
+
 
 @pytest.mark.skipif(has_amber is False, reason="Requires AMBER to be installed.")
 def test_amber():
@@ -36,11 +39,8 @@ def test_amber():
     # Create a short minimisation protocol.
     protocol = BSS.Protocol.Minimisation(steps=100)
 
-    # Glob the input files.
-    files = BSS.IO.glob("test/input/amber/ala/*")
-
     # Load the molecular system.
-    system = BSS.IO.readMolecules(files)
+    system = BSS.IO.readMolecules(["test/input/ala.top", "test/input/ala.crd"])
 
     # Initialise the AMBER process.
     process = BSS.MD.run(system, protocol, name="test")
@@ -59,11 +59,8 @@ def test_gromacs():
     # Create a short minimisation protocol.
     protocol = BSS.Protocol.Minimisation(steps=100)
 
-    # Glob the input files.
-    files = BSS.IO.glob("test/input/gromacs/kigaki/*")
-
     # Load the molecular system.
-    system = BSS.IO.readMolecules(files)
+    system = BSS.IO.readMolecules([f"{url}/kigaki.top.bz2", f"{url}/kigaki.gro.bz2"])
 
     # Initialise the GROMACS process.
     process = BSS.MD.run(system, protocol, name="test")
@@ -82,11 +79,10 @@ def test_namd():
     # Create a short minimisation protocol.
     protocol = BSS.Protocol.Minimisation(steps=100)
 
-    # Glob the input files.
-    files = BSS.IO.glob("test/input/namd/alanin/*")
-
     # Load the molecular system.
-    system = BSS.IO.readMolecules(files)
+    system = BSS.IO.readMolecules(
+        ["test/input/alanin.psf", "test/input/alanin.pdb", "test/input/alanin.params"]
+    )
 
     # Initialise the NAMD process.
     process = BSS.MD.run(system, protocol, name="test")

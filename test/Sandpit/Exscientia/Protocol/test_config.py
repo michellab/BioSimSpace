@@ -8,13 +8,20 @@ from BioSimSpace.Sandpit.Exscientia.Align._decouple import decouple
 # Make sure GROMSCS is installed.
 has_gromacs = BSS._gmx_exe is not None
 
+# Store the tutorial URL.
+url = BSS.tutorialUrl()
+
 
 class TestGromacsRBFE:
     @staticmethod
     @pytest.fixture(scope="class")
     def system():
-        m0 = BSS.IO.readMolecules("test/input/ligands/CAT-13a*").getMolecule(0)
-        m1 = BSS.IO.readMolecules("test/input/ligands/CAT-13c*").getMolecule(0)
+        m0 = BSS.IO.readMolecules(
+            [f"{url}/CAT-13a.prm7.bz2", f"{url}/CAT-13a.rst7.bz2"]
+        ).getMolecule(0)
+        m1 = BSS.IO.readMolecules(
+            [f"{url}/CAT-13c.prm7.bz2", f"{url}/CAT-13c.rst7.bz2"]
+        ).getMolecule(0)
         atom_mapping = BSS.Align.matchAtoms(m0, m1)
         m0 = BSS.Align.rmsdAlign(m0, m1, atom_mapping)
         merged = BSS.Align.merge(m0, m1)

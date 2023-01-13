@@ -10,41 +10,44 @@ except Exception:
 
 import pytest
 
+# Store the tutorial URL.
+url = BSS.tutorialUrl()
 
-@pytest.fixture
-def system(scope="session"):
+
+@pytest.fixture(scope="session")
+def system():
     """A system object with the same topology as the trajectories."""
-    return BSS.IO.readMolecules("test/Sandpit/Exscientia/input/amber/ala/*")
+    return BSS.IO.readMolecules(["test/input/ala.top", "test/input/ala.crd"])
 
 
-@pytest.fixture
-def traj_mdtraj(system, scope="session"):
+@pytest.fixture(scope="session")
+def traj_mdtraj(system):
     """A trajectory object using the MDTraj backend."""
     return BSS.Trajectory.Trajectory(
-        trajectory="test/Sandpit/Exscientia/input/trajectories/ala.trr",
-        topology="test/Sandpit/Exscientia/input/trajectories/ala.gro",
+        trajectory="test/input/ala.trr",
+        topology="test/input/ala.gro",
         system=system,
     )
 
 
-@pytest.fixture
-def traj_mdanalysis(system, scope="session"):
+@pytest.fixture(scope="session")
+def traj_mdanalysis(system):
     """A trajectory object using the MDAnalysis backend."""
     return BSS.Trajectory.Trajectory(
-        trajectory="test/Sandpit/Exscientia/input/trajectories/ala.trr",
-        topology="test/Sandpit/Exscientia/input/trajectories/ala.tpr",
+        trajectory="test/input/ala.trr",
+        topology="test/input/ala.tpr",
         system=system,
     )
 
 
-@pytest.fixture
-def traj_mdanalysis_pdb(system, scope="session"):
+@pytest.fixture(scope="session")
+def traj_mdanalysis_pdb(system):
     """A trajectory object using the MDAnalysis backend."""
     new_system = system.copy()
     new_system._sire_object.setProperty("fileformat", wrap("PDB"))
     return BSS.Trajectory.Trajectory(
-        trajectory="test/Sandpit/Exscientia/input/trajectories/ala.trr",
-        topology="test/Sandpit/Exscientia/input/trajectories/ala.tpr",
+        trajectory="test/input/ala.trr",
+        topology="test/input/ala.tpr",
         system=new_system,
     )
 

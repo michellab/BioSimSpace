@@ -15,7 +15,7 @@ else:
 
 
 @pytest.fixture
-def perturbed_system():
+def perturbed_system(scope="session"):
     mol_smiles = [
         "c1ccccc1",
         "c1ccccc1C",

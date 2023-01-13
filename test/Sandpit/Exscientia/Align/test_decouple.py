@@ -3,12 +3,14 @@ import pytest
 import BioSimSpace.Sandpit.Exscientia as BSS
 from BioSimSpace.Sandpit.Exscientia.Align._decouple import decouple
 
+# Store the tutorial URL.
+url = BSS.tutorialUrl()
 
-@pytest.fixture()
+
+@pytest.fixture(scope="session")
 def mol():
-    # Benzene.
-    mol = BSS.IO.readMolecules("test/input/amber/ala/*").getMolecule(0)
-    return mol
+    # Alanin-dipeptide.
+    return BSS.IO.readMolecules(["test/input/ala.top", "test/input/ala.crd"])[0]
 
 
 def test_sanity(mol):
