@@ -245,6 +245,15 @@ def readPDB(id, pdb4amber=False, work_dir=None, show_warnings=False, property_ma
     if _os.path.isfile(id):
         pdb_file = _os.path.abspath(id)
 
+    # This is a URL.
+    elif id.startswith(("http", "www")):
+        from sire._load import _resolve_path
+
+        try:
+            pdb_file = _resolve_path(id, directory=work_dir)[0]
+        except:
+            raise IOError(f"Unable to download PDB file: '{id}'")
+
     # ID from the Protein Data Bank.
     else:
         if not _has_pypdb:
