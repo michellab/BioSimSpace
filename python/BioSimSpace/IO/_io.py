@@ -386,7 +386,10 @@ def readMolecules(files, show_warnings=False, download_dir=None, property_map={}
 
     # Glob string to catch wildcards and convert to list.
     if isinstance(files, str):
-        files = _glob(files)
+        if not files.startswith(("http", "www")):
+            files = _glob(files)
+        else:
+            files = [files]
 
     # Check that all arguments are of type 'str'.
     if isinstance(files, (list, tuple)):
@@ -430,7 +433,7 @@ def readMolecules(files, show_warnings=False, download_dir=None, property_map={}
 
     # Check that the files exist (if not a URL).
     for file in files:
-        if not "http" in file and not _os.path.isfile(file):
+        if not file.startswith(("http", "www")) and not _os.path.isfile(file):
             raise IOError("Missing input file: '%s'" % file)
 
     # Try to read the files and return a molecular system.
@@ -852,49 +855,63 @@ def readPerturbableSystem(top0, coords0, top1, coords1, property_map={}):
 
     # Check that the coordinate and topology files can be parsed.
 
-    # lamba = 0 coordinates.
-    try:
-        _SireIO.AmberRst7(coords0)
-    except Exception as e:
-        msg = f"Unable to read lambda=0 coordinate file: {coords0}"
-        if _isVerbose():
-            raise IOError(msg) from e
-        else:
-            raise IOError(msg) from None
+    prefixes = ("http", "www")
 
-    # lamba = 1 coordinates.
-    try:
-        _SireIO.AmberRst7(coords1)
-    except Exception as e:
-        msg = f"Unable to read lambda=1 coordinate file: {coords1}"
-        if _isVerbose():
-            raise IOError(msg) from e
-        else:
-            raise IOError(msg) from None
+    # Don't validate URLs.
+    if (
+        not top0.startswith(prefixes)
+        and not coords0.startswith(prefixes)
+        and not top1.startswith(prefixes)
+        and not coords1.startswith(prefixes)
+    ):
 
-    # lamba = 0 topology.
-    try:
-        parser = _SireIO.AmberPrm(top0)
-    except Exception as e:
-        msg = f"Unable to read lambda=0 topology file: {top0}"
-        if _isVerbose():
-            raise IOError(msg) from e
-        else:
-            raise IOError(msg) from None
-    if parser.isEmpty():
-        raise ValueError(f"Unable to read topology file for lamba=0 end state: {top0}")
+        # lamba = 0 coordinates.
+        try:
+            _SireIO.AmberRst7(coords0)
+        except Exception as e:
+            msg = f"Unable to read lambda=0 coordinate file: {coords0}"
+            if _isVerbose():
+                raise IOError(msg) from e
+            else:
+                raise IOError(msg) from None
 
-    # lamba = 1 topology.
-    try:
-        parser = _SireIO.AmberPrm(top1)
-    except Exception as e:
-        msg = f"Unable to read lambda=1 topology file: {top1}"
-        if _isVerbose():
-            raise IOError(msg) from e
-        else:
-            raise IOError(msg) from None
-    if parser.isEmpty():
-        raise ValueError(f"Unable to read topology file for lamba=1 end state: {top1}")
+        # lamba = 1 coordinates.
+        try:
+            _SireIO.AmberRst7(coords1)
+        except Exception as e:
+            msg = f"Unable to read lambda=1 coordinate file: {coords1}"
+            if _isVerbose():
+                raise IOError(msg) from e
+            else:
+                raise IOError(msg) from None
+
+        # lamba = 0 topology.
+        try:
+            parser = _SireIO.AmberPrm(top0)
+        except Exception as e:
+            msg = f"Unable to read lambda=0 topology file: {top0}"
+            if _isVerbose():
+                raise IOError(msg) from e
+            else:
+                raise IOError(msg) from None
+        if parser.isEmpty():
+            raise ValueError(
+                f"Unable to read topology file for lamba=0 end state: {top0}"
+            )
+
+        # lamba = 1 topology.
+        try:
+            parser = _SireIO.AmberPrm(top1)
+        except Exception as e:
+            msg = f"Unable to read lambda=1 topology file: {top1}"
+            if _isVerbose():
+                raise IOError(msg) from e
+            else:
+                raise IOError(msg) from None
+        if parser.isEmpty():
+            raise ValueError(
+                f"Unable to read topology file for lamba=1 end state: {top1}"
+            )
 
     # Try loading the two end states.
     system0 = readMolecules([coords0, top0], property_map=property_map)
