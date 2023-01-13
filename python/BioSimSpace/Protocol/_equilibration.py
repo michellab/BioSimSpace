@@ -479,7 +479,7 @@ class Equilibration(_Protocol):
         Returns
         -------
 
-        force_constant :class:`GeneralUnit <BioSimSpace.Types._GeneralUnit>`
+        force_constant : class:`GeneralUnit <BioSimSpace.Types._GeneralUnit>`
             The force constant for the restraint, in units of
             kcal_per_mol/angstrom**2.
         """

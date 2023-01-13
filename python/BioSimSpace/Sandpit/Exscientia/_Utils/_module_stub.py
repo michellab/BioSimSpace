@@ -71,10 +71,10 @@ def _module_stub(name: str, install_command: str = None):
     Parameters
     ----------
 
-    name: str
+    name : str
         The name of the module being stubbed
 
-    install_command: str (optional)
+    install_command : str (optional)
         The command used to install the module. If
         this is not supplied, then it is assumed
         to be 'conda install {name}'
@@ -82,7 +82,7 @@ def _module_stub(name: str, install_command: str = None):
     Returns
     -------
 
-    module: _ModuleStub
+    module : _ModuleStub
         The stubbed module
     """
     return _ModuleStub(name=name, install_command=install_command)
@@ -97,10 +97,10 @@ def _try_import(name: str, install_command: str = None):
     Parameters
     ----------
 
-    name: str
+    name : str
         The name of the module being stubbed
 
-    install_command: str (optional)
+    install_command : str (optional)
         The command used to install the module. If
         this is not supplied, then it is assumed
         to be 'conda install {name}'
@@ -108,7 +108,7 @@ def _try_import(name: str, install_command: str = None):
     Returns
     -------
 
-    module: _ModuleStub | module
+    module : _ModuleStub | module
         The module if it loaded correctly, else otherwise
         a _ModuleStub for that module
     """

@@ -1871,7 +1871,7 @@ class Amber(_process.Process):
         Parameters
         ----------
 
-        max_time: :class:`Time <BioSimSpace.Types.Time>`, int, float
+        max_time : :class:`Time <BioSimSpace.Types.Time>`, int, float
             The maximum time to wait (in minutes).
         """
 

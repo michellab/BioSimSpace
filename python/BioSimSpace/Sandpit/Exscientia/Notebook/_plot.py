@@ -102,10 +102,10 @@ def plot(
     y : list
         A list of y data values.
 
-    xerr: list
+    xerr : list
         A list of error values for the x data.
 
-    yerr: list
+    yerr : list
         A list of error values for the y data.
 
     xlabel : str

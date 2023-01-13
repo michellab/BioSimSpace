@@ -616,7 +616,7 @@ def _has_ions(molecule, property_map={}):
     has_ions : bool
         Whether the molecule contains ions.
 
-    ions: [str]
+    ions : [str]
         A list of the ions that were found.
     """
 
@@ -753,7 +753,7 @@ def _validate(
         Run 'BioSimSpace.Solvent.waterModels()' to see the supported
         water models. This is ignored if ions are not present.
 
-    check_ions: bool
+    check_ions : bool
         Whether to check for the presence of structural ions. This is only
         required when parameterising with protein force fields.
 

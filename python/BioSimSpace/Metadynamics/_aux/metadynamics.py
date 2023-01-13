@@ -92,27 +92,27 @@ class Metadynamics(object):
 
         Parameters
         ----------
-        system: System
+        system : System
             the System to simulate.  A CustomCVForce implementing the bias is created and
             added to the System.
-        variables: list of BiasVariables
+        variables : list of BiasVariables
             the collective variables to sample
-        temperature: temperature
+        temperature : temperature
             the temperature at which the simulation is being run.  This is used in computing
             the free energy.
-        biasFactor: float
+        biasFactor : float
             used in scaling the height of the Gaussians added to the bias.  The collective
             variables are sampled as if the effective temperature of the simulation were
             temperature*biasFactor.
-        height: energy
+        height : energy
             the initial height of the Gaussians to add
-        frequency: int
+        frequency : int
             the interval in time steps at which Gaussians should be added to the bias potential
-        saveFrequency: int (optional)
+        saveFrequency : int (optional)
             the interval in time steps at which to write out the current biases to disk.  At
             the same time it writes biases, it also checks for updated biases written by other
             processes and loads them in.  This must be a multiple of frequency.
-        biasDir: str (optional)
+        biasDir : str (optional)
             the directory to which biases should be written, and from which biases written by
             other processes should be loaded
         """
@@ -199,9 +199,9 @@ class Metadynamics(object):
 
         Parameters
         ----------
-        simulation: Simulation
+        simulation : Simulation
             the Simulation to advance
-        steps: int
+        steps : int
             the number of time steps to integrate
         """
         stepsToGo = steps
@@ -356,19 +356,19 @@ class BiasVariable(object):
 
         Parameters
         ----------
-        force: Force
+        force : Force
             the Force object whose potential energy defines the collective variable
-        minValue: float or unit.Quantity
+        minValue : float or unit.Quantity
             the minimum value the collective variable can take.  If it should ever go below this,
             the bias force will be set to 0.
-        maxValue: float or unit.Quantity
+        maxValue : float or unit.Quantity
             the maximum value the collective variable can take.  If it should ever go above this,
             the bias force will be set to 0.
-        biasWidth: float or unit.Quantity
+        biasWidth : float or unit.Quantity
             the width (standard deviation) of the Gaussians added to the bias during metadynamics
-        periodic: bool (optional)
+        periodic : bool (optional)
             whether this is a periodic variable, such that minValue and maxValue are physical equivalent
-        gridWidth: int (optional)
+        gridWidth : int (optional)
             the number of grid points to use when tabulating the bias function.  If this is omitted,
             a reasonable value is chosen automatically.
         """

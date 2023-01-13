@@ -139,7 +139,7 @@ class RestraintSearch:
             The working directory for the ABFE restraint generation
             simulation.
 
-        engine: str
+        engine : str
             The molecular dynamics engine used to run the simulation. Available
             options are "AMBER", "GROMACS", or "SOMD". If this argument is omitted
             then BioSimSpace will choose an appropriate engine for you.
@@ -335,15 +335,15 @@ class RestraintSearch:
            Parameters
            ----------
 
-           restraint_type: str
+           restraint_type : str
                The type of restraints to select (currently only Boresch is available).
                Default is 'Boresch'.
 
-           method: str
+           method : str
                The method to use to derive the restraints. Currently only 'MDRestraintsGenerator'
                is supported.
 
-           append_to_ligand_selection: str
+           append_to_ligand_selection : str
                Appends the supplied string to the default atom selection which chooses
                the atoms in the ligand to consider as potential anchor points. The default
                atom selection is f'resname {ligand_resname} and not name H*'. Uses the
@@ -352,13 +352,13 @@ class RestraintSearch:
                name O*'. The f'{ligand_resname}' comes from the residue name of the
                decoupled molecule.
 
-           receptor_selection_str: str
+           receptor_selection_str : str
                The selection string for the atoms in the receptor to consider
                as potential anchor points. The default atom selection is
                'protein and name CA C N'. Uses the mdanalysis atom selection
                language.
 
-           cutoff: BioSimSpace.Types.Length
+           cutoff : BioSimSpace.Types.Length
                The greatest distance between ligand and receptor anchor atoms, in
                Angstrom. Receptor anchors further than cutoff Angstroms from the closest
                ligand anchors will not be included in the search for potential anchor points.
@@ -495,15 +495,15 @@ class RestraintSearch:
            temperature : :class:`System <BioSimSpace.Types.Temperature>`
                The temperature of the system
 
-           restraint_type: str
+           restraint_type : str
                The type of restraints to select (currently only Boresch is available).
                Default is ``Boresch``.
 
-           method: str
+           method : str
                 The method to use to derive the restraints. 'BSS' or 'MDRestraintsGenerator'.
                 BSS uses the native BioSimSpace derivation.
 
-           append_to_ligand_selection: str
+           append_to_ligand_selection : str
                Appends the supplied string to the default atom selection which chooses
                the atoms in the ligand to consider as potential anchor points. The default
                atom selection is f'resname {ligand_resname} and not name H*'. Uses the
@@ -511,13 +511,13 @@ class RestraintSearch:
                in an atom selection of f'resname {ligand_resname} and not name H* and not
                name O*'.
 
-           receptor_selection_str: str
+           receptor_selection_str : str
                The selection string for the atoms in the receptor to consider
                as potential anchor points. The default atom selection is
                'protein and name CA C N'. Uses the mdanalysis atom selection
                language.
 
-           cutoff: BioSimSpace.Types.Length
+           cutoff : BioSimSpace.Types.Length
                The greatest distance between ligand and receptor anchor atoms, in
                Angstrom. Receptor anchors further than cutoff Angstroms from the closest
                ligand anchors will not be included in the search for potential anchor points.
@@ -648,23 +648,23 @@ class RestraintSearch:
         temperature : :class:`System <BioSimSpace.Types.Temperature>`
             The temperature of the system
 
-        ligand_selection_str: str
+        ligand_selection_str : str
             The selection string for the atoms in the ligand to consider
             as potential anchor points.
 
-        receptor_selection_str: str
+        receptor_selection_str : str
             The selection string for the atoms in the receptor to consider
             as potential anchor points. Uses the mdanalysis atom selection
             language.
 
-        method: str
+        method : str
             The method to use to derive the restraints. 'BSS' or 'MDRestraintsGenerator'.
             BSS uses the native BioSimSpace derivation.
 
         work_dir : str
             The working directory for the simulation.
 
-        cutoff: BioSimSpace.Types.Length
+        cutoff : BioSimSpace.Types.Length
             The greatest distance between ligand and receptor anchor atoms, in
             Angstrom. Receptor anchors further than cutoff Angstroms from the closest
             ligand anchors will not be included in the search for potential anchor points.
@@ -733,11 +733,11 @@ class RestraintSearch:
         temperature : :class:`System <BioSimSpace.Types.Temperature>`
             The temperature of the system
 
-        ligand_selection_str: str
+        ligand_selection_str : str
             The selection string for the atoms in the ligand to consider
             as potential anchor points.
 
-        receptor_selection_str: str
+        receptor_selection_str : str
             The selection string for the protein in the ligand to consider
             as potential anchor points.
 
@@ -877,18 +877,18 @@ class RestraintSearch:
         temperature : :class:`System <BioSimSpace.Types.Temperature>`
             The temperature of the system
 
-        ligand_selection_str: str
+        ligand_selection_str : str
             The selection string for the atoms in the ligand to consider
             as potential anchor points.
 
-        receptor_selection_str: str
+        receptor_selection_str : str
             The selection string for the protein in the ligand to consider
             as potential anchor points.
 
         work_dir : str
             The working directory for the simulation.
 
-        cutoff: float
+        cutoff : float
             The greatest distance between ligand and receptor anchor atoms, in
             Angstrom. Receptor anchors further than cutoff Angstroms from the closest
             ligand anchors will not be included in the search for potential anchor points.

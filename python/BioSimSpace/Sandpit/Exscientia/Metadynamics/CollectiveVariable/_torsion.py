@@ -52,7 +52,7 @@ class Torsion(_CollectiveVariable):
         Parameters
         ----------
 
-        atoms :  [int, int, int, int]
+        atoms : [int, int, int, int]
             The indices of the four atoms involved in the torsion.
 
         hill_width : :class:`Angle <BioSimSpace.Types.Angle>`

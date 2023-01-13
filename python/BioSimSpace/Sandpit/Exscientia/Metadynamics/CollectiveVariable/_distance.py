@@ -596,7 +596,7 @@ class Distance(_CollectiveVariable):
         distance is used.
 
         Returns
-        --------
+        -------
 
         component : str
             'x', 'y', or 'z'

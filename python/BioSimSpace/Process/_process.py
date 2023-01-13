@@ -634,7 +634,7 @@ class Process:
         desired end state.
 
         Parameters
-        ---------
+        ----------
 
         system : :class:`System <BioSimSpace._SireWrappers.System>`
             The molecular system.
@@ -836,7 +836,7 @@ class Process:
         Parameters
         ----------
 
-        max_time: :class:`Time <BioSimSpace.Types.Time>`, int, float
+        max_time : :class:`Time <BioSimSpace.Types.Time>`, int, float
             The maximum time to wait (in minutes).
         """
 

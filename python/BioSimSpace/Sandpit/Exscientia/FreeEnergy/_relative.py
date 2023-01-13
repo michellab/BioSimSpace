@@ -139,7 +139,7 @@ class Relative:
             The working directory for the free-energy perturbation
             simulation.
 
-        engine: str
+        engine : str
             The molecular dynamics engine used to run the simulation. Available
             options are "AMBER", "GROMACS", or "SOMD". If this argument is omitted
             then BioSimSpace will choose an appropriate engine for you.
@@ -147,7 +147,7 @@ class Relative:
         gpu_support : bool
             Whether the engine must have GPU support.
 
-        setup_only: bool
+        setup_only : bool
             Whether to only support simulation setup. If True, then no
             simulation processes objects will be created, only the directory
             hierarchy and input files to run a simulation externally. This
@@ -601,7 +601,7 @@ class Relative:
         Parameters
         ----------
 
-        engine: str
+        engine : str
             The molecular dynamics engine used to run the simulation. Available
             options are "AMBER", "GROMACS".
 
