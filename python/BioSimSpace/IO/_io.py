@@ -27,9 +27,11 @@ __email__ = "lester.hedges@gmail.com"
 __all__ = [
     "fileFormats",
     "formatInfo",
+    "readFileCache",
     "readMolecules",
     "readPDB",
     "readPerturbableSystem",
+    "saveFileCache",
     "saveMolecules",
     "savePerturbableSystem",
 ]
@@ -38,8 +40,11 @@ from collections import OrderedDict as _OrderedDict
 from glob import glob as _glob
 from io import StringIO as _StringIO
 
+import hashlib as _hashlib
+import json as _json
 import os as _os
 import shlex as _shlex
+import shutil as _shutil
 import sys as _sys
 import subprocess as _subprocess
 import tempfile as _tempfile
@@ -111,6 +116,13 @@ for index, line in enumerate(format_info):
 
 # Delete the redundant variables.
 del format_info, index, line, format, extensions, description
+
+
+# Initialise a "cache". This maps system UIDs and formats that have previously
+# been written to file. When saving, we can then check to see if a system has
+# previously been written to the specified format and, if the file still exists
+# and is unmodified, then we can simply copy to the new location.
+_file_cache = {}
 
 
 def fileFormats():
@@ -655,6 +667,13 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
 
     # Save the system using each file format.
     for format in formats:
+
+        # Copy an existing file if it exists in the cache.
+        ext = _check_cache(system._sire_object, format, filebase)
+        if ext:
+            files.append(_os.path.abspath(filebase + ext))
+            continue
+
         # Add the file format to the property map.
         _property_map["fileformat"] = _SireBase.wrap(format)
 
@@ -688,16 +707,16 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
             # and save GROMACS files with an extension such that they can be run
             # directly by GROMACS without needing to be renamed.
             if format == "PRM7" or format == "RST7":
-                system = system.copy()
-                system._set_water_topology("AMBER", _property_map)
+                system_copy = system.copy()
+                system_copy._set_water_topology("AMBER", _property_map)
                 file = _SireIO.MoleculeParser.save(
-                    system._sire_object, filebase, _property_map
+                    system_copy._sire_object, filebase, _property_map
                 )
             elif format == "GroTop":
-                system = system.copy()
-                system._set_water_topology("GROMACS")
+                system_copy = system.copy()
+                system_copy._set_water_topology("GROMACS")
                 file = _SireIO.MoleculeParser.save(
-                    system._sire_object, filebase, _property_map
+                    system_copy._sire_object, filebase, _property_map
                 )[0]
                 new_file = file.replace("grotop", "top")
                 _os.rename(file, new_file)
@@ -719,6 +738,9 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
                 )
 
             files += file
+
+            # If this is a new file, then add it to the cache.
+            _update_cache(system._sire_object, format, file[0])
 
         except Exception as e:
             if dirname != "":
@@ -817,6 +839,81 @@ def savePerturbableSystem(filebase, system, property_map={}):
     # Save the coordinate files.
     saveMolecules(filebase + "0", system0, "rst7")
     saveMolecules(filebase + "1", system1, "rst7")
+
+
+def saveFileCache(filebase="file_cache"):
+    """
+    Save the internal file cache. This will dump to a JSON file.
+
+    Parameters
+    ----------
+
+    filebase : str
+        The base name of the output files.
+    """
+
+    # Check that the filebase is a string.
+    if not isinstance(filebase, str):
+        raise TypeError("'filebase' must be of type 'str'")
+
+    # Get the directory name.
+    dirname = _os.path.dirname(filebase)
+
+    # If the user has passed a directory, make sure that is exists.
+    if _os.path.basename(filebase) != filebase:
+        # Create the directory if it doesn't already exist.
+        if not _os.path.isdir(dirname):
+            _os.makedirs(dirname, exist_ok=True)
+
+    # Store the current working directory.
+    dir = _os.getcwd()
+
+    # Change to the working directory for the process.
+    # This avoid problems with relative paths.
+    if dirname != "":
+        _os.chdir(dirname)
+
+    # Helper function to transform cache into a JSON appropriate format.
+    def remap_keys(cache):
+        return [{"key": k, "value": v} for k, v in cache.items()]
+
+    # Dump the remapped cache dictionary.
+    with open(f"{filebase}.json", "w", encoding="utf-8") as f:
+        _json.dump(remap_keys(_file_cache), f, ensure_ascii=False, indent=4)
+
+
+def readFileCache(cache):
+    """
+    Read a dumped file cache into memory.
+
+    Parameters
+    ----------
+
+    cache : str
+        The path to a file cache JSON dump.
+    """
+
+    # Validate input.
+
+    if not isinstance(cache, str):
+        raise TypeError("'cache' must be of type 'str'.")
+
+    if not _os.path.exists(cache):
+        raise IOError(f"Unable to locate file cache: '{cache}'")
+
+    # Try reading the cache.
+    try:
+        with open(cache) as f:
+            data = _json.load(f)
+
+        # Clear the existing cache.
+        _file_cache.clear()
+
+        for item in data:
+            _file_cache[tuple(item["key"])] = tuple(item["value"])
+
+    except:
+        raise IOError(f"Unable to read file cache: '{cache}'")
 
 
 def readPerturbableSystem(top0, coords0, top1, coords1, property_map={}):
@@ -1001,6 +1098,145 @@ def readPerturbableSystem(top0, coords0, top1, coords1, property_map={}):
     system0.updateMolecules(mol)
 
     return system0
+
+
+def _check_cache(system, format, filebase):
+    """
+    Internal helper function to check whether a Sire system has previously
+    been written to the specified format.
+
+    Parameters
+    ----------
+
+    system : sire.legacy.System.System
+        The Sire system.
+
+    format : str
+        The molecular file format.
+
+    filebase : str
+        The file base to copy the file to.
+
+    Returns
+    -------
+
+    extension: str
+        The extension for cached file. False if no file was found.
+    """
+
+    # Validate input.
+
+    if not isinstance(system, _SireSystem.System):
+        raise TypeError("'system' must be of type 'Sire.System.System'")
+
+    if not isinstance(format, str):
+        raise TypeError("'format' must be of type 'str'")
+
+    if not isinstance(filebase, str):
+        raise TypeError("'filebase' must be of type 'str'")
+
+    # Get the existing file path and MD5 hash from the cache.
+    try:
+        (path, original_hash) = _file_cache[(system.uid().toString(), format)]
+    except:
+        print("Cache check failed!")
+        return False
+
+    # Whether the cache entry is still valid.
+    cache_valid = True
+
+    # Make sure the file still exists.
+    if not _os.path.exists(path):
+        cache_valid = False
+    # Make sure the MD5 sum is still the same.
+    else:
+        current_hash = _get_md5_hash(path)
+        if current_hash != original_hash:
+            cache_valid = False
+
+    # If the cache isn't valid, delete the entry and return False.
+    if not cache_valid:
+        del _file_cache[(system._uid().toString(), format)]
+
+    # Copy the old file to the new location.
+    else:
+        # Get the file extension.
+        ext = _os.path.splitext(path)[1]
+
+        # Add the extension to the file base.
+        new_path = filebase + ext
+
+        # Copy the file to the new location.
+        try:
+            _shutil.copyfile(path, new_path)
+        except _shutil.SameFileError:
+            pass
+
+        return ext
+
+
+def _update_cache(system, format, path):
+    """
+    Internal helper function to update the file cache when a new system
+    is written to a specified format.
+
+    Parameters
+    ----------
+
+    system : sire.legacy.System.System
+        The Sire system.
+
+    format : str
+        The molecular file format.
+
+    path : str
+        The path to the file.
+    """
+
+    # Validate input.
+
+    if not isinstance(system, _SireSystem.System):
+        raise TypeError("'system' must be of type 'Sire.System.System'")
+
+    if not isinstance(format, str):
+        raise TypeError("'format' must be of type 'str'")
+
+    if not isinstance(path, str):
+        raise TypeError("'path' must be of type 'str'")
+
+    if not _os.path.exists(path):
+        raise IOError(f"File does not exist: '{path}'")
+
+    # Convert to an absolute path.
+    path = _os.path.abspath(path)
+
+    # Get the MD5 checksum for the file.
+    hash = _get_md5_hash(path)
+
+    # Create the key.
+    key = (system.uid().toString(), format)
+
+    # Update the cache.
+    _file_cache[key] = (path, hash)
+
+
+def _get_md5_hash(path):
+    """
+    Internal helper function to return the MD5 checksum for a file.
+
+    Returns
+    -------
+
+    hash : hashlib.HASH
+    """
+    # Get the MD5 hash of the file. Process in chunks in case the file is too
+    # large to process.
+    hash = _hashlib.md5()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(4096), b""):
+            hash.update(chunk)
+
+    return hash.hexdigest()
 
 
 def _patch_sire_load(path, *args, show_warnings=True, property_map={}, **kwargs):
