@@ -1135,11 +1135,13 @@ def _check_cache(system, format, filebase):
     if not isinstance(filebase, str):
         raise TypeError("'filebase' must be of type 'str'")
 
+    # Create the key.
+    key = (system.uid().toString(), format)
+
     # Get the existing file path and MD5 hash from the cache.
     try:
-        (path, original_hash) = _file_cache[(system.uid().toString(), format)]
+        (path, original_hash) = _file_cache[key]
     except:
-        print("Cache check failed!")
         return False
 
     # Whether the cache entry is still valid.
@@ -1156,7 +1158,9 @@ def _check_cache(system, format, filebase):
 
     # If the cache isn't valid, delete the entry and return False.
     if not cache_valid:
-        del _file_cache[(system._uid().toString(), format)]
+        if key in _file_cache:
+            del _file_cache[key]
+        return False
 
     # Copy the old file to the new location.
     else:
