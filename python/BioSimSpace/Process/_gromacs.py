@@ -163,8 +163,8 @@ class Gromacs(_process.Process):
         self._log_file = "%s/%s.log" % (self._work_dir, name)
 
         # The names of the input files.
-        self._gro_file = "%s/%s.gro" % (self._work_dir, name)
-        self._top_file = "%s/%s.top" % (self._work_dir, name)
+        self._gro_file = "%s/%s" % (self._work_dir, name)
+        self._top_file = "%s/%s" % (self._work_dir, name)
 
         # The name of the trajectory file.
         self._traj_file = "%s/%s.trr" % (self._work_dir, name)
@@ -173,7 +173,7 @@ class Gromacs(_process.Process):
         self._config_file = "%s/%s.mdp" % (self._work_dir, name)
 
         # Create the list of input files.
-        self._input_files = [self._config_file, self._gro_file, self._top_file]
+        self._input_files = [self._config_file]
 
         # Initialise the PLUMED interface object.
         self._plumed = None
@@ -227,12 +227,18 @@ class Gromacs(_process.Process):
         system._set_water_topology("GROMACS")
 
         # GRO87 file.
-        gro = _SireIO.Gro87(system._sire_object, self._property_map)
-        gro.writeToFile(self._gro_file)
+        _IO.saveMolecules(
+            self._gro_file, system, "gro87", property_map=self._property_map
+        )
+        self._gro_file += ".gro"
+        self._input_files.append(self._gro_file)
 
         # TOP file.
-        top = _SireIO.GroTop(system._sire_object, self._property_map)
-        top.writeToFile(self._top_file)
+        _IO.saveMolecules(
+            self._top_file, system, "grotop", property_map=self._property_map
+        )
+        self._top_file += ".top"
+        self._input_files.append(self._gro_file)
 
         # Create the binary input file name.
         self._tpr_file = "%s/%s.tpr" % (self._work_dir, self._name)
