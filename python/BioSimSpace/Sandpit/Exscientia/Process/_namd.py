@@ -46,6 +46,7 @@ from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from .._SireWrappers import System as _System
 from ..Types._type import Type as _Type
 
+from .. import IO as _IO
 from .. import Protocol as _Protocol
 from .. import Trajectory as _Trajectory
 from .. import Units as _Units
@@ -130,7 +131,7 @@ class Namd(_process.Process):
         self._stdout_title = None
 
         # The names of the input files.
-        self._psf_file = "%s/%s.psf" % (self._work_dir, name)
+        self._psf_file = "%s/%s" % (self._work_dir, name)
         self._top_file = "%s/%s.pdb" % (self._work_dir, name)
         self._param_file = "%s/%s.params" % (self._work_dir, name)
         self._velocity_file = None
@@ -145,7 +146,6 @@ class Namd(_process.Process):
         # Create the list of input files.
         self._input_files = [
             self._config_file,
-            self._psf_file,
             self._top_file,
             self._param_file,
         ]
@@ -166,8 +166,11 @@ class Namd(_process.Process):
 
         # PSF and parameter files.
         try:
-            psf = _SireIO.CharmmPSF(self._system._sire_object, self._property_map)
-            psf.writeToFile(self._psf_file)
+            _IO.saveMolecules(
+                self._psf_file, system, "psf", property_map=self._property_map
+            )
+            self._psf_file += ".psf"
+            self._input_files.append(self._psf_file)
         except Exception as e:
             msg = "Failed to write system to 'CHARMMPSF' format."
             if _isVerbose():
@@ -177,7 +180,7 @@ class Namd(_process.Process):
 
         # PDB file.
         try:
-            pdb = _SireIO.PDB2(self._system._sire_object, self._property_map)
+            pdb = _SireIO.PDB2(system._sire_object, self._property_map)
             pdb.writeToFile(self._top_file)
         except Exception as e:
             msg = "Failed to write system to 'PDB' format."
@@ -2053,7 +2056,7 @@ class Namd(_process.Process):
 
     def _createRestrainedSystem(self, system, restraint):
         """
-        Apply atom position restraints.
+        Restrain protein backbone atoms.
 
         Parameters
         ----------
