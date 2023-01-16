@@ -48,6 +48,7 @@ import timeit as _timeit
 import warnings as _warnings
 
 from sire.legacy import Base as _SireBase
+from sire.legacy import IO as _SireIO
 from sire.legacy import Mol as _SireMol
 
 from .. import _amber_home, _isVerbose
