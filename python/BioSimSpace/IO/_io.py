@@ -27,11 +27,9 @@ __email__ = "lester.hedges@gmail.com"
 __all__ = [
     "fileFormats",
     "formatInfo",
-    "readFileCache",
     "readMolecules",
     "readPDB",
     "readPerturbableSystem",
-    "saveFileCache",
     "saveMolecules",
     "savePerturbableSystem",
 ]
@@ -839,81 +837,6 @@ def savePerturbableSystem(filebase, system, property_map={}):
     # Save the coordinate files.
     saveMolecules(filebase + "0", system0, "rst7")
     saveMolecules(filebase + "1", system1, "rst7")
-
-
-def saveFileCache(filebase="file_cache"):
-    """
-    Save the internal file cache. This will dump to a JSON file.
-
-    Parameters
-    ----------
-
-    filebase : str
-        The base name of the output files.
-    """
-
-    # Check that the filebase is a string.
-    if not isinstance(filebase, str):
-        raise TypeError("'filebase' must be of type 'str'")
-
-    # Get the directory name.
-    dirname = _os.path.dirname(filebase)
-
-    # If the user has passed a directory, make sure that is exists.
-    if _os.path.basename(filebase) != filebase:
-        # Create the directory if it doesn't already exist.
-        if not _os.path.isdir(dirname):
-            _os.makedirs(dirname, exist_ok=True)
-
-    # Store the current working directory.
-    dir = _os.getcwd()
-
-    # Change to the working directory for the process.
-    # This avoid problems with relative paths.
-    if dirname != "":
-        _os.chdir(dirname)
-
-    # Helper function to transform cache into a JSON appropriate format.
-    def remap_keys(cache):
-        return [{"key": k, "value": v} for k, v in cache.items()]
-
-    # Dump the remapped cache dictionary.
-    with open(f"{filebase}.json", "w", encoding="utf-8") as f:
-        _json.dump(remap_keys(_file_cache), f, ensure_ascii=False, indent=4)
-
-
-def readFileCache(cache):
-    """
-    Read a dumped file cache into memory.
-
-    Parameters
-    ----------
-
-    cache : str
-        The path to a file cache JSON dump.
-    """
-
-    # Validate input.
-
-    if not isinstance(cache, str):
-        raise TypeError("'cache' must be of type 'str'.")
-
-    if not _os.path.exists(cache):
-        raise IOError(f"Unable to locate file cache: '{cache}'")
-
-    # Try reading the cache.
-    try:
-        with open(cache) as f:
-            data = _json.load(f)
-
-        # Clear the existing cache.
-        _file_cache.clear()
-
-        for item in data:
-            _file_cache[tuple(item["key"])] = tuple(item["value"])
-
-    except:
-        raise IOError(f"Unable to read file cache: '{cache}'")
 
 
 def readPerturbableSystem(top0, coords0, top1, coords1, property_map={}):
