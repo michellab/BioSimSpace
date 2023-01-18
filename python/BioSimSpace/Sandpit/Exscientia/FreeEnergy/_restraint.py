@@ -343,7 +343,7 @@ class Restraint:
         """Give the free energy of removing the restraint."""
         if self._restraint_type == "boresch":
             K = (
-                _k_boltz.value() * (_kcal_per_mol / _kelvin) / (_kj_per_mol / _kelvin)
+                _k_boltz.value() * (_kcal_per_mol / _kj_per_mol)
             )  # Gas constant in kJ/mol/K
             V = (
                 (_meter3 / 1000 / _mole) / _nanometer3
