@@ -44,3 +44,18 @@ def test_file_cache():
 
     # The directory should now contain 5 files.
     assert len(glob.glob(f"{tmp_path}/*")) == 5
+
+    # Now "corrupt" a file on disk so that its MD5 checksum is no longer
+    # valid.
+    with open(f"{tmp_path}/tmp2.pdb", "w") as f:
+        pass
+
+    # Write back to PDB and Gro87 format. The PDB file is now invalid, so
+    # a new one will be written and added to the cache.
+    BSS.IO.saveMolecules(f"{tmp_path}/tmp4", s, ["pdb", "gro87"])
+
+    # Check that the file cache still has three entries.
+    assert len(BSS.IO._io._file_cache) == 4
+
+    # The directory should now contain 7 files.
+    assert len(glob.glob(f"{tmp_path}/*")) == 7
