@@ -1043,7 +1043,7 @@ def _check_cache(system, format, filebase):
     Returns
     -------
 
-    extension: str
+    extension : str
         The extension for cached file. False if no file was found.
     """
 

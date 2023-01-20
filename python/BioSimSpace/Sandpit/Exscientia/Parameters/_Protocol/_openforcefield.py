@@ -130,7 +130,8 @@ class OpenForceField(_protocol.Protocol):
         self._pdb2gmx = False
 
     def run(self, molecule, work_dir=None, queue=None):
-        """Run the parameterisation protocol.
+        """
+        Run the parameterisation protocol.
 
         Parameters
         ----------
