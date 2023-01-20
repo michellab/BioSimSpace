@@ -12,6 +12,9 @@ def test_file_cache():
     the same system to the same file format.
     """
 
+    # Clear the file cache.
+    BSS.IO._io._file_cache = {}
+
     # Load the molecular system.
     s = BSS.IO.readMolecules(["test/input/ala.crd", "test/input/ala.top"])
 
