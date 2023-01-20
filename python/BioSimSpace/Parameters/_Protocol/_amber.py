@@ -1173,16 +1173,16 @@ def _find_force_field(forcefield):
     is_old = False
 
     # Search for a compatible force field file.
-    ff = _glob("%s/*.%s" % (_cmd_dir, forcefield))
+    ff = _glob.glob("%s/*.%s" % (_cmd_dir, forcefield))
 
     # Search the old force fields. First try a specific match.
     if len(ff) == 0:
-        ff = _glob("%s/oldff/leaprc.%s" % (_cmd_dir, forcefield))
+        ff = _glob.glob("%s/oldff/leaprc.%s" % (_cmd_dir, forcefield))
         is_old = True
 
         # No matches, try globbing all files with matching extension.
         if len(ff) == 0:
-            ff = _glob("%s/oldff/*.%s" % (_cmd_dir, forcefield))
+            ff = _glob.glob("%s/oldff/*.%s" % (_cmd_dir, forcefield))
 
     # No force field found!
     if len(ff) == 0:
