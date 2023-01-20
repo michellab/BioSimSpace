@@ -1059,7 +1059,7 @@ def _check_cache(system, format, filebase):
         raise TypeError("'filebase' must be of type 'str'")
 
     # Create the key.
-    key = (system.uid().toString(), format)
+    key = (system.uid().toString(), str(system.version()), format)
 
     # Get the existing file path and MD5 hash from the cache.
     try:
@@ -1141,7 +1141,7 @@ def _update_cache(system, format, path):
     hash = _get_md5_hash(path)
 
     # Create the key.
-    key = (system.uid().toString(), format)
+    key = (system.uid().toString(), str(system.version()), format)
 
     # Update the cache.
     _file_cache[key] = (path, hash)
