@@ -1600,8 +1600,6 @@ def viewMapping(
         width = int(pixels / 2)
         height = pixels
 
-    print(height, width, viewergrid)
-
     # Create the view.
     view = _py3Dmol.view(
         linked=False, width=width, height=height, viewergrid=viewergrid
