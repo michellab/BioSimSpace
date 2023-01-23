@@ -1593,12 +1593,14 @@ def viewMapping(
         viewergrid = (1, 2)
         viewer1 = (0, 1)
         width = pixels
-        height = pixels / 2
+        height = int(pixels / 2)
     else:
         viewergrid = (2, 1)
         viewer1 = (1, 0)
-        width = pixels / 2
+        width = int(pixels / 2)
         height = pixels
+
+    print(height, width, viewergrid)
 
     # Create the view.
     view = _py3Dmol.view(
