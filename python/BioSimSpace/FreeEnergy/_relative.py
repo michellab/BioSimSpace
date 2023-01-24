@@ -487,9 +487,10 @@ class Relative:
             raise ValueError("'work_dir' doesn't exist!")
 
         # Create the command.
-        command = "%s bar -f %s/lambda_*/*.xvg -o %s/bar.xvg" % (
+        xvg_files = _glob(f"{work_dir}/lambda_*/*.xvg")
+        command = "%s bar -f %s -o %s/bar.xvg" % (
             _gmx_exe,
-            work_dir,
+            " ".join(xvg_files),
             work_dir,
         )
 
