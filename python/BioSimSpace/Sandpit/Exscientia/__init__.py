@@ -197,6 +197,7 @@ if _gmx_exe is not None:
     )
 
     del _command
+    del command_split
 
     # Get the data prefix.
     if _proc.returncode == 0:
