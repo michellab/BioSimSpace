@@ -364,22 +364,32 @@ class Amber(_process.Process):
 
             self.addToConfig("Minimisation")
             self.addToConfig(" &cntrl")
-            self.addToConfig("  imin=1,")  # Minimisation simulation.
-            self.addToConfig("  ntx=1,")  # Only read coordinates from file.
-            self.addToConfig("  ntxo=1,")  # Output coordinates in ASCII.
-            self.addToConfig("  ntpr=100,")  # Output energies every 100 steps.
-            self.addToConfig("  irest=0,")  # Don't restart.
-            self.addToConfig("  maxcyc=%d," % num_steps)  # Set the number of steps.
+            # Minimisation simulation.
+            self.addToConfig("  imin=1,")
+            # Only read coordinates from file.
+            self.addToConfig("  ntx=1,")
+            # Output coordinates in ASCII.
+            self.addToConfig("  ntxo=1,")
+            # Output energies every 100 steps.
+            self.addToConfig("  ntpr=100,")
+            # Don't restart.
+            self.addToConfig("  irest=0,")
+            # Set the number of steps.
+            self.addToConfig("  maxcyc=%d," % num_steps)
             self.addToConfig(
                 "  ncyc=%d," % num_steep
             )  # Set the number of steepest descent steps.
             if not has_box or not self._has_water:
-                self.addToConfig("  ntb=0,")  # No periodic box.
-                self.addToConfig("  cut=999.,")  # Non-bonded cut-off.
+                # No periodic box.
+                self.addToConfig("  ntb=0,")
+                # Non-bonded cut-off.
+                self.addToConfig("  cut=999.,")
                 if is_pmemd:
-                    self.addToConfig("  igb=6,")  # Use vacuum generalised Born model.
+                    # Use vacuum generalised Born model.
+                    self.addToConfig("  igb=6,")
             else:
-                self.addToConfig("  cut=8.0,")  # Non-bonded cut-off.
+                # Non-bonded cut-off.
+                self.addToConfig("  cut=8.0,")
             self.addToConfig(" /")
 
         # Add configuration variables for an equilibration simulation.
@@ -411,43 +421,53 @@ class Amber(_process.Process):
 
             self.addToConfig("Equilibration.")
             self.addToConfig(" &cntrl")
-            self.addToConfig("  ig=%d," % seed)  # Random number seed.
-            self.addToConfig("  ntx=1,")  # Only read coordinates from file.
-            self.addToConfig("  ntxo=1,")  # Output coordinates in ASCII.
-            self.addToConfig(
-                "  ntpr=%d," % report_interval
-            )  # Interval between reporting energies.
-            self.addToConfig(
-                "  ntwr=%d," % restart_interval
-            )  # Interval between saving restart files.
-            self.addToConfig(
-                "  ntwx=%d," % restart_interval
-            )  # Trajectory sampling frequency.
-            self.addToConfig("  irest=0,")  # Don't restart.
-            self.addToConfig("  dt=%.3f," % timestep)  # Time step.
-            self.addToConfig("  nstlim=%d," % steps)  # Number of integration steps.
-            self.addToConfig("  ntc=2,")  # Enable SHAKE.
-            self.addToConfig(
-                "  ntf=2,"
-            )  # Don't calculate forces for constrained bonds.
-            self.addToConfig("  ntt=3,")  # Langevin dynamics.
-            self.addToConfig("  gamma_ln=2,")  # Collision frequency (ps).
+            # Random number seed.
+            self.addToConfig("  ig=%d," % seed)
+            # Only read coordinates from file.
+            self.addToConfig("  ntx=1,")
+            # Output coordinates in ASCII.
+            self.addToConfig("  ntxo=1,")
+            # Interval between reporting energies.
+            self.addToConfig("  ntpr=%d," % report_interval)
+            # Interval between saving restart files.
+            self.addToConfig("  ntwr=%d," % restart_interval)
+            # Trajectory sampling frequency.
+            self.addToConfig("  ntwx=%d," % restart_interval)
+            # Don't restart.
+            self.addToConfig("  irest=0,")
+            # Time step.
+            self.addToConfig("  dt=%.3f," % timestep)
+            # Number of integration steps.
+            self.addToConfig("  nstlim=%d," % steps)
+            # Enable SHAKE.
+            self.addToConfig("  ntc=2,")
+            # Don't calculate forces for constrained bonds.
+            self.addToConfig("  ntf=2,")
+            # Langevin dynamics.
+            self.addToConfig("  ntt=3,")
+            # Collision frequency (ps).
+            self.addToConfig("  gamma_ln=2,")
             if not has_box or not self._has_water:
-                self.addToConfig("  ntb=0,")  # No periodic box.
-                self.addToConfig("  cut=999.,")  # Non-bonded cut-off.
+                # No periodic box.
+                self.addToConfig("  ntb=0,")
+                # Non-bonded cut-off.
+                self.addToConfig("  cut=999.,")
                 if is_pmemd:
-                    self.addToConfig("  igb=6,")  # Use vacuum generalised Born model.
+                    # Use vacuum generalised Born model.
+                    self.addToConfig("  igb=6,")
             else:
-                self.addToConfig("  cut=8.0,")  # Non-bonded cut-off.
+                # Non-bonded cut-off.
+                self.addToConfig("  cut=8.0,")
 
             # Constant pressure control.
             if self._protocol.getPressure() is not None:
                 # Don't use barostat for vacuum simulations.
                 if has_box and self._has_water:
-                    self.addToConfig("  ntp=1,")  # Isotropic pressure scaling.
+                    # Isotropic pressure scaling.
+                    self.addToConfig("  ntp=1,")
+                    # Pressure in bar.
                     self.addToConfig(
-                        "  pres0=%.5f,"  # Pressure in bar.
-                        % self._protocol.getPressure().bar().value()
+                        "  pres0=%.5f," % self._protocol.getPressure().bar().value()
                     )
                 else:
                     _warnings.warn(
@@ -557,58 +577,70 @@ class Amber(_process.Process):
 
             self.addToConfig("Production.")
             self.addToConfig(" &cntrl")
-            self.addToConfig("  ig=%d," % seed)  # Random number seed.
+            # Random number seed.
+            self.addToConfig("  ig=%d," % seed)
             if self._protocol.isRestart():
-                self.addToConfig("  ntx=5,")  # Read coordinates and velocities.
+                # Read coordinates and velocities.
+                self.addToConfig("  ntx=5,")
             else:
-                self.addToConfig("  ntx=1,")  # Only read coordinates.
-            self.addToConfig("  ntxo=1,")  # Output coordinates in ASCII.
-            self.addToConfig(
-                "  ntpr=%d," % report_interval
-            )  # Interval between reporting energies.
-            self.addToConfig(
-                "  ntwr=%d," % restart_interval
-            )  # Interval between saving restart files.
-            self.addToConfig(
-                "  ntwx=%d," % restart_interval
-            )  # Trajectory sampling frequency.
+                # Only read coordinates.
+                self.addToConfig("  ntx=1,")
+            # Output coordinates in ASCII.
+            self.addToConfig("  ntxo=1,")
+            # Interval between reporting energies.
+            self.addToConfig("  ntpr=%d," % report_interval)
+            # Interval between saving restart files.
+            self.addToConfig("  ntwr=%d," % restart_interval)
+            # Trajectory sampling frequency.
+            self.addToConfig("  ntwx=%d," % restart_interval)
             if self._protocol.isRestart():
-                self.addToConfig("  irest=1,")  # Restart using previous velocities.
+                # Restart using previous velocities.
+                self.addToConfig("  irest=1,")
             else:
-                self.addToConfig("  irest=0,")  # Don't restart.
-            self.addToConfig("  dt=%.3f," % timestep)  # Time step.
-            self.addToConfig("  nstlim=%d," % steps)  # Number of integration steps.
-            self.addToConfig("  ntc=2,")  # Enable SHAKE.
-            self.addToConfig(
-                "  ntf=2,"
-            )  # Don't calculate forces for constrained bonds.
-            self.addToConfig("  ntt=3,")  # Langevin dynamics.
-            self.addToConfig("  gamma_ln=2,")  # Collision frequency (ps).
+                # Don't restart.
+                self.addToConfig("  irest=0,")
+            # Time step.
+            self.addToConfig("  dt=%.3f," % timestep)
+            # Number of integration steps.
+            self.addToConfig("  nstlim=%d," % steps)
+            # Enable SHAKE.
+            self.addToConfig("  ntc=2,")
+            # Don't calculate forces for constrained bonds.
+            self.addToConfig("  ntf=2,")
+            # Langevin dynamics.
+            self.addToConfig("  ntt=3,")
+            # Collision frequency (ps).
+            self.addToConfig("  gamma_ln=2,")
             if not has_box or not self._has_water:
-                self.addToConfig("  ntb=0,")  # No periodic box.
-                self.addToConfig("  cut=999.,")  # Non-bonded cut-off.
+                # No periodic box.
+                self.addToConfig("  ntb=0,")
+                # Non-bonded cut-off.
+                self.addToConfig("  cut=999.,")
                 if is_pmemd:
-                    self.addToConfig("  igb=6,")  # Use vacuum generalised Born model.
+                    # Use vacuum generalised Born model.
+                    self.addToConfig("  igb=6,")
             else:
-                self.addToConfig("  cut=8.0,")  # Non-bonded cut-off.
+                # Non-bonded cut-off.
+                self.addToConfig("  cut=8.0,")
             if not self._protocol.isRestart():
+                # Initial temperature.
                 self.addToConfig(
-                    "  tempi=%.2f,"  # Initial temperature.
-                    % self._protocol.getTemperature().kelvin().value()
+                    "  tempi=%.2f," % self._protocol.getTemperature().kelvin().value()
                 )
+            # Target temperature.
             self.addToConfig(
-                "  temp0=%.2f,"  # Target temperature.
-                % self._protocol.getTemperature().kelvin().value()
+                "  temp0=%.2f," % self._protocol.getTemperature().kelvin().value()
             )
 
             # Constant pressure control.
             if self._protocol.getPressure() is not None:
                 # Don't use barostat for vacuum simulations.
                 if has_box and self._has_water:
-                    self.addToConfig("  ntp=1,")  # Isotropic pressure scaling.
+                    # Isotropic pressure scaling.
+                    self.addToConfig("  ntp=1,")
+                    # Pressure in bar.
                     self.addToConfig(
-                        "  pres0=%.5f,"  # Pressure in bar.
-                        % self._protocol.getPressure().bar().value()
+                        "  pres0=%.5f," % self._protocol.getPressure().bar().value()
                     )
                 else:
                     _warnings.warn(
@@ -646,51 +678,61 @@ class Amber(_process.Process):
 
             self.addToConfig("Production.")
             self.addToConfig(" &cntrl")
-            self.addToConfig("  ig=%d," % seed)  # Random number seed.
-            self.addToConfig("  ntx=1,")  # Only read coordinates.
-            self.addToConfig("  ntxo=1,")  # Output coordinates in ASCII.
-            self.addToConfig(
-                "  ntpr=%d," % report_interval
-            )  # Interval between reporting energies.
-            self.addToConfig(
-                "  ntwr=%d," % restart_interval
-            )  # Interval between saving restart files.
-            self.addToConfig(
-                "  ntwx=%d," % restart_interval
-            )  # Trajectory sampling frequency.
-            self.addToConfig("  irest=0,")  # Don't restart.
-            self.addToConfig("  dt=%.3f," % timestep)  # Time step.
-            self.addToConfig("  nstlim=%d," % steps)  # Number of integration steps.
-            self.addToConfig("  ntc=2,")  # Enable SHAKE.
-            self.addToConfig(
-                "  ntf=2,"
-            )  # Don't calculate forces for constrained bonds.
-            self.addToConfig("  ntt=3,")  # Langevin dynamics.
-            self.addToConfig("  gamma_ln=2,")  # Collision frequency (ps).
+            # Random number seed.
+            self.addToConfig("  ig=%d," % seed)
+            # Only read coordinates.
+            self.addToConfig("  ntx=1,")
+            # Output coordinates in ASCII.
+            self.addToConfig("  ntxo=1,")
+            # Interval between reporting energies.
+            self.addToConfig("  ntpr=%d," % report_interval)
+            # Interval between saving restart files.
+            self.addToConfig("  ntwr=%d," % restart_interval)
+            # Trajectory sampling frequency.
+            self.addToConfig("  ntwx=%d," % restart_interval)
+            # Don't restart.
+            self.addToConfig("  irest=0,")
+            # Time step.
+            self.addToConfig("  dt=%.3f," % timestep)
+            # Number of integration steps.
+            self.addToConfig("  nstlim=%d," % steps)
+            # Enable SHAKE.
+            self.addToConfig("  ntc=2,")
+            # Don't calculate forces for constrained bonds.
+            self.addToConfig("  ntf=2,")
+            # Langevin dynamics.
+            self.addToConfig("  ntt=3,")
+            # Collision frequency (ps).
+            self.addToConfig("  gamma_ln=2,")
             if not has_box or not self._has_water:
-                self.addToConfig("  ntb=0,")  # No periodic box.
-                self.addToConfig("  cut=999.,")  # Non-bonded cut-off.
+                # No periodic box.
+                self.addToConfig("  ntb=0,")
+                # Non-bonded cut-off.
+                self.addToConfig("  cut=999.,")
                 if is_pmemd:
-                    self.addToConfig("  igb=6,")  # Use vacuum generalised Born model.
+                    # Use vacuum generalised Born model.
+                    self.addToConfig("  igb=6,")
             else:
-                self.addToConfig("  cut=8.0,")  # Non-bonded cut-off.
+                # Non-bonded cut-off.
+                self.addToConfig("  cut=8.0,")
+            # Initial temperature.
             self.addToConfig(
-                "  tempi=%.2f,"  # Initial temperature.
-                % self._protocol.getTemperature().kelvin().value()
+                "  tempi=%.2f," % self._protocol.getTemperature().kelvin().value()
             )
+            # Target temperature.
             self.addToConfig(
-                "  temp0=%.2f,"  # Target temperature.
-                % self._protocol.getTemperature().kelvin().value()
+                "  temp0=%.2f," % self._protocol.getTemperature().kelvin().value()
             )
 
             # Constant pressure control.
             if self._protocol.getPressure() is not None:
                 # Don't use barostat for vacuum simulations.
                 if has_box and self._has_water:
-                    self.addToConfig("  ntp=1,")  # Isotropic pressure scaling.
+                    # Isotropic pressure scaling.
+                    self.addToConfig("  ntp=1,")
+                    # Pressure in bar.
                     self.addToConfig(
-                        "  pres0=%.5f,"  # Pressure in bar.
-                        % self._protocol.getPressure().bar().value()
+                        "  pres0=%.5f," % self._protocol.getPressure().bar().value()
                     )
                 else:
                     _warnings.warn(
@@ -753,51 +795,61 @@ class Amber(_process.Process):
 
             self.addToConfig("Production.")
             self.addToConfig(" &cntrl")
-            self.addToConfig("  ig=%d," % seed)  # Random number seed.
-            self.addToConfig("  ntx=1,")  # Only read coordinates.
-            self.addToConfig("  ntxo=1,")  # Output coordinates in ASCII.
-            self.addToConfig(
-                "  ntpr=%d," % report_interval
-            )  # Interval between reporting energies.
-            self.addToConfig(
-                "  ntwr=%d," % restart_interval
-            )  # Interval between saving restart files.
-            self.addToConfig(
-                "  ntwx=%d," % restart_interval
-            )  # Trajectory sampling frequency.
-            self.addToConfig("  irest=0,")  # Don't restart.
-            self.addToConfig("  dt=%.3f," % timestep)  # Time step.
-            self.addToConfig("  nstlim=%d," % steps)  # Number of integration steps.
-            self.addToConfig("  ntc=2,")  # Enable SHAKE.
-            self.addToConfig(
-                "  ntf=2,"
-            )  # Don't calculate forces for constrained bonds.
-            self.addToConfig("  ntt=3,")  # Langevin dynamics.
-            self.addToConfig("  gamma_ln=2,")  # Collision frequency (ps).
+            # Random number seed.
+            self.addToConfig("  ig=%d," % seed)
+            # Only read coordinates.
+            self.addToConfig("  ntx=1,")
+            # Output coordinates in ASCII.
+            self.addToConfig("  ntxo=1,")
+            # Interval between reporting energies.
+            self.addToConfig("  ntpr=%d," % report_interval)
+            # Interval between saving restart files.
+            self.addToConfig("  ntwr=%d," % restart_interval)
+            # Trajectory sampling frequency.
+            self.addToConfig("  ntwx=%d," % restart_interval)
+            # Don't restart.
+            self.addToConfig("  irest=0,")
+            # Time step.
+            self.addToConfig("  dt=%.3f," % timestep)
+            # Number of integration steps.
+            self.addToConfig("  nstlim=%d," % steps)
+            # Enable SHAKE.
+            self.addToConfig("  ntc=2,")
+            # Don't calculate forces for constrained bonds.
+            self.addToConfig("  ntf=2,")
+            # Langevin dynamics.
+            self.addToConfig("  ntt=3,")
+            # Collision frequency (ps).
+            self.addToConfig("  gamma_ln=2,")
             if not has_box or not self._has_water:
-                self.addToConfig("  ntb=0,")  # No periodic box.
-                self.addToConfig("  cut=999.,")  # Non-bonded cut-off.
+                # No periodic box.
+                self.addToConfig("  ntb=0,")
+                # Non-bonded cut-off.
+                self.addToConfig("  cut=999.,")
                 if is_pmemd:
-                    self.addToConfig("  igb=6,")  # Use vacuum generalised Born model.
+                    # Use vacuum generalised Born model.
+                    self.addToConfig("  igb=6,")
             else:
-                self.addToConfig("  cut=8.0,")  # Non-bonded cut-off.
+                # Non-bonded cut-off.
+                self.addToConfig("  cut=8.0,")
+            # Initial temperature.
             self.addToConfig(
-                "  tempi=%.2f,"  # Initial temperature.
-                % self._protocol.getTemperature().kelvin().value()
+                "  tempi=%.2f," % self._protocol.getTemperature().kelvin().value()
             )
+            # Target temperature.
             self.addToConfig(
-                "  temp0=%.2f,"  # Target temperature.
-                % self._protocol.getTemperature().kelvin().value()
+                "  temp0=%.2f," % self._protocol.getTemperature().kelvin().value()
             )
 
             # Constant pressure control.
             if self._protocol.getPressure() is not None:
                 # Don't use barostat for vacuum simulations.
                 if has_box and self._has_water:
-                    self.addToConfig("  ntp=1,")  # Isotropic pressure scaling.
+                    # Isotropic pressure scaling.
+                    self.addToConfig("  ntp=1,")
+                    # Pressure in bar.
                     self.addToConfig(
-                        "  pres0=%.5f,"  # Pressure in bar.
-                        % self._protocol.getPressure().bar().value()
+                        "  pres0=%.5f," % self._protocol.getPressure().bar().value()
                     )
                 else:
                     _warnings.warn(
