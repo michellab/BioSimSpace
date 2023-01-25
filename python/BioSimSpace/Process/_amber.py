@@ -39,7 +39,6 @@ else:
     _PatternMatchingEventHandler = _watchdog
     _Observer = _watchdog
 
-import math as _math
 import os as _os
 import re as _re
 import time as _time
@@ -52,6 +51,7 @@ from sire.legacy import IO as _SireIO
 from sire.legacy import Mol as _SireMol
 
 from .. import _amber_home, _isVerbose
+from .._Config import Amber as _AmberConfig
 from .._Exceptions import IncompatibleError as _IncompatibleError
 from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from .._SireWrappers import System as _System
@@ -173,6 +173,8 @@ class Amber(_process.Process):
         name="amber",
         work_dir=None,
         seed=None,
+        extra_options={},
+        extra_lines=[],
         property_map={},
     ):
         """
@@ -199,6 +201,13 @@ class Amber(_process.Process):
         seed : int
             A random number seed.
 
+        extra_options : dict
+            A dictionary containing extra options. Overrides the defaults generated
+            by the protocol.
+
+        extra_lines : [str]
+            A list of extra lines to put at the end of the configuration file.
+
         property_map : dict
             A dictionary that maps system "properties" to their user defined
             values. This allows the user to refer to properties with their
@@ -206,7 +215,22 @@ class Amber(_process.Process):
         """
 
         # Call the base class constructor.
-        super().__init__(system, protocol, name, work_dir, seed, property_map)
+        super().__init__(
+            system,
+            protocol,
+            name=name,
+            work_dir=work_dir,
+            seed=seed,
+            extra_options=extra_options,
+            extra_lines=extra_lines,
+            property_map=property_map,
+        )
+
+        # Catch unsupported protocols.
+        if isinstance(protocol, _Protocol.FreeEnergy):
+            raise _IncompatibleError(
+                "Unsupported protocol: '%s'" % self._protocol.__class__.__name__
+            )
 
         # Set the package name.
         self._package_name = "AMBER"
@@ -325,425 +349,26 @@ class Amber(_process.Process):
     def _generate_config(self):
         """Generate AMBER configuration file strings."""
 
-        # Clear the existing configuration list.
-        self._config = []
-
-        prop = self._property_map.get("space", "space")
-
-        # Check whether the system contains periodic box information.
-        # For now, we'll not attempt to generate a box if the system property
-        # is missing. If no box is present, we'll assume a non-periodic simulation.
-        if prop in self._system._sire_object.propertyKeys():
-            has_box = True
-        else:
-            _warnings.warn("No simulation box found. Assuming gas phase simulation.")
-            has_box = False
-
         # Work out whether we're generating a config for PMEMD.
         if "pmemd" in self._exe.lower():
             is_pmemd = True
         else:
             is_pmemd = False
 
-        # While the configuration parameters below share a lot of overlap,
-        # we choose the keep them separate so that the user can modify options
-        # for a given protocol in a single place.
+        # Flag that this isn't a custom protocol.
+        if not self._extra_options and not self._extra_lines:
+            self._protocol._setCustomised(False)
 
-        # Add configuration variables for a minimisation simulation.
-        if isinstance(self._protocol, _Protocol.Minimisation):
-
-            # Work out the number of steepest descent cycles.
-            # This is 1000 or 10% of the number of steps, whichever is larger.
-            num_steps = self._protocol.getSteps()
-            if num_steps <= 1000:
-                num_steep = num_steps
-            else:
-                num_steep = _math.ceil(num_steps / 10)
-                if num_steep < 1000:
-                    num_steep = 1000
-
-            self.addToConfig("Minimisation")
-            self.addToConfig(" &cntrl")
-            # Minimisation simulation.
-            self.addToConfig("  imin=1,")
-            # Only read coordinates from file.
-            self.addToConfig("  ntx=1,")
-            # Output coordinates in ASCII.
-            self.addToConfig("  ntxo=1,")
-            # Output energies every 100 steps.
-            self.addToConfig("  ntpr=100,")
-            # Don't restart.
-            self.addToConfig("  irest=0,")
-            # Set the number of steps.
-            self.addToConfig("  maxcyc=%d," % num_steps)
-            self.addToConfig(
-                "  ncyc=%d," % num_steep
-            )  # Set the number of steepest descent steps.
-            if not has_box or not self._has_water:
-                # No periodic box.
-                self.addToConfig("  ntb=0,")
-                # Non-bonded cut-off.
-                self.addToConfig("  cut=999.,")
-                if is_pmemd:
-                    # Use vacuum generalised Born model.
-                    self.addToConfig("  igb=6,")
-            else:
-                # Non-bonded cut-off.
-                self.addToConfig("  cut=8.0,")
-            self.addToConfig(" /")
-
-        # Add configuration variables for an equilibration simulation.
-        elif isinstance(self._protocol, _Protocol.Equilibration):
-
-            # Work out the number of integration steps.
-            steps = _math.ceil(
-                self._protocol.getRunTime() / self._protocol.getTimeStep()
-            )
-
-            # Get the report and restart intervals.
-            report_interval = self._protocol.getReportInterval()
-            restart_interval = self._protocol.getRestartInterval()
-
-            # Cap the intervals at the total number of steps.
-            if report_interval > steps:
-                report_interval = steps
-            if restart_interval > steps:
-                restart_interval = steps
-
-            # Set the random number seed.
-            if self._is_seeded:
-                seed = self._seed
-            else:
-                seed = -1
-
-            # Convert the timestep to picoseconds.
-            timestep = self._protocol.getTimeStep().picoseconds().value()
-
-            self.addToConfig("Equilibration.")
-            self.addToConfig(" &cntrl")
-            # Random number seed.
-            self.addToConfig("  ig=%d," % seed)
-            # Only read coordinates from file.
-            self.addToConfig("  ntx=1,")
-            # Output coordinates in ASCII.
-            self.addToConfig("  ntxo=1,")
-            # Interval between reporting energies.
-            self.addToConfig("  ntpr=%d," % report_interval)
-            # Interval between saving restart files.
-            self.addToConfig("  ntwr=%d," % restart_interval)
-            # Trajectory sampling frequency.
-            self.addToConfig("  ntwx=%d," % restart_interval)
-            # Don't restart.
-            self.addToConfig("  irest=0,")
-            # Time step.
-            self.addToConfig("  dt=%.3f," % timestep)
-            # Number of integration steps.
-            self.addToConfig("  nstlim=%d," % steps)
-            # Enable SHAKE.
-            self.addToConfig("  ntc=2,")
-            # Don't calculate forces for constrained bonds.
-            self.addToConfig("  ntf=2,")
-            # Langevin dynamics.
-            self.addToConfig("  ntt=3,")
-            # Collision frequency (ps).
-            self.addToConfig("  gamma_ln=2,")
-            if not has_box or not self._has_water:
-                # No periodic box.
-                self.addToConfig("  ntb=0,")
-                # Non-bonded cut-off.
-                self.addToConfig("  cut=999.,")
-                if is_pmemd:
-                    # Use vacuum generalised Born model.
-                    self.addToConfig("  igb=6,")
-            else:
-                # Non-bonded cut-off.
-                self.addToConfig("  cut=8.0,")
-
-            # Constant pressure control.
-            if self._protocol.getPressure() is not None:
-                # Don't use barostat for vacuum simulations.
-                if has_box and self._has_water:
-                    # Isotropic pressure scaling.
-                    self.addToConfig("  ntp=1,")
-                    # Pressure in bar.
-                    self.addToConfig(
-                        "  pres0=%.5f," % self._protocol.getPressure().bar().value()
-                    )
-                else:
-                    _warnings.warn(
-                        "Cannot use a barostat for a vacuum or non-periodic simulation"
-                    )
-
-            # Restrain the backbone.
-            restraint = self._protocol.getRestraint()
-            if restraint is not None:
-                # Get the indices of the atoms that are restrained.
-                if isinstance(restraint, str):
-                    atom_idxs = self._system.getRestraintAtoms(restraint)
-                else:
-                    atom_idxs = restraint
-
-                # Don't add restraints if there are no atoms to restrain.
-                if len(atom_idxs) > 0:
-                    # Generate the restraint mask based on atom indices.
-                    restraint_mask = self._create_restraint_mask(atom_idxs)
-
-                    # The restraintmask cannot be more than 256 characters.
-                    if len(restraint_mask) > 256:
-
-                        # AMBER has a limit on the length of the restraintmask
-                        # so it's easy to overflow if we are matching by index
-                        # on a large protein. As such, handle "backbone" and
-                        # "heavy" restraints using a non-interoperable name mask.
-                        if isinstance(restraint, str):
-                            if restraint == "backbone":
-                                restraint_mask = "@CA,C,O,N"
-                            elif restraint == "heavy":
-                                restraint_mask = "!:WAT & !@H"
-                            elif restraint == "all":
-                                restraint_mask = "!:WAT"
-
-                        # We can't do anything about a custom restraint, since we don't
-                        # know anything about the atoms.
-                        else:
-                            raise ValueError(
-                                "AMBER atom 'restraintmask' exceeds 256 character limit!"
-                            )
-
-                    # Get the force constant value. The default is the same
-                    # units as AMBER, i.e. kcal_per_mol/angstrom**2
-                    force_constant = self._protocol.getForceConstant().value()
-
-                    self.addToConfig("  ntr=1,")
-                    self.addToConfig(f"  restraint_wt={force_constant},")
-                    self.addToConfig(f"  restraintmask='{restraint_mask}',")
-
-            # Heating/cooling protocol.
-            if not self._protocol.isConstantTemp():
-                self.addToConfig(
-                    "  tempi=%.2f,"
-                    % self._protocol.getStartTemperature().kelvin().value()
-                )
-                self.addToConfig(
-                    "  temp0=%.2f,"
-                    % self._protocol.getEndTemperature().kelvin().value()
-                )
-                self.addToConfig("  nmropt=1,")
-                self.addToConfig(" /")
-                self.addToConfig(
-                    "&wt TYPE='TEMP0', istep1=0, istep2=%d, value1=%.2f, value2=%.2f /"
-                    % (
-                        steps,
-                        self._protocol.getStartTemperature().kelvin().value(),
-                        self._protocol.getEndTemperature().kelvin().value(),
-                    )
-                )
-                self.addToConfig("&wt TYPE='END' /")
-
-            # Constant temperature equilibration.
-            else:
-                self.addToConfig(
-                    "  temp0=%.2f,"
-                    % self._protocol.getStartTemperature().kelvin().value()
-                )
-                self.addToConfig(" /")
-
-        # Add configuration variables for a production simulation.
-        elif isinstance(self._protocol, _Protocol.Production):
-
-            # Work out the number of integration steps.
-            steps = _math.ceil(
-                self._protocol.getRunTime() / self._protocol.getTimeStep()
-            )
-
-            # Get the report and restart intervals.
-            report_interval = self._protocol.getReportInterval()
-            restart_interval = self._protocol.getRestartInterval()
-
-            # Cap the intervals at the total number of steps.
-            if report_interval > steps:
-                report_interval = steps
-            if restart_interval > steps:
-                restart_interval = steps
-
-            # Set the random number seed.
-            if self._seed is None:
-                seed = -1
-            else:
-                seed = self._seed
-
-            # Convert the timestep to picoseconds.
-            timestep = self._protocol.getTimeStep().picoseconds().value()
-
-            self.addToConfig("Production.")
-            self.addToConfig(" &cntrl")
-            # Random number seed.
-            self.addToConfig("  ig=%d," % seed)
-            if self._protocol.isRestart():
-                # Read coordinates and velocities.
-                self.addToConfig("  ntx=5,")
-            else:
-                # Only read coordinates.
-                self.addToConfig("  ntx=1,")
-            # Output coordinates in ASCII.
-            self.addToConfig("  ntxo=1,")
-            # Interval between reporting energies.
-            self.addToConfig("  ntpr=%d," % report_interval)
-            # Interval between saving restart files.
-            self.addToConfig("  ntwr=%d," % restart_interval)
-            # Trajectory sampling frequency.
-            self.addToConfig("  ntwx=%d," % restart_interval)
-            if self._protocol.isRestart():
-                # Restart using previous velocities.
-                self.addToConfig("  irest=1,")
-            else:
-                # Don't restart.
-                self.addToConfig("  irest=0,")
-            # Time step.
-            self.addToConfig("  dt=%.3f," % timestep)
-            # Number of integration steps.
-            self.addToConfig("  nstlim=%d," % steps)
-            # Enable SHAKE.
-            self.addToConfig("  ntc=2,")
-            # Don't calculate forces for constrained bonds.
-            self.addToConfig("  ntf=2,")
-            # Langevin dynamics.
-            self.addToConfig("  ntt=3,")
-            # Collision frequency (ps).
-            self.addToConfig("  gamma_ln=2,")
-            if not has_box or not self._has_water:
-                # No periodic box.
-                self.addToConfig("  ntb=0,")
-                # Non-bonded cut-off.
-                self.addToConfig("  cut=999.,")
-                if is_pmemd:
-                    # Use vacuum generalised Born model.
-                    self.addToConfig("  igb=6,")
-            else:
-                # Non-bonded cut-off.
-                self.addToConfig("  cut=8.0,")
-            if not self._protocol.isRestart():
-                # Initial temperature.
-                self.addToConfig(
-                    "  tempi=%.2f," % self._protocol.getTemperature().kelvin().value()
-                )
-            # Target temperature.
-            self.addToConfig(
-                "  temp0=%.2f," % self._protocol.getTemperature().kelvin().value()
-            )
-
-            # Constant pressure control.
-            if self._protocol.getPressure() is not None:
-                # Don't use barostat for vacuum simulations.
-                if has_box and self._has_water:
-                    # Isotropic pressure scaling.
-                    self.addToConfig("  ntp=1,")
-                    # Pressure in bar.
-                    self.addToConfig(
-                        "  pres0=%.5f," % self._protocol.getPressure().bar().value()
-                    )
-                else:
-                    _warnings.warn(
-                        "Cannot use a barostat for a vacuum or non-periodic simulation"
-                    )
-
-            self.addToConfig(" /")
+        # Set the random number seed.
+        if self._seed is None:
+            self._extra_options["ig"] = -1
+        else:
+            self._extra_options["ig"] = self._seed
 
         # Add configuration variables for a metadynamics simulation.
-        elif isinstance(self._protocol, _Protocol.Metadynamics):
-
-            # Work out the number of integration steps.
-            steps = _math.ceil(
-                self._protocol.getRunTime() / self._protocol.getTimeStep()
-            )
-
-            # Get the report and restart intervals.
-            report_interval = self._protocol.getReportInterval()
-            restart_interval = self._protocol.getRestartInterval()
-
-            # Cap the intervals at the total number of steps.
-            if report_interval > steps:
-                report_interval = steps
-            if restart_interval > steps:
-                restart_interval = steps
-
-            # Set the random number seed.
-            if self._seed is None:
-                seed = -1
-            else:
-                seed = self._seed
-
-            # Convert the timestep to picoseconds.
-            timestep = self._protocol.getTimeStep().picoseconds().value()
-
-            self.addToConfig("Production.")
-            self.addToConfig(" &cntrl")
-            # Random number seed.
-            self.addToConfig("  ig=%d," % seed)
-            # Only read coordinates.
-            self.addToConfig("  ntx=1,")
-            # Output coordinates in ASCII.
-            self.addToConfig("  ntxo=1,")
-            # Interval between reporting energies.
-            self.addToConfig("  ntpr=%d," % report_interval)
-            # Interval between saving restart files.
-            self.addToConfig("  ntwr=%d," % restart_interval)
-            # Trajectory sampling frequency.
-            self.addToConfig("  ntwx=%d," % restart_interval)
-            # Don't restart.
-            self.addToConfig("  irest=0,")
-            # Time step.
-            self.addToConfig("  dt=%.3f," % timestep)
-            # Number of integration steps.
-            self.addToConfig("  nstlim=%d," % steps)
-            # Enable SHAKE.
-            self.addToConfig("  ntc=2,")
-            # Don't calculate forces for constrained bonds.
-            self.addToConfig("  ntf=2,")
-            # Langevin dynamics.
-            self.addToConfig("  ntt=3,")
-            # Collision frequency (ps).
-            self.addToConfig("  gamma_ln=2,")
-            if not has_box or not self._has_water:
-                # No periodic box.
-                self.addToConfig("  ntb=0,")
-                # Non-bonded cut-off.
-                self.addToConfig("  cut=999.,")
-                if is_pmemd:
-                    # Use vacuum generalised Born model.
-                    self.addToConfig("  igb=6,")
-            else:
-                # Non-bonded cut-off.
-                self.addToConfig("  cut=8.0,")
-            # Initial temperature.
-            self.addToConfig(
-                "  tempi=%.2f," % self._protocol.getTemperature().kelvin().value()
-            )
-            # Target temperature.
-            self.addToConfig(
-                "  temp0=%.2f," % self._protocol.getTemperature().kelvin().value()
-            )
-
-            # Constant pressure control.
-            if self._protocol.getPressure() is not None:
-                # Don't use barostat for vacuum simulations.
-                if has_box and self._has_water:
-                    # Isotropic pressure scaling.
-                    self.addToConfig("  ntp=1,")
-                    # Pressure in bar.
-                    self.addToConfig(
-                        "  pres0=%.5f," % self._protocol.getPressure().bar().value()
-                    )
-                else:
-                    _warnings.warn(
-                        "Cannot use a barostat for a vacuum or non-periodic simulation"
-                    )
-
-            # Activate PLUMED and locate the plumed.dat file.
-            self.addToConfig("  plumed=1,")
-            self.addToConfig("  plumedfile='plumed.dat',")
-
-            self.addToConfig(" /")
+        if isinstance(self._protocol, (_Protocol.Metadynamics, _Protocol.Steering)):
+            self._extra_options["plumed"] = 1
+            self._extra_options["plumedfile"] = "plumed.dat"
 
             # Create the PLUMED input file and copy auxiliary files to the working directory.
             self._plumed = _Plumed(self._work_dir)
@@ -766,128 +391,16 @@ class Amber(_process.Process):
             setattr(self, "sampleConfigurations", self._sampleConfigurations)
             setattr(self, "getTime", self._getTime)
 
-        # Add configuration variables for a steered molecular dynamics simulation.
-        elif isinstance(self._protocol, _Protocol.Steering):
+        # Instantiate the AMBER configuration generator.
+        amber_config = _AmberConfig(
+            self._system,
+            self._protocol,
+            extra_options=self._extra_options,
+            extra_lines=self._extra_lines,
+        )
 
-            # Work out the number of integration steps.
-            steps = _math.ceil(
-                self._protocol.getRunTime() / self._protocol.getTimeStep()
-            )
-
-            # Get the report and restart intervals.
-            report_interval = self._protocol.getReportInterval()
-            restart_interval = self._protocol.getRestartInterval()
-
-            # Cap the intervals at the total number of steps.
-            if report_interval > steps:
-                report_interval = steps
-            if restart_interval > steps:
-                restart_interval = steps
-
-            # Set the random number seed.
-            if self._seed is None:
-                seed = -1
-            else:
-                seed = self._seed
-
-            # Convert the timestep to picoseconds.
-            timestep = self._protocol.getTimeStep().picoseconds().value()
-
-            self.addToConfig("Production.")
-            self.addToConfig(" &cntrl")
-            # Random number seed.
-            self.addToConfig("  ig=%d," % seed)
-            # Only read coordinates.
-            self.addToConfig("  ntx=1,")
-            # Output coordinates in ASCII.
-            self.addToConfig("  ntxo=1,")
-            # Interval between reporting energies.
-            self.addToConfig("  ntpr=%d," % report_interval)
-            # Interval between saving restart files.
-            self.addToConfig("  ntwr=%d," % restart_interval)
-            # Trajectory sampling frequency.
-            self.addToConfig("  ntwx=%d," % restart_interval)
-            # Don't restart.
-            self.addToConfig("  irest=0,")
-            # Time step.
-            self.addToConfig("  dt=%.3f," % timestep)
-            # Number of integration steps.
-            self.addToConfig("  nstlim=%d," % steps)
-            # Enable SHAKE.
-            self.addToConfig("  ntc=2,")
-            # Don't calculate forces for constrained bonds.
-            self.addToConfig("  ntf=2,")
-            # Langevin dynamics.
-            self.addToConfig("  ntt=3,")
-            # Collision frequency (ps).
-            self.addToConfig("  gamma_ln=2,")
-            if not has_box or not self._has_water:
-                # No periodic box.
-                self.addToConfig("  ntb=0,")
-                # Non-bonded cut-off.
-                self.addToConfig("  cut=999.,")
-                if is_pmemd:
-                    # Use vacuum generalised Born model.
-                    self.addToConfig("  igb=6,")
-            else:
-                # Non-bonded cut-off.
-                self.addToConfig("  cut=8.0,")
-            # Initial temperature.
-            self.addToConfig(
-                "  tempi=%.2f," % self._protocol.getTemperature().kelvin().value()
-            )
-            # Target temperature.
-            self.addToConfig(
-                "  temp0=%.2f," % self._protocol.getTemperature().kelvin().value()
-            )
-
-            # Constant pressure control.
-            if self._protocol.getPressure() is not None:
-                # Don't use barostat for vacuum simulations.
-                if has_box and self._has_water:
-                    # Isotropic pressure scaling.
-                    self.addToConfig("  ntp=1,")
-                    # Pressure in bar.
-                    self.addToConfig(
-                        "  pres0=%.5f," % self._protocol.getPressure().bar().value()
-                    )
-                else:
-                    _warnings.warn(
-                        "Cannot use a barostat for a vacuum or non-periodic simulation"
-                    )
-
-            # Activate PLUMED and locate the plumed.dat file.
-            self.addToConfig("  plumed=1,")
-            self.addToConfig("  plumedfile='plumed.dat',")
-
-            self.addToConfig(" /")
-
-            # Create the PLUMED input file and copy auxiliary files to the working directory.
-            self._plumed = _Plumed(self._work_dir)
-            plumed_config, auxiliary_files = self._plumed.createConfig(
-                self._system, self._protocol, self._property_map
-            )
-            self._setPlumedConfig(plumed_config)
-            if auxiliary_files is not None:
-                for file in auxiliary_files:
-                    file_name = _os.path.basename(file)
-                    _shutil.copyfile(file, self._work_dir + f"/{file_name}")
-            self._input_files.append(self._plumed_config_file)
-
-            # Expose the PLUMED specific member functions.
-            setattr(self, "getPlumedConfig", self._getPlumedConfig)
-            setattr(self, "getPlumedConfigFile", self._getPlumedConfigFile)
-            setattr(self, "setPlumedConfig", self._setPlumedConfig)
-            setattr(self, "getCollectiveVariable", self._getCollectiveVariable)
-            setattr(self, "getTime", self._getTime)
-
-        else:
-            raise _IncompatibleError(
-                "Unsupported protocol: '%s'" % self._protocol.__class__.__name__
-            )
-
-        # Flag that this isn't a custom protocol.
-        self._protocol._setCustomised(False)
+        # Create the configuration.
+        self.setConfig(amber_config.createConfig())
 
     def _generate_args(self):
         """Generate the dictionary of command-line arguments."""

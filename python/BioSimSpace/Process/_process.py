@@ -67,7 +67,15 @@ class Process:
     """Base class for running different biomolecular simulation processes."""
 
     def __init__(
-        self, system, protocol, name=None, work_dir=None, seed=None, property_map={}
+        self,
+        system,
+        protocol,
+        name=None,
+        work_dir=None,
+        seed=None,
+        extra_options={},
+        extra_lines=[],
+        property_map={},
     ):
         """
         Constructor.
@@ -89,6 +97,13 @@ class Process:
 
         seed : int
             A random number seed.
+
+        extra_options : dict
+            A dictionary containing extra options. Overrides the defaults generated
+            by the protocol.
+
+        extra_lines : [str]
+            A list of extra lines to put at the end of the configuration file.
 
         property_map : dict
             A dictionary that maps system "properties" to their user defined
@@ -125,6 +140,21 @@ class Process:
         # Check that the seed is valid.
         if seed is not None and not type(seed) is int:
             raise TypeError("'seed' must be of type 'int'")
+
+        # Check the extra options.
+        if not isinstance(extra_options, dict):
+            raise TypeError("'extra_options' must be of type 'dict'.")
+        else:
+            keys = extra_options.keys()
+            if not all(isinstance(k, str) for k in keys):
+                raise TypeError("Keys of 'extra_options' must be of type 'str'.")
+
+        # Check the extra lines.
+        if not isinstance(extra_lines, list):
+            raise TypeError("'extra_lines' must be of type 'list'.")
+        else:
+            if not all(isinstance(line, str) for line in extra_lines):
+                raise TypeError("Lines in 'extra_lines' must be of type 'str'.")
 
         # Check that the map is valid.
         if not isinstance(property_map, dict):
@@ -180,6 +210,10 @@ class Process:
         else:
             self._is_seeded = True
             self.setSeed(seed)
+
+        # Set the extra options and lines.
+        self._extra_options = extra_options
+        self._extra_lines = extra_lines
 
         # Set the map.
         self._property_map = property_map.copy()
