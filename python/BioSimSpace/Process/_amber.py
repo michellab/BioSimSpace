@@ -355,20 +355,19 @@ class Amber(_process.Process):
         else:
             is_pmemd = False
 
-        # Flag that this isn't a custom protocol.
-        if not self._extra_options and not self._extra_lines:
-            self._protocol._setCustomised(False)
+        extra_options = self._extra_options.copy()
+        extra_lines = self._extra_lines.copy()
 
         # Set the random number seed.
         if self._seed is None:
-            self._extra_options["ig"] = -1
+            extra_options["ig"] = -1
         else:
-            self._extra_options["ig"] = self._seed
+            extra_options["ig"] = self._seed
 
         # Add configuration variables for a metadynamics simulation.
         if isinstance(self._protocol, (_Protocol.Metadynamics, _Protocol.Steering)):
-            self._extra_options["plumed"] = 1
-            self._extra_options["plumedfile"] = "plumed.dat"
+            extra_options["plumed"] = 1
+            extra_options["plumedfile"] = "plumed.dat"
 
             # Create the PLUMED input file and copy auxiliary files to the working directory.
             self._plumed = _Plumed(self._work_dir)
@@ -395,12 +394,16 @@ class Amber(_process.Process):
         amber_config = _AmberConfig(
             self._system,
             self._protocol,
-            extra_options=self._extra_options,
-            extra_lines=self._extra_lines,
+            extra_options=extra_options,
+            extra_lines=extra_lines,
         )
 
         # Create the configuration.
         self.setConfig(amber_config.createConfig())
+
+        # Flag that this isn't a custom protocol.
+        if not self._extra_options and not self._extra_lines:
+            self._protocol._setCustomised(False)
 
     def _generate_args(self):
         """Generate the dictionary of command-line arguments."""
