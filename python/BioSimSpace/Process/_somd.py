@@ -74,6 +74,8 @@ class Somd(_process.Process):
         platform="CPU",
         work_dir=None,
         seed=None,
+        extra_options={},
+        extra_lines=[],
         property_map={},
     ):
         """
@@ -106,6 +108,13 @@ class Somd(_process.Process):
             purposes since SOMD uses the same seed for each Monte Carlo
             cycle.
 
+        extra_options : dict
+            A dictionary containing extra options. Overrides the defaults generated
+            by the protocol.
+
+        extra_lines : [str]
+            A list of extra lines to put at the end of the configuration file.
+
         property_map : dict
             A dictionary that maps system "properties" to their user defined
             values. This allows the user to refer to properties with their
@@ -113,7 +122,16 @@ class Somd(_process.Process):
         """
 
         # Call the base class constructor.
-        super().__init__(system, protocol, name, work_dir, seed, property_map)
+        super().__init__(
+            system,
+            protocol,
+            name=name,
+            work_dir=work_dir,
+            seed=seed,
+            extra_options=extra_options,
+            extra_lines=extra_lines,
+            property_map=property_map,
+        )
 
         # Set the package name.
         self._package_name = "SOMD"
