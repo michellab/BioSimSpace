@@ -30,6 +30,8 @@ Classes
     :toctree: generated/
 
     Amber
+    Gromacs
 """
 
 from ._amber import *
+from ._gromacs import *
