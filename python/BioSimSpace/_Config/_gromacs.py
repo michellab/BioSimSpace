@@ -28,8 +28,6 @@ __all__ = ["Gromacs"]
 
 import math as _math
 
-from sire.legacy import Units as _SireUnits
-
 from .. import Protocol as _Protocol
 
 from ._config import Config as _Config
