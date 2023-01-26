@@ -10,13 +10,13 @@ url = BSS.tutorialUrl()
 
 
 @pytest.fixture(scope="session")
-def system(scope="session"):
+def system():
     """Re-use the same molecuar system for each test."""
     return BSS.IO.readMolecules(["test/input/ala.top", "test/input/ala.crd"])
 
 
 @pytest.fixture(scope="session")
-def perturbable_system(scope="session"):
+def perturbable_system():
     """Re-use the same perturbable system for each test."""
     return BSS.IO.readPerturbableSystem(
         f"{url}/perturbable_system0.prm7",

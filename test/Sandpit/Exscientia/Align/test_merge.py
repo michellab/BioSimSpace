@@ -14,8 +14,8 @@ else:
     has_amber = False
 
 
-@pytest.fixture
-def perturbed_system(scope="session"):
+@pytest.fixture(scope="session")
+def perturbed_system():
     mol_smiles = [
         "c1ccccc1",
         "c1ccccc1C",

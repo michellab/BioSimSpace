@@ -13,13 +13,13 @@ def system():
 
 
 @pytest.fixture(scope="session")
-def molecule(system, scope="session"):
+def molecule(system):
     """Re-use the same molecule for each test."""
     return system[0]
 
 
 @pytest.fixture(scope="session")
-def residue(molecule, scope="session"):
+def residue(molecule):
     """Re-use the same residue for each test."""
     return molecule.getResidues()[0]
 
