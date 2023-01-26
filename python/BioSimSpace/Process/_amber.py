@@ -391,15 +391,14 @@ class Amber(_process.Process):
             setattr(self, "getTime", self._getTime)
 
         # Instantiate the AMBER configuration generator.
-        amber_config = _AmberConfig(
-            self._system,
-            self._protocol,
-            extra_options=extra_options,
-            extra_lines=extra_lines,
-        )
+        amber_config = _AmberConfig(self._system, self._protocol)
 
         # Create the configuration.
-        self.setConfig(amber_config.createConfig())
+        self.setConfig(
+            amber_config.createConfig(
+                is_pmemd=is_pmemd, extra_options=extra_options, extra_lines=extra_lines
+            )
+        )
 
         # Flag that this isn't a custom protocol.
         if not self._extra_options and not self._extra_lines:

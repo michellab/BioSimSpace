@@ -38,15 +38,7 @@ from ._config import Config as _Config
 class Amber(_Config):
     """A class for generating configuration files for AMBER."""
 
-    def __init__(
-        self,
-        system,
-        protocol,
-        is_pmemd=False,
-        extra_options={},
-        extra_lines=[],
-        property_map={},
-    ):
+    def __init__(self, system, protocol, property_map={}):
         """
         Constructor.
 
@@ -59,6 +51,24 @@ class Amber(_Config):
         protocol : :class:`Protocol <BioSimSpace.Protocol>`
             The protocol for the process.
 
+        property_map : dict
+            A dictionary that maps system "properties" to their user defined
+            values. This allows the user to refer to properties with their
+            own naming scheme, e.g. { "charge" : "my-charge" }
+        """
+
+        # Call the base class constructor.
+        super().__init__(system, protocol, property_map=property_map)
+
+    def createConfig(
+        self, version=None, is_pmemd=False, extra_options={}, extra_lines=[]
+    ):
+        """
+        Create the list of configuration strings.
+
+        version : float
+            The AMBER version.
+
         is_pmemd : bool
             Whether the configuration is for a simulation using PMEMD.
 
@@ -69,36 +79,33 @@ class Amber(_Config):
         extra_lines : [str]
             A list of extra lines to put at the end of the configuration file.
 
-        property_map : dict
-            A dictionary that maps system "properties" to their user defined
-            values. This allows the user to refer to properties with their
-            own naming scheme, e.g. { "charge" : "my-charge" }
-        """
-
-        # Call the base class constructor.
-        super().__init__(
-            system,
-            protocol,
-            extra_options=extra_options,
-            extra_lines=extra_lines,
-            property_map=property_map,
-        )
-
-        if not isinstance(is_pmemd, bool):
-            raise TypeError("'is_pmemd' must be of type 'bool'.")
-
-        self._is_pmemd = is_pmemd
-
-    def createConfig(self):
-        """
-        Create the list of configuration strings.
-
         Returns
         -------
 
         config : [str]
             The list of AMBER format configuration strings.
         """
+
+        # Validate input.
+
+        if version and not isinstance(version, float):
+            raise TypeError("'version' must be of type 'float'.")
+
+        if not isinstance(is_pmemd, bool):
+            raise TypeError("'is_pmemd' must be of type 'bool'.")
+
+        if not isinstance(extra_options, dict):
+            raise TypeError("'extra_options' must be of type 'dict'.")
+        else:
+            keys = extra_options.keys()
+            if not all(isinstance(k, str) for k in keys):
+                raise TypeError("Keys of 'extra_options' must be of type 'str'.")
+
+        if not isinstance(extra_lines, list):
+            raise TypeError("'extra_lines' must be of type 'list'.")
+        else:
+            if not all(isinstance(line, str) for line in extra_lines):
+                raise TypeError("Lines in 'extra_lines' must be of type 'str'.")
 
         # Initialise the protocol lines.
         protocol_lines = []
@@ -159,13 +166,13 @@ class Amber(_Config):
             # Don't calculate forces for constrained bonds.
             protocol_dict["ntf"] = 2
 
-        # PBC.
+        # Periodic boundary conditions.
         if not self.hasBox() or not self.hasWater():
             # No periodic box.
             protocol_dict["ntb"] = 0
             # Non-bonded cut-off.
             protocol_dict["cut"] = "999."
-            if self._is_pmemd:
+            if is_pmemd:
                 # Use vacuum generalised Born model.
                 self.addToConfig("  igb=6,")
         else:
@@ -279,12 +286,12 @@ class Amber(_Config):
                 protocol_dict["temp0"] = f"{temp:.2f}"
 
         # Put everything together in a line-by-line format.
-        total_dict = {**protocol_dict, **self._extra_options}
+        total_dict = {**protocol_dict, **extra_options}
         dict_lines = [self._protocol.__class__.__name__, "&cntrl"]
         dict_lines += [
             f"   {k}={v}," for k, v in total_dict.items() if v is not None
         ] + ["/"]
-        total_lines = protocol_lines + self._extra_lines
+        total_lines = protocol_lines + extra_lines
         if total_lines:
             total_lines += ["&wt TYPE='END' /"]
         total_lines = dict_lines + total_lines

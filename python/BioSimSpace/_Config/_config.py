@@ -38,9 +38,7 @@ from .. import Protocol as _Protocol
 class Config:
     """Base class for generating configuration files for molecular dynamics engines."""
 
-    def __init__(
-        self, system, protocol, extra_options={}, extra_lines=[], property_map={}
-    ):
+    def __init__(self, system, protocol, property_map={}):
         """
         Constructor.
 
@@ -52,13 +50,6 @@ class Config:
 
         protocol : :class:`Protocol <BioSimSpace.Protocol>`
             The protocol for the process.
-
-        extra_options : dict
-            A dictionary containing extra options. Overrides the defaults generated
-            by the protocol.
-
-        extra_lines : [str]
-            A list of extra lines to put at the end of the configuration file.
 
         property_map : dict
             A dictionary that maps system "properties" to their user defined
@@ -80,27 +71,12 @@ class Config:
         if not isinstance(protocol, _ProtocolBase):
             raise TypeError("'protocol' must be of type 'BioSimSpace.Protocol'")
 
-        if not isinstance(extra_options, dict):
-            raise TypeError("'extra_options' must be of type 'dict'.")
-        else:
-            keys = extra_options.keys()
-            if not all(isinstance(k, str) for k in keys):
-                raise TypeError("Keys of 'extra_options' must be of type 'str'.")
-
-        if not isinstance(extra_lines, list):
-            raise TypeError("'extra_lines' must be of type 'list'.")
-        else:
-            if not all(isinstance(line, str) for line in extra_lines):
-                raise TypeError("Lines in 'extra_lines' must be of type 'str'.")
-
         if not isinstance(property_map, dict):
             raise TypeError("'property_map' must be of type 'dict'")
 
         # Store the attributes.
         self._system = system
         self._protocol = protocol
-        self._extra_options = extra_options
-        self._extra_lines = extra_lines
         self._property_map = property_map
 
     def hasBox(self):
