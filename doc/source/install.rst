@@ -7,7 +7,7 @@ Installation
 Conda install
 =============
 
-The easiest way to install BioSimSpace is using our `conda channel <https://anaconda.org/michellab/repo>`__.
+The easiest way to install BioSimSpace is using our `conda channel <https://anaconda.org/openbiosim/repo>`__.
 BioSimSpace is built using dependencies from `conda-forge <https://conda-forge.org/>`__,
 so please ensure that the channel takes strict priority. We recommend using
 `Miniforge <https://github.com/conda-forge/miniforge>`__.
@@ -16,22 +16,22 @@ To create a new environment:
 
 .. code-block:: bash
 
-    conda create -n biosimspace -c conda-forge -c michellab biosimspace
-    conda activate biosimspace
+    conda create -n openbiosim -c conda-forge -c openbiosim biosimspace
+    conda activate openbiosim
 
 To install the latest development version you can use:
 
 .. code-block:: bash
 
-    conda create -n biosimspace-dev -c conda-forge -c michellab/label/dev biosimspace
-    conda activate biosimspace-dev
+    conda create -n openbiosim-dev -c conda-forge -c openbiosim/label/dev biosimspace
+    conda activate openbiosim-dev
 
-When updating the development version it is generally advised to update `Sire <https://github.com/michellab/Sire>`_
+When updating the development version it is generally advised to update `Sire <https://github.com/openbiosim/sire>`_
 at the same time:
 
 .. code-block:: bash
 
-    conda update -c conda-forge -c michellab/label/dev biosimspace sire
+    conda update -c conda-forge -c openbiosim/label/dev biosimspace sire
 
 If you plan on using BioSimSpace interactively via Jupyter, then you might also
 need to enable the required notebook extensions within your Conda environment:
@@ -45,7 +45,7 @@ need to add them when updating, e.g., for the development package:
 
 .. code-block:: bash
 
-    conda update -c conda-forge -c michellab/label/dev biosimspace
+    conda update -c conda-forge -c openbiosim/label/dev biosimspace
 
 If you find that Conda is particularly slow to install or upgrade BioSimSpace,
 then we advise using `mamba <https://github.com/TheSnakePit/mamba>`__:
@@ -58,7 +58,7 @@ You can then replace all ``conda`` commands with ``mamba``, e.g.:
 
 .. code-block:: bash
 
-    mamba create -n biosimspace -c conda-forge -c michellab biosimspace
+    mamba create -n openbiosim -c conda-forge -c openbiosim biosimspace
 
 Binary install
 ==============
@@ -73,9 +73,9 @@ For developers
 The following documents a full installation of BioSimSpace from source. Before
 starting, you'll need a working `Git <https://git-scm.com>`__ installation.
 
-BioSimSpace is built on top of the `Sire <https://github.com/michellab/Sire>`__
+BioSimSpace is built on top of the `Sire <https://github.com/openbiosim/sire>`__
 molecular simulation framework. To download and install Sire, follow the
-instructions `here <https://github.com/michellab/Sire#installation>`__, making
+instructions `here <https://github.com/openbiosim/sire#installation>`__, making
 sure that BioSimSpace's dependencies are installed into the Sire conda
 environment at the point at which Sire is installed.
 
@@ -84,7 +84,7 @@ Conda environment.
 
 .. code-block:: bash
 
-   git clone https://github.com/michellab/BioSimSpace
+   git clone https://github.com/openbiosim/biosimspace
    cd BioSimSpace/python
    python setup.py install
 

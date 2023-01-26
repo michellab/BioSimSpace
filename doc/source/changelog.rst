@@ -1,7 +1,7 @@
 Changelog
 =========
 
-`2022.3.0 <https://github.com/michellab/BioSimSpace/compare/2022.2.1...2022.3.0>`_ - Sep 28 2022 (Pre-release)
+`2022.3.0 <https://github.com/openbiosim/biosimspace/compare/2022.2.1...2022.3.0>`_ - Sep 28 2022 (Pre-release)
 --------------------------------------------------------------------------------------------------------------
 
 * Improved NAMD restraint implementation for consistency with other engines.
@@ -14,13 +14,13 @@ Changelog
 * Allow continuation for GROMACS equilibration simulations. (`@kexul <https://github.com/kexul>`_)
 * Update BioSimSpace to work with the new Sire 2023.0.0 Python API.
 
-`2022.2.1 <https://github.com/michellab/BioSimSpace/compare/2022.2.0...2022.2.1>`_ - Mar 30 2022
+`2022.2.1 <https://github.com/openbiosim/biosimspace/compare/2022.2.0...2022.2.1>`_ - Mar 30 2022
 ------------------------------------------------------------------------------------------------
 
 * Fix performance issues when ensuring unique molecule numbering when adding molecules to ``BioSimSpace._SireWrappers.System`` and ``BioSimSpace._SireWrappers.Molecules`` objects.
 * Fix extraction of box vector magnitudes for triclinic boxes.
 
-`2022.2.0 <https://github.com/michellab/BioSimSpace/compare/2022.1.0...2022.2.0>`_ - Mar 24 2022
+`2022.2.0 <https://github.com/openbiosim/biosimspace/compare/2022.1.0...2022.2.0>`_ - Mar 24 2022
 ------------------------------------------------------------------------------------------------
 
 * Use fast C++ wrappers for updating coordinates and velocities during SOMD simulations.
@@ -33,7 +33,7 @@ Changelog
 * Handle trjconv frame extraction failures within ``BioSimSpace.Process.Gromacs.getSystem()``.
 * Catch and handle possible GSL error during singular valued decomposition routine used for molecular alignment.
 
-`2022.1.0 <https://github.com/michellab/BioSimSpace/compare/2020.1.0...2022.1.0>`_ - Jan 26 2022
+`2022.1.0 <https://github.com/openbiosim/biosimspace/compare/2020.1.0...2022.1.0>`_ - Jan 26 2022
 ------------------------------------------------------------------------------------------------
 
 * Added basic support for cleaning PDB files with `pdb4amber <https://github.com/Amber-MD/pdb4amber>`_ prior to read.
@@ -50,7 +50,7 @@ Changelog
 * Numerous free-energy perturbation pipeline fixes and improvements. Thanks to `@kexul <https://github.com/kexul>`_ and `@msuruzhon <https://github.com/msuruzhon>`_ for their help testing and debugging.
 * Switch continuous integration to GitHub actions using conda-forge compliant build and upload to Anaconda cloud.
 
-`2020.1.0 <https://github.com/michellab/BioSimSpace/compare/2019.3.0...2020.1.0>`_ - July 28 2020
+`2020.1.0 <https://github.com/openbiosim/biosimspace/compare/2019.3.0...2020.1.0>`_ - July 28 2020
 -------------------------------------------------------------------------------------------------
 
 * Added logo to website and update theme (`@ppxasjsm <https://github.com/ppxasjsm>`_).
@@ -63,7 +63,7 @@ Changelog
 * Run vacuum simulations on a single thread when using GROMACS to avoid domain decomposition.
 * Make sure BioSimSpace is always built against the latest version of Sire during conda build.
 
-`2019.3.0 <https://github.com/michellab/BioSimSpace/compare/2019.2.0...2019.3.0>`_ - Nov 22 2019
+`2019.3.0 <https://github.com/openbiosim/biosimspace/compare/2019.2.0...2019.3.0>`_ - Nov 22 2019
 ------------------------------------------------------------------------------------------------
 
 * Make FKCOMBU download during conda build resilient to server downtime.
@@ -71,7 +71,7 @@ Changelog
 * Fixed numerous typos in Sphinx documentation.
 * Added Journal of Open Source Software paper.
 
-`2019.2.0 <https://github.com/michellab/BioSimSpace/compare/2019.1.0...2019.2.0>`_ - Sep 11 2019
+`2019.2.0 <https://github.com/openbiosim/biosimspace/compare/2019.1.0...2019.2.0>`_ - Sep 11 2019
 ------------------------------------------------------------------------------------------------
 
 * Switched to using `RDKit <https://www.rdkit.org/>`_ for maximum common substructure (MCS) mappings.
@@ -84,7 +84,7 @@ Changelog
 * Added thin-wrappers for several additional Sire objects, e.g. Residue, Atom, and Molecules container.
 * Performance improvements for searching, indexing, and extracting objects from molecular containers, e.g. System, Molecule.
 
-`2019.1.0 <https://github.com/michellab/BioSimSpace/compare/2018.1.1...2019.1.0>`_ - May 02 2019
+`2019.1.0 <https://github.com/openbiosim/biosimspace/compare/2018.1.1...2019.1.0>`_ - May 02 2019
 ------------------------------------------------------------------------------------------------
 
 * Added support for parameterising proteins and ligands.
@@ -94,7 +94,7 @@ Changelog
 * Added Azure Pipeline to automatically build, test, document, and deploy BioSimSpace.
 * Created automatic Conda package pipeline.
 
-`2018.1.1 <https://github.com/michellab/BioSimSpace/compare/2018.1.0...2018.1.1>`_ - May 02 2018
+`2018.1.1 <https://github.com/openbiosim/biosimspace/compare/2018.1.0...2018.1.1>`_ - May 02 2018
 ------------------------------------------------------------------------------------------------
 
 * Fixed conda NetCDF issue on macOS. Yay for managing `python environments <https://xkcd.com/1987>`_\ !

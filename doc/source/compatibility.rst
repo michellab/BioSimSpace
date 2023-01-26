@@ -7,7 +7,7 @@ Compatibility
 BioSimSpace has been tested against the versions of its
 external dependencies listed below. Please let us know if
 you encounter problems by raising an issue on our
-`GitHub <https://github.com/michellab/BioSimSpace/issues>`__
+`GitHub <https://github.com/openbiosim/biosimspace/issues>`__
 page. (It may also work with more recent versions and we
 will update these lists as they are validated.)
 

@@ -5,7 +5,7 @@ Developer's guide
 .. toctree::
    :maxdepth: 2
 
-The source code for BioSimSpace is available on `GitHub <https://github.com/michellab/BioSimSpace>`__.
+The source code for BioSimSpace is available on `GitHub <https://github.com/openbiosim/biosimspace>`__.
 
 Python
 ======
@@ -406,7 +406,7 @@ Remember that it is better to make small changes and commit frequently.
 If your edits don't change the BioSimSpace source code, or documentation,
 e.g. fixing typos, then please add ``ci skip`` to your commit message.
 This will avoid unnecessarily triggering
-`GitHub actions <https://github.com/michellab/BioSimSpace/actions?query=workflow%3ABuild>`__, e.g.
+`GitHub actions <https://github.com/openbiosim/biosimspace/actions?query=workflow%3ABuild>`__, e.g.
 building a new BioSimSpace binary, updating the website, etc. To this end, we
 have provided a git hook that will append ``ci skip`` if the commit only
 modifies files in a blacklist that is specified in the file ``.ciignore``

@@ -2,12 +2,12 @@
 OpenBioSim | BioSimSpace
 ========================
 
-.. image:: https://github.com/michellab/BioSimSpace/workflows/Build/badge.svg
-   :target: https://github.com/michellab/BioSimSpace/actions?query=workflow%3ABuild)
+.. image:: https://github.com/openbiosim/biosimspace/workflows/Build/badge.svg
+   :target: https://github.com/openbiosim/biosimspace/actions?query=workflow%3ABuild)
    :alt: Build status
 
-.. image:: https://anaconda.org/michellab/biosimspace/badges/downloads.svg
-   :target: https://anaconda.org/michellab/biosimspace
+.. image:: https://anaconda.org/openbiosim/biosimspace/badges/downloads.svg
+   :target: https://anaconda.org/openbiosim/biosimspace
    :alt: Conda Downloads
 
 .. image:: https://img.shields.io/badge/License-GPL%20v3-blue.svg
@@ -18,7 +18,7 @@ OpenBioSim | BioSimSpace
    :target: https://joss.theoj.org/papers/4ba84ad443693b5dded90e35bf5f8225
    :alt: Paper
 
-`BioSimSpace <https://github.com/michellab/BioSimSpace>`__ is an interoperable
+`BioSimSpace <https://github.com/openbiosim/biosimspace>`__ is an interoperable
 Python framework for biomolecular simulation. With it you can:
 
 * Write robust and portable biomolecular :ref:`workflow components <ref_nodes>` that work on different hardware, with different software packages, and that can be run in different ways, e.g. command-line, `Jupyter <https://jupyter.org>`__.
