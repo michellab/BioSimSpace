@@ -31,7 +31,9 @@ Classes
 
     Amber
     Gromacs
+    Somd
 """
 
 from ._amber import *
 from ._gromacs import *
+from ._somd import *
