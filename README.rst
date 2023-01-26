@@ -63,55 +63,35 @@ Conda package
 The easiest way to install BioSimSpace is using our `conda channel <https://anaconda.org/openbiosim/repo>`__.
 BioSimSpace is built using dependencies from `conda-forge <https://conda-forge.org/>`__,
 so please ensure that the channel takes strict priority. We recommend using
-`Miniforge <https://github.com/conda-forge/miniforge>`__.
+`Mambaforge <https://github.com/conda-forge/miniforge#mamabaforge>`__.
 
 To create a new environment:
 
 .. code-block:: bash
 
-    conda create -n openbiosim -c conda-forge -c openbiosim biosimspace
-    conda activate openbiosim
+    mamba create -n openbiosim -c conda-forge -c openbiosim biosimspace
+    mamba activate openbiosim
 
 To install the latest development version you can use:
 
 .. code-block:: bash
 
-    conda create -n openbiosim-dev -c conda-forge -c openbiosim/label/dev biosimspace
-    conda activate openbiosim-dev
+    mamba create -n openbiosim-dev -c conda-forge -c openbiosim/label/dev biosimspace
+    mamba activate openbiosim-dev
 
 When updating the development version it is generally advised to update `Sire <https://github.com/openbiosim/sire>`_
 at the same time:
 
 .. code-block:: bash
 
-    conda update -c conda-forge -c openbiosim/label/dev biosimspace sire
-
-If you plan on using BioSimSpace interactively via Jupyter, then you might also
-need to enable the required notebook extensions within your Conda environment:
-
-.. code-block:: bash
-
-    jupyter-nbextension enable nglview --py --sys-prefix
+    mamba update -c conda-forge -c openbiosim/label/dev biosimspace sire
 
 Unless you add the required channels to your Conda configuration, then you'll
 need to add them when updating, e.g., for the development package:
 
 .. code-block:: bash
 
-    conda update -c conda-forge -c openbiosim/label/dev biosimspace
-
-If you find that Conda is particularly slow to install or upgrade BioSimSpace,
-then we advise using `mamba <https://github.com/TheSnakePit/mamba>`__:
-
-.. code-block:: bash
-
-    conda install -c conda-forge mamba
-
-You can then replace all ``conda`` commands with ``mamba``, e.g.:
-
-.. code-block:: bash
-
-    mamba create -n openbiosim -c conda-forge -c openbiosim biosimspace
+    mamba update -c conda-forge -c openbiosim/label/dev biosimspace
 
 Installing from source
 ^^^^^^^^^^^^^^^^^^^^^^
