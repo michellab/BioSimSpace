@@ -39,12 +39,12 @@ test:
     - pytest -vvv --color=yes --import-mode=importlib test
 
 about:
-  home: https://biosimspace.org
+  home: https://biosimspace.openbiosim.org
   license: GPL-3.0-or-later
   license_file: '{{ environ["RECIPE_DIR"] }}/LICENSE'
   summary: "An interoperable Python framework for biomolecular simulation."
-  dev_url: https://github.com/michellab/BioSimSpace
-  doc_url: https://biosimspace.org
+  dev_url: https://github.com/openbiosim/biosimspace
+  doc_url: https://biosimspace.openbiosim.org
   description: |
                 BioSimSpace is an interoperable Python framework for
                 biomolecular simulation. With it you can:
@@ -57,22 +57,16 @@ about:
 
                 To install:
 
-                `conda install -c conda-forge -c michellab biosimspace`
+                `conda install -c conda-forge -c openbiosim biosimspace`
 
                 To install the development version:
 
-                `conda install -c conda-forge -c michellab/label/dev biosimspace`
+                `conda install -c conda-forge -c openbiosim/label/dev biosimspace`
 
                 When updating the development version it is generally advised to
                 update Sire at the same time:
 
-                `conda install -c conda-forge -c michellab/label/dev biosimspace sire`
-
-                Since BioSimSpace has many dependencies, an install or update
-                might not always give you the most recent version. If this is
-                the case, use, e.g.:
-
-                `conda install -c conda-forge -c michellab/label/dev biosimspace --all`
+                `conda install -c conda-forge -c openbiosim/label/dev biosimspace sire`
 
 extra:
   recipe-maintainers:
