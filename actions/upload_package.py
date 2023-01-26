@@ -59,9 +59,9 @@ else:
     print("\nNo tag is set. This is a 'devel' release.")
     label = "--label dev"
 
-# Upload the packages to the michellab channel on Anaconda Cloud.
+# Upload the packages to the openbiosim channel on Anaconda Cloud.
 cmd = (
-    f"anaconda --token {conda_token} upload --user michellab {label} --force {packages}"
+    f"anaconda --token {conda_token} upload --user openbiosim {label} --force {packages}"
 )
 
 print(f"\nUpload command:\n\n{cmd}\n")
