@@ -46,14 +46,9 @@ def test_molecule_combine():
     # Create processes to single point calculations with GROMACS.
     p0 = BSS.Process.Gromacs(m0.toSystem(), protocol)
     p1 = BSS.Process.Gromacs(m1.toSystem(), protocol)
-    p01 = BSS.Process.Gromacs((m0 + m1).toSystem(), protocol)
-
-    # Modify the GROMACS configuration to run zero steps.
-    config = p0.getConfig()
-    config[1] = "nsteps = 0"
-    p0.setConfig(config)
-    p1.setConfig(config)
-    p01.setConfig(config)
+    p01 = BSS.Process.Gromacs(
+        (m0 + m1).toSystem(), protocol, extra_options={"nsteps": 0}
+    )
 
     # Run the processes and wait for them to finish.
     p0.start()

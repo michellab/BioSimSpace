@@ -75,7 +75,9 @@ def test_cool(system):
     )
 
     # Run the process and check that it finishes without error.
-    assert run_process(system, protocol)
+    assert run_process(
+        system, protocol, extra_options={"verlet-buffer-tolerance": "2e-07"}
+    )
 
 
 @pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
@@ -116,11 +118,11 @@ def test_restraints(perturbable_system, restraint):
     process = BSS.Process.Gromacs(perturbable_system, protocol)
 
 
-def run_process(system, protocol):
+def run_process(system, protocol, **kwargs):
     """Helper function to run various simulation protocols."""
 
     # Initialise the GROMACS process.
-    process = BSS.Process.Gromacs(system, protocol, name="test")
+    process = BSS.Process.Gromacs(system, protocol, name="test", **kwargs)
 
     # Only run on a single MPI rank.
     process.setArg("-ntmpi", 1)
