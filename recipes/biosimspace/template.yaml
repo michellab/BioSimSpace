@@ -27,8 +27,7 @@ test:
   requires:
     - pytest
     - pytest-black
-    - ambertools  # [linux]
-    - gromacs     # [linux]
+    BSS_TEST_REQUIREMENTS
   imports:
     - BioSimSpace
   source_files:
