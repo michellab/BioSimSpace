@@ -28,7 +28,6 @@ __all__ = ["Gromacs"]
 
 from .._Utils import _try_import
 
-import math as _math
 import os as _os
 
 _pygtail = _try_import("pygtail")
