@@ -66,8 +66,6 @@ class Namd(_process.Process):
         name="namd",
         work_dir=None,
         seed=None,
-        extra_options={},
-        extra_lines=[],
         property_map={},
     ):
         """
@@ -94,13 +92,6 @@ class Namd(_process.Process):
         seed : int
             A random number seed.
 
-        extra_options : dict
-            A dictionary containing extra options. Overrides the defaults generated
-            by the protocol.
-
-        extra_lines : [str]
-            A list of extra lines to put at the end of the configuration file.
-
         property_map : dict
             A dictionary that maps system "properties" to their user defined
             values. This allows the user to refer to properties with their
@@ -114,8 +105,6 @@ class Namd(_process.Process):
             name=name,
             work_dir=work_dir,
             seed=seed,
-            extra_options=extra_options,
-            extra_lines=extra_lines,
             property_map=property_map,
         )
 
