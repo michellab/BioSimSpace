@@ -132,7 +132,7 @@ Conda environment.
 .. code-block:: bash
 
    git clone https://github.com/openbiosim/biosimspace
-   cd BioSimSpace/python
+   cd biosimspace/python
    python setup.py install
 
 Once finished, you can test the installation by running:
