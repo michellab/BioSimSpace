@@ -63,7 +63,7 @@ Conda package
 The easiest way to install BioSimSpace is using our `conda channel <https://anaconda.org/openbiosim/repo>`__.
 BioSimSpace is built using dependencies from `conda-forge <https://conda-forge.org/>`__,
 so please ensure that the channel takes strict priority. We recommend using
-`Mambaforge <https://github.com/conda-forge/miniforge#mamabaforge>`__.
+`Mambaforge <https://github.com/conda-forge/miniforge#mambaforge>`__.
 
 To create a new environment:
 
