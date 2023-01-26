@@ -69,15 +69,15 @@ To create a new environment:
 
 .. code-block:: bash
 
-    conda create -n biosimspace -c conda-forge -c openbiosim biosimspace
-    conda activate biosimspace
+    conda create -n openbiosim -c conda-forge -c openbiosim biosimspace
+    conda activate openbiosim
 
 To install the latest development version you can use:
 
 .. code-block:: bash
 
-    conda create -n biosimspace-dev -c conda-forge -c openbiosim/label/dev biosimspace
-    conda activate biosimspace-dev
+    conda create -n openbiosim-dev -c conda-forge -c openbiosim/label/dev biosimspace
+    conda activate openbiosim-dev
 
 When updating the development version it is generally advised to update `Sire <https://github.com/openbiosim/sire>`_
 at the same time:
@@ -111,7 +111,7 @@ You can then replace all ``conda`` commands with ``mamba``, e.g.:
 
 .. code-block:: bash
 
-    mamba create -n biosimspace -c conda-forge -c openbiosim biosimspace
+    mamba create -n openbiosim -c conda-forge -c openbiosim biosimspace
 
 Installing from source
 ^^^^^^^^^^^^^^^^^^^^^^
