@@ -29,8 +29,6 @@ __all__ = ["Somd"]
 import math as _math
 import warnings as _warnings
 
-from sire.legacy import Units as _SireUnits
-
 from .. import Protocol as _Protocol
 
 from ._config import Config as _Config
