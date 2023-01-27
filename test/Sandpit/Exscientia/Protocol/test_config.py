@@ -140,12 +140,8 @@ class TestGromacsABFE:
     @pytest.fixture(scope="class")
     def system():
         # Benzene.
-        m0 = BSS.Parameters.openff_unconstrained_2_0_0(
-            "c1ccccc1"
-        ).getMolecule()
-        m0._sire_object = (
-            m0._sire_object.edit().rename("LIG").molecule().commit()
-        )
+        m0 = BSS.Parameters.openff_unconstrained_2_0_0("c1ccccc1").getMolecule()
+        m0._sire_object = m0._sire_object.edit().rename("LIG").molecule().commit()
         protocol = FreeEnergyMinimisation(
             lam=0.0,
             lam_vals=None,
@@ -182,9 +178,7 @@ class TestGromacsABFE:
     def test_annihilate_vdw2q(self, system):
         """Test the annihilation where lambda0 = vdw-q and lambda1=none"""
         m, protocol = system
-        mol = decouple(
-            m, charge=(False, True), LJ=(True, False), intramol=False
-        )
+        mol = decouple(m, charge=(False, True), LJ=(True, False), intramol=False)
         freenrg = BSS.FreeEnergy.Relative(
             mol.toSystem(),
             protocol,

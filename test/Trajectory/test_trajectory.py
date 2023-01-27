@@ -85,15 +85,9 @@ def test_coords(traj_mdtraj, traj_mdanalysis):
     for system0, system1 in zip(frames0, frames1):
         for mol0, mol1 in zip(system0, system1):
             for c0, c1 in zip(mol0.coordinates(), mol1.coordinates()):
-                assert c0.x().value() == pytest.approx(
-                    c1.x().value(), abs=1e-2
-                )
-                assert c0.y().value() == pytest.approx(
-                    c1.y().value(), abs=1e-2
-                )
-                assert c0.z().value() == pytest.approx(
-                    c1.z().value(), abs=1e-2
-                )
+                assert c0.x().value() == pytest.approx(c1.x().value(), abs=1e-2)
+                assert c0.y().value() == pytest.approx(c1.y().value(), abs=1e-2)
+                assert c0.z().value() == pytest.approx(c1.z().value(), abs=1e-2)
 
 
 @pytest.mark.skipif(
@@ -112,15 +106,9 @@ def test_coords_pdb(traj_mdtraj, traj_mdanalysis_pdb):
     for system0, system1 in zip(frames0, frames1):
         for mol0, mol1 in zip(system0, system1):
             for c0, c1 in zip(mol0.coordinates(), mol1.coordinates()):
-                assert c0.x().value() == pytest.approx(
-                    c1.x().value(), abs=1e-2
-                )
-                assert c0.y().value() == pytest.approx(
-                    c1.y().value(), abs=1e-2
-                )
-                assert c0.z().value() == pytest.approx(
-                    c1.z().value(), abs=1e-2
-                )
+                assert c0.x().value() == pytest.approx(c1.x().value(), abs=1e-2)
+                assert c0.y().value() == pytest.approx(c1.y().value(), abs=1e-2)
+                assert c0.z().value() == pytest.approx(c1.z().value(), abs=1e-2)
 
 
 @pytest.mark.skipif(

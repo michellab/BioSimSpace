@@ -40,9 +40,7 @@ if not os.getenv("BSS_CONDA_INSTALL"):
 
     # Check the Sire version.
     if int(sire.legacy.__version__.replace(".", "")) < min_ver_int:
-        raise ImportError(
-            "BioSimSpace requires Sire version '%s' or above." % min_ver
-        )
+        raise ImportError("BioSimSpace requires Sire version '%s' or above." % min_ver)
 
 from setuptools import setup, find_packages
 
@@ -144,12 +142,8 @@ finally:
 
             if not os.path.exists(conda_exe):
                 # This could be in an environment
-                conda_exe = os.path.join(
-                    bin_dir, "..", "..", "..", "bin", "mamba"
-                )
-                real_conda_exe = os.path.join(
-                    bin_dir, "..", "..", "..", "bin", "conda"
-                )
+                conda_exe = os.path.join(bin_dir, "..", "..", "..", "bin", "mamba")
+                real_conda_exe = os.path.join(bin_dir, "..", "..", "..", "bin", "conda")
 
                 if not os.path.exists(conda_exe):
                     if not os.path.exists(real_conda_exe):
@@ -172,10 +166,7 @@ finally:
         posix = sys.platform != "win32"
 
         print("Adding conda-forge channel")
-        command = (
-            "%s config --system --prepend channels conda-forge"
-            % real_conda_exe
-        )
+        command = "%s config --system --prepend channels conda-forge" % real_conda_exe
         print(command)
         try:
             subprocess.run(
@@ -188,9 +179,7 @@ finally:
             print(f"Something went wrong ({e}). Continuing regardless...")
 
         print("Disabling conda auto update")
-        command = (
-            "%s config --system --set auto_update_conda false" % real_conda_exe
-        )
+        command = "%s config --system --set auto_update_conda false" % real_conda_exe
         print(command)
         try:
             subprocess.run(
@@ -271,9 +260,7 @@ finally:
             stdout=stdout,
             stderr=stderr,
         )
-        command = (
-            "%s/jupyter-nbextension enable nglview --py --sys-prefix" % bin_dir
-        )
+        command = "%s/jupyter-nbextension enable nglview --py --sys-prefix" % bin_dir
         subprocess.run(
             shlex.split(command, posix=posix),
             shell=False,

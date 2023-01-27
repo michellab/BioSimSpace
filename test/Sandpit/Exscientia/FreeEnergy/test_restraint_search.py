@@ -46,9 +46,7 @@ def test_run_Gromacs():
         ]
     ).getMolecule(0)
     decouple_ligand = decouple(ligand)
-    protocol = BSS.Protocol.Production(
-        runtime=BSS.Types.Time(8, "FEMTOSECOND")
-    )
+    protocol = BSS.Protocol.Production(runtime=BSS.Types.Time(8, "FEMTOSECOND"))
     restraint_search = RestraintSearch(
         decouple_ligand.toSystem(), protocol=protocol, engine="GROMACS"
     )
