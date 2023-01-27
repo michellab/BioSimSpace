@@ -87,7 +87,7 @@ In particular:
   :class:`BioSimSpace.FreeEnergy <BioSimSpace.FreeEnergy>`. Here a ``run``
   method orchestrates the separate processes that are required by overall
   simulation. This means that the free-energy objects themselves, e.g.
-  :class:`BioSimSpace.FreeEnergy.Binding <BioSimSpace.FreeEnergy.Binding>`,
+  :class:`BioSimSpace.FreeEnergy.Relative <BioSimSpace.FreeEnergy.Relative>`,
   can be thought of as a high-level protocol for the simulation method, with
   low-level protocols used to implement the specific stages of the simulation.
 * :ref:`Metadynamics <ref-Metadynamics>` support is provided via a molecular
