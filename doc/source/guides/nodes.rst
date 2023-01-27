@@ -111,7 +111,7 @@ user interface for interactive use in Jupyter, or a custom
 handling command-line arguments. The following figure shows the example node
 above running within a Jupyter notebook (top) and from the command-line (bottom).
 
-.. image:: _static/node.png
+.. image:: ../_static/node.png
    :width: 800px
    :align: center
 
@@ -289,7 +289,7 @@ option of argparse on the command-line (bottom). This means that the script is
 adaptive to the support of additional file parsers in future without need for
 modification.
 
-.. image:: _static/forwards_compatibility.png
+.. image:: ../_static/forwards_compatibility.png
    :width: 800px
    :align: center
 
