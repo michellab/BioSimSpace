@@ -62,8 +62,7 @@ Detailed Guides
 .. toctree::
    :maxdepth: 2
 
-   nodes
-   protocols
+   guides/index
 
 Documentation
 =============
