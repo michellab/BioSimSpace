@@ -28,18 +28,37 @@ perform an energy minimisation on a molecular system loaded from file:
     node = BSS.Gateway.Node("Minimise a molecular system and save to file.")
 
     # Set the node author and license.
-    node.addAuthor(name="Lester Hedges",
-                   email="lester.hedges@bristol.ac.uk",
-                   affiliation="University of Bristol")
+    node.addAuthor(
+        name="Lester Hedges",
+        email="lester@openbiosim.org",
+        affiliation="OpenBioSim"
+    )
     node.setLicense("GPLv3")
 
     # Set the node inputs.
-    node.addInput("files", BSS.Gateway.FileSet(help="A set of molecular input files."))
-    node.addInput("steps", BSS.Gateway.Integer(help="The number of minimisation steps.",
-                                               minimum=0, maximum=1000000, default=10000))
+    node.addInput(
+        "files",
+        BSS.Gateway.FileSet(
+            help="A set of molecular input files."
+        )
+    )
+    node.addInput(
+        "steps",
+        BSS.Gateway.Integer(
+            help="The number of minimisation steps.",
+            minimum=0,
+            maximum=1000000,
+            default=10000
+        )
+    )
 
     # Set the node outputs.
-    node.addOutput("minimised", BSS.Gateway.FileSet(help="The minimised molecular system."))
+    node.addOutput(
+        "minimised",
+        BSS.Gateway.FileSet(
+            help="The minimised molecular system."
+        )
+    )
 
     # Show the graphical user interface (GUI) to allow the user to set the inputs.
     # This will only happen if running interactively, i.e. in a Jupyter notebook.
@@ -59,8 +78,14 @@ perform an energy minimisation on a molecular system loaded from file:
     # process finished before getting the final configuration. (It is possible
     # to query the running process in real time when running interactively.)
     # Note that the original file format of the system is preserved on write.
-    node.setOutput("minimised", BSS.IO.saveMolecules("minimised",
-        process.getSystem(block=True), system.fileFormat()))
+    node.setOutput(
+        "minimised",
+        BSS.IO.saveMolecules(
+            "minimised",
+            process.getSystem(block=True),
+            system.fileFormat()
+        )
+    )
 
     # Finally, validate the node to make sure that outputs are set correctly
     # and no errors have been raised. If running interactively, this will
@@ -205,18 +230,33 @@ additional formats are added.
     node = BSS.Gateway.Node("Convert between molecular file formats.")
 
     # Set the node author and license.
-    node.addAuthor(name="Lester Hedges",
-                   email="lester.hedges@bristol.ac.uk",
-                   affiliation="University of Bristol")
+    node.addAuthor(
+        name="Lester Hedges",
+        email="lester@openbiosim.org",
+        affiliation="OpenBioSim"
+    )
     node.setLicense("GPLv3")
 
     # Set the node inputs.
-    node.addInput("files", BSS.Gateway.FileSet(help="A set of molecular input files."))
-    node.addInput("file_format", BSS.Gateway.String(help="The format to convert to.",
-                                                    allowed=BSS.IO.fileFormats()))
+    node.addInput(
+        "files",
+        BSS.Gateway.FileSet(
+            help="A set of molecular input files."
+        )
+    )
+    node.addInput(
+        "file_format",
+        BSS.Gateway.String(
+            help="The format to convert to.",
+            allowed=BSS.IO.fileFormats()
+        )
+    )
 
     # Set the node outputs.
-    node.addOutput("converted", BSS.Gateway.File(help="The converted file."))
+    node.addOutput(
+        "converted",
+        BSS.Gateway.File(help="The converted file.")
+    )
 
     # Show the graphical user interface to allow the user to set the inputs.
     # This will only happen if running interactively, i.e. in a Jupyter notebook.
@@ -226,8 +266,13 @@ additional formats are added.
     system = BSS.IO.readMolecules(node.getInput("files"))
 
     # Convert the system to the chosen format and set the output.
-    node.setOutput("converted",
-        BSS.IO.saveMolecules("converted", system, node.getInput("file_format")))
+    node.setOutput(
+        "converted",
+        BSS.IO.saveMolecules(
+            "converted",
+            system, node.getInput("file_format")
+        )
+    )
 
     # Validate the node.
     node.validate()
