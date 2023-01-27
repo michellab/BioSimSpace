@@ -15,7 +15,7 @@ doing the following:
    work together to share and help each other with our problems.
 
 2. If your issue hasn't been posted, please double-check that
-   there isn't anything in the :doc:`tutorial <tutorial/index>`
+   there isn't anything in the :doc:`tutorials <tutorials/index>`
    or :doc:`API documentation <api/index>`, or anywhere
    else in this website that could help you.
 
