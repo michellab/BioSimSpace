@@ -9,7 +9,7 @@ Import :mod:`BioiSmSpace` using
 Load a molecular system from a URL, via :func:`BioSimSpace.IO.readMolecules`.
 
 >>> url = BSS.tutorialUrl()
->>> system = BSS.IO.readMolecules(["f{url}/ala.top", f"{url}/ala.crd"])
+>>> system = BSS.IO.readMolecules([f"{url}/ala.top", f"{url}/ala.crd"])
 
 .. note ::
 
