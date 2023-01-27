@@ -245,4 +245,5 @@ modification.
 Examples
 ========
 
-A set of example nodes are available on our :ref:`notebook server <ref_notebook>`.
+A set of example nodes are available along with the `demos <https://github.com/OpenBioSim/biosimspace/tree/devel/demo>`__
+in our GitHub repository.
