@@ -69,27 +69,12 @@ Documentation
 
    api/index
 
-Development
-===========
-.. toctree::
-   :maxdepth: 2
-
-   development
-   changelog
-
 Nodes
 =====
 .. toctree::
    :maxdepth: 2
 
    nodes
-
-Notebook server
-===============
-.. toctree::
-   :maxdepth: 2
-
-   notebook
 
 Protocols
 =========
@@ -101,9 +86,30 @@ Protocols
 Support
 =======
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    support
+
+Contributing
+============
+.. toctree::
+   :maxdepth: 2
+
+   contributing/index
+   contributors
+
+.. toctree::
+   :maxdepth: 1
+
+   code_of_conduct
+
+Changelog
+=========
+
+.. toctree::
+   :maxdepth: 1
+
+   changelog
 
 Indices and tables
 ==================
