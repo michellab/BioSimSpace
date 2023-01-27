@@ -27,6 +27,7 @@ print(run_reqs)
 build_reqs = parse_requirements(os.path.join(srcdir, "requirements_build.txt"))
 print(build_reqs)
 
+
 def run_cmd(cmd):
     p = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE)
     return str(p.stdout.read().decode("utf-8")).lstrip().rstrip()
