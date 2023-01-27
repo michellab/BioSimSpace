@@ -1,8 +1,25 @@
 Changelog
 =========
 
+OpenBioSim
+----------
+
+:mod:`BioSimSpace` is supported by `OpenBioSim <https://openbiosim.org>`__, a community interest
+company supporting open-source development of fostering academic/industrial collaboration
+within the biomolecular simulation community. Our software is hosted via the `OpenBioSim`
+`<GitHub <https://github.com/OpenBioSim/biosimspace>`__ organisation.
+
+`2023.1.0 <https://github.com/openbiosim/biosimspace/compare/2023.1.0...2022.3.0>`_ - January 31 2023
+-----------------------------------------------------------------------------------------------------
+
+Michellab
+---------
+
+Prior to January 2023, :mod:`BioSimSpace` was hosted within the `michellab <https://github.com/michellab/BioSimSpace>`__
+GitHub organisation. The following releases were made during that time.
+
 `2022.3.0 <https://github.com/openbiosim/biosimspace/compare/2022.2.1...2022.3.0>`_ - Sep 28 2022 (Pre-release)
---------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------
 
 * Improved NAMD restraint implementation for consistency with other engines.
 * Make sure we wait for ``trjconv`` to finish when calling as a sub-process.
@@ -15,13 +32,13 @@ Changelog
 * Update BioSimSpace to work with the new Sire 2023.0.0 Python API.
 
 `2022.2.1 <https://github.com/openbiosim/biosimspace/compare/2022.2.0...2022.2.1>`_ - Mar 30 2022
-------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------
 
 * Fix performance issues when ensuring unique molecule numbering when adding molecules to ``BioSimSpace._SireWrappers.System`` and ``BioSimSpace._SireWrappers.Molecules`` objects.
 * Fix extraction of box vector magnitudes for triclinic boxes.
 
 `2022.2.0 <https://github.com/openbiosim/biosimspace/compare/2022.1.0...2022.2.0>`_ - Mar 24 2022
-------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------
 
 * Use fast C++ wrappers for updating coordinates and velocities during SOMD simulations.
 * Fix import issues caused by change in module layout for conda-forge OpenMM package.
@@ -34,7 +51,7 @@ Changelog
 * Catch and handle possible GSL error during singular valued decomposition routine used for molecular alignment.
 
 `2022.1.0 <https://github.com/openbiosim/biosimspace/compare/2020.1.0...2022.1.0>`_ - Jan 26 2022
-------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------
 
 * Added basic support for cleaning PDB files with `pdb4amber <https://github.com/Amber-MD/pdb4amber>`_ prior to read.
 * Added basic support for exporting BioSimSpace Nodes as Common Workflow Language wrappers.
@@ -51,7 +68,7 @@ Changelog
 * Switch continuous integration to GitHub actions using conda-forge compliant build and upload to Anaconda cloud.
 
 `2020.1.0 <https://github.com/openbiosim/biosimspace/compare/2019.3.0...2020.1.0>`_ - July 28 2020
--------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------
 
 * Added logo to website and update theme (`@ppxasjsm <https://github.com/ppxasjsm>`_).
 * Make sure potential terms are sorted when writing to SOMD perturbation files (`@ptosco <https://github.com/ptosco>`_).
@@ -64,7 +81,7 @@ Changelog
 * Make sure BioSimSpace is always built against the latest version of Sire during conda build.
 
 `2019.3.0 <https://github.com/openbiosim/biosimspace/compare/2019.2.0...2019.3.0>`_ - Nov 22 2019
-------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------
 
 * Make FKCOMBU download during conda build resilient to server downtime.
 * Added support for xtc trajectory files and custom protocols with GROMACS.
@@ -72,7 +89,7 @@ Changelog
 * Added Journal of Open Source Software paper.
 
 `2019.2.0 <https://github.com/openbiosim/biosimspace/compare/2019.1.0...2019.2.0>`_ - Sep 11 2019
-------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------
 
 * Switched to using `RDKit <https://www.rdkit.org/>`_ for maximum common substructure (MCS) mappings.
 * Handle perturbable molecules for non free-energy protocols with SOMD and GROMACS.
@@ -85,7 +102,7 @@ Changelog
 * Performance improvements for searching, indexing, and extracting objects from molecular containers, e.g. System, Molecule.
 
 `2019.1.0 <https://github.com/openbiosim/biosimspace/compare/2018.1.1...2019.1.0>`_ - May 02 2019
-------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------
 
 * Added support for parameterising proteins and ligands.
 * Added support for solvating molecular systems.
@@ -95,7 +112,7 @@ Changelog
 * Created automatic Conda package pipeline.
 
 `2018.1.1 <https://github.com/openbiosim/biosimspace/compare/2018.1.0...2018.1.1>`_ - May 02 2018
-------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------
 
 * Fixed conda NetCDF issue on macOS. Yay for managing `python environments <https://xkcd.com/1987>`_\ !
 * Install conda `ambertools <https://anaconda.org/AmberMD/ambertools>`_ during `setup <python/setup.py>`_.
