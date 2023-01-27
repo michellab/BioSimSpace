@@ -141,6 +141,14 @@ finally:
             real_conda_exe = os.path.join(bin_dir, "conda")
 
             if not os.path.exists(conda_exe):
+                # This could be in an environment
+                conda_exe = os.path.join(bin_dir, "..", "..", "..", "bin", "mamba")
+                real_conda_exe = os.path.join(bin_dir, "..", "..", "..", "bin", "conda")
+
+                if not os.path.exists(conda_exe):
+                    if not os.path.exists(real_conda_exe):
+                        real_conda_exe = os.path.join(bin_dir, "conda")
+
                 conda_exe = real_conda_exe
 
         for dep in conda_deps:
@@ -247,17 +255,26 @@ finally:
             % bin_dir
         )
         subprocess.run(
-            shlex.split(command, posix=posix), shell=False, stdout=stdout, stderr=stderr
+            shlex.split(command, posix=posix),
+            shell=False,
+            stdout=stdout,
+            stderr=stderr,
         )
         command = "%s/jupyter-nbextension enable nglview --py --sys-prefix" % bin_dir
         subprocess.run(
-            shlex.split(command, posix=posix), shell=False, stdout=stdout, stderr=stderr
+            shlex.split(command, posix=posix),
+            shell=False,
+            stdout=stdout,
+            stderr=stderr,
         )
 
         print("Cleaning conda environment")
         command = "%s clean --all --yes --quiet" % conda_exe
         subprocess.run(
-            shlex.split(command, posix=posix), shell=False, stdout=stdout, stderr=stderr
+            shlex.split(command, posix=posix),
+            shell=False,
+            stdout=stdout,
+            stderr=stderr,
         )
 
         # We can't install BioSimSpace here because it confuses the Sire old/new/mixed API

@@ -4,9 +4,19 @@ import pytest
 import BioSimSpace.Sandpit.Exscientia as BSS
 from BioSimSpace.Sandpit.Exscientia.Protocol import FreeEnergyMinimisation
 from BioSimSpace.Sandpit.Exscientia.Align._decouple import decouple
+from BioSimSpace.Sandpit.Exscientia._Utils import _try_import, _have_imported
 
-# Make sure GROMSCS is installed.
+# Make sure GROMACS is installed.
 has_gromacs = BSS._gmx_exe is not None
+
+# Make sure antechamber is installed.
+has_antechamber = BSS.Parameters._Protocol._amber._antechamber_exe is not None
+
+# Make sure openff is installed.
+_openff = _try_import("openff")
+
+has_openff = _have_imported(_openff)
+
 
 # Store the tutorial URL.
 url = BSS.tutorialUrl()
@@ -121,6 +131,10 @@ class TestGromacsRBFE:
             assert "init-lambda-state = 6" in mdp_text
 
 
+@pytest.mark.skipif(
+    has_antechamber is False or has_openff is False,
+    reason="Requires ambertools/antechamber and openff to be installed",
+)
 class TestGromacsABFE:
     @staticmethod
     @pytest.fixture(scope="class")

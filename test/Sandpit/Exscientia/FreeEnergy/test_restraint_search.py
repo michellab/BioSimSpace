@@ -1,19 +1,27 @@
 import pytest
 
-import MDAnalysis as mda
 import numpy as np
 
 import BioSimSpace.Sandpit.Exscientia as BSS
 from BioSimSpace.Sandpit.Exscientia.Align import decouple
-from BioSimSpace.Sandpit.Exscientia.FreeEnergy import RestraintSearch, Restraint
+from BioSimSpace.Sandpit.Exscientia.FreeEnergy import (
+    RestraintSearch,
+    Restraint,
+)
 from BioSimSpace.Sandpit.Exscientia.Trajectory import Trajectory
 from BioSimSpace.Sandpit.Exscientia.Units.Length import nanometer
 from BioSimSpace.Sandpit.Exscientia.Units.Angle import degree
 
 from BioSimSpace.Sandpit.Exscientia._Utils import _try_import, _have_imported
 
+mda = _try_import("MDAnalysis")
+
+has_mdanalysis = _have_imported(mda)
+
+
 _MDRestraintsGenerator = _try_import(
-    "MDRestraintsGenerator", install_command="pip install MDRestraintsGenerator"
+    "MDRestraintsGenerator",
+    install_command="pip install MDRestraintsGenerator",
 )
 
 is_MDRestraintsGenerator = _have_imported(_MDRestraintsGenerator)
@@ -25,7 +33,10 @@ has_gromacs = BSS._gmx_exe is not None
 url = BSS.tutorialUrl()
 
 
-@pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
+@pytest.mark.skipif(
+    (has_gromacs is False or has_mdanalysis is False),
+    reason="Requires GROMACS and MDAnalysis to be installed.",
+)
 def test_run_Gromacs():
     "Test if the normal run works on Gromacs"
     ligand = BSS.IO.readMolecules(
@@ -56,8 +67,12 @@ class Trajectory(Trajectory):
 
 
 @pytest.mark.skipif(
-    (is_MDRestraintsGenerator is False or has_gromacs is False),
-    reason="Requires MDRestraintsGenerator and Gromacs to be installed.",
+    (
+        is_MDRestraintsGenerator is False
+        or has_gromacs is False
+        or has_mdanalysis is False
+    ),
+    reason="Requires MDRestraintsGenerator, MDAnalysis and Gromacs to be installed.",
 )
 class TestMDRestraintsGenerator_analysis:
     @staticmethod
@@ -77,11 +92,16 @@ class TestMDRestraintsGenerator_analysis:
 
         protocol = BSS.Protocol.Production()
         restraint_search = BSS.FreeEnergy.RestraintSearch(
-            new_system, protocol=protocol, engine="GROMACS", work_dir=str(outdir)
+            new_system,
+            protocol=protocol,
+            engine="GROMACS",
+            work_dir=str(outdir),
         )
         restraint_search._process.getTrajectory = lambda: Trajectory()
         restraint = restraint_search.analyse(
-            method="MDRestraintsGenerator", restraint_type="Boresch", block=False
+            method="MDRestraintsGenerator",
+            restraint_type="Boresch",
+            block=False,
         )
         return restraint, outdir
 
