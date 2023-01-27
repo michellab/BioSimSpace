@@ -45,21 +45,25 @@ If you use BioSimSpace in any scientific software, please cite the following pap
 .. |DOI for Citing BioSimSpace| image:: https://joss.theoj.org/papers/4ba84ad443693b5dded90e35bf5f8225/status.svg
    :target: https://joss.theoj.org/papers/4ba84ad443693b5dded90e35bf5f8225
 
-Installation
-============
+Quick Start
+===========
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
+   features
    install
+   compatibility
+   quickstart/index
 
-Compatibility
-=============
+Detailed Guides
+===============
 
 .. toctree::
    :maxdepth: 2
 
-   compatibility
+   nodes
+   protocols
 
 Documentation
 =============
@@ -68,20 +72,6 @@ Documentation
    :maxdepth: 2
 
    api/index
-
-Nodes
-=====
-.. toctree::
-   :maxdepth: 2
-
-   nodes
-
-Protocols
-=========
-.. toctree::
-   :maxdepth: 2
-
-   protocols
 
 Support
 =======
