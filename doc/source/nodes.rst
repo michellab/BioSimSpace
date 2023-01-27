@@ -144,7 +144,13 @@ For example, the minimisation node can be run from within BioSimSpace as follows
 .. code-block:: python
 
     # Create a dictionary of inputs to the node.
-    input = {"files" : ["amber/ala.crd", "amber/ala.top"], "steps" : 1000}
+    input = {
+        "files" : [
+            "amber/ala.crd",
+            "amber/ala.top"
+        ], 
+        "steps" : 1000
+    }
 
     # Run the node and capture the output as a dictionary.
     output = BSS.Node.run("minimisation", input)
