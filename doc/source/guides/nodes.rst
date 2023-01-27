@@ -186,8 +186,8 @@ Here ``config.yaml`` is a YAML configuration file, e.g.:
 .. code-block:: yaml
 
     files:
-      - {class: File, path: /home/lester/BioSimSpace/demo/amber/ala/ala.top}
-      - {class: File, path: /home/lester/BioSimSpace/demo/amber/ala/ala.crd}
+      - {class: File, path: /home/lester/biosimspace/demo/amber/ala/ala.top}
+      - {class: File, path: /home/lester/biosimspace/demo/amber/ala/ala.crd}
 
     steps:
       1000
