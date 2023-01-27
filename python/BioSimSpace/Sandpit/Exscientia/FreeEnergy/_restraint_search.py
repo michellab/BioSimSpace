@@ -35,9 +35,6 @@ import sys as _sys
 import tempfile as _tempfile
 import warnings as _warnings
 
-import MDAnalysis as _mda
-from MDAnalysis.analysis.distances import dist as _dist
-from MDAnalysis.lib.distances import calc_dihedrals as _calc_dihedrals
 from numpy.linalg import norm as _norm
 import matplotlib.pyplot as _plt
 
@@ -67,8 +64,17 @@ from ..MD._md import _find_md_engines
 if _is_notebook:
     from IPython.display import FileLink as _FileLink
 
+
+_mda = _try_import("MDAnalysis")
+
+if _have_imported(_mda):
+    from MDAnalysis.analysis.distances import dist as _dist
+    from MDAnalysis.lib.distances import calc_dihedrals as _calc_dihedrals
+
+
 _MDRestraintsGenerator = _try_import(
-    "MDRestraintsGenerator", install_command="pip install MDRestraintsGenerator"
+    "MDRestraintsGenerator",
+    install_command="pip install MDRestraintsGenerator",
 )
 if _have_imported(_MDRestraintsGenerator):
     from MDRestraintsGenerator import search as _search
@@ -173,6 +179,11 @@ class RestraintSearch:
         """
 
         # Validate the input.
+        if not _have_imported(_mda):
+            raise _MissingSoftwareError(
+                "Cannot perform a RestraintSearch because MDAnalysis is "
+                "not installed!"
+            )
 
         if not isinstance(system, _System):
             raise TypeError(
@@ -253,7 +264,9 @@ class RestraintSearch:
 
             elif engine == "AMBER":
                 # Find a molecular dynamics engine and executable.
-                engines, exes = _find_md_engines(system, protocol, engine, gpu_support)
+                engines, exes = _find_md_engines(
+                    system, protocol, engine, gpu_support
+                )
                 if not exes:
                     raise _MissingSoftwareError(
                         "Cannot use AMBER engine as AMBER is not installed!"
@@ -411,7 +424,9 @@ class RestraintSearch:
         # Convert to an appropriate AMBER topology. (Required by SOMD for its
         # FEP setup.)
         if self._engine == "SOMD":
-            system._set_water_topology("AMBER", property_map=self._property_map)
+            system._set_water_topology(
+                "AMBER", property_map=self._property_map
+            )
 
         # Setup all of the simulation processes.
 
@@ -602,7 +617,9 @@ class RestraintSearch:
         decoupled_mol = _system.getDecoupledMolecules()[0]
         decoupled_resname = decoupled_mol.getResidues()[0].name()
 
-        ligand_selection_str = f"((resname {decoupled_resname}) and (not name H*))"
+        ligand_selection_str = (
+            f"((resname {decoupled_resname}) and (not name H*))"
+        )
         if append_to_ligand_selection:
             ligand_selection_str += " and "
             ligand_selection_str += append_to_ligand_selection
@@ -688,9 +705,7 @@ class RestraintSearch:
                         work_dir,
                     )
                 except Exception as e:
-                    msg = (
-                        "Failed to generate the restraint using MDRestraintsGenerator."
-                    )
+                    msg = "Failed to generate the restraint using MDRestraintsGenerator."
                     if _isVerbose():
                         msg += ": " + getattr(e, "message", repr(e))
                         raise IOError(msg) from e
@@ -713,7 +728,12 @@ class RestraintSearch:
 
     @staticmethod
     def _boresch_restraint_MDRestraintsGenerator(
-        u, system, temperature, ligand_selection_str, receptor_selection_str, work_dir
+        u,
+        system,
+        temperature,
+        ligand_selection_str,
+        receptor_selection_str,
+        work_dir,
     ):
         """
         Generate the Boresch Restraint using MDRestraintsGenerator.
@@ -924,13 +944,15 @@ class RestraintSearch:
                     _mda.AtomGroup([u.atoms[prot_atom_index]]),
                     box=frame.dimensions,
                 )[2][0]
-                anchors_dict[(lig_atom_index, prot_atom_index)]["dists"].append(
-                    distance
-                )
+                anchors_dict[(lig_atom_index, prot_atom_index)][
+                    "dists"
+                ].append(distance)
 
         # change lists to numpy arrays
         for pair in anchors_dict.keys():
-            anchors_dict[pair]["dists"] = _np.array(anchors_dict[pair]["dists"])
+            anchors_dict[pair]["dists"] = _np.array(
+                anchors_dict[pair]["dists"]
+            )
 
         # calculate average and SD
         for pair in anchors_dict.keys():
@@ -939,7 +961,9 @@ class RestraintSearch:
 
         # get n pairs with lowest SD
         pairs_ordered_sd = []
-        for item in sorted(anchors_dict.items(), key=lambda item: item[1]["sd_dist"]):
+        for item in sorted(
+            anchors_dict.items(), key=lambda item: item[1]["sd_dist"]
+        ):
             pairs_ordered_sd.append(item[0])
             # print(f'Pair: {item[0]}, av distance: {item[1]["avg_dist"]:.2f}, SD: {item[1]["sd_dist"]:.2f}')
 
@@ -975,7 +999,9 @@ class RestraintSearch:
             else:
                 # at end of chain, get next heavy atom along
                 a3_idx = (
-                    bonded_heavy_at[0].bonded_atoms.select_atoms("not name H*")[0].index
+                    bonded_heavy_at[0]
+                    .bonded_atoms.select_atoms("not name H*")[0]
+                    .index
                 )
 
             return a1_idx, a2_idx, a3_idx
@@ -1003,9 +1029,15 @@ class RestraintSearch:
 
         def getDihedral(idx1, idx2, idx3, idx4, u):
             """Dihedral in radian."""
-            positions = [u.atoms[idx].position for idx in [idx1, idx2, idx3, idx4]]
+            positions = [
+                u.atoms[idx].position for idx in [idx1, idx2, idx3, idx4]
+            ]
             dihedral = _calc_dihedrals(
-                positions[0], positions[1], positions[2], positions[3], box=u.dimensions
+                positions[0],
+                positions[1],
+                positions[2],
+                positions[3],
+                box=u.dimensions,
             )
             return dihedral
 
@@ -1074,7 +1106,16 @@ class RestraintSearch:
             for i, frame in enumerate(
                 u.trajectory
             ):  # TODO: Use MDA.analysis.base instead?
-                r, thetaA, thetaB, phiA, phiB, phiC, thetaR, thetaL = getBoreschDof(
+                (
+                    r,
+                    thetaA,
+                    thetaB,
+                    phiA,
+                    phiB,
+                    phiC,
+                    thetaR,
+                    thetaL,
+                ) = getBoreschDof(
                     l1_idx, l2_idx, l3_idx, r1_idx, r2_idx, r3_idx, u
                 )
                 boresch_dof_dict[pair]["r"]["values"].append(r)
@@ -1092,9 +1133,9 @@ class RestraintSearch:
                         boresch_dof_dict[pair][dof]["values"] = _np.array(
                             boresch_dof_dict[pair][dof]["values"]
                         )
-                        boresch_dof_dict[pair][dof]["avg"] = boresch_dof_dict[pair][
-                            dof
-                        ]["values"].mean()
+                        boresch_dof_dict[pair][dof]["avg"] = boresch_dof_dict[
+                            pair
+                        ][dof]["values"].mean()
                         # For dihedrals, compute variance and mean based on list of values corrected for periodic boundary at
                         # pi radians, because there is no problem with dihedrals in this region
                         if dof[:3] == "phi":
@@ -1107,7 +1148,9 @@ class RestraintSearch:
                                 corrected_values_sd.append(
                                     min(dtheta, 2 * _np.pi - dtheta)
                                 )
-                            corrected_values_sd = _np.array(corrected_values_sd)
+                            corrected_values_sd = _np.array(
+                                corrected_values_sd
+                            )
                             boresch_dof_dict[pair][dof][
                                 "sd"
                             ] = corrected_values_sd.std()
@@ -1122,10 +1165,14 @@ class RestraintSearch:
                             # shift vals from below periodic bound to above
                             for val in boresch_dof_dict[pair][dof]["values"]:
                                 if val < periodic_bound:
-                                    corrected_values_avg.append(val + 2 * _np.pi)
+                                    corrected_values_avg.append(
+                                        val + 2 * _np.pi
+                                    )
                                 else:
                                     corrected_values_avg.append(val)
-                            corrected_values_avg = _np.array(corrected_values_avg)
+                            corrected_values_avg = _np.array(
+                                corrected_values_avg
+                            )
                             mean_corrected = corrected_values_avg.mean()
                             # shift mean back to normal range
                             if mean_corrected > _np.pi:
@@ -1133,12 +1180,14 @@ class RestraintSearch:
                                     mean_corrected - 2 * _np.pi
                                 )
                             else:
-                                boresch_dof_dict[pair][dof]["avg"] = mean_corrected
+                                boresch_dof_dict[pair][dof][
+                                    "avg"
+                                ] = mean_corrected
 
                         else:
-                            boresch_dof_dict[pair][dof]["sd"] = boresch_dof_dict[pair][
-                                dof
-                            ]["values"].std()
+                            boresch_dof_dict[pair][dof][
+                                "sd"
+                            ] = boresch_dof_dict[pair][dof]["values"].std()
                         # Exclude variance of internal angles as these are not restrained
                         if dof != "thetaR" and dof != "thetaL":
                             boresch_dof_dict[pair]["tot_var"] += (
@@ -1172,7 +1221,9 @@ class RestraintSearch:
             ]  # May also be good to check internal angles, although will be much stiffer
             for angle in angles:
                 avg_angles.append(boresch_dof_dict[pair][angle]["avg"])
-            cond_angles = list(map(lambda x: (x < 2.62 and x > 0.52), avg_angles))
+            cond_angles = list(
+                map(lambda x: (x < 2.62 and x > 0.52), avg_angles)
+            )
             if cond_dist and all(cond_angles):
                 selected_pairs_boresch.append(pair)
 
@@ -1211,7 +1262,9 @@ class RestraintSearch:
         # Plot variation with time to see if there are slow DOF
         fig, axs = _plt.subplots(1, n_dof, figsize=(16, 4), dpi=500)
         for i, dof in enumerate(dof_to_plot):
-            axs[i].plot([x for x in range(300)], boresch_dof_dict[pair][dof]["values"])
+            axs[i].plot(
+                [x for x in range(300)], boresch_dof_dict[pair][dof]["values"]
+            )
             if dof == "r":
                 axs[i].set_ylabel("r ($\AA$)")
             else:
@@ -1248,7 +1301,9 @@ class RestraintSearch:
 
             # Check we have found all anchors
             if not len(anchor_ats) == 6:
-                raise _AnalysisError("Could not find all anchor atoms in system")
+                raise _AnalysisError(
+                    "Could not find all anchor atoms in system"
+                )
 
             # Get remaining parameters
             r0 = boresch_dof_dict[pair]["r"]["avg"]
