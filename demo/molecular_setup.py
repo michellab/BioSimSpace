@@ -2,7 +2,7 @@
 # coding: utf-8
 
 # Author: Lester Hedges<br>
-# Email:&nbsp;&nbsp; lester.hedges@bristol.ac.uk
+# Email:&nbsp;&nbsp; lester@openbiosim.org
 #
 # # Molecular setup
 #
@@ -33,8 +33,8 @@ node = BSS.Gateway.Node(
 
 node.addAuthor(
     name="Lester Hedges",
-    email="lester.hedges@bristol.ac.uk",
-    affiliation="University of Bristol",
+    email="lester@openbiosim.org",
+    affiliation="OpenBioSim",
 )
 node.setLicense("GPLv3")
 
