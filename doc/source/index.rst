@@ -56,6 +56,14 @@ Quick Start
    compatibility
    quickstart/index
 
+Tutorials
+========
+
+.. toctree::
+   :maxdepth: 2
+
+   tutorials/index
+
 Detailed Guides
 ===============
 
