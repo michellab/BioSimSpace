@@ -57,7 +57,7 @@ Quick Start
    quickstart/index
 
 Tutorials
-========
+=========
 
 .. toctree::
    :maxdepth: 2
