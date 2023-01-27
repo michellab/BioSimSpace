@@ -29,6 +29,11 @@ Context managers
     :toctree: generated/
 
     cd
+    command_split
+    _module_stub
+    _try_import
+    _have_imported
+    _assert_imported
 """
 
 from ._contextmanagers import *
