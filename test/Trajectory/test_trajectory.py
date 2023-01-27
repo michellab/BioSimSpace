@@ -10,6 +10,15 @@ except Exception:
 
 import pytest
 
+from BioSimSpace.Sandpit.Exscientia._Utils import _try_import, _have_imported
+
+_mdanalysis = _try_import("MDAnalysis")
+have_mdanalysis = _have_imported(_mdanalysis)
+
+_mdtraj = _try_import("mdtraj")
+have_mdtraj = _have_imported(_mdtraj)
+
+
 # Store the tutorial URL.
 url = BSS.tutorialUrl()
 
@@ -52,11 +61,19 @@ def traj_mdanalysis_pdb(system):
     )
 
 
+@pytest.mark.skipif(
+    have_mdanalysis is False or have_mdtraj is False,
+    reason="Requires MDAnalysis and mdtraj to be installed.",
+)
 def test_frames(traj_mdtraj, traj_mdanalysis):
     """Make sure that the number of frames loaded by each backend agree."""
     assert traj_mdtraj.nFrames() == traj_mdanalysis.nFrames()
 
 
+@pytest.mark.skipif(
+    have_mdanalysis is False or have_mdtraj is False,
+    reason="Requires MDAnalysis and mdtraj to be installed.",
+)
 def test_coords(traj_mdtraj, traj_mdanalysis):
     """Make sure that frames from both backends have comparable coordinates."""
 
@@ -68,11 +85,21 @@ def test_coords(traj_mdtraj, traj_mdanalysis):
     for system0, system1 in zip(frames0, frames1):
         for mol0, mol1 in zip(system0, system1):
             for c0, c1 in zip(mol0.coordinates(), mol1.coordinates()):
-                assert c0.x().value() == pytest.approx(c1.x().value(), abs=1e-2)
-                assert c0.y().value() == pytest.approx(c1.y().value(), abs=1e-2)
-                assert c0.z().value() == pytest.approx(c1.z().value(), abs=1e-2)
+                assert c0.x().value() == pytest.approx(
+                    c1.x().value(), abs=1e-2
+                )
+                assert c0.y().value() == pytest.approx(
+                    c1.y().value(), abs=1e-2
+                )
+                assert c0.z().value() == pytest.approx(
+                    c1.z().value(), abs=1e-2
+                )
 
 
+@pytest.mark.skipif(
+    have_mdanalysis is False or have_mdtraj is False,
+    reason="Requires MDAnalysis and mdtraj to be installed.",
+)
 def test_coords_pdb(traj_mdtraj, traj_mdanalysis_pdb):
     """Make sure that frames from both backends have comparable coordinates
     when a PDB intermediate topology is used for reconstruction."""
@@ -85,11 +112,20 @@ def test_coords_pdb(traj_mdtraj, traj_mdanalysis_pdb):
     for system0, system1 in zip(frames0, frames1):
         for mol0, mol1 in zip(system0, system1):
             for c0, c1 in zip(mol0.coordinates(), mol1.coordinates()):
-                assert c0.x().value() == pytest.approx(c1.x().value(), abs=1e-2)
-                assert c0.y().value() == pytest.approx(c1.y().value(), abs=1e-2)
-                assert c0.z().value() == pytest.approx(c1.z().value(), abs=1e-2)
+                assert c0.x().value() == pytest.approx(
+                    c1.x().value(), abs=1e-2
+                )
+                assert c0.y().value() == pytest.approx(
+                    c1.y().value(), abs=1e-2
+                )
+                assert c0.z().value() == pytest.approx(
+                    c1.z().value(), abs=1e-2
+                )
 
 
+@pytest.mark.skipif(
+    have_mdanalysis is False, reason="Requires MDAnalysis to be installed."
+)
 def test_velocities(traj_mdanalysis):
     """Make sure that the MDAnalysis format trajectory contains velocities."""
 
@@ -102,6 +138,10 @@ def test_velocities(traj_mdanalysis):
             assert mol._sire_object.hasProperty("velocity")
 
 
+@pytest.mark.skipif(
+    have_mdanalysis is False or have_mdtraj is False,
+    reason="Requires MDAnalysis and mdtraj to be installed.",
+)
 def test_rmsd(traj_mdtraj, traj_mdanalysis):
     """Make sure that the RMSD computed by both backends is comparable."""
 
