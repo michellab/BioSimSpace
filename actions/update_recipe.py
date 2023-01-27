@@ -26,8 +26,6 @@ run_reqs = parse_requirements(os.path.join(srcdir, "requirements.txt"))
 print(run_reqs)
 build_reqs = parse_requirements(os.path.join(srcdir, "requirements_build.txt"))
 print(build_reqs)
-test_reqs = parse_requirements(os.path.join(srcdir, "requirements_test.txt"))
-print(test_reqs)
 
 def run_cmd(cmd):
     p = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE)
@@ -61,19 +59,12 @@ if len(build_reqs) > 0:
 else:
     build_reqs = ""
 
-if len(test_reqs) > 0:
-    test_reqs = dep_lines(test_reqs)
-else:
-    test_reqs = ""
-
 with open(recipe, "w") as FILE:
     for line in lines:
         if line.find("BSS_BUILD_REQUIREMENTS") != -1:
             line = build_reqs
         elif line.find("BSS_RUN_REQUIREMENTS") != -1:
             line = run_reqs
-        elif line.find("BSS_TEST_REQUIREMENTS") != -1:
-            line = test_reqs
         else:
             line = line.replace("BSS_BRANCH", branch)
 

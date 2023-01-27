@@ -1,4 +1,0 @@
-# Both ambertools and gromacs aren't available on ARM64 or Windows
-# We will only require them for Linux x86-64 and Apple x86-64.
-ambertools ; sys_platform != "win32" and platform_machine == "x86_64"
-gromacs ; sys_platform != "win32" and platform_machine == "x86_64"
