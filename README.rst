@@ -130,7 +130,7 @@ Then try importing the BioSimSpace package:
 Developers
 ----------
 
-Please follow the `developer's guide <https:/biosimspace.openbiosim.org/development.html>`__.
+Please follow the `developer's guide <https://biosimspace.openbiosim.org/contributing>`__.
 
 Issues
 ------
