@@ -148,19 +148,17 @@ For example, the minimisation node can be run from within BioSimSpace as follows
         "files" : [
             "amber/ala.crd",
             "amber/ala.top"
-        ], 
+        ],
         "steps" : 1000
     }
 
     # Run the node and capture the output as a dictionary.
     output = BSS.Node.run("minimisation", input)
 
-(Note that, by default, a ``node library`` is created in a hidden ``_nodes``
-directory wherever BioSimSpace is installed, e.g.
-``/usr/local/lib/python3.7/site-pacakges/BioSimSpace/Nodes/_nodes``. To
-set a custom directory, use the
-:class:`BioSimSpace.Node.setNodeDirectory <BioSimSpace.Node.setNodeDirectory>`
-function.)
+.. note ::
+
+   Use the :data:`BioSimSpace.Node.setNodeDirectory()` function to point
+   BioSimSpace to any nodes that you have written.
 
 Common Workflow Language
 ========================
