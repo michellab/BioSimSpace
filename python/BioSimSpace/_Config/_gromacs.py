@@ -27,6 +27,7 @@ __email__ = "lester.hedges@gmail.com"
 __all__ = ["Gromacs"]
 
 import math as _math
+import warnings as _warnings
 
 from .. import Protocol as _Protocol
 

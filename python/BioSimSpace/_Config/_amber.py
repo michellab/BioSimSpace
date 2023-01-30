@@ -27,6 +27,7 @@ __email__ = "lester.hedges@gmail.com"
 __all__ = ["Amber"]
 
 import math as _math
+import warnings as _warnings
 
 from sire.legacy import Units as _SireUnits
 
