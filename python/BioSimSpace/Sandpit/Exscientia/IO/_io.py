@@ -25,6 +25,7 @@ __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
 
 __all__ = [
+    "expand",
     "fileFormats",
     "formatInfo",
     "readMolecules",
@@ -121,6 +122,46 @@ del format_info, index, line, format, extensions, description
 # previously been written to the specified format and, if the file still exists
 # and is unmodified, then we can simply copy to the new location.
 _file_cache = {}
+
+
+def expand(base, path, suffix=None):
+    """
+    Expand the set of paths with the supplied base.
+
+    Parameters
+    ----------
+
+    base : str
+        The base to prepend to all paths.
+
+    path : str, [str]
+        The filename (or names) that will be prepended with the base.
+
+    suffix : str
+        An optional suffix to append to all files, e.g. ".bz2".
+
+    Returns
+    -------
+    path : [str]
+        The list of expanded filenames or URLs.
+    """
+
+    if not isinstance(base, str):
+        raise TypeError("'base' must be of type 'str'")
+
+    # Convert single values to a list.
+    if isinstance(path, str):
+        path = [path]
+
+    if not isinstance(path, (list, tuple)) and not all(
+        isinstance(x, str) for x in path
+    ):
+        raise TypeError("'path' must be a list of 'str' types.")
+
+    if suffix is not None and not isinstance(suffix, str):
+        raise TypeError("'suffix' must be of type 'str'")
+
+    return _sire.expand(base, path, suffix=suffix)
 
 
 def fileFormats():
