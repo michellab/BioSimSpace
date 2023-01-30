@@ -16,5 +16,9 @@ If :mod:`BioSimSpace` imports without error, then everything is working.
 If you can't import :mod:`BioSimSpace`, or have any other problems, then
 please :doc:`ask for support. <../support>`
 
+
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
+
+   solvation_freenrg
+   metadynamics
