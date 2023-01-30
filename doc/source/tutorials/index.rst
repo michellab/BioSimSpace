@@ -20,5 +20,5 @@ please :doc:`ask for support. <../support>`
 .. toctree::
    :maxdepth: 1
 
-   solvation_freenrg
+   hydration_freenrg
    metadynamics
