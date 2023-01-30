@@ -237,3 +237,6 @@ Let's examine the value of the collective variables for each sample to make sure
  (1.0810 radians, -0.0643 radians),
  (1.2382 radians, 0.3638 radians),
  (1.2085 radians, -0.4942 radians)]
+
+We hope that you have enjoyed this tutorial. Please explore the metadynamics
+:data:`API documentation <BioSimSpace.Metadynamics>` for further information.
