@@ -1008,10 +1008,22 @@ class Relative():
             _warnings.warn("Could not preprocess the data.")
             processed_u_nk = u_nk
 
-        try:
-            mbar = _MBAR().fit(processed_u_nk)
-        except:
-            raise _AnalysisError("MBAR free-energy analysis failed!")
+        # check kwargs incase there is an mbar_method and then use this
+        for key,value in kwargs.items():
+            if key == "mbar_method":
+                mbar_method = value
+
+        if mbar_method:
+            try:
+                mbar = _MBAR(method=mbar_method)
+                mbar.fit(processed_u_nk)
+            except:
+                raise _AnalysisError(f"MBAR free-energy analysis failed with {mbar_method} as mbar_method!")
+        else:
+            try:
+                mbar = _MBAR().fit(processed_u_nk)
+            except:
+                raise _AnalysisError("MBAR free-energy analysis failed!")
 
         # Extract the data from the mbar results.
         data = []
@@ -1274,15 +1286,6 @@ class Relative():
             # Initialise list to hold the data.
             data = []
 
-            # Run the first command.
-            proc = _subprocess.run(_shlex.split(command), shell=False,
-                stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
-            if proc.returncode != 0:
-                raise _AnalysisError("GROMACS free-energy analysis failed!")
-
-            # Initialise list to hold the data.
-            data = []
-
             # Extract the data from the output files.
 
             # First leg.
@@ -1401,7 +1404,7 @@ class Relative():
         elif method == "native":
 
             # Create the command.
-            command = "%s mbar -i %s/lambda_*/simfile.dat* -o %s/mbar.txt --overlap --percent 5" % (_analyse_freenrg, work_dir, work_dir)
+            command = "%s mbar -i %s/lambda_*/simfile.dat -o %s/mbar.txt --overlap --percent 5" % (_analyse_freenrg, work_dir, work_dir)
 
             # Run the first command.
             proc = _subprocess.run(_shlex.split(command), shell=False,
