@@ -1,13 +1,13 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2022
+# Copyright: 2017-2023
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
 # BioSimSpace is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 2 of the License, or
+# the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
 # BioSimSpace is distributed in the hope that it will be useful,
@@ -36,17 +36,19 @@ from .. import _isVerbose
 
 from ._sire_wrapper import SireWrapper as _SireWrapper
 
+
 class Bond(_SireWrapper):
     """A class for storing a bond."""
 
     def __init__(self, bond):
-        """Constructor.
+        """
+        Constructor.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           bond : Sire.MM.Bond, :class:`Bond <BioSimSpace._SireWrappers.Bond>`
-               A Sire or BioSimSpace Bond object.
+        bond : Sire.MM.Bond, :class:`Bond <BioSimSpace._SireWrappers.Bond>`
+            A Sire or BioSimSpace Bond object.
         """
 
         # Check that the bond is valid.
@@ -61,8 +63,10 @@ class Bond(_SireWrapper):
 
         # Invalid type.
         else:
-            raise TypeError("'bond' must be of type 'Sire.MM.Bond' "
-                            "or 'BioSimSpace._SireWrappers.Bond'.")
+            raise TypeError(
+                "'bond' must be of type 'Sire.MM.Bond' "
+                "or 'BioSimSpace._SireWrappers.Bond'."
+            )
 
         # Call the base class constructor.
         super().__init__(sire_object)
@@ -71,21 +75,29 @@ class Bond(_SireWrapper):
         self._is_multi_atom = True
 
         # Store the atom indices in the bond.
-        self._atom_idxs = [self._sire_object.atom0().index(),
-                           self._sire_object.atom1().index()]
+        self._atom_idxs = [
+            self._sire_object.atom0().index(),
+            self._sire_object.atom1().index(),
+        ]
 
         # Initialise the iterator count.
         self._iter_count = 0
 
     def __str__(self):
         """Return a human readable string representation of the object."""
-        return "<BioSimSpace.Bond: name=%r, length=%s, molecule=%d>" \
-            % (self.name(), self.length(), self.moleculeNumber())
+        return "<BioSimSpace.Bond: name=%r, length=%s, molecule=%d>" % (
+            self.name(),
+            self.length(),
+            self.moleculeNumber(),
+        )
 
     def __repr__(self):
         """Return a string showing how to instantiate the object."""
-        return "<BioSimSpace.Bond: name=%r, length=%s, molecule=%d>" \
-            % (self.name(), self.length(), self.moleculeNumber())
+        return "<BioSimSpace.Bond: name=%r, length=%s, molecule=%d>" % (
+            self.name(),
+            self.length(),
+            self.moleculeNumber(),
+        )
 
     def __contains__(self, other):
         """Return whether other is in self."""
@@ -159,92 +171,103 @@ class Bond(_SireWrapper):
         return 2
 
     def atom0(self):
-        """Return the first atom in the bond.
+        """
+        Return the first atom in the bond.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           atom : Atom
-                The atom
+        atom : Atom
+             The atom
         """
         return _Atom(self._sire_object.atom0())
 
     def atom1(self):
-        """Return the first atom in the bond.
+        """
+        Return the first atom in the bond.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           atom : Atom
-                The atom
+        atom : Atom
+             The atom
         """
         return _Atom(self._sire_object.atom1())
 
     def length(self):
-        """Return the length of the bond
+        """
+        Return the length of the bond.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           length : Length
-                The length of the bond
+        length : :class:`Length <BioSimSpace.Types.Length>`
+             The length of the bond
         """
         from ..Types import Length as _Length
+
         return _Length(self._sire_object.length())
 
     def energy(self):
-        """Return the energy of the bond. This assumes
-           that an energy expression has been assigned
-           to this bond.
+        """
+        Return the energy of the bond. This assumes
+        that an energy expression has been assigned
+        to this bond.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           energy : Energy
-                The energy of the bond
+        energy : :class:`Energy <BioSimSpace.Types.Energy>`
+             The energy of the bond
         """
         from ..Types import Energy as _Energy
+
         return _Energy(self._sire_object.energy())
 
     def name(self):
-        """Return the name of the bond.
-
-           Returns
-           -------
-
-           name : str
-               The name of the bond.
         """
-        return f"{self._sire_object.atom0().name().value()}=" \
-               f"{self._sire_object.atom1().name().value()}"
+        Return the name of the bond.
+
+        Returns
+        -------
+
+        name : str
+            The name of the bond.
+        """
+        return (
+            f"{self._sire_object.atom0().name().value()}="
+            f"{self._sire_object.atom1().name().value()}"
+        )
 
     def moleculeNumber(self):
-        """Return the number of the molecule to which this bond belongs.
+        """
+        Return the number of the molecule to which this bond belongs.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           number : int
-               The number of the molecule to which the bond belongs.
+        number : int
+            The number of the molecule to which the bond belongs.
         """
         return self._sire_object.molecule().number().value()
 
     def coordinates(self, property_map={}):
-        """Return the coordinates of the atoms in the bond.
+        """
+        Return the coordinates of the atoms in the bond.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           property_map : dict
-               A dictionary that maps system "properties" to their user defined
-               values. This allows the user to refer to properties with their
-               own naming scheme, e.g. { "charge" : "my-charge" }
+        property_map : dict
+            A dictionary that maps system "properties" to their user defined
+            values. This allows the user to refer to properties with their
+            own naming scheme, e.g. { "charge" : "my-charge" }
 
-           Returns
-           -------
+        Returns
+        -------
 
-           [coordinates] : [class:`Coordinate <BioSimSpace.Types.Coordinate>`]
-               The coordinates of the atoms in the bond.
+        [coordinates] : [class:`Coordinate <BioSimSpace.Types.Coordinate>`]
+            The coordinates of the atoms in the bond.
         """
         # Get the "coordinates" property for each atom in the bond.
         try:
@@ -258,27 +281,29 @@ class Bond(_SireWrapper):
         return coordinates
 
     def nAtoms(self):
-        """Return the number of atoms in the bond.
+        """
+        Return the number of atoms in the bond.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           num_atoms : int
-               The number of atoms in the system.
+        num_atoms : int
+            The number of atoms in the system.
         """
         return 2
 
     def getAtoms(self):
-        """Return a list containing all of the atoms in the bond.
+        """
+        Return a list containing all of the atoms in the bond.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           Returns
-           -------
+        Returns
+        -------
 
-           atoms : [:class:`Atoms <BioSimSpace._SireWrappers.Atom>`]
-               The list of atoms in the bond.
+        atoms : [:class:`Atoms <BioSimSpace._SireWrappers.Atom>`]
+            The list of atoms in the bond.
         """
         atoms = []
         for atom in self._sire_object.atoms():
@@ -286,45 +311,49 @@ class Bond(_SireWrapper):
         return atoms
 
     def toMolecule(self):
-        """Convert a single Residue to a Molecule.
-
-           Returns
-           -------
-
-           system : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
         """
-        return _Molecule(_SireMol.PartialMolecule(self._sire_object).extract().molecule())
+        Convert a single Residue to a Molecule.
+
+        Returns
+        -------
+
+        system : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+        """
+        return _Molecule(
+            _SireMol.PartialMolecule(self._sire_object).extract().molecule()
+        )
 
     def search(self, query, property_map={}):
-        """Search the bond for atoms and bonds.
+        """
+        Search the bond for atoms and bonds.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           query : str
-               The search query.
+        query : str
+            The search query.
 
-           property_map : dict
-               A dictionary that maps system "properties" to their user defined
-               values. This allows the user to refer to properties with their
-               own naming scheme, e.g. { "charge" : "my-charge" }
+        property_map : dict
+            A dictionary that maps system "properties" to their user defined
+            values. This allows the user to refer to properties with their
+            own naming scheme, e.g. { "charge" : "my-charge" }
 
-           Returns
-           -------
+        Returns
+        -------
 
-           results : [:class:`Atom <BioSimSpace._SireWrappers.Atom>`]
-               A list of objects matching the search query.
+        results : [:class:`Atom <BioSimSpace._SireWrappers.Atom>`]
+            A list of objects matching the search query.
 
-           Examples
-           --------
+        Examples
+        --------
 
-           Search for all oxygen or hydrogen atoms.
+        Search for all oxygen or hydrogen atoms.
 
-           >>> result = bond.search("element oxygen or element hydrogen")
+        >>> result = bond.search("element oxygen or element hydrogen")
 
-           Search for atom index 23.
+        Search for atom index 23.
 
-           >>> result = bond.search("atomidx 23")
+        >>> result = bond.search("atomidx 23")
         """
 
         if not isinstance(query, str):
@@ -348,6 +377,7 @@ class Bond(_SireWrapper):
                 raise ValueError(msg) from None
 
         return _SearchResult(search_result)
+
 
 # Import at bottom of module to avoid circular dependency.
 from ._atom import Atom as _Atom

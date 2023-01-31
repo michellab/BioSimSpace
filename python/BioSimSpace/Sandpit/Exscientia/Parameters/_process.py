@@ -1,13 +1,13 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2022
+# Copyright: 2017-2023
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
 # BioSimSpace is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 2 of the License, or
+# the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
 # BioSimSpace is distributed in the hope that it will be useful,
@@ -21,7 +21,7 @@
 
 """
 Functionality running parameterisation protocols as a background process.
-Author: Lester Hedges <lester.hedges@gmail.com>
+Author: Lester Hedges <lester.hedges@gmail.com>.
 """
 
 __author__ = "Lester Hedges"
@@ -57,28 +57,28 @@ from .. import _isVerbose
 from .._Exceptions import ParameterisationError as _ParameterisationError
 from .._SireWrappers import Molecule as _Molecule
 
-from . import Protocol as _Protocol
+from . import _Protocol
 
 if _is_notebook:
     from IPython.display import FileLink as _FileLink
 
+
 def _wrap_protocol(protocol_function, process):
-    """A simple decorator function to wrap the running of parameterisation
-       protocols and catch exceptions.
+    """
+    A simple decorator function to wrap the running of parameterisation
+    protocols and catch exceptions.
 
-       Parameters
-       ----------
+    Parameters
+    ----------
 
-       protocol_function : function
-           The protocol function.
+    protocol_function : function
+        The protocol function.
 
-       process : BioSimSpace.Parameters.Process
-           A handle to the parent process.
+    process : BioSimSpace.Parameters.Process
+        A handle to the parent process.
     """
     try:
-        protocol_function(process._molecule,
-                          process._work_dir,
-                          process._queue)
+        protocol_function(process._molecule, process._work_dir, process._queue)
     except Exception as e:
         # Record that an error has been thrown.
         process._is_error = True
@@ -91,36 +91,42 @@ def _wrap_protocol(protocol_function, process):
         # Return to the user directory.
         _os.chdir(process._dir)
 
-class Process():
+
+class Process:
     """A class for running parameterisation protocols as a background process."""
 
     def __init__(self, molecule, protocol, work_dir=None, auto_start=False):
-        """Constructor
+        """
+        Constructor.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           molecule : BioSimSpace._SireWrappers.Molecule, str
-               The molecule to parameterise, either as a Molecule object, or
-               SMILES string.
+        molecule : BioSimSpace._SireWrappers.Molecule, str
+            The molecule to parameterise, either as a Molecule object, or
+            SMILES string.
 
-           protocol : BioSimSpace.Parameters.Protocol
-               The parameterisation protocol.
+        protocol : BioSimSpace.Parameters.Protocol
+            The parameterisation protocol.
 
-           work_dir : str
-               The working directory for the process.
+        work_dir : str
+            The working directory for the process.
 
-           auto_start : bool
-               Whether to automatically start the process.
+        auto_start : bool
+            Whether to automatically start the process.
         """
 
         # Validate arguments.
 
         if not isinstance(molecule, (_Molecule, str)):
-            raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule' or 'str'")
+            raise TypeError(
+                "'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule' or 'str'"
+            )
 
         if not isinstance(protocol, _Protocol._Protocol):
-            raise TypeError("'protocol' must be of type 'BioSimSpace.Parameters.Protocol'")
+            raise TypeError(
+                "'protocol' must be of type 'BioSimSpace.Parameters.Protocol'"
+            )
 
         if work_dir is not None and not isinstance(work_dir, str):
             raise TypeError("'work_dir' must be of type 'str'")
@@ -133,7 +139,9 @@ class Process():
             try:
                 molecule.search("element H", property_map=protocol._property_map)
             except:
-                _warnings.warn("Attempting to parameterise a molecule without hydrogen atoms!")
+                _warnings.warn(
+                    "Attempting to parameterise a molecule without hydrogen atoms!"
+                )
 
         # Set attributes.
         self._molecule = molecule
@@ -187,20 +195,23 @@ class Process():
         self._queue = _queue.Queue()
 
         # Create the thread.
-        self._thread = _threading.Thread(target=_wrap_protocol, args=[self._protocol.run, self])
+        self._thread = _threading.Thread(
+            target=_wrap_protocol, args=[self._protocol.run, self]
+        )
 
         # Start the thread.
         self._thread.start()
 
     def getMolecule(self):
-        """Get the parameterised molecule. This method blocks until
-           parameterisation is complete.
+        """
+        Get the parameterised molecule. This method blocks until
+        parameterisation is complete.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           molecule : BioSimSpace._SireWrappers.Molecule
-               The parameterised molecule.
+        molecule : BioSimSpace._SireWrappers.Molecule
+            The parameterised molecule.
         """
 
         # Start the process, if it's not already started.
@@ -224,9 +235,13 @@ class Process():
         # If there was an problem, return the last error.
         if self._is_error:
             if _isVerbose():
-                raise _ParameterisationError("Parameterisation failed! Last error: '%s'" % str(self._last_error))
+                raise _ParameterisationError(
+                    "Parameterisation failed! Last error: '%s'" % str(self._last_error)
+                )
             else:
-                raise _ParameterisationError("Parameterisation failed! Last error: '%s'" % str(self._last_error)) from None
+                raise _ParameterisationError(
+                    "Parameterisation failed! Last error: '%s'" % str(self._last_error)
+                ) from None
 
         return self._new_molecule
 
@@ -235,33 +250,35 @@ class Process():
         return not self._is_finished
 
     def isError(self):
-        """Return whether there was a parameterisation error.
+        """
+        Return whether there was a parameterisation error.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           is_error : bool
-               Whether there was an error during parameterisation.
+        is_error : bool
+            Whether there was an error during parameterisation.
         """
         return self._is_error
 
     def getOutput(self, filename=None, file_link=False):
-        """Return a zip file containing the output from the parameterisation process.
+        """
+        Return a zip file containing the output from the parameterisation process.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           filename : str
-               The name to write the output to.
+        filename : str
+            The name to write the output to.
 
-           file_link : bool
-               Whether to return a FileLink when working in Jupyter.
+        file_link : bool
+            Whether to return a FileLink when working in Jupyter.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           file_link : str, IPython.lib.display.FileLink
-               The name of, or link to, a zipfile containing the output.
+        file_link : str, IPython.lib.display.FileLink
+            The name of, or link to, a zipfile containing the output.
         """
 
         if self._zipfile is None or filename is not None:
@@ -295,7 +312,9 @@ class Process():
                 f_link = _FileLink(self._zipfile)
 
                 # Set the download attribute so that JupyterLab doesn't try to open the file.
-                f_link.html_link_str = f"<a href='%s' target='_blank' download='{self._zipfile}'>%s</a>"
+                f_link.html_link_str = (
+                    f"<a href='%s' target='_blank' download='{self._zipfile}'>%s</a>"
+                )
 
                 # Return a link to the archive.
                 return f_link

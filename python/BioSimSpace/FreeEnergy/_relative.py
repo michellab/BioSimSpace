@@ -1,13 +1,13 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2022
+# Copyright: 2017-2023
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
 # BioSimSpace is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 2 of the License, or
+# the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
 # BioSimSpace is distributed in the hope that it will be useful,
@@ -19,9 +19,7 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-"""
-Functionality for relative free-energy simulations.
-"""
+"""Functionality for relative free-energy simulations."""
 
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
@@ -68,70 +66,90 @@ if _is_notebook:
 if _sys.platform != "win32":
     _analyse_freenrg = _os.path.join(_getBinDir(), "analyse_freenrg")
 else:
-    _analyse_freenrg = _os.path.join(_os.path.normpath(_getShareDir()), "scripts", "analyse_freenrg.py")
+    _analyse_freenrg = _os.path.join(
+        _os.path.normpath(_getShareDir()), "scripts", "analyse_freenrg.py"
+    )
 if not _os.path.isfile(_analyse_freenrg):
-    raise _MissingSoftwareError("Cannot find free energy analysis script in expected location: '%s'" % _analyse_freenrg)
+    raise _MissingSoftwareError(
+        "Cannot find free energy analysis script in expected location: '%s'"
+        % _analyse_freenrg
+    )
 if _sys.platform == "win32":
-    _analyse_freenrg = "%s %s" % (_os.path.join(_os.path.normpath(_getBinDir()), "sire_python.exe"), _analyse_freenrg)
+    _analyse_freenrg = "%s %s" % (
+        _os.path.join(_os.path.normpath(_getBinDir()), "sire_python.exe"),
+        _analyse_freenrg,
+    )
 
-class Relative():
+
+class Relative:
     """Class for configuring and running relative free-energy perturbation simulations."""
 
     # Create a list of supported molecular dynamics engines.
     _engines = ["GROMACS", "SOMD"]
 
-    def __init__(self, system, protocol=None, work_dir=None, engine=None,
-            setup_only=False, ignore_warnings=False, show_errors=True,
-            property_map={}):
-        """Constructor.
+    def __init__(
+        self,
+        system,
+        protocol=None,
+        work_dir=None,
+        engine=None,
+        setup_only=False,
+        ignore_warnings=False,
+        show_errors=True,
+        property_map={},
+    ):
+        """
+        Constructor.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           system : :class:`System <BioSimSpace._SireWrappers.System>`
-               The molecular system for the perturbation leg. This must contain
-               a single perturbable molecule and is assumed to have already
-               been equilibrated.
+        system : :class:`System <BioSimSpace._SireWrappers.System>`
+            The molecular system for the perturbation leg. This must contain
+            a single perturbable molecule and is assumed to have already
+            been equilibrated.
 
-           protocol : :class:`Protocol.FreeEnergy <BioSimSpace.Protocol.FreeEnergy>`, \
-               The simulation protocol.
+        protocol : :class:`Protocol.FreeEnergy <BioSimSpace.Protocol.FreeEnergy>`, \
+            The simulation protocol.
 
-           work_dir : str
-               The working directory for the free-energy perturbation
-               simulation.
+        work_dir : str
+            The working directory for the free-energy perturbation
+            simulation.
 
-           engine: str
-               The molecular dynamics engine used to run the simulation. Available
-               options are "GROMACS", or "SOMD". If this argument is omitted then
-               BioSimSpace will choose an appropriate engine for you.
+        engine : str
+            The molecular dynamics engine used to run the simulation. Available
+            options are "GROMACS", or "SOMD". If this argument is omitted then
+            BioSimSpace will choose an appropriate engine for you.
 
-           setup_only: bool
-               Whether to only support simulation setup. If True, then no
-               simulation processes objects will be created, only the directory
-               hierarchy and input files to run a simulation externally. This
-               can be useful when you don't intend to use BioSimSpace to run
-               the simulation. Note that a 'work_dir' must also be specified.
+        setup_only : bool
+            Whether to only support simulation setup. If True, then no
+            simulation processes objects will be created, only the directory
+            hierarchy and input files to run a simulation externally. This
+            can be useful when you don't intend to use BioSimSpace to run
+            the simulation. Note that a 'work_dir' must also be specified.
 
-           ignore_warnings : bool
-               Whether to ignore warnings when generating the binary run file.
-               This option is specific to GROMACS and will be ignored when a
-               different molecular dynamics engine is chosen.
+        ignore_warnings : bool
+            Whether to ignore warnings when generating the binary run file.
+            This option is specific to GROMACS and will be ignored when a
+            different molecular dynamics engine is chosen.
 
-           show_errors : bool
-               Whether to show warning/error messages when generating the binary
-               run file. This option is specific to GROMACS and will be ignored
-               when a different molecular dynamics engine is chosen.
+        show_errors : bool
+            Whether to show warning/error messages when generating the binary
+            run file. This option is specific to GROMACS and will be ignored
+            when a different molecular dynamics engine is chosen.
 
-           property_map : dict
-               A dictionary that maps system "properties" to their user defined
-               values. This allows the user to refer to properties with their
-               own naming scheme, e.g. { "charge" : "my-charge" }
+        property_map : dict
+            A dictionary that maps system "properties" to their user defined
+            values. This allows the user to refer to properties with their
+            own naming scheme, e.g. { "charge" : "my-charge" }
         """
 
         # Validate the input.
 
         if not isinstance(system, _System):
-            raise TypeError("'system' must be of type 'BioSimSpace._SireWrappers.System'")
+            raise TypeError(
+                "'system' must be of type 'BioSimSpace._SireWrappers.System'"
+            )
         else:
             # Store a copy of solvated system.
             self._system = system.copy()
@@ -140,7 +158,9 @@ class Relative():
             if isinstance(protocol, _Protocol.FreeEnergy):
                 self._protocol = protocol
             else:
-                raise TypeError("'protocol' must be of type 'BioSimSpace.Protocol.FreeEnergy'")
+                raise TypeError(
+                    "'protocol' must be of type 'BioSimSpace.Protocol.FreeEnergy'"
+                )
         else:
             # Use a default protocol.
             self._protocol = _Protocol.FreeEnergy()
@@ -153,7 +173,9 @@ class Relative():
         # Create a temporary working directory and store the directory name.
         if work_dir is None:
             if setup_only:
-                raise ValueError("A 'work_dir' must be specified when 'setup_only' is True!")
+                raise ValueError(
+                    "A 'work_dir' must be specified when 'setup_only' is True!"
+                )
             self._tmp_dir = _tempfile.TemporaryDirectory()
             self._work_dir = self._tmp_dir.name
 
@@ -175,31 +197,41 @@ class Relative():
 
             # Check that the engine is supported.
             if engine not in self._engines:
-                raise ValueError("Unsupported molecular dynamics engine '%s'. "
-                                 "Supported engines are: %r." % ", ".join(self._engines))
+                raise ValueError(
+                    "Unsupported molecular dynamics engine '%s'. "
+                    "Supported engines are: %r." % ", ".join(self._engines)
+                )
 
             # Make sure GROMACS is installed if GROMACS engine is selected.
             if engine == "GROMACS":
                 if _gmx_exe is None:
-                    raise _MissingSoftwareError("Cannot use GROMACS engine as GROMACS is not installed!")
+                    raise _MissingSoftwareError(
+                        "Cannot use GROMACS engine as GROMACS is not installed!"
+                    )
 
                 # The system must have a perturbable molecule.
                 if system.nPerturbableMolecules() == 0:
-                    raise ValueError("The system must contain a perturbable molecule! "
-                                     "Use the 'BioSimSpace.Align' package to map and merge molecules.")
+                    raise ValueError(
+                        "The system must contain a perturbable molecule! "
+                        "Use the 'BioSimSpace.Align' package to map and merge molecules."
+                    )
 
                 if self._protocol.getPerturbationType() != "full":
-                    raise NotImplementedError("GROMACS currently only supports the 'full' perturbation "
-                                              "type. Please use engine='SOMD' when running multistep "
-                                              "perturbation types.")
+                    raise NotImplementedError(
+                        "GROMACS currently only supports the 'full' perturbation "
+                        "type. Please use engine='SOMD' when running multistep "
+                        "perturbation types."
+                    )
         else:
             # Use SOMD as a default.
             engine = "SOMD"
 
             # The system must have a single perturbable molecule.
             if system.nPerturbableMolecules() != 1:
-                raise ValueError("The system must contain a single perturbable molecule! "
-                                 "Use the 'BioSimSpace.Align' package to map and merge molecules.")
+                raise ValueError(
+                    "The system must contain a single perturbable molecule! "
+                    "Use the 'BioSimSpace.Align' package to map and merge molecules."
+                )
 
         # Set the engine.
         self._engine = engine
@@ -226,14 +258,15 @@ class Relative():
         self._initialise_runner(self._system)
 
     def run(self, serial=True):
-        """Run the simulation.
+        """
+        Run the simulation.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           serial : bool
-               Whether to run the individual processes for the lambda windows
-               in serial.
+        serial : bool
+            Whether to run the individual processes for the lambda windows
+            in serial.
         """
         if not isinstance(serial, bool):
             raise TypeError("'serial' must be of type 'bool'.")
@@ -251,13 +284,14 @@ class Relative():
             self._runner.wait()
 
     def kill(self, index):
-        """Kill a process for a specific lambda window.
+        """
+        Kill a process for a specific lambda window.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           index : int
-               The index of the lambda window.
+        index : int
+            The index of the lambda window.
         """
         self._runner.kill(index)
 
@@ -267,38 +301,40 @@ class Relative():
         self._runner.killAll()
 
     def workDir(self):
-        """Return the working directory.
+        """
+        Return the working directory.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           work_dir : str
-               The path of the working directory.
+        work_dir : str
+            The path of the working directory.
         """
         return self._work_dir
 
     def getData(self, name="data", file_link=False, work_dir=None):
-        """Return a link to a zip file containing the data files required for
-           post-simulation analysis.
+        """
+        Return a link to a zip file containing the data files required for
+        post-simulation analysis.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           name : str
-               The name of the zip file.
+        name : str
+            The name of the zip file.
 
-           file_link : bool
-               Whether to return a FileLink when working in Jupyter.
+        file_link : bool
+            Whether to return a FileLink when working in Jupyter.
 
-           work_dir : str
-               The working directory for the free-energy perturbation
-               simulation.
+        work_dir : str
+            The working directory for the free-energy perturbation
+            simulation.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           output : str, IPython.display.FileLink
-               A path, or file link, to an archive of the process input.
+        output : str, IPython.display.FileLink
+            A path, or file link, to an archive of the process input.
         """
 
         if self._work_dir is None:
@@ -329,7 +365,9 @@ class Relative():
                 files = _glob("*/*/gromacs.xvg")
 
                 if len(files) == 0:
-                    raise ValueError(f"Couldn't find any analysis files in '{work_dir}'")
+                    raise ValueError(
+                        f"Couldn't find any analysis files in '{work_dir}'"
+                    )
 
             # Write to the zip file.
             with _zipfile.ZipFile(cwd + f"/{zipname}", "w") as zip:
@@ -343,7 +381,9 @@ class Relative():
                 f_link = _FileLink(zipname)
 
                 # Set the download attribute so that JupyterLab doesn't try to open the file.
-                f_link.html_link_str = f"<a href='%s' target='_blank' download='{zipname}'>%s</a>"
+                f_link.html_link_str = (
+                    f"<a href='%s' target='_blank' download='{zipname}'>%s</a>"
+                )
 
                 # Return a link to the archive.
                 return f_link
@@ -355,26 +395,27 @@ class Relative():
 
     @staticmethod
     def analyse(work_dir):
-        """Analyse existing free-energy data from a simulation working directory.
+        """
+        Analyse existing free-energy data from a simulation working directory.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           work_dir : str
-               The working directory for the simulation.
+        work_dir : str
+            The working directory for the simulation.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           pmf : [(float, :class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)]
-               The potential of mean force (PMF). The data is a list of tuples,
-               where each tuple contains the lambda value, the PMF, and the
-               standard error.
+        pmf : [(float, :class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)]
+            The potential of mean force (PMF). The data is a list of tuples,
+            where each tuple contains the lambda value, the PMF, and the
+            standard error.
 
-           overlap : [ [ float, float, ... ] ]
-               The overlap matrix. This gives the overlap between each lambda
-               window.  This parameter is only computed for the SOMD engine and
-               will be None when GROMACS is used.
+        overlap : [ [ float, float, ... ] ]
+            The overlap matrix. This gives the overlap between each lambda
+            window.  This parameter is only computed for the SOMD engine and
+            will be None when GROMACS is used.
         """
 
         if not isinstance(work_dir, str):
@@ -393,24 +434,27 @@ class Relative():
         else:
             data = _glob(work_dir + "/lambda_*/gromacs.xvg")
             if len(data) == 0:
-                raise ValueError("Couldn't find any SOMD or GROMACS free-energy output?")
+                raise ValueError(
+                    "Couldn't find any SOMD or GROMACS free-energy output?"
+                )
             return Relative._analyse_gromacs(work_dir)
 
     def _analyse(self):
-        """Analyse free-energy data for this object.
+        """
+        Analyse free-energy data for this object.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           pmf : [(float, :class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)]
-               The potential of mean force (PMF). The data is a list of tuples,
-               where each tuple contains the lambda value, the PMF, and the
-               standard error.
+        pmf : [(float, :class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)]
+            The potential of mean force (PMF). The data is a list of tuples,
+            where each tuple contains the lambda value, the PMF, and the
+            standard error.
 
-           overlap : [ [ float, float, ... ] ]
-               The overlap matrix. This gives the overlap between each lambda
-               window.  This parameter is only computed for the SOMD engine and
-               will be None when GROMACS is used.
+        overlap : [ [ float, float, ... ] ]
+            The overlap matrix. This gives the overlap between each lambda
+            window.  This parameter is only computed for the SOMD engine and
+            will be None when GROMACS is used.
         """
 
         # Return the result of calling the staticmethod, passing in the working
@@ -419,21 +463,22 @@ class Relative():
 
     @staticmethod
     def _analyse_gromacs(work_dir=None):
-        """Analyse the GROMACS free energy data.
+        """
+        Analyse the GROMACS free energy data.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           work_dir : str
-               The path to the working directory.
+        work_dir : str
+            The path to the working directory.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           pmf : [(float, :class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)]
-               The potential of mean force (PMF). The data is a list of tuples,
-               where each tuple contains the lambda value, the PMF, and the
-               standard error.
+        pmf : [(float, :class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)]
+            The potential of mean force (PMF). The data is a list of tuples,
+            where each tuple contains the lambda value, the PMF, and the
+            standard error.
         """
 
         if not isinstance(work_dir, str):
@@ -442,11 +487,19 @@ class Relative():
             raise ValueError("'work_dir' doesn't exist!")
 
         # Create the command.
-        command = "%s bar -f %s/lambda_*/*.xvg -o %s/bar.xvg" % (_gmx_exe, work_dir, work_dir)
+        command = "%s bar -f %s/lambda_*/*.xvg -o %s/bar.xvg" % (
+            _gmx_exe,
+            work_dir,
+            work_dir,
+        )
 
         # Run the first command.
-        proc = _subprocess.run(_Utils.command_split(command), shell=False,
-            stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
+        proc = _subprocess.run(
+            _Utils.command_split(command),
+            shell=False,
+            stdout=_subprocess.PIPE,
+            stderr=_subprocess.PIPE,
+        )
         if proc.returncode != 0:
             raise _AnalysisError("GROMACS free-energy analysis failed!")
 
@@ -466,9 +519,13 @@ class Relative():
                     lines.append(line.rstrip())
 
             # Store the initial free energy reading.
-            data.append((0.0,
-                         0.0 * _Units.Energy.kcal_per_mol,
-                         0.0 * _Units.Energy.kcal_per_mol))
+            data.append(
+                (
+                    0.0,
+                    0.0 * _Units.Energy.kcal_per_mol,
+                    0.0 * _Units.Energy.kcal_per_mol,
+                )
+            )
 
             # Zero the accumulated error.
             total_error = 0
@@ -488,37 +545,42 @@ class Relative():
                 error = float(records[2])
 
                 # Update the accumulated error.
-                total_error = _math.sqrt(total_error*total_error + error*error)
+                total_error = _math.sqrt(total_error * total_error + error * error)
 
                 # Append the data.
-                data.append(((x + 1) / (len(lines)),
-                             (total_freenrg * _Units.Energy.kt).kcal_per_mol(),
-                             (total_error * _Units.Energy.kt).kcal_per_mol()))
+                data.append(
+                    (
+                        (x + 1) / (len(lines)),
+                        (total_freenrg * _Units.Energy.kt).kcal_per_mol(),
+                        (total_error * _Units.Energy.kt).kcal_per_mol(),
+                    )
+                )
 
         return (data, None)
 
     @staticmethod
     def _analyse_somd(work_dir=None):
-        """Analyse the SOMD free energy data.
+        """
+        Analyse the SOMD free energy data.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           work_dir : str
-               The path to the working directory.
+        work_dir : str
+            The path to the working directory.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           pmf : [(float, :class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)]
-               The potential of mean force (PMF). The data is a list of tuples,
-               where each tuple contains the lambda value, the PMF, and the
-               standard error.
+        pmf : [(float, :class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)]
+            The potential of mean force (PMF). The data is a list of tuples,
+            where each tuple contains the lambda value, the PMF, and the
+            standard error.
 
-           overlap : [ [ float, float, ... ] ]
-               The overlap matrix. This gives the overlap between each lambda
-               window.  This parameter is only computed for the SOMD engine and
-               will be None when GROMACS is used.
+        overlap : [ [ float, float, ... ] ]
+            The overlap matrix. This gives the overlap between each lambda
+            window.  This parameter is only computed for the SOMD engine and
+            will be None when GROMACS is used.
         """
 
         if not isinstance(work_dir, str):
@@ -527,23 +589,42 @@ class Relative():
             raise ValueError("'work_dir' doesn't exist!")
 
         # Create the command.
-        command = "%s mbar -i %s/lambda_*/simfile.dat -o %s/mbar.txt --overlap --subsampling" % (_analyse_freenrg, work_dir, work_dir)
+        command = (
+            "%s mbar -i %s/lambda_*/simfile.dat -o %s/mbar.txt --overlap --subsampling"
+            % (_analyse_freenrg, work_dir, work_dir)
+        )
 
         # Run the first command.
-        proc = _subprocess.run(_Utils.command_split(command), shell=False,
-            stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
+        proc = _subprocess.run(
+            _Utils.command_split(command),
+            shell=False,
+            stdout=_subprocess.PIPE,
+            stderr=_subprocess.PIPE,
+        )
         if proc.returncode != 0:
             raise _AnalysisError("SOMD free-energy analysis failed!")
 
         # Re-run without subsampling if the subsampling has resulted in less than 50 samples.
         with open("%s/mbar.txt" % work_dir) as file:
             for line in file:
-                if "#WARNING SUBSAMPLING ENERGIES RESULTED IN LESS THAN 50 SAMPLES" in line:
-                    _warnings.warn("Subsampling resulted in less than 50 samples, "
-                                  f"re-running without subsampling for '{work_dir}'")
-                    command = "%s mbar -i %s/lambda_*/simfile.dat -o %s/mbar.txt --overlap" % (_analyse_freenrg, work_dir, work_dir)
-                    proc = _subprocess.run(_Utils.command_split(command), shell=False,
-                        stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
+                if (
+                    "#WARNING SUBSAMPLING ENERGIES RESULTED IN LESS THAN 50 SAMPLES"
+                    in line
+                ):
+                    _warnings.warn(
+                        "Subsampling resulted in less than 50 samples, "
+                        f"re-running without subsampling for '{work_dir}'"
+                    )
+                    command = (
+                        "%s mbar -i %s/lambda_*/simfile.dat -o %s/mbar.txt --overlap"
+                        % (_analyse_freenrg, work_dir, work_dir)
+                    )
+                    proc = _subprocess.run(
+                        _Utils.command_split(command),
+                        shell=False,
+                        stdout=_subprocess.PIPE,
+                        stderr=_subprocess.PIPE,
+                    )
                     if proc.returncode != 0:
                         raise _AnalysisError("SOMD free-energy analysis failed!")
                     break
@@ -589,9 +670,13 @@ class Relative():
                         records = row.split()
 
                         # Append the data.
-                        data.append((float(records[0]),
-                                     float(records[1]) * _Units.Energy.kcal_per_mol,
-                                     float(records[2]) * _Units.Energy.kcal_per_mol))
+                        data.append(
+                            (
+                                float(records[0]),
+                                float(records[1]) * _Units.Energy.kcal_per_mol,
+                                float(records[2]) * _Units.Energy.kcal_per_mol,
+                            )
+                        )
 
                         # Get the next line.
                         row = next(file)
@@ -600,27 +685,28 @@ class Relative():
 
     @staticmethod
     def difference(pmf, pmf_ref):
-        """Compute the relative free-energy difference between two perturbation
-           legs.
+        """
+        Compute the relative free-energy difference between two perturbation
+        legs.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           pmf : [(float, :class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)]
-               The potential of mean force (PMF) of interest. The data is a list
-               of tuples, where each tuple contains the lambda value, the PMF,
-               and the standard error.
+        pmf : [(float, :class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)]
+            The potential of mean force (PMF) of interest. The data is a list
+            of tuples, where each tuple contains the lambda value, the PMF,
+            and the standard error.
 
-           pmf_ref : [(float, :class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)]
-               The reference potential of mean force (PMF). The data is a list
-               of tuples, where each tuple contains the lambda value, the PMF,
-               and the standard error.
+        pmf_ref : [(float, :class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)]
+            The reference potential of mean force (PMF). The data is a list
+            of tuples, where each tuple contains the lambda value, the PMF,
+            and the standard error.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           free_energy : (:class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)
-               The relative free-energy difference and its associated error.
+        free_energy : (:class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)
+            The relative free-energy difference and its associated error.
         """
 
         if not isinstance(pmf, list):
@@ -630,29 +716,41 @@ class Relative():
 
         for rec in pmf:
             if not isinstance(rec, tuple):
-                raise TypeError("'pmf1' must contain tuples containing lambda "
-                                "values and the associated free-energy and error.")
+                raise TypeError(
+                    "'pmf1' must contain tuples containing lambda "
+                    "values and the associated free-energy and error."
+                )
             else:
                 if len(rec) != 3:
-                    raise ValueError("Each tuple in 'pmf1' must contain three items: "
-                                    "a lambda value and the associated free energy "
-                                    "and error.")
+                    raise ValueError(
+                        "Each tuple in 'pmf1' must contain three items: "
+                        "a lambda value and the associated free energy "
+                        "and error."
+                    )
                 for val in rec[1:]:
                     if not isinstance(val, _Types.Energy):
-                        raise TypeError("'pmf' must contain 'BioSimSpace.Types.Energy' types.")
+                        raise TypeError(
+                            "'pmf' must contain 'BioSimSpace.Types.Energy' types."
+                        )
 
         for rec in pmf_ref:
             if not isinstance(rec, tuple):
-                raise TypeError("'pmf_ref' must contain tuples containing lambda "
-                                "values and the associated free-energy and error.")
+                raise TypeError(
+                    "'pmf_ref' must contain tuples containing lambda "
+                    "values and the associated free-energy and error."
+                )
             else:
                 if len(rec) != 3:
-                    raise ValueError("Each tuple in 'pmf_ref' must contain three items: "
-                                    "a lambda value and the associated free energy "
-                                    "and error.")
+                    raise ValueError(
+                        "Each tuple in 'pmf_ref' must contain three items: "
+                        "a lambda value and the associated free energy "
+                        "and error."
+                    )
                 for val in rec[1:]:
                     if not isinstance(val, _Types.Energy):
-                        raise TypeError("'pmf_ref' must contain 'BioSimSpace.Types.Energy' types.")
+                        raise TypeError(
+                            "'pmf_ref' must contain 'BioSimSpace.Types.Energy' types."
+                        )
 
         # Work out the difference in free energy.
         free_energy = (pmf[-1][1] - pmf[0][1]) - (pmf_ref[-1][1] - pmf_ref[0][1])
@@ -660,35 +758,43 @@ class Relative():
         # Propagate the errors. (These add in quadrature.)
 
         # Measure.
-        error0 = _math.sqrt((pmf[-1][2].value() * pmf[-1][2].value()) +
-                            (pmf[ 0][2].value() * pmf[ 0][2].value()))
+        error0 = _math.sqrt(
+            (pmf[-1][2].value() * pmf[-1][2].value())
+            + (pmf[0][2].value() * pmf[0][2].value())
+        )
 
         # Reference.
-        error1 = _math.sqrt((pmf_ref[-1][2].value() * pmf_ref[-1][2].value()) +
-                            (pmf_ref[ 0][2].value() * pmf_ref[ 0][2].value()))
+        error1 = _math.sqrt(
+            (pmf_ref[-1][2].value() * pmf_ref[-1][2].value())
+            + (pmf_ref[0][2].value() * pmf_ref[0][2].value())
+        )
 
         # Error for free-energy difference.
-        error = _math.sqrt((error0 * error0) + (error1 * error1)) * _Units.Energy.kcal_per_mol
+        error = (
+            _math.sqrt((error0 * error0) + (error1 * error1))
+            * _Units.Energy.kcal_per_mol
+        )
 
         return (free_energy, error)
 
     def _difference(self, pmf_ref):
-        """Compute the relative free-energy difference between two perturbation
-           legs.
+        """
+        Compute the relative free-energy difference between two perturbation
+        legs.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           pmf_ref : [(float, :class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)]
-               The reference potential of mean force (PMF). The data is a list
-               of tuples, where each tuple contains the lambda value, the PMF,
-               and the standard error.
+        pmf_ref : [(float, :class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)]
+            The reference potential of mean force (PMF). The data is a list
+            of tuples, where each tuple contains the lambda value, the PMF,
+            and the standard error.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           free_energy : (:class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)
-               The relative free-energy difference and its associated error.
+        free_energy : (:class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)
+            The relative free-energy difference and its associated error.
         """
 
         # Calculate the PMF for this object.
@@ -698,14 +804,14 @@ class Relative():
         return Relative.difference(pmf, pmf_ref)
 
     def _initialise_runner(self, system):
-        """Internal helper function to initialise the process runner.
+        """
+        Internal helper function to initialise the process runner.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           system : :class:`System <BioSimSpace._SireWrappers.System>`
-               The molecular system.
-
+        system : :class:`System <BioSimSpace._SireWrappers.System>`
+            The molecular system.
         """
 
         # Initialise list to store the processe
@@ -741,21 +847,29 @@ class Relative():
             else:
                 platform = "CPU"
 
-            first_process = _Process.Somd(system, self._protocol,
-                platform=platform, work_dir=first_dir,
-                property_map=self._property_map)
+            first_process = _Process.Somd(
+                system,
+                self._protocol,
+                platform=platform,
+                work_dir=first_dir,
+                property_map=self._property_map,
+            )
             if self._setup_only:
-                del(first_process)
+                del first_process
             else:
                 processes.append(first_process)
 
         # GROMACS.
         elif self._engine == "GROMACS":
-            first_process = _Process.Gromacs(system, self._protocol,
-                work_dir=first_dir, ignore_warnings=self._ignore_warnings,
-                show_errors=self._show_errors)
+            first_process = _Process.Gromacs(
+                system,
+                self._protocol,
+                work_dir=first_dir,
+                ignore_warnings=self._ignore_warnings,
+                show_errors=self._show_errors,
+            )
             if self._setup_only:
-                del(first_process)
+                del first_process
             else:
                 processes.append(first_process)
 
@@ -796,23 +910,25 @@ class Relative():
                 # Create a copy of the process and update the working
                 # directory.
                 if not self._setup_only:
-                    process                 = _copy.copy(first_process)
-                    process._system         = first_process._system.copy()
-                    process._protocol       = self._protocol
-                    process._work_dir       = new_dir
-                    process._std_out_file   = new_dir + "/somd.out"
-                    process._std_err_file   = new_dir + "/somd.err"
-                    process._rst_file       = new_dir + "/somd.rst7"
-                    process._top_file       = new_dir + "/somd.prm7"
-                    process._traj_file      = new_dir + "/traj000000001.dcd"
-                    process._restart_file   = new_dir + "/latest.rst"
-                    process._config_file    = new_dir + "/somd.cfg"
-                    process._pert_file      = new_dir + "/somd.pert"
+                    process = _copy.copy(first_process)
+                    process._system = first_process._system.copy()
+                    process._protocol = self._protocol
+                    process._work_dir = new_dir
+                    process._std_out_file = new_dir + "/somd.out"
+                    process._std_err_file = new_dir + "/somd.err"
+                    process._rst_file = new_dir + "/somd.rst7"
+                    process._top_file = new_dir + "/somd.prm7"
+                    process._traj_file = new_dir + "/traj000000001.dcd"
+                    process._restart_file = new_dir + "/latest.rst"
+                    process._config_file = new_dir + "/somd.cfg"
+                    process._pert_file = new_dir + "/somd.pert"
                     process._gradients_file = new_dir + "/gradients.dat"
-                    process._input_files    = [process._config_file,
-                                               process._rst_file,
-                                               process._top_file,
-                                               process._pert_file]
+                    process._input_files = [
+                        process._config_file,
+                        process._rst_file,
+                        process._top_file,
+                        process._pert_file,
+                    ]
                     processes.append(process)
 
             # GROMACS.
@@ -823,46 +939,60 @@ class Relative():
                 with open(new_dir + "/gromacs.mdp", "r") as f:
                     for line in f:
                         if "init-lambda-state" in line:
-                            new_config.append("init-lambda-state = %d\n" % (x+1))
+                            new_config.append("init-lambda-state = %d\n" % (x + 1))
                         else:
                             new_config.append(line)
                 with open(new_dir + "/gromacs.mdp", "w") as f:
                     for line in new_config:
                         f.write(line)
 
-                mdp     = new_dir + "/gromacs.mdp"
+                mdp = new_dir + "/gromacs.mdp"
                 mdp_out = new_dir + "/gromacs.out.mdp"
-                gro     = new_dir + "/gromacs.gro"
-                top     = new_dir + "/gromacs.top"
-                tpr     = new_dir + "/gromacs.tpr"
+                gro = new_dir + "/gromacs.gro"
+                top = new_dir + "/gromacs.top"
+                tpr = new_dir + "/gromacs.tpr"
 
                 # Use grompp to generate the portable binary run input file.
-                command = "%s grompp -f %s -po %s -c %s -p %s -r %s -o %s" \
-                    % (_gmx_exe, mdp, mdp_out, gro, top, gro, tpr)
+                command = "%s grompp -f %s -po %s -c %s -p %s -r %s -o %s" % (
+                    _gmx_exe,
+                    mdp,
+                    mdp_out,
+                    gro,
+                    top,
+                    gro,
+                    tpr,
+                )
 
                 # Run the command. If this worked for the first lambda value,
                 # then it should work for all others.
-                proc = _subprocess.run(_Utils.command_split(command), shell=False, text=True,
-                    stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
+                proc = _subprocess.run(
+                    _Utils.command_split(command),
+                    shell=False,
+                    text=True,
+                    stdout=_subprocess.PIPE,
+                    stderr=_subprocess.PIPE,
+                )
 
                 # Create a copy of the process and update the working
                 # directory.
                 if not self._setup_only:
-                    process                 = _copy.copy(first_process)
-                    process._system         = first_process._system.copy()
-                    process._protocol       = self._protocol
-                    process._work_dir       = new_dir
-                    process._std_out_file   = new_dir + "/gromacs.out"
-                    process._std_err_file   = new_dir + "/gromacs.err"
-                    process._gro_file       = new_dir + "/gromacs.gro"
-                    process._top_file       = new_dir + "/gromacs.top"
-                    process._traj_file      = new_dir + "/gromacs.trr"
-                    process._config_file    = new_dir + "/gromacs.mdp"
-                    process._tpr_file       = new_dir + "/gromacs.tpr"
-                    process._input_files    = [process._config_file,
-                                               process._gro_file,
-                                               process._top_file,
-                                               process._tpr_file]
+                    process = _copy.copy(first_process)
+                    process._system = first_process._system.copy()
+                    process._protocol = self._protocol
+                    process._work_dir = new_dir
+                    process._std_out_file = new_dir + "/gromacs.out"
+                    process._std_err_file = new_dir + "/gromacs.err"
+                    process._gro_file = new_dir + "/gromacs.gro"
+                    process._top_file = new_dir + "/gromacs.top"
+                    process._traj_file = new_dir + "/gromacs.trr"
+                    process._config_file = new_dir + "/gromacs.mdp"
+                    process._tpr_file = new_dir + "/gromacs.tpr"
+                    process._input_files = [
+                        process._config_file,
+                        process._gro_file,
+                        process._top_file,
+                        process._tpr_file,
+                    ]
                     processes.append(process)
 
         if not self._setup_only:
@@ -871,14 +1001,15 @@ class Relative():
             self._runner = _Process.ProcessRunner(processes)
 
     def _update_run_args(self, args):
-        """Internal function to update run arguments for all subprocesses.
+        """
+        Internal function to update run arguments for all subprocesses.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           args : dict, collections.OrderedDict
-               A dictionary which contains the new command-line arguments
-               for the process executable.
+        args : dict, collections.OrderedDict
+            A dictionary which contains the new command-line arguments
+            for the process executable.
         """
 
         if not isinstance(args, dict):
@@ -887,26 +1018,28 @@ class Relative():
         for process in self._runner.processes():
             process.setArgs(args)
 
+
 def getData(name="data", file_link=False, work_dir=None):
-    """Return a link to a zip file containing the data files required for
-       post-simulation analysis.
+    """
+    Return a link to a zip file containing the data files required for
+    post-simulation analysis.
 
-       Parameters
-       ----------
+    Parameters
+    ----------
 
-       name : str
-           The name of the zip file.
+    name : str
+        The name of the zip file.
 
-       file_link : bool
-           Whether to return a FileLink when working in Jupyter.
+    file_link : bool
+        Whether to return a FileLink when working in Jupyter.
 
-       work_dir : str
-           The working directory for the simulation.
+    work_dir : str
+        The working directory for the simulation.
 
-       Returns
-       -------
+    Returns
+    -------
 
-       output : str, IPython.display.FileLink
-           A path, or file link, to an archive of the process input.
+    output : str, IPython.display.FileLink
+        A path, or file link, to an archive of the process input.
     """
     return Relative.getData(name=name, file_link=file_link, work_dir=work_dir)

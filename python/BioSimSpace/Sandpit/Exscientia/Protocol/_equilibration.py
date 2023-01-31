@@ -1,13 +1,13 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2022
+# Copyright: 2017-2023
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
 # BioSimSpace is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 2 of the License, or
+# the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
 # BioSimSpace is distributed in the hope that it will be useful,
@@ -19,9 +19,7 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-"""
-Functionality for equilibration protocols.
-"""
+"""Functionality for equilibration protocols."""
 
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
@@ -58,7 +56,8 @@ class Equilibration(_Protocol, _PositionRestraintMixin):
         force_constant=10 * _Units.Energy.kcal_per_mol / _Units.Area.angstrom2,
         restart=False,
     ):
-        """Constructor.
+        """
+        Constructor.
 
         Parameters
         ----------
@@ -116,6 +115,7 @@ class Equilibration(_Protocol, _PositionRestraintMixin):
         """
 
         # Call the base class constructor.
+
         _Protocol.__init__(self)
 
         # Set the time step.
@@ -190,7 +190,8 @@ class Equilibration(_Protocol, _PositionRestraintMixin):
             return f"BioSimSpace.Protocol.Equilibration({self._get_parm()})"
 
     def getTimeStep(self):
-        """Return the time step.
+        """
+        Return the time step.
 
         Returns
         -------
@@ -201,7 +202,8 @@ class Equilibration(_Protocol, _PositionRestraintMixin):
         return self._timestep
 
     def setTimeStep(self, timestep):
-        """Set the time step.
+        """
+        Set the time step.
 
         Parameters
         ----------
@@ -215,7 +217,8 @@ class Equilibration(_Protocol, _PositionRestraintMixin):
             raise TypeError("'timestep' must be of type 'BioSimSpace.Types.Time'")
 
     def getRunTime(self):
-        """Return the running time.
+        """
+        Return the running time.
 
         Returns
         -------
@@ -226,7 +229,8 @@ class Equilibration(_Protocol, _PositionRestraintMixin):
         return self._runtime
 
     def setRunTime(self, runtime):
-        """Set the running time.
+        """
+        Set the running time.
 
         Parameters
         ----------
@@ -240,7 +244,8 @@ class Equilibration(_Protocol, _PositionRestraintMixin):
             raise TypeError("'runtime' must be of type 'BioSimSpace.Types.Time'")
 
     def getStartTemperature(self):
-        """Return the starting temperature.
+        """
+        Return the starting temperature.
 
         Returns
         -------
@@ -251,7 +256,8 @@ class Equilibration(_Protocol, _PositionRestraintMixin):
         return self._temperature_start
 
     def setStartTemperature(self, temperature):
-        """Set the starting temperature.
+        """
+        Set the starting temperature.
 
         Parameters
         ----------
@@ -270,7 +276,8 @@ class Equilibration(_Protocol, _PositionRestraintMixin):
             )
 
     def getEndTemperature(self):
-        """Return the final temperature.
+        """
+        Return the final temperature.
 
         Returns
         -------
@@ -281,7 +288,8 @@ class Equilibration(_Protocol, _PositionRestraintMixin):
         return self._temperature_end
 
     def setEndTemperature(self, temperature):
-        """Set the final temperature.
+        """
+        Set the final temperature.
 
         Parameters
         ----------
@@ -299,7 +307,8 @@ class Equilibration(_Protocol, _PositionRestraintMixin):
             )
 
     def getPressure(self):
-        """Return the pressure.
+        """
+        Return the pressure.
 
         Returns
         -------
@@ -310,7 +319,8 @@ class Equilibration(_Protocol, _PositionRestraintMixin):
         return self._pressure
 
     def setPressure(self, pressure):
-        """Set the pressure.
+        """
+        Set the pressure.
 
         Parameters
         ----------
@@ -324,7 +334,8 @@ class Equilibration(_Protocol, _PositionRestraintMixin):
             raise TypeError("'pressure' must be of type 'BioSimSpace.Types.Pressure'")
 
     def getReportInterval(self):
-        """Return the interval between reporting statistics. (In integration steps.)
+        """
+        Return the interval between reporting statistics. (In integration steps.).
 
         Returns
         -------
@@ -335,7 +346,8 @@ class Equilibration(_Protocol, _PositionRestraintMixin):
         return self._report_interval
 
     def setReportInterval(self, report_interval):
-        """Set the interval at which statistics are reported. (In integration steps.)
+        """
+        Set the interval at which statistics are reported. (In integration steps.).
 
         Parameters
         ----------
@@ -353,8 +365,9 @@ class Equilibration(_Protocol, _PositionRestraintMixin):
         self._report_interval = report_interval
 
     def getRestartInterval(self):
-        """Return the interval between saving restart confiugrations, and/or
-        trajectory frames. (In integration steps.)
+        """
+        Return the interval between saving restart confiugrations, and/or
+        trajectory frames. (In integration steps.).
 
         Returns
         -------
@@ -366,8 +379,9 @@ class Equilibration(_Protocol, _PositionRestraintMixin):
         return self._restart_interval
 
     def setRestartInterval(self, restart_interval):
-        """Set the interval between saving restart confiugrations, and/or
-        trajectory frames. (In integration steps.)
+        """
+        Set the interval between saving restart confiugrations, and/or
+        trajectory frames. (In integration steps.).
 
         Parameters
         ----------
@@ -386,7 +400,8 @@ class Equilibration(_Protocol, _PositionRestraintMixin):
         self._restart_interval = restart_interval
 
     def isRestart(self):
-        """Return whether this restart simulation.
+        """
+        Return whether this restart simulation.
 
         Returns
         -------
@@ -397,7 +412,8 @@ class Equilibration(_Protocol, _PositionRestraintMixin):
         return self._restart
 
     def setRestart(self, restart):
-        """Set the restart flag.
+        """
+        Set the restart flag.
 
         Parameters
         ----------
@@ -412,7 +428,8 @@ class Equilibration(_Protocol, _PositionRestraintMixin):
             self._restart = False
 
     def getRestraint(self):
-        """Return the type of restraint..
+        """
+        Return the type of restraint..
 
         Returns
         -------
@@ -423,7 +440,8 @@ class Equilibration(_Protocol, _PositionRestraintMixin):
         return self._restraint
 
     def setRestraint(self, restraint):
-        """Set the type of restraint.
+        """
+        Set the type of restraint.
 
         Parameters
         ----------
@@ -470,7 +488,8 @@ class Equilibration(_Protocol, _PositionRestraintMixin):
         self._restraint = restraint
 
     def isConstantTemp(self):
-        """Return whether the protocol has a constant temperature.
+        """
+        Return whether the protocol has a constant temperature.
 
         Returns
         -------

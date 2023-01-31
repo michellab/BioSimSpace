@@ -13,15 +13,30 @@ node.addInput("float", BSS.Gateway.Float(help="A float requirement."))
 node.addInput("string", BSS.Gateway.String(help="A string requirement."))
 node.addInput("file", BSS.Gateway.File(help="A file requirement."))
 node.addInput("fileset", BSS.Gateway.FileSet(help="A file set requirement."))
-node.addInput("temperature", BSS.Gateway.Temperature(help="A temperature requirement.", unit="kelvin"))
+node.addInput(
+    "temperature",
+    BSS.Gateway.Temperature(help="A temperature requirement.", unit="kelvin"),
+)
 node.addInput("time", BSS.Gateway.Time(help="A time requirement.", unit="minute"))
-node.addInput("length", BSS.Gateway.Length(help="A length requirement.", unit="angstrom"))
-node.addInput("area", BSS.Gateway.Area(help="An area requirement.", unit="angstrom squared"))
-node.addInput("volume", BSS.Gateway.Volume(help="A volume requirement.", unit="angstrom cubed"))
+node.addInput(
+    "length", BSS.Gateway.Length(help="A length requirement.", unit="angstrom")
+)
+node.addInput(
+    "area", BSS.Gateway.Area(help="An area requirement.", unit="angstrom squared")
+)
+node.addInput(
+    "volume", BSS.Gateway.Volume(help="A volume requirement.", unit="angstrom cubed")
+)
 node.addInput("angle", BSS.Gateway.Angle(help="An angle requirement.", unit="radian"))
-node.addInput("charge", BSS.Gateway.Charge(help="A charge requirement.", unit="electron charge"))
-node.addInput("energy", BSS.Gateway.Energy(help="An energy requirement.", unit="kcal/mol"))
-node.addInput("pressure", BSS.Gateway.Pressure(help="A pressure requirement.", unit="atmosphere"))
+node.addInput(
+    "charge", BSS.Gateway.Charge(help="A charge requirement.", unit="electron charge")
+)
+node.addInput(
+    "energy", BSS.Gateway.Energy(help="An energy requirement.", unit="kcal/mol")
+)
+node.addInput(
+    "pressure", BSS.Gateway.Pressure(help="A pressure requirement.", unit="atmosphere")
+)
 
 # Set some output requirements.
 node.addOutput("out1", BSS.Gateway.Float(help="a float requirement"))

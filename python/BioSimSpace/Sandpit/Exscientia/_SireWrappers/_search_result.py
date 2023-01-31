@@ -1,13 +1,13 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2022
+# Copyright: 2017-2023
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
 # BioSimSpace is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 2 of the License, or
+# the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
 # BioSimSpace is distributed in the hope that it will be useful,
@@ -31,23 +31,25 @@ __all__ = ["SearchResult"]
 
 import sire.legacy as _Sire
 
-class SearchResult():
+
+class SearchResult:
     """A thin wrapper around Sire.Mol.SelectResult."""
 
     def __init__(self, select_result):
-        """Constructor.
+        """
+        Constructor.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           select_result : Output of a Sire search
-               The Sire result object.
+        select_result : Output of a Sire search
+            The Sire result object.
         """
 
-        # Note that the type of a sire search will now be
-        # whatever makes most sense for the result, e.g.
-        # SelectorMol if this is a list of molecules,
-        # SelectorBond if this is a list of bonds etc.
+        # Note that the type of a sire search will now be
+        # whatever makes most sense for the result, e.g.
+        # SelectorMol if this is a list of molecules,
+        # SelectorBond if this is a list of bonds etc.
 
         # Store the Sire select result.
         self._sire_object = select_result.__deepcopy__()
@@ -67,13 +69,14 @@ class SearchResult():
         return "<BioSimSpace.SearchResult: nResults=%d>" % self.nResults()
 
     def __len__(self):
-        """Return the number of results.
+        """
+        Return the number of results.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           num_results : int
-               The number of search results.
+        num_results : int
+            The number of search results.
         """
         return self._num_results
 
@@ -122,7 +125,7 @@ class SearchResult():
             except:
                 raise TypeError("'key' must be of type 'int'")
 
-            if key < -self._num_results or key > self._num_results -1:
+            if key < -self._num_results or key > self._num_results - 1:
                 raise IndexError("SearchResult index is out of range.")
 
             if key < 0:
@@ -183,139 +186,153 @@ class SearchResult():
         return result
 
     def copy(self):
-        """Create a copy of this object.
+        """
+        Create a copy of this object.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           search_result : :class:`SearchResult <BioSimSpace._SireWrappers.SearchResult>`
-               A copy of the object.
+        search_result : :class:`SearchResult <BioSimSpace._SireWrappers.SearchResult>`
+            A copy of the object.
         """
         return SearchResult(self)
 
     def atoms(self):
-        """Return all of the atoms that contain the results of this
-           search.
+        """
+        Return all of the atoms that contain the results of this
+        search.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           search_result : :class:`SearchResult <BioSimSpace._SireWrappers.SearchResult>`
-               A copy of the object viewed via its atoms.
+        search_result : :class:`SearchResult <BioSimSpace._SireWrappers.SearchResult>`
+            A copy of the object viewed via its atoms.
         """
         return SearchResult(self._sire_object.atoms())
 
     def residues(self):
-        """Return all of the residues that contain the results of this
-           search.
+        """
+        Return all of the residues that contain the results of this
+        search.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           search_result : :class:`SearchResult <BioSimSpace._SireWrappers.SearchResult>`
-               A copy of the object viewed via its residues.
+        search_result : :class:`SearchResult <BioSimSpace._SireWrappers.SearchResult>`
+            A copy of the object viewed via its residues.
         """
         return SearchResult(self._sire_object.residues())
 
     def chains(self):
-        """Return all of the chains that contain the results of this
-           search.
+        """
+        Return all of the chains that contain the results of this
+        search.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           search_result : :class:`SearchResult <BioSimSpace._SireWrappers.SearchResult>`
-               A copy of the object viewed via its chains.
+        search_result : :class:`SearchResult <BioSimSpace._SireWrappers.SearchResult>`
+            A copy of the object viewed via its chains.
         """
         return SearchResult(self._sire_object.chains())
 
     def segments(self):
-        """Return all of the segments that contain the results of this
-           search.
+        """
+        Return all of the segments that contain the results of this
+        search.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           search_result : :class:`SearchResult <BioSimSpace._SireWrappers.SearchResult>`
-               A copy of the object viewed via its segments.
+        search_result : :class:`SearchResult <BioSimSpace._SireWrappers.SearchResult>`
+            A copy of the object viewed via its segments.
         """
         return SearchResult(self._sire_object.segments())
 
     def molecules(self):
-        """Return all of the molecules that contain the results of this
-           search.
+        """
+        Return all of the molecules that contain the results of this
+        search.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           search_result : :class:`SearchResult <BioSimSpace._SireWrappers.SearchResult>`
-               A copy of the object viewed via its molecules.
+        search_result : :class:`SearchResult <BioSimSpace._SireWrappers.SearchResult>`
+            A copy of the object viewed via its molecules.
         """
         try:
             return SearchResult(self._sire_object.molecules())
         except Exception:
             # this is a single molecule view
             from sire.mol import SelectorMol
+
             return SearchResult(SelectorMol(self._sire_object.molecule()))
 
     def bonds(self):
-        """Return all of the bonds in this result
+        """
+        Return all of the bonds in this result.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           search_result : :class:`SearchResult <BioSimSpace._SireWrappers.SearchResult>`
-               A copy of the object viewed via its bonds.
+        search_result : :class:`SearchResult <BioSimSpace._SireWrappers.SearchResult>`
+            A copy of the object viewed via its bonds.
         """
         try:
             from sire.mm import SelectorMBond
+
             return SearchResult(SelectorMBond(self._sire_object))
         except Exception:
             from sire.mm import SelectorBond
+
             return SearchResult(SelectorBond(self._sire_object))
 
     def nResults(self):
-        """Return the number of results.
+        """
+        Return the number of results.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           num_results : int
-               The number of search results.
+        num_results : int
+            The number of search results.
         """
         return self._num_results
 
     def getResult(self, index):
-        """Return the result at the given index.
+        """
+        Return the result at the given index.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           index : int
-               The index of the result.
+        index : int
+            The index of the result.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
-               The requested molecule.
+        molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+            The requested molecule.
 
-           result : :class:`Atom <BioSimSpace._SireWrappers.Atom>`, \
-                    :class:`Residue <BioSimSpace._SireWrappers.Residue>`, \
-                    :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, \
-                    :class:`Bond <BioSimSpace._SireWrappers.Bond>`
+        result : :class:`Atom <BioSimSpace._SireWrappers.Atom>`, \
+                 :class:`Residue <BioSimSpace._SireWrappers.Residue>`, \
+                 :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, \
+                 :class:`Bond <BioSimSpace._SireWrappers.Bond>`
         """
         return self[index]
 
     def _getSireObject(self):
-        """Return the underlying Sire object.
+        """
+        Return the underlying Sire object.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           object : Sire.Mol.SelectResult
+        object : Sire.Mol.SelectResult
         """
         return self._sire_object
+
 
 # Import at bottom of module to avoid circular dependency.
 from ._atom import Atom as _Atom

@@ -1,13 +1,13 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2022
+# Copyright: 2017-2023
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
 # BioSimSpace is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 2 of the License, or
+# the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
 # BioSimSpace is distributed in the hope that it will be useful,
@@ -19,9 +19,7 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-"""
-Functionality for creating BioSimSpace workflow components (nodes).
-"""
+"""Functionality for creating BioSimSpace workflow components (nodes)."""
 
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
@@ -38,6 +36,7 @@ import shutil as _shutil
 import sys as _sys
 import textwrap as _textwrap
 import warnings as _warnings
+
 _yaml = _try_import("yaml")
 
 from .. import _is_notebook
@@ -69,12 +68,30 @@ from ._requirements import Time as _Time
 from ._requirements import Volume as _Volume
 
 # Float types (including those with units).
-_float_types = [_Float, _Charge, _Energy, _Pressure, _Length, _Area, _Volume,
-    _Temperature, _Time]
+_float_types = [
+    _Float,
+    _Charge,
+    _Energy,
+    _Pressure,
+    _Length,
+    _Area,
+    _Volume,
+    _Temperature,
+    _Time,
+]
 
 # Unit types.
-_unit_types = [_Charge, _Energy, _Pressure, _Length, _Area, _Volume,
-    _Temperature, _Time]
+_unit_types = [
+    _Charge,
+    _Energy,
+    _Pressure,
+    _Length,
+    _Area,
+    _Volume,
+    _Temperature,
+    _Time,
+]
+
 
 class Parser(_argparse.ArgumentParser):
     # Pass the message straight through to the exit method.
@@ -88,6 +105,7 @@ class Parser(_argparse.ArgumentParser):
             print("\nArgument parser failed with the following message:")
             message = "   " + message + "\n"
         return super().exit(status, message)
+
 
 class CwlAction(_argparse.Action):
     """Helper class to export CWL wrappers from Node metadata."""
@@ -110,14 +128,16 @@ class CwlAction(_argparse.Action):
             # requirements with CWL.
             output_type = type(value)
             if output_type not in [_File, _FileSet]:
-                raise TypeError("We currently only support File and "
-                                "FileSet outputs with CWL.")
+                raise TypeError(
+                    "We currently only support File and " "FileSet outputs with CWL."
+                )
 
         # Store the absolute path of the Python interpreter used to run the node.
         exe = _sys.executable
 
         # Store the absolute path of the node.
         import __main__
+
         node = _os.path.abspath(__main__.__file__)
 
         # Create the name of the CWL wrapper.
@@ -126,8 +146,8 @@ class CwlAction(_argparse.Action):
         # Write the wrapper.
         with open(cwl_wrapper, "w") as file:
             # Write the header.
-            file.write( "cwlVersion: v1.0\n")
-            file.write( "class: CommandLineTool\n")
+            file.write("cwlVersion: v1.0\n")
+            file.write("class: CommandLineTool\n")
             file.write(f'baseCommand: ["{exe}", "{node}", "--strict-file-naming"]\n')
 
             # Write the inputs section.
@@ -187,9 +207,9 @@ class CwlAction(_argparse.Action):
                         file.write(f"    default: {default}\n")
 
                 # Bind the command-line option name.
-                file.write( "    inputBinding:\n")
+                file.write("    inputBinding:\n")
                 file.write(f"      prefix: --{key}\n")
-                file.write( "      separate: true\n")
+                file.write("      separate: true\n")
 
                 file.write("\n")
 
@@ -211,48 +231,49 @@ class CwlAction(_argparse.Action):
 
                     # File.
                     if output_type is _File:
-                        file.write( "    type: File\n")
-                        file.write( "    outputBinding:\n")
+                        file.write("    type: File\n")
+                        file.write("    outputBinding:\n")
                         file.write(f'      glob: "{key}.*"\n')
 
                     # FileSet.
                     elif output_type is _FileSet:
-                        file.write( "    type:\n")
-                        file.write( "      type: array\n")
-                        file.write( "      items: File\n")
-                        file.write( "    outputBinding:\n")
+                        file.write("    type:\n")
+                        file.write("      type: array\n")
+                        file.write("      items: File\n")
+                        file.write("    outputBinding:\n")
                         file.write(f'      glob: "{key}.*"\n')
 
         # Exit the parser.
         parser.exit()
 
-class Node():
+
+class Node:
     """A class for interfacing with BioSimSpace nodes.
 
-       Nodes are used to collect and validate user input, document the
-       intentions of the workflow component, track and report errors,
-       and validate output. Once written, a node can be run from within
-       Jupyter, from the command-line, or plugged into a workflow engine,
-       such as Knime.
+    Nodes are used to collect and validate user input, document the
+    intentions of the workflow component, track and report errors,
+    and validate output. Once written, a node can be run from within
+    Jupyter, from the command-line, or plugged into a workflow engine,
+    such as Knime.
 
-       Example
-       -------
+    Example
+    -------
 
-       A generic energy minimisation node:
+    A generic energy minimisation node:
 
-       >>> import BioSimSpace as BSS
-       >>> node = BSS.Gateway.Node("Perform energy minimisation")
-       >>> node.addAuthor(name="Lester Hedges", email="lester.hedges@bristol.ac.uk", affiliation="University of Bristol")
-       >>> node.setLicence("GPLv3")
-       >>> node.addInput("files", BSS.Gateway.FileSet(help="A set of molecular input files."))
-       >>> node.addInput("steps", BSS.Gateway.Integer(help="The number of minimisation steps.", minimum=0, maximum=100000, default=10000))
-       >>> node.addOutput("minimised", BSS.Gateway.FileSet(help="The minimised molecular system."))
-       >>> node.showControls()
-       >>> system = BSS.IO.readMolecules(node.getInput("files"))
-       >>> protocol = BSS.Protocol.Minimisation(steps=node.getInput("steps"))
-       >>> process = BSS.MD.run(system, protocol)
-       >>> node.setOutput("minimised", BSS.IO.saveMolecules("minimised", process.getSystem(block=True), system.fileFormat()))
-       >>> node.validate()
+    >>> import BioSimSpace as BSS
+    >>> node = BSS.Gateway.Node("Perform energy minimisation")
+    >>> node.addAuthor(name="Lester Hedges", email="lester.hedges@bristol.ac.uk", affiliation="University of Bristol")
+    >>> node.setLicence("GPLv3")
+    >>> node.addInput("files", BSS.Gateway.FileSet(help="A set of molecular input files."))
+    >>> node.addInput("steps", BSS.Gateway.Integer(help="The number of minimisation steps.", minimum=0, maximum=100000, default=10000))
+    >>> node.addOutput("minimised", BSS.Gateway.FileSet(help="The minimised molecular system."))
+    >>> node.showControls()
+    >>> system = BSS.IO.readMolecules(node.getInput("files"))
+    >>> protocol = BSS.Protocol.Minimisation(steps=node.getInput("steps"))
+    >>> process = BSS.MD.run(system, protocol)
+    >>> node.setOutput("minimised", BSS.IO.saveMolecules("minimised", process.getSystem(block=True), system.fileFormat()))
+    >>> node.validate()
     """
 
     # Whether the node is run from Knime.
@@ -262,16 +283,17 @@ class Node():
     _is_notebook = _is_notebook
 
     def __init__(self, description, name=None):
-        """Constructor.
+        """
+        Constructor.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           description : str
-               A description of the node.
+        description : str
+            A description of the node.
 
-           name : str
-               The name of the node.
+        name : str
+            The name of the node.
         """
 
         if not isinstance(description, str):
@@ -329,10 +351,13 @@ class Node():
             description = self._generate_description()
 
             # Create the parser.
-            self._parser = Parser(description=description,
-                formatter_class=_argparse.RawTextHelpFormatter, add_help=False,
+            self._parser = Parser(
+                description=description,
+                formatter_class=_argparse.RawTextHelpFormatter,
+                add_help=False,
                 config_file_parser_class=_argparse.YAMLConfigFileParser,
-                add_config_file_help=False)
+                add_config_file_help=False,
+            )
 
             # Bind the node inputs and outputs to the CWL action.
             CwlAction.bind_node(self)
@@ -340,14 +365,41 @@ class Node():
             # Add argument groups.
             self._required = self._parser.add_argument_group("Required arguments")
             self._optional = self._parser.add_argument_group("Optional arguments")
-            self._optional.add_argument("-h", "--help", action="help", help="Show this help message and exit.")
-            self._optional.add_argument("-c", "--config", is_config_file=True, help="Path to configuration file.")
-            self._optional.add_argument("-v", "--verbose", type=_str2bool, nargs='?', const=True, default=False,
-                                        help="Print verbose error messages.")
-            self._optional.add_argument("--export-cwl", action=CwlAction, type=_str2bool, nargs='?', const=True,
-                                        default=False, help="Export Common Workflow Language (CWL) wrapper and exit.")
-            self._optional.add_argument("--strict-file-naming", type=_str2bool, nargs='?', const=True, default=False,
-                                        help="Enforce that the prefix of any file based output matches its name.")
+            self._optional.add_argument(
+                "-h", "--help", action="help", help="Show this help message and exit."
+            )
+            self._optional.add_argument(
+                "-c",
+                "--config",
+                is_config_file=True,
+                help="Path to configuration file.",
+            )
+            self._optional.add_argument(
+                "-v",
+                "--verbose",
+                type=_str2bool,
+                nargs="?",
+                const=True,
+                default=False,
+                help="Print verbose error messages.",
+            )
+            self._optional.add_argument(
+                "--export-cwl",
+                action=CwlAction,
+                type=_str2bool,
+                nargs="?",
+                const=True,
+                default=False,
+                help="Export Common Workflow Language (CWL) wrapper and exit.",
+            )
+            self._optional.add_argument(
+                "--strict-file-naming",
+                type=_str2bool,
+                nargs="?",
+                const=True,
+                default=False,
+                help="Enforce that the prefix of any file based output matches its name.",
+            )
 
             # Overload the "_check_value" method for more flexible string support.
             # (Ignore whitespace and case insensitive.)
@@ -362,16 +414,17 @@ class Node():
                 self.validate()
 
     def addInput(self, name, input):
-        """Add an input requirement.
+        """
+        Add an input requirement.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           name : str
-               The name of the input.
+        name : str
+            The name of the input.
 
-           input : :class:`Requirement <BioSimSpace.Gateway._requirement.Requirement>`
-               The input requirement object.
+        input : :class:`Requirement <BioSimSpace.Gateway._requirement.Requirement>`
+            The input requirement object.
         """
 
         if not isinstance(name, str):
@@ -384,10 +437,10 @@ class Node():
         reset = False
         if name in self._inputs:
             if self._is_notebook:
-                _warnings.warn("Duplicate input requirement '%s'"  % name)
+                _warnings.warn("Duplicate input requirement '%s'" % name)
                 reset = True
             else:
-                raise ValueError("Duplicate input requirement '%s'"  % name)
+                raise ValueError("Duplicate input requirement '%s'" % name)
 
         # Add the input to the dictionary.
         self._inputs[name] = input
@@ -405,94 +458,141 @@ class Node():
             self._addInputCommandLine(name, input)
 
     def _addInputCommandLine(self, name, input):
-        """Add an input requirement for the command-line.
+        """
+        Add an input requirement for the command-line.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           name : str
-               The name of the input.
+        name : str
+            The name of the input.
 
-           input : :class:`Requirement <BioSimSpace.Gateway._requirement.Requirement>`
-               The input requirement object.
+        input : :class:`Requirement <BioSimSpace.Gateway._requirement.Requirement>`
+            The input requirement object.
         """
 
         # Append long-form argument name if not present.
-        if (len(name) > 2):
-            if name[0:2] != '--':
-                name = '--' + name
+        if len(name) > 2:
+            if name[0:2] != "--":
+                name = "--" + name
         else:
-            name = '--' + name
+            name = "--" + name
 
         if input.isOptional():
             if input.getDefault() is not None:
                 if input.isMulti() is not False:
-                    self._optional.add_argument(name, type=input.getArgType(), nargs='+',
-                        help=self._create_help_string(input), default=input.getDefault())
+                    self._optional.add_argument(
+                        name,
+                        type=input.getArgType(),
+                        nargs="+",
+                        help=self._create_help_string(input),
+                        default=input.getDefault(),
+                    )
                 else:
                     if isinstance(input.getArgType(), bool):
-                        self._optional.add_argument(name, type=_str2bool, nargs='?',
-                            const=True, default=input.getDefault(), help=self._create_help_string(input))
+                        self._optional.add_argument(
+                            name,
+                            type=_str2bool,
+                            nargs="?",
+                            const=True,
+                            default=input.getDefault(),
+                            help=self._create_help_string(input),
+                        )
                     else:
                         if input.getAllowedValues() is not None:
-                            self._optional.add_argument(name, type=input.getArgType(),
-                                help=self._create_help_string(input), default=input.getDefault(),
-                                choices=input.getAllowedValues())
+                            self._optional.add_argument(
+                                name,
+                                type=input.getArgType(),
+                                help=self._create_help_string(input),
+                                default=input.getDefault(),
+                                choices=input.getAllowedValues(),
+                            )
                         else:
-                            self._optional.add_argument(name, type=input.getArgType(),
-                                help=self._create_help_string(input), default=input.getDefault())
+                            self._optional.add_argument(
+                                name,
+                                type=input.getArgType(),
+                                help=self._create_help_string(input),
+                                default=input.getDefault(),
+                            )
             else:
                 if input.isMulti() is not False:
-                    self._optional.add_argument(name, type=input.getArgType(), nargs='+',
-                        help=self._create_help_string(input))
+                    self._optional.add_argument(
+                        name,
+                        type=input.getArgType(),
+                        nargs="+",
+                        help=self._create_help_string(input),
+                    )
                 else:
-                    self._optional.add_argument(name, type=input.getArgType(),
-                        help=self._create_help_string(input))
+                    self._optional.add_argument(
+                        name,
+                        type=input.getArgType(),
+                        help=self._create_help_string(input),
+                    )
         else:
             if input.isMulti() is not False:
-                self._required.add_argument(name, type=input.getArgType(), nargs='+',
-                    help=self._create_help_string(input), required=True)
+                self._required.add_argument(
+                    name,
+                    type=input.getArgType(),
+                    nargs="+",
+                    help=self._create_help_string(input),
+                    required=True,
+                )
             else:
                 if input.getAllowedValues() is not None:
-                    self._required.add_argument(name, type=input.getArgType(),
-                        help=self._create_help_string(input), required=True,
-                        choices=input.getAllowedValues())
+                    self._required.add_argument(
+                        name,
+                        type=input.getArgType(),
+                        help=self._create_help_string(input),
+                        required=True,
+                        choices=input.getAllowedValues(),
+                    )
                 else:
                     if isinstance(input.getArgType(), bool):
-                        self._required.add_argument(name, type=_str2bool, nargs='?',
-                            const=True, help=self._create_help_string(input))
+                        self._required.add_argument(
+                            name,
+                            type=_str2bool,
+                            nargs="?",
+                            const=True,
+                            help=self._create_help_string(input),
+                        )
                     else:
-                        self._required.add_argument(name, type=input.getArgType(),
-                            help=self._create_help_string(input), required=True)
+                        self._required.add_argument(
+                            name,
+                            type=input.getArgType(),
+                            help=self._create_help_string(input),
+                            required=True,
+                        )
 
     def _addInputKnime(self, name, input):
-        """Add an input requirement for Knime.
+        """
+        Add an input requirement for Knime.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           name : str
-               The name of the input.
+        name : str
+            The name of the input.
 
-           input : :class:`Requirement <BioSimSpace.Gateway._requirement.Requirement>`
-               The input requirement object.
+        input : :class:`Requirement <BioSimSpace.Gateway._requirement.Requirement>`
+            The input requirement object.
         """
         return None
 
     def _addInputJupyter(self, name, input, reset=False):
-        """Add an input requirement for Jupyter.
+        """
+        Add an input requirement for Jupyter.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           name : str
-               The name of the input.
+        name : str
+            The name of the input.
 
-           input : :class:`Requirement <BioSimSpace.Gateway._requirement.Requirement>`
-               The input requirement object.
+        input : :class:`Requirement <BioSimSpace.Gateway._requirement.Requirement>`
+            The input requirement object.
 
-           reset : bool
-               Whether to reset the widget data.
+        reset : bool
+            Whether to reset the widget data.
         """
 
         # Create a widget button to indicate whether the requirement value
@@ -515,7 +615,7 @@ class Node():
                 description=name,
                 tooltip=input.getHelp(),
                 button_style="",
-                disabled=False
+                disabled=False,
             )
 
             # Add the 'set' indicator button to the widget.
@@ -562,7 +662,7 @@ class Node():
                     value=default,
                     description=name,
                     tooltip=input.getHelp(),
-                    disabled=False
+                    disabled=False,
                 )
 
             else:
@@ -580,7 +680,7 @@ class Node():
 
                     # Bounded integer.
                     if _max is not None:
-                        step=int((_max - _min) / 100)
+                        step = int((_max - _min) / 100)
                         # Create an int slider widget.
                         widget = _widgets.IntSlider(
                             value=default,
@@ -593,7 +693,7 @@ class Node():
                             orientation="horizontal",
                             readout=True,
                             readout_format="d",
-                            disabled=False
+                            disabled=False,
                         )
 
                         # Flag that the integer is bounded.
@@ -606,7 +706,7 @@ class Node():
                         value=default,
                         description=name,
                         tooltip=input.getHelp(),
-                        disabled=False
+                        disabled=False,
                     )
 
             # Add the 'set' indicator button to the widget.
@@ -659,7 +759,7 @@ class Node():
                     value=default,
                     description=name,
                     tooltip=input.getHelp(),
-                    disabled=False
+                    disabled=False,
                 )
 
             else:
@@ -683,7 +783,7 @@ class Node():
 
                     # Bounded float.
                     if _max is not None:
-                        step=(_max - _min) / 100
+                        step = (_max - _min) / 100
                         # Create a float slider widget.
                         widget = _widgets.FloatSlider(
                             value=default,
@@ -696,7 +796,7 @@ class Node():
                             orientation="horizontal",
                             readout=True,
                             readout_format=".2f",
-                            disabled=False
+                            disabled=False,
                         )
 
                         # Flag that the float is bounded.
@@ -709,7 +809,7 @@ class Node():
                         value=default,
                         description=name,
                         tooltip=input.getHelp(),
-                        disabled=False
+                        disabled=False,
                     )
 
             # Add the 'set' indicator button to the widget.
@@ -754,7 +854,7 @@ class Node():
                     value=default,
                     description=name,
                     tooltip=input.getHelp(),
-                    disabled=False
+                    disabled=False,
                 )
 
             else:
@@ -764,7 +864,7 @@ class Node():
                         placeholder="Type something",
                         description=name,
                         tooltip=input.getHelp(),
-                        disabled=False
+                        disabled=False,
                     )
                 else:
                     # Create a text widget.
@@ -773,7 +873,7 @@ class Node():
                         placeholder="Type something",
                         description=name,
                         tooltip=input.getHelp(),
-                        disabled=False
+                        disabled=False,
                     )
 
             # Add the 'set' indicator button to the widget.
@@ -834,16 +934,17 @@ class Node():
             raise ValueError("Unsupported requirement type '%s'" % type(input))
 
     def addOutput(self, name, output):
-        """Add an output requirement.
+        """
+        Add an output requirement.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           name : str
-               The name of the output.
+        name : str
+            The name of the output.
 
-           output : :class:`Requirement <BioSimSpace.Gateway._requirement.Requirement>`
-               The output requirement object.
+        output : :class:`Requirement <BioSimSpace.Gateway._requirement.Requirement>`
+            The output requirement object.
         """
 
         if not isinstance(name, str):
@@ -864,16 +965,17 @@ class Node():
             self._parser.description = self._generate_description()
 
     def setOutput(self, name, value):
-        """Set the value of an output.
+        """
+        Set the value of an output.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           name : str
-               The name of the output.
+        name : str
+            The name of the output.
 
-           value :
-               The value of the output.
+        value :
+            The value of the output.
         """
         try:
             # Enforce strict naming for all file-based outputs. This ensures
@@ -898,9 +1000,11 @@ class Node():
                         # If the file prefix doesn't match the requirement name, then
                         # rename, i.e. move, the file.
                         if fileprefix != name:
-                            _warnings.warn(f"Output file prefix '{fileprefix}' "
-                                           f"doesn't match requirement name '{name}'. "
-                                            "Renaming file!")
+                            _warnings.warn(
+                                f"Output file prefix '{fileprefix}' "
+                                f"doesn't match requirement name '{name}'. "
+                                "Renaming file!"
+                            )
                             new_name = dirname + f"/{name}.{extension}"
                             _shutil.move(file, new_name)
                             file = new_name
@@ -919,19 +1023,20 @@ class Node():
             raise
 
     def getInput(self, name):
-        """Get the value of the named input.
+        """
+        Get the value of the named input.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           name : str
-               The name of the input requirement.
+        name : str
+            The name of the input requirement.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           input :
-               The value of the named input requirement.
+        input :
+            The value of the named input requirement.
         """
 
         if not isinstance(name, str):
@@ -950,13 +1055,14 @@ class Node():
             raise
 
     def getInputs(self):
-        """Get all of the input requirements.
+        """
+        Get all of the input requirements.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           inputs : { str : :class:`Requirement <BioSimSpace.Gateway._requirement.Requirement>` }
-               The dictionary of input requirements.
+        inputs : { str : :class:`Requirement <BioSimSpace.Gateway._requirement.Requirement>` }
+            The dictionary of input requirements.
         """
 
         # Validate the inputs.
@@ -965,13 +1071,14 @@ class Node():
         return self._inputs.copy()
 
     def addError(self, error):
-        """Add an error message.
+        """
+        Add an error message.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           error : str
-               The error message.
+        error : str
+            The error message.
         """
 
         if not isinstance(error, str):
@@ -980,19 +1087,20 @@ class Node():
             self._errors.append(error)
 
     def addAuthor(self, name=None, email=None, affiliation=None):
-        """Add an author for the node.
+        """
+        Add an author for the node.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           name : str
-               The author's name.
+        name : str
+            The author's name.
 
-           email : str
-               The author's email address.
+        email : str
+            The author's email address.
 
-           affiliation : str
-               The author's affiliation.
+        affiliation : str
+            The author's affiliation.
         """
 
         if name is None:
@@ -1008,31 +1116,33 @@ class Node():
             raise TypeError("'affiliation' must be of type 'str'")
 
         if self._authors is None:
-            self._authors = [{"name" : name, "email" : email, "affiliation" : affiliation}]
+            self._authors = [{"name": name, "email": email, "affiliation": affiliation}]
         else:
-            author = {"name" : name, "email" : email, "affiliation" : affiliation}
+            author = {"name": name, "email": email, "affiliation": affiliation}
             if not author in self._authors:
                 self._authors.append(author)
 
     def getAuthors(self):
-        """Return the list of authors.
+        """
+        Return the list of authors.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           authors : [dict]
-              A list of author dictionaries.
+        authors : [dict]
+           A list of author dictionaries.
         """
         return self._authors.copy()
 
     def setLicense(self, license):
-        """Set the license for the node.
+        """
+        Set the license for the node.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           license : str
-               The license type.
+        license : str
+            The license type.
         """
         if not isinstance(license, str):
             raise TypeError("The license must be of type 'str'")
@@ -1040,24 +1150,26 @@ class Node():
             self._license = license
 
     def getLicense(self):
-        """Return the license.
+        """
+        Return the license.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           license : str
-               The license of the node.
+        license : str
+            The license of the node.
         """
         return self._license
 
     def showControls(self):
-        """Show the Jupyter widget GUI to allow the user to enter input.
+        """
+        Show the Jupyter widget GUI to allow the user to enter input.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           controls : ipywidgets.form
-              A gui control panel for setting input requirements.
+        controls : ipywidgets.form
+           A gui control panel for setting input requirements.
         """
 
         if not self._is_notebook:
@@ -1065,9 +1177,7 @@ class Node():
 
         # Create the layout object.
         layout = _widgets.Layout(
-            display="flex",
-            flex_flow="row",
-            justify_content="space-between"
+            display="flex", flex_flow="row", justify_content="space-between"
         )
 
         # Initialise the list of form items.
@@ -1108,21 +1218,24 @@ class Node():
             indicators.append(indicator)
 
         # Create the widget form.
-        form1 = _widgets.Box(requirements, layout=_widgets.Layout(
-            display="flex",
-            flex_flow="column",
-            border="solid 2px",
-            align_items="stretch",
-            width="100%"
-        ))
+        form1 = _widgets.Box(
+            requirements,
+            layout=_widgets.Layout(
+                display="flex",
+                flex_flow="column",
+                border="solid 2px",
+                align_items="stretch",
+                width="100%",
+            ),
+        )
 
         # Create the indicator form.
-        form2 = _widgets.VBox(indicators, layout=_widgets.Layout(
-            display="flex",
-            flex_flow="column",
-            align_items="stretch",
-            width="5%"
-        ))
+        form2 = _widgets.VBox(
+            indicators,
+            layout=_widgets.Layout(
+                display="flex", flex_flow="column", align_items="stretch", width="5%"
+            ),
+        )
 
         # Combine the two forms.
         form = _widgets.Box([form1, form2], layout=layout)
@@ -1171,8 +1284,11 @@ class Node():
         # Command-line.
         else:
             # Parse the arguments into a dictionary.
-            args = vars(self._parser.parse_known_args(
-                args=None if _sys.argv[1:] else ['--help'])[0])
+            args = vars(
+                self._parser.parse_known_args(
+                    args=None if _sys.argv[1:] else ["--help"]
+                )[0]
+            )
 
             # Now loop over the arguments and set the input values.
             for key, value in args.items():
@@ -1186,21 +1302,22 @@ class Node():
                         self._inputs[key].setValue(value, name=key)
 
     def validate(self, file_prefix="output"):
-        """Whether the output requirements are satisfied.
+        """
+        Whether the output requirements are satisfied.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           file_prefix : str
-               The prefix of the output file name.
+        file_prefix : str
+            The prefix of the output file name.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           output : IPython.lib.display.FileLink, str
-               If running interatvely: A link to a zipfile containing the
-               validated output, else the name of a YAML file containing
-               the node output.
+        output : IPython.lib.display.FileLink, str
+            If running interatvely: A link to a zipfile containing the
+            validated output, else the name of a YAML file containing
+            the node output.
         """
 
         if not isinstance(file_prefix, str):
@@ -1252,7 +1369,9 @@ class Node():
                 file_link = _FileLink(zipname)
 
                 # Set the download attribute so that JupyterLab doesn't try to open the file.
-                file_link.html_link_str = f"<a href='%s' target='_blank' download='{zipname}'>%s</a>"
+                file_link.html_link_str = (
+                    f"<a href='%s' target='_blank' download='{zipname}'>%s</a>"
+                )
 
                 # Return a link to the archive.
                 return file_link
@@ -1274,19 +1393,20 @@ class Node():
             return yamlname
 
     def _create_help_string(self, input):
-        """Create a nicely formatted argparse help string.
+        """
+        Create a nicely formatted argparse help string.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           input : :class:`Requirement <BioSimSpace.Gateway.Requirement>`
-               The input requirement.
+        input : :class:`Requirement <BioSimSpace.Gateway.Requirement>`
+            The input requirement.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           help : str
-               The formatted help string.
+        help : str
+            The formatted help string.
         """
 
         # Initialise the help string.
@@ -1323,25 +1443,27 @@ class Node():
         return help
 
     def _generate_description(self):
-        """Generate a formatted output section for the argparse help description.
+        """
+        Generate a formatted output section for the argparse help description.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           output : str
-               A string listing the output requirements.
+        output : str
+            A string listing the output requirements.
         """
 
         string = "\n".join(_textwrap.wrap(self._description, 80))
 
-        yaml_help = ("Args that start with '--' (e.g. --arg) can also be set "
-                     "in a config file (specified via -c). The config file uses "
-                     "YAML syntax and must represent a YAML 'mapping' "
-                     "(for details, see http://learn.getgrav.org/advanced/yaml). "
-                     "If an arg is specified in more than one place, then "
-                     "commandline values override config file values which "
-                     "override defaults."
-                    )
+        yaml_help = (
+            "Args that start with '--' (e.g. --arg) can also be set "
+            "in a config file (specified via -c). The config file uses "
+            "YAML syntax and must represent a YAML 'mapping' "
+            "(for details, see http://learn.getgrav.org/advanced/yaml). "
+            "If an arg is specified in more than one place, then "
+            "commandline values override config file values which "
+            "override defaults."
+        )
 
         string += "\n\n" + "\n".join(_textwrap.wrap(yaml_help, 80))
 
@@ -1359,10 +1481,11 @@ class Node():
                 else:
                     for _ in range(0, 24):
                         s += " "
-                s +=  line + "\n"
+                s += line + "\n"
             string += s
 
         return string
+
 
 def _on_value_change(change):
     """Helper function to flag that a widget value has been set."""
@@ -1370,6 +1493,7 @@ def _on_value_change(change):
     change["owner"]._button.tooltip = "The input requirement is set."
     change["owner"]._button.button_style = "success"
     change["owner"]._button.icon = "fa-check"
+
 
 def _on_file_upload(change):
     """Helper function to handle file uploads."""
@@ -1427,8 +1551,7 @@ def _on_file_upload(change):
             file.write(content)
 
         # Report that the file was uploaded.
-        print("Uploaded '{}' ({:.2f} kB)".format(
-            filename, num_bytes / 2 **10))
+        print("Uploaded '{}' ({:.2f} kB)".format(filename, num_bytes / 2**10))
 
         # Truncate the filename string if it is more than 15 characters.
         label += (filename[:15] + "...") if len(filename) > 15 else filename
@@ -1455,13 +1578,14 @@ def _on_file_upload(change):
     # with different input.
     change["owner"]._counter = len(change["owner"].value)
 
+
 def _check_value(action, value):
     """Helper function to overload argparse's choice checker."""
     if action.choices is not None and value not in action.choices:
-        args = {"value"   : value,
-                "choices" : ", ".join(map(repr, action.choices))
-               }
-        msg = _argparse.argparse._("invalid choice: %(value)r (choose from %(choices)s)")
+        args = {"value": value, "choices": ", ".join(map(repr, action.choices))}
+        msg = _argparse.argparse._(
+            "invalid choice: %(value)r (choose from %(choices)s)"
+        )
 
         # If the value is a string, then strip whitespace and try a case insensitive search.
         if isinstance(value, str):
@@ -1473,6 +1597,7 @@ def _check_value(action, value):
                 raise _argparse.ArgumentError(action, msg % args)
         else:
             raise _argparse.ArgumentError(action, msg % args)
+
 
 def _str2bool(v):
     """Convert an argument string to a boolean value."""

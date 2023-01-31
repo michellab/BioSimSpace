@@ -1,13 +1,13 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2022
+# Copyright: 2017-2023
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
 # BioSimSpace is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 2 of the License, or
+# the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
 # BioSimSpace is distributed in the hope that it will be useful,
@@ -19,9 +19,7 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-"""
-Functionality for reading and analysing molecular trajectories.
-"""
+"""Functionality for reading and analysing molecular trajectories."""
 
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
@@ -51,40 +49,42 @@ from ..Types import Time as _Time
 from .. import IO as _IO
 from .. import Units as _Units
 
+
 def getFrame(trajectory, topology, index, system=None, property_map={}):
-    """Extract a single frame from a trajectory file.
+    """
+    Extract a single frame from a trajectory file.
 
-       Parameters
-       ----------
+    Parameters
+    ----------
 
-       trajectory : str
-           A trajectory file.
+    trajectory : str
+        A trajectory file.
 
-       topology : str
-           A topology file.
+    topology : str
+        A topology file.
 
-       index : int
-          The index of the frame.
+    index : int
+       The index of the frame.
 
-       system : :class:`System <BioSimSpace._SireWrappers.System>`
-           A BioSimSpace System object. If passed, then trajectory coordinates
-           and velocities will be copied into this system and returned. This is
-           useful if you wish to preserve all molecular properties, which might
-           be lost during reading of the topology format required by the
-           trajectory backend. It is assumed that he system contains the same
-           number of molecules as each frame in the trajectory, and that the
-           molecules are in the same order.
+    system : :class:`System <BioSimSpace._SireWrappers.System>`
+        A BioSimSpace System object. If passed, then trajectory coordinates
+        and velocities will be copied into this system and returned. This is
+        useful if you wish to preserve all molecular properties, which might
+        be lost during reading of the topology format required by the
+        trajectory backend. It is assumed that he system contains the same
+        number of molecules as each frame in the trajectory, and that the
+        molecules are in the same order.
 
-       property_map : dict
-           A dictionary that maps system "properties" to their user defined
-           values. This allows the user to refer to properties with their
-           own naming scheme, e.g. { "charge" : "my-charge" }
+    property_map : dict
+        A dictionary that maps system "properties" to their user defined
+        values. This allows the user to refer to properties with their
+        own naming scheme, e.g. { "charge" : "my-charge" }
 
-       Returns
-       -------
+    Returns
+    -------
 
-       frame : :class:`System <BioSimSpace._SireWrappers.System>`
-           The System object of the corresponding frame.
+    frame : :class:`System <BioSimSpace._SireWrappers.System>`
+        The System object of the corresponding frame.
     """
 
     if not isinstance(trajectory, str):
@@ -101,12 +101,17 @@ def getFrame(trajectory, topology, index, system=None, property_map={}):
 
     if system is not None:
         if not isinstance(system, _System):
-            raise TypeError("'system' must be of type 'BioSimSpace._SireWrappers.System'")
+            raise TypeError(
+                "'system' must be of type 'BioSimSpace._SireWrappers.System'"
+            )
         system = system.copy()
 
         # We assume the molecules are in the same order, so create a one-to-one
         # molecule mapping between the frame and reference.
-        mapping = {_SireMol.MolIdx(x) : _SireMol.MolIdx(x) for x in range(0, system.nMolecules())}
+        mapping = {
+            _SireMol.MolIdx(x): _SireMol.MolIdx(x)
+            for x in range(0, system.nMolecules())
+        }
 
         # Update the water topology to match topology/trajectory.
         system = _update_water_topology(system, topology, trajectory)
@@ -138,7 +143,11 @@ def getFrame(trajectory, topology, index, system=None, property_map={}):
                 universe.select_atoms("all").write(pdb_file)
         except Exception as e:
             errors.append(f"MDAnalysis: {str(e)}")
-            msg = "MDTraj/MDAnalysis failed to read frame %d from: traj=%s, top=%s" % (index, trajectory, topology)
+            msg = "MDTraj/MDAnalysis failed to read frame %d from: traj=%s, top=%s" % (
+                index,
+                trajectory,
+                topology,
+            )
             if _isVerbose():
                 raise IOError(msg + "\n" + "\n".join(errors))
             else:
@@ -176,12 +185,8 @@ def getFrame(trajectory, topology, index, system=None, property_map={}):
         return _System(new_system)
         try:
             sire_system, _ = _SireIO.updateCoordinatesAndVelocities(
-                    system._sire_object,
-                    new_system,
-                    mapping,
-                    False,
-                    property_map,
-                    {})
+                system._sire_object, new_system, mapping, False, property_map, {}
+            )
 
             new_system = _System(sire_system)
         except Exception as e:
@@ -192,7 +197,9 @@ def getFrame(trajectory, topology, index, system=None, property_map={}):
                 raise IOError(msg) from None
 
         else:
-            raise IOError("The trajectory frame is incompatible with the passed system!")
+            raise IOError(
+                "The trajectory frame is incompatible with the passed system!"
+            )
 
     # Load the frame directly to create a new System object.
     else:
@@ -200,7 +207,9 @@ def getFrame(trajectory, topology, index, system=None, property_map={}):
             if is_mdanalysis:
                 new_system = _System(_SireIO.MoleculeParser.read(frame_file))
             else:
-                new_system = _System(_SireIO.MoleculeParser.read([frame_file, topology]))
+                new_system = _System(
+                    _SireIO.MoleculeParser.read([frame_file, topology])
+                )
         except Exception as e:
             msg = "Failed to read trajectory frame: '%s'" % frame_file
             if _isVerbose():
@@ -211,36 +220,39 @@ def getFrame(trajectory, topology, index, system=None, property_map={}):
     # Return the system.
     return new_system
 
-class Trajectory():
+
+class Trajectory:
     """A class for reading a manipulating biomolecular trajectories."""
 
-    def __init__(self, process=None, trajectory=None,
-                 topology=None, system=None, property_map={}):
-        """Constructor.
+    def __init__(
+        self, process=None, trajectory=None, topology=None, system=None, property_map={}
+    ):
+        """
+        Constructor.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           process : :class:`Process <BioSimSpace.Process>`
-               A BioSimSpace process object.
+        process : :class:`Process <BioSimSpace.Process>`
+            A BioSimSpace process object.
 
-           trajectory : str
-               A trajectory file.
+        trajectory : str
+            A trajectory file.
 
-           topology : str
-               A topology file.
+        topology : str
+            A topology file.
 
-           system : :class:`System <BioSimSpace._SireWrappers.System>`
-               A BioSimSpace System object. If passed, then trajectory coordinates
-               and velocities will be copied into this system and returned. This is
-               useful if you wish to preserve all molecular properties, which might
-               be lost during reading of the topology format required by the
-               trajectory backend.
+        system : :class:`System <BioSimSpace._SireWrappers.System>`
+            A BioSimSpace System object. If passed, then trajectory coordinates
+            and velocities will be copied into this system and returned. This is
+            useful if you wish to preserve all molecular properties, which might
+            be lost during reading of the topology format required by the
+            trajectory backend.
 
-           property_map : dict
-              A dictionary that maps system "properties" to their user defined
-              values. This allows the user to refer to properties with their
-              own naming scheme, e.g. { "charge" : "my-charge" }
+        property_map : dict
+           A dictionary that maps system "properties" to their user defined
+           values. This allows the user to refer to properties with their
+           own naming scheme, e.g. { "charge" : "my-charge" }
         """
 
         # Set default member variables.
@@ -253,11 +265,15 @@ class Trajectory():
 
         # Nothing to create a trajectory from.
         if process is None and trajectory is None:
-            raise ValueError("Both 'process' and 'trajectory' keyword arguments are 'None'")
+            raise ValueError(
+                "Both 'process' and 'trajectory' keyword arguments are 'None'"
+            )
 
         # Both use cases active. Default to process.
         if not process is None and not trajectory is None:
-            _warnings.warn("Both a process and trajectory file are specified! Defaulting to 'process'.")
+            _warnings.warn(
+                "Both a process and trajectory file are specified! Defaulting to 'process'."
+            )
             self._traj_file = None
 
         # BioSimSpace process.
@@ -267,7 +283,10 @@ class Trajectory():
                 process_name = process.__class__.__name__
                 # Check that the process can generate a trajectory.
                 if not self._process._has_trajectory:
-                    raise ValueError("BioSimSpace.Process.%s cannot generate a trajectory!" % process_name)
+                    raise ValueError(
+                        "BioSimSpace.Process.%s cannot generate a trajectory!"
+                        % process_name
+                    )
             else:
                 raise TypeError("'process' must be of type 'BioSimSpace.Process'.")
 
@@ -287,17 +306,24 @@ class Trajectory():
 
         # Invalid arguments.
         else:
-            raise ValueError("BioSimSpace.Trajectory requires a BioSimSpace.Process object, "
-                             "or a trajectory and topology file.")
+            raise ValueError(
+                "BioSimSpace.Trajectory requires a BioSimSpace.Process object, "
+                "or a trajectory and topology file."
+            )
 
         if system is not None:
             if not isinstance(system, _System):
-                raise TypeError("'system' must be of type 'BioSimSpace._SireWrappers.System'")
+                raise TypeError(
+                    "'system' must be of type 'BioSimSpace._SireWrappers.System'"
+                )
             self._system = system.copy()
 
             # We assume the molecules are in the same order, so create a one-to-one
             # molecule mapping between the frame and reference.
-            self._mapping = {_SireMol.MolIdx(x) : _SireMol.MolIdx(x) for x in range(0, system.nMolecules())}
+            self._mapping = {
+                _SireMol.MolIdx(x): _SireMol.MolIdx(x)
+                for x in range(0, system.nMolecules())
+            }
 
             if process is not None:
                 # If this is a GROMACS process, convert the water topology to
@@ -308,7 +334,9 @@ class Trajectory():
                     self._system._set_water_topology("AMBER")
             else:
                 # Update the water topology to match topology/trajectory.
-                self._system = _update_water_topology(self._system, self._top_file, self._traj_file)
+                self._system = _update_water_topology(
+                    self._system, self._top_file, self._traj_file
+                )
 
         if not isinstance(property_map, dict):
             raise TypeError("'property_map' must be of type 'dict'")
@@ -323,31 +351,36 @@ class Trajectory():
 
     def __str__(self):
         """Return a human readable string representation of the object."""
-        return "<BioSimSpace.Trajectory: nFrames=%d, backend=%r>" \
-            % (self.nFrames(), str(self._backend).lower())
+        return "<BioSimSpace.Trajectory: nFrames=%d, backend=%r>" % (
+            self.nFrames(),
+            str(self._backend).lower(),
+        )
 
     def __repr__(self):
         """Return a string showing how to instantiate the object."""
-        return "<BioSimSpace.Trajectory: nFrames=%d, backend=%r>" \
-            % (self.nFrames(), str(self._backend).lower())
+        return "<BioSimSpace.Trajectory: nFrames=%d, backend=%r>" % (
+            self.nFrames(),
+            str(self._backend).lower(),
+        )
 
     def getTrajectory(self, format="auto"):
-        """Get the current trajectory object.
+        """
+        Get the current trajectory object.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           format : str
-               Whether to return an 'MDTraj' or 'MDAnalysis' object.
-               Use "auto" if you are happy with either format, i.e. it
-               will try each backend in sequence and return an object
-               from the first one that works.
+        format : str
+            Whether to return an 'MDTraj' or 'MDAnalysis' object.
+            Use "auto" if you are happy with either format, i.e. it
+            will try each backend in sequence and return an object
+            from the first one that works.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           trajectory : mdtraj.core.trajectory.Trajectory, MDAnalysis.core.universe.Universe
-               The trajectory in MDTraj or MDAnalysis format.
+        trajectory : mdtraj.core.trajectory.Trajectory, MDAnalysis.core.universe.Universe
+            The trajectory in MDTraj or MDAnalysis format.
         """
 
         # Strip whitespace and convert to upper case.
@@ -366,8 +399,10 @@ class Trajectory():
                 return self._trajectory.copy()
 
         if format == "MDTRAJ" and self._backend == "MDANALYSIS":
-            raise _IncompatibleError("This Trajectory object can only be used "
-                                     "with the MDAnalysis backend.")
+            raise _IncompatibleError(
+                "This Trajectory object can only be used "
+                "with the MDAnalysis backend."
+            )
 
         # Set the location of the trajectory and topology files.
         if self._process is not None:
@@ -399,7 +434,10 @@ class Trajectory():
                 return traj
             except:
                 if format == "MDTRAJ":
-                    _warnings.warn("MDTraj failed to read: traj=%s, top=%s" % (self._traj_file, self._top_file))
+                    _warnings.warn(
+                        "MDTraj failed to read: traj=%s, top=%s"
+                        % (self._traj_file, self._top_file)
+                    )
                     return None
 
         # Return an MDAnalysis Universe.
@@ -425,27 +463,34 @@ class Trajectory():
 
             except:
                 if format == "MDANALYSIS":
-                    _warnings.warn("MDAnalysis failed to read: traj=%s, top=%s" % (self._traj_file, self._top_file))
+                    _warnings.warn(
+                        "MDAnalysis failed to read: traj=%s, top=%s"
+                        % (self._traj_file, self._top_file)
+                    )
                 else:
-                    _warnings.warn("MDTraj and MDAnalysis failed to read: traj=%s, top=%s" % (self._traj_file, self._top_file))
+                    _warnings.warn(
+                        "MDTraj and MDAnalysis failed to read: traj=%s, top=%s"
+                        % (self._traj_file, self._top_file)
+                    )
                 universe = None
 
             return universe
 
     def getFrames(self, indices=None):
-        """Get trajectory frames as a list of System objects.
+        """
+        Get trajectory frames as a list of System objects.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           indices : [int], [:class:`Time <BioSimSpace.Types.Time>`]
-               A list of trajectory frame indices, or time stamps (in ns).
+        indices : [int], [:class:`Time <BioSimSpace.Types.Time>`]
+            A list of trajectory frame indices, or time stamps (in ns).
 
-           Returns
-           -------
+        Returns
+        -------
 
-           frames : [:class:`System <BioSimSpace._SireWrappers.System>`]
-               The list of System objects.
+        frames : [:class:`System <BioSimSpace._SireWrappers.System>`]
+            The list of System objects.
         """
 
         # The process is running. Grab the latest trajectory.
@@ -465,7 +510,10 @@ class Trajectory():
         # Some formats do not store time information as part of the trajectory.
         if n_frames > 1:
             if self._process is not None and self._process._package_name != "OPENMM":
-                time_interval = (self._process._protocol.getRunTime() / self._process._protocol.getRestartInterval())
+                time_interval = (
+                    self._process._protocol.getRunTime()
+                    / self._process._protocol.getRestartInterval()
+                )
                 time_interval = time_interval.nanoseconds().value()
             else:
                 if self._backend == "MDTRAJ":
@@ -489,8 +537,10 @@ class Trajectory():
                 # Round time stamp to nearest frame index.
                 indices = [round(indices.nanoseconds().value() / time_interval) - 1]
             else:
-                raise _IncompatibleError("Cannot determine time stamps for a trajectory "
-                                        "with only one frame!")
+                raise _IncompatibleError(
+                    "Cannot determine time stamps for a trajectory "
+                    "with only one frame!"
+                )
 
         # A list of frame indices.
         elif all(type(x) is int for x in indices):
@@ -499,17 +549,23 @@ class Trajectory():
         # A list of time stamps.
         elif all(isinstance(x, _Time) for x in indices):
             if n_frames <= 1:
-                raise _IncompatibleError("Cannot determine time stamps for a trajectory "
-                                        "with only one frame!")
+                raise _IncompatibleError(
+                    "Cannot determine time stamps for a trajectory "
+                    "with only one frame!"
+                )
 
             # Round time stamps to nearest frame indices.
-            indices = [round(x.nanoseconds().value() / time_interval) - 1 for x in indices]
+            indices = [
+                round(x.nanoseconds().value() / time_interval) - 1 for x in indices
+            ]
 
         # Unsupported argument.
         else:
-            raise ValueError("Unsupported argument. Indices or time stamps "
-                            "must be an 'int' or 'BioSimSpace.Types.Time', or list of 'int' or "
-                            "'BioSimSpace.Types.Time' types.")
+            raise ValueError(
+                "Unsupported argument. Indices or time stamps "
+                "must be an 'int' or 'BioSimSpace.Types.Time', or list of 'int' or "
+                "'BioSimSpace.Types.Time' types."
+            )
 
         # Initialise the list of frames.
         frames = []
@@ -522,9 +578,13 @@ class Trajectory():
 
             # Make sure the frame index is within range.
             if x > 0 and x >= n_frames:
-                raise ValueError("Frame index (%d) of of range (0 to %d)." % (x, n_frames - 1))
+                raise ValueError(
+                    "Frame index (%d) of of range (0 to %d)." % (x, n_frames - 1)
+                )
             elif x < -n_frames:
-                raise ValueError("Frame index (%d) of of range (-1 to -%d)." % (x, n_frames))
+                raise ValueError(
+                    "Frame index (%d) of of range (-1 to -%d)." % (x, n_frames)
+                )
 
             # Write the current frame to file.
 
@@ -570,15 +630,18 @@ class Trajectory():
                 # The new_system object will contain a single molecule with the
                 # coordinates of all of the atoms in the reference. As such, we
                 # will need to split the system into molecules.
-                new_system = _split_molecules(frame, pdb, self._system, self._work_dir, self._property_map)
+                new_system = _split_molecules(
+                    frame, pdb, self._system, self._work_dir, self._property_map
+                )
                 try:
                     sire_system, _ = _SireIO.updateCoordinatesAndVelocities(
-                            self._system._sire_object,
-                            new_system,
-                            self._mapping,
-                            False,
-                            self._property_map,
-                            {})
+                        self._system._sire_object,
+                        new_system,
+                        self._mapping,
+                        False,
+                        self._property_map,
+                        {},
+                    )
 
                     new_system = _System(sire_system)
                 except Exception as e:
@@ -592,9 +655,17 @@ class Trajectory():
             else:
                 try:
                     if self._backend == "MDANALYSIS":
-                        new_system = _System(_SireIO.MoleculeParser.read([frame_file], self._property_map))
+                        new_system = _System(
+                            _SireIO.MoleculeParser.read(
+                                [frame_file], self._property_map
+                            )
+                        )
                     else:
-                        new_system = _System(_SireIO.MoleculeParser.read([frame_file, self._top_file], self._property_map))
+                        new_system = _System(
+                            _SireIO.MoleculeParser.read(
+                                [frame_file, self._top_file], self._property_map
+                            )
+                        )
                 except Exception as e:
                     msg = "Failed to read trajectory frame: '%s'" % frame_file
                     if _isVerbose():
@@ -613,13 +684,14 @@ class Trajectory():
         return frames
 
     def nFrames(self):
-        """Return the current number of trajectory frames.
+        """
+        Return the current number of trajectory frames.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           nFrames : int
-               The number of trajectory frames.
+        nFrames : int
+            The number of trajectory frames.
         """
 
         # First get the current MDTraj object.
@@ -636,22 +708,23 @@ class Trajectory():
                 return self._trajectory.trajectory.n_frames
 
     def rmsd(self, frame=None, atoms=None):
-        """Compute the root mean squared displacement.
+        """
+        Compute the root mean squared displacement.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           frame : int
-               The index of the reference frame.
+        frame : int
+            The index of the reference frame.
 
-           atoms : [int]
-               A list of reference atom indices.
+        atoms : [int]
+            A list of reference atom indices.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           rmsd : [:class:`Length <BioSimSpace.Types.Length>`]
-               A list containing the RMSD value at each time point.
+        rmsd : [:class:`Length <BioSimSpace.Types.Length>`]
+            A list containing the RMSD value at each time point.
         """
 
         # Default to the first frame.
@@ -666,9 +739,14 @@ class Trajectory():
 
                 # Make sure the frame index is within range.
                 if frame > 0 and frame >= n_frames:
-                    raise ValueError("Frame index (%d) of of range (0 to %d)." % (frame, n_frames - 1))
+                    raise ValueError(
+                        "Frame index (%d) of of range (0 to %d)."
+                        % (frame, n_frames - 1)
+                    )
                 elif frame < -n_frames:
-                    raise ValueError("Frame index (%d) of of range (-1 to -%d)." % (frame, n_frames))
+                    raise ValueError(
+                        "Frame index (%d) of of range (-1 to -%d)." % (frame, n_frames)
+                    )
 
         if atoms is not None:
             # Check that all of the atom indices are integers.
@@ -695,7 +773,7 @@ class Trajectory():
             if atoms is None:
                 select = "all"
             else:
-                select = "bynum " + " ".join([str(x+1) for x in atoms])
+                select = "bynum " + " ".join([str(x + 1) for x in atoms])
 
             # Instantiate the RMSD object.
             R = _rms.RMSD(self._trajectory, self._trajectory, select, ref_frame=frame)
@@ -706,52 +784,58 @@ class Trajectory():
             # Get the RMSD results.
             results = R.results.rmsd
 
-            rmsd = [_Units.Length.nanometer * float(x[-1]/10) for x in results]
+            rmsd = [_Units.Length.nanometer * float(x[-1] / 10) for x in results]
 
         # Return the RMSD result.
         return rmsd
 
+
 def _split_molecules(frame, pdb, reference, work_dir, property_map={}):
-    """Internal helper function to split molecules in a "squashed" system based
-       on a reference, i.e. we use the number of atoms per molecule in the
-       reference to break the system apart.
+    """
+    Internal helper function to split molecules in a "squashed" system based
+    on a reference, i.e. we use the number of atoms per molecule in the
+    reference to break the system apart.
 
-       Parameters
-       ----------
+    Parameters
+    ----------
 
-       frame : Sire.IO.AmberRst7, SireIO.Gro87
-           The trajectory frame, parsed to AmberRst7 or Gro87 format.
+    frame : Sire.IO.AmberRst7, SireIO.Gro87
+        The trajectory frame, parsed to AmberRst7 or Gro87 format.
 
-       pdb : Sire.IO.PDB2
-           A PDB representation of the frame.
+    pdb : Sire.IO.PDB2
+        A PDB representation of the frame.
 
-       reference : :class:`System <BioSimSpace._SireWrappers.System>`
-           A BioSimSpace System object for reference topology.
+    reference : :class:`System <BioSimSpace._SireWrappers.System>`
+        A BioSimSpace System object for reference topology.
 
-       work_dir : str
-           The working directory for the trajectory.
+    work_dir : str
+        The working directory for the trajectory.
 
-       property_map : dict
-           A dictionary that maps system "properties" to their user defined
-           values. This allows the user to refer to properties with their
-           own naming scheme, e.g. { "charge" : "my-charge" }
+    property_map : dict
+        A dictionary that maps system "properties" to their user defined
+        values. This allows the user to refer to properties with their
+        own naming scheme, e.g. { "charge" : "my-charge" }
 
-       Returns
-       -------
+    Returns
+    -------
 
-       system : Sire.System.System
-           The passed system, split into the appropriate number of molecules,
-           as a Sire System object.
+    system : Sire.System.System
+        The passed system, split into the appropriate number of molecules,
+        as a Sire System object.
     """
 
     if not isinstance(frame, (_SireIO.AmberRst7, _SireIO.Gro87)):
-        raise TypeError("'frame' must be of type 'Sire.IO.AmberRst7' or 'Sire.IO.Gro87'")
+        raise TypeError(
+            "'frame' must be of type 'Sire.IO.AmberRst7' or 'Sire.IO.Gro87'"
+        )
 
     if not isinstance(pdb, _SireIO.PDB2):
         raise TypeError("'pdb' must be of type 'Sire.IO.PDB2'")
 
     if not isinstance(reference, _System):
-        raise TypeError("'reference' must be of type 'BioSimSpace._SireWrappers.System'")
+        raise TypeError(
+            "'reference' must be of type 'BioSimSpace._SireWrappers.System'"
+        )
 
     if not isinstance(work_dir, str):
         raise TypeError("'work_dir' must be of type 'str'")
@@ -782,7 +866,7 @@ def _split_molecules(frame, pdb, reference, work_dir, property_map={}):
 
     if "PRM7" in formats:
         try:
-            top =  _SireIO.AmberPrm(reference._sire_object)
+            top = _SireIO.AmberPrm(reference._sire_object)
             top.writeToFile(top_file)
         except Exception as e:
             msg = "Unable to write reference system to AmberPrm7 format!"
@@ -793,7 +877,7 @@ def _split_molecules(frame, pdb, reference, work_dir, property_map={}):
 
     elif "GroTop" in formats:
         try:
-            top =  _SireIO.GroTop(reference._sire_object)
+            top = _SireIO.GroTop(reference._sire_object)
             top.writeToFile(top_file)
         except Exception as e:
             msg = "Unable to write reference system to GroTop format!"
@@ -804,7 +888,7 @@ def _split_molecules(frame, pdb, reference, work_dir, property_map={}):
 
     elif "PSF" in formats:
         try:
-            top =  _SireIO.CharmmPSF(reference._sire_object)
+            top = _SireIO.CharmmPSF(reference._sire_object)
             top.writeToFile(top_file)
         except Exception as e:
             msg = "Unable to write reference system to CharmmPSF format!"
@@ -832,7 +916,7 @@ def _split_molecules(frame, pdb, reference, work_dir, property_map={}):
         # each atom. We append a standalone TER record between each molecule,
         # which is used by Sire.IO.PDB2 to split molecules.
         for mol in reference:
-            new_lines.extend(pdb_lines[idx:idx+mol.nAtoms()])
+            new_lines.extend(pdb_lines[idx : idx + mol.nAtoms()])
             new_lines.append("TER")
             idx += mol.nAtoms()
 
@@ -856,27 +940,29 @@ def _split_molecules(frame, pdb, reference, work_dir, property_map={}):
 
     return split_system
 
+
 def _update_water_topology(system, topology, trajectory):
-    """Internal helper function to update the water topology of the system
-       so that it is consistent with the passed topology or trajectory.
+    """
+    Internal helper function to update the water topology of the system
+    so that it is consistent with the passed topology or trajectory.
 
-       Parameters
-       ----------
+    Parameters
+    ----------
 
-       system : :class:`System <BioSimSpace._SireWrappers.System>`
-           A BioSimSpace System object for reference topology.
+    system : :class:`System <BioSimSpace._SireWrappers.System>`
+        A BioSimSpace System object for reference topology.
 
-       trajectory : str
-           A trajectory file.
+    trajectory : str
+        A trajectory file.
 
-       topology : str
-           A topology file.
+    topology : str
+        A topology file.
 
-       Returns
-       -------
+    Returns
+    -------
 
-       system : :class:`System <BioSimSpace._SireWrappers.System>`
-           The passed system with updated water topology.
+    system : :class:`System <BioSimSpace._SireWrappers.System>`
+        The passed system with updated water topology.
     """
 
     if not isinstance(system, _System):

@@ -13,6 +13,7 @@ if BSS._amber_home is not None:
 else:
     has_amber = False
 
+
 @pytest.mark.skipif(has_amber is False, reason="Requires AMBER to be installed.")
 def test_makeCompatibleWith():
     # Load the original PDB file. In this representation the system contains
@@ -28,8 +29,9 @@ def test_makeCompatibleWith():
     molecule = BSS.Parameters.ff14SB(system[0]).getMolecule()
 
     # Load in the two-molecule tLEaP system.
-    tLEaP_system = BSS.IO.readMolecules(["test/input/molecules/1jr5.crd",
-                                         "test/input/molecules/1jr5.top"])
+    tLEaP_system = BSS.IO.readMolecules(
+        ["test/input/molecules/1jr5.crd", "test/input/molecules/1jr5.top"]
+    )
 
     # Now perform single-point energy calculations using the two molecular
     # representations.
@@ -68,8 +70,14 @@ def test_makeCompatibleWith():
     # representation. This maps the coordinates back into the original topology.
     new_system = process0.getSystem()
 
-@pytest.mark.parametrize("system, ignore_waters", [(BSS.IO.readMolecules("test/input/amber/ala/*"), False),
-                                                   (BSS.IO.readMolecules("test/input/amber/ala/*"), True)])
+
+@pytest.mark.parametrize(
+    "system, ignore_waters",
+    [
+        (BSS.IO.readMolecules("test/input/amber/ala/*"), False),
+        (BSS.IO.readMolecules("test/input/amber/ala/*"), True),
+    ],
+)
 def test_hydrogen_mass_repartitioning(system, ignore_waters):
     # Work out the initial mass of the system.
     initial_mass = 0
@@ -90,7 +98,7 @@ def test_hydrogen_mass_repartitioning(system, ignore_waters):
     assert final_mass == pytest.approx(initial_mass)
 
     # Invert the repartitioning.
-    system.repartitionHydrogenMass(factor=1/4)
+    system.repartitionHydrogenMass(factor=1 / 4)
 
     # Work out the new mass of the system.
     final_mass = 0

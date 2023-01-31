@@ -3,31 +3,39 @@ import BioSimSpace.Sandpit.Exscientia as BSS
 try:
     from Sire.Base import wrap
 except Exception:
+
     def wrap(arg):
         return arg
 
+
 import pytest
+
 
 @pytest.fixture
 def system(scope="session"):
     """A system object with the same topology as the trajectories."""
     return BSS.IO.readMolecules("test/Sandpit/Exscientia/input/amber/ala/*")
 
+
 @pytest.fixture
 def traj_mdtraj(system, scope="session"):
     """A trajectory object using the MDTraj backend."""
     return BSS.Trajectory.Trajectory(
-            trajectory="test/Sandpit/Exscientia/input/trajectories/ala.trr",
-            topology="test/Sandpit/Exscientia/input/trajectories/ala.gro",
-            system=system)
+        trajectory="test/Sandpit/Exscientia/input/trajectories/ala.trr",
+        topology="test/Sandpit/Exscientia/input/trajectories/ala.gro",
+        system=system,
+    )
+
 
 @pytest.fixture
 def traj_mdanalysis(system, scope="session"):
     """A trajectory object using the MDAnalysis backend."""
     return BSS.Trajectory.Trajectory(
-            trajectory="test/Sandpit/Exscientia/input/trajectories/ala.trr",
-            topology="test/Sandpit/Exscientia/input/trajectories/ala.tpr",
-            system=system)
+        trajectory="test/Sandpit/Exscientia/input/trajectories/ala.trr",
+        topology="test/Sandpit/Exscientia/input/trajectories/ala.tpr",
+        system=system,
+    )
+
 
 @pytest.fixture
 def traj_mdanalysis_pdb(system, scope="session"):
@@ -35,13 +43,16 @@ def traj_mdanalysis_pdb(system, scope="session"):
     new_system = system.copy()
     new_system._sire_object.setProperty("fileformat", wrap("PDB"))
     return BSS.Trajectory.Trajectory(
-            trajectory="test/Sandpit/Exscientia/input/trajectories/ala.trr",
-            topology="test/Sandpit/Exscientia/input/trajectories/ala.tpr",
-            system=new_system)
+        trajectory="test/Sandpit/Exscientia/input/trajectories/ala.trr",
+        topology="test/Sandpit/Exscientia/input/trajectories/ala.tpr",
+        system=new_system,
+    )
+
 
 def test_frames(traj_mdtraj, traj_mdanalysis):
     """Make sure that the number of frames loaded by each backend agree."""
     assert traj_mdtraj.nFrames() == traj_mdanalysis.nFrames()
+
 
 def test_coords(traj_mdtraj, traj_mdanalysis):
     """Make sure that frames from both backends have comparable coordinates."""
@@ -58,9 +69,11 @@ def test_coords(traj_mdtraj, traj_mdanalysis):
                 assert c0.y().value() == pytest.approx(c1.y().value(), abs=1e-2)
                 assert c0.z().value() == pytest.approx(c1.z().value(), abs=1e-2)
 
+
 def test_coords_pdb(traj_mdtraj, traj_mdanalysis_pdb):
     """Make sure that frames from both backends have comparable coordinates
-       when a PDB intermediate topology is used for reconstruction."""
+    when a PDB intermediate topology is used for reconstruction.
+    """
 
     # Extract the first and last frame from each trajectory.
     frames0 = traj_mdtraj.getFrames([0, -1])
@@ -74,6 +87,7 @@ def test_coords_pdb(traj_mdtraj, traj_mdanalysis_pdb):
                 assert c0.y().value() == pytest.approx(c1.y().value(), abs=1e-2)
                 assert c0.z().value() == pytest.approx(c1.z().value(), abs=1e-2)
 
+
 def test_velocities(traj_mdanalysis):
     """Make sure that the MDAnalysis format trajectory contains velocities."""
 
@@ -84,6 +98,7 @@ def test_velocities(traj_mdanalysis):
     for frame in frames:
         for mol in frame:
             assert mol._sire_object.hasProperty("velocity")
+
 
 def test_rmsd(traj_mdtraj, traj_mdanalysis):
     """Make sure that the RMSD computed by both backends is comparable."""

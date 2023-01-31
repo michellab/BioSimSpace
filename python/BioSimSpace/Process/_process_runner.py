@@ -1,13 +1,13 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2022
+# Copyright: 2017-2023
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
 # BioSimSpace is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 2 of the License, or
+# the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
 # BioSimSpace is distributed in the hope that it will be useful,
@@ -19,9 +19,7 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-"""
-Functionality for running multiple processes.
-"""
+"""Functionality for running multiple processes."""
 
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
@@ -37,43 +35,46 @@ from .._SireWrappers import System as _System
 
 from ._process import Process as _Process
 
-class ProcessRunner():
-    """A class for managing and running multiple simulation processes, e.g.
-       a free energy simulation at multiple lambda values.
 
-       Since BioSimSpace handles its own background processes it is unsuitable
-       for use with Python modules such as concurrent.futures, where use of
-       objects like a ProcessPoolExecutor would lead to redundant processes,
-       i.e. a process would be created, from which BioSimSpace would fork its
-       own background process. Instead, we recommend using a ProcessRunner,
-       which can handle the running of processes for you, both in serial and
-       parallel.
+class ProcessRunner:
+    """
+    A class for managing and running multiple simulation processes, e.g.
+    a free energy simulation at multiple lambda values.
 
-       At present there is no way to allocate specific compute resources to
-       individual processes. As such, unless you have access to a large amount
-       of compute, when executing the runner in parallel we recommend that the
-       individual processes are serial in nature. BioSimSpace is not intended
-       to be a workflow manager and the ProcessRunner is only meant to help
-       facilitate running of more complex, multi-leg simulation processes. If
-       you desire more fine-grained resource control we recommend breaking your
-       workflow into separate :class:`nodes <BioSimSpace.Gateway.Node>`, which
-       can be run independently and allocated their own specific resources.
+    Since BioSimSpace handles its own background processes it is unsuitable
+    for use with Python modules such as concurrent.futures, where use of
+    objects like a ProcessPoolExecutor would lead to redundant processes,
+    i.e. a process would be created, from which BioSimSpace would fork its
+    own background process. Instead, we recommend using a ProcessRunner,
+    which can handle the running of processes for you, both in serial and
+    parallel.
+
+    At present there is no way to allocate specific compute resources to
+    individual processes. As such, unless you have access to a large amount
+    of compute, when executing the runner in parallel we recommend that the
+    individual processes are serial in nature. BioSimSpace is not intended
+    to be a workflow manager and the ProcessRunner is only meant to help
+    facilitate running of more complex, multi-leg simulation processes. If
+    you desire more fine-grained resource control we recommend breaking your
+    workflow into separate :class:`nodes <BioSimSpace.Gateway.Node>`, which
+    can be run independently and allocated their own specific resources.
     """
 
     def __init__(self, processes, name="runner", work_dir=None):
-        """Constructor.
+        """
+        Constructor.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           processes : [:class:`Process <BioSimSpace.Process>`]
-               A list of process objects.
+        processes : [:class:`Process <BioSimSpace.Process>`]
+            A list of process objects.
 
-           name : str
-               The name of the of processes.
+        name : str
+            The name of the of processes.
 
-           work_dir : str
-               The working directory for the processes.
+        work_dir : str
+            The working directory for the processes.
         """
 
         # Convert tuple to list.
@@ -86,11 +87,15 @@ class ProcessRunner():
 
         # Check that the list of processes is valid.
         if not all(isinstance(process, _Process) for process in processes):
-            raise TypeError("'processes' must be a list of 'BioSimSpace.Process' types.")
+            raise TypeError(
+                "'processes' must be a list of 'BioSimSpace.Process' types."
+            )
 
         # Make sure all of the processes aren't running.
         if not all(process.isRunning() == False for process in processes):
-            raise ValueError("'processes' must not contain any running 'BioSimSpace.Process' objects!")
+            raise ValueError(
+                "'processes' must not contain any running 'BioSimSpace.Process' objects!"
+            )
 
         # Check that the working directory is valid.
         if work_dir is not None and not isinstance(work_dir, str):
@@ -123,58 +128,79 @@ class ProcessRunner():
 
     def __str__(self):
         """Return a human readable string representation of the object."""
-        return "<BioSimSpace.Process.%s: nProcesses=%d, nRunning=%d, nQueued=%d, nError=%d, name='%s', work_dir='%s'>" \
-            % (self.__class__.__name__, self.nProcesses(), self.nRunning(), self.nQueued(),
-               self.nError(), self._name, self._work_dir)
+        return (
+            "<BioSimSpace.Process.%s: nProcesses=%d, nRunning=%d, nQueued=%d, nError=%d, name='%s', work_dir='%s'>"
+            % (
+                self.__class__.__name__,
+                self.nProcesses(),
+                self.nRunning(),
+                self.nQueued(),
+                self.nError(),
+                self._name,
+                self._work_dir,
+            )
+        )
 
     def __repr__(self):
         """Return a human readable string representation of the object."""
-        return "<BioSimSpace.Process.%s: nProcesses=%d, nRunning=%d, nQueued=%d, nError=%d, name='%s', work_dir='%s'>" \
-            % (self.__class__.__name__, self.nProcesses(), self.nRunning(), self.nQueued(),
-               self.nError(), self._name, self._work_dir)
+        return (
+            "<BioSimSpace.Process.%s: nProcesses=%d, nRunning=%d, nQueued=%d, nError=%d, name='%s', work_dir='%s'>"
+            % (
+                self.__class__.__name__,
+                self.nProcesses(),
+                self.nRunning(),
+                self.nQueued(),
+                self.nError(),
+                self._name,
+                self._work_dir,
+            )
+        )
 
     def processes(self):
-        """Return the list of processes.
+        """
+        Return the list of processes.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           processes : [:class:`Process<BioSimSpace.Process>`]
-               The list of processes.
+        processes : [:class:`Process<BioSimSpace.Process>`]
+            The list of processes.
         """
         return self._processes
 
     def workDir(self):
-        """Return the working directory.
+        """
+        Return the working directory.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           work_dir : str
-               The working directory.
+        work_dir : str
+            The working directory.
         """
         return self._work_dir
 
     def getName(self):
-        """Return the process runner name.
+        """
+        Return the process runner name.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           name : str
-               The name of the process.
-
+        name : str
+            The name of the process.
         """
         return self._name
 
     def setName(self, name):
-        """Set the process runner name.
+        """
+        Set the process runner name.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           name : str
-               The process runner name.
+        name : str
+            The process runner name.
         """
         if not isinstance(name, str):
             raise TypeError("'name' must be of type 'str'")
@@ -182,14 +208,15 @@ class ProcessRunner():
             self._name = name
 
     def addProcess(self, process):
-        """Add a process to the runner.
+        """
+        Add a process to the runner.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           process : :class:`Process <BioSimSpace.Process>`, \
-                     [:class:`Process <BioSimSpace.Process>`]
-               The process/processes to add.
+        process : :class:`Process <BioSimSpace.Process>`, \
+                 [:class:`Process <BioSimSpace.Process>`]
+            The process/processes to add.
         """
 
         # Convert to a list.
@@ -200,11 +227,15 @@ class ProcessRunner():
 
         # Check that the list of processes is valid.
         if not all(isinstance(process, _Process) for process in processes):
-            raise TypeError("'processes' must be a list of 'BioSimSpace.Process' types.")
+            raise TypeError(
+                "'processes' must be a list of 'BioSimSpace.Process' types."
+            )
 
         # Make sure all of the processes aren't running.
         if not all(process.isRunning() == False for process in processes):
-            raise ValueError("'processes' must not contain any running 'BioSimSpace.Process' objects!")
+            raise ValueError(
+                "'processes' must not contain any running 'BioSimSpace.Process' objects!"
+            )
 
         if self._work_dir is None:
             self._processes.extend(self._nest_directories(processes))
@@ -220,13 +251,14 @@ class ProcessRunner():
             self._processes[idx]._num_failed = 0
 
     def removeProcess(self, index):
-        """Remove a process from the runner.
+        """
+        Remove a process from the runner.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           index : int
-               The index of the process.
+        index : int
+            The index of the process.
         """
 
         try:
@@ -237,7 +269,9 @@ class ProcessRunner():
         num_processes = self.nProcesses()
 
         if index < -num_processes or index > num_processes - 1:
-            raise IndexError(f"'index' is out of range: [-{num_processes}:{num_processes-1}]")
+            raise IndexError(
+                f"'index' is out of range: [-{num_processes}:{num_processes-1}]"
+            )
 
         # Map negative indices back into positive range.
         if index < 0:
@@ -253,29 +287,33 @@ class ProcessRunner():
                 process.kill()
 
             except IndexError:
-                raise IndexError("'index' is out of range: [0-%d]" % (self.nProcesses() - 1))
+                raise IndexError(
+                    "'index' is out of range: [0-%d]" % (self.nProcesses() - 1)
+                )
         else:
             print("ProcessRunner has started. Kill all processes before removing.")
 
     def nProcesses(self):
-        """Return the number of processes.
+        """
+        Return the number of processes.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           n_processes : int
-               The number of processes managed by the runner.
+        n_processes : int
+            The number of processes managed by the runner.
         """
         return len(self._processes)
 
     def nRunning(self):
-        """Return the number of running processes.
+        """
+        Return the number of running processes.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           n_running : int
-               The number of processes that are running.
+        n_running : int
+            The number of processes that are running.
         """
 
         n = 0
@@ -287,13 +325,14 @@ class ProcessRunner():
         return n
 
     def nQueued(self):
-        """Return the number of queued processes.
+        """
+        Return the number of queued processes.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           n_queued : int
-               The number of processes that are queued.
+        n_queued : int
+            The number of processes that are queued.
         """
 
         n = 0
@@ -305,13 +344,14 @@ class ProcessRunner():
         return n
 
     def nError(self):
-        """Return the number of errored processes.
+        """
+        Return the number of errored processes.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           n_error : int
-               The number of processes that are in an error state.
+        n_error : int
+            The number of processes that are in an error state.
         """
 
         n = 0
@@ -323,13 +363,14 @@ class ProcessRunner():
         return n
 
     def running(self):
-        """Return the indices of the running processes.
+        """
+        Return the indices of the running processes.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           idx_running : [ int ]
-               A list containing the indices of the running processes.
+        idx_running : [ int ]
+            A list containing the indices of the running processes.
         """
 
         indices = []
@@ -341,13 +382,14 @@ class ProcessRunner():
         return indices
 
     def queued(self):
-        """Return the indices of the queued processes.
+        """
+        Return the indices of the queued processes.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           idx_queued : [int]
-               A list containing the indices of the queued processes.
+        idx_queued : [int]
+            A list containing the indices of the queued processes.
         """
 
         indices = []
@@ -359,13 +401,14 @@ class ProcessRunner():
         return indices
 
     def errored(self):
-        """Return the indices of the errored processes.
+        """
+        Return the indices of the errored processes.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           idx_errored : [int]
-               A list containing the indices of the errored processes.
+        idx_errored : [int]
+            A list containing the indices of the errored processes.
         """
 
         indices = []
@@ -377,13 +420,14 @@ class ProcessRunner():
         return indices
 
     def isRunning(self):
-        """Return whether each process is running.
+        """
+        Return whether each process is running.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           is_running : [ bool ]
-               A list indicating whether each process is running.
+        is_running : [ bool ]
+            A list indicating whether each process is running.
         """
 
         bool_list = []
@@ -397,13 +441,14 @@ class ProcessRunner():
         return bool_list
 
     def isQueued(self):
-        """Return whether each process is queued.
+        """
+        Return whether each process is queued.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           is_queued : [ bool ]
-               A list indicating whether each process is queued.
+        is_queued : [ bool ]
+            A list indicating whether each process is queued.
         """
 
         bool_list = []
@@ -417,13 +462,14 @@ class ProcessRunner():
         return bool_list
 
     def isError(self):
-        """Return whether each process is in an error state.
+        """
+        Return whether each process is in an error state.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           is_error : [bool]
-               A list indicating whether each process is in an error state.
+        is_error : [bool]
+            A list indicating whether each process is in an error state.
         """
 
         bool_list = []
@@ -437,15 +483,16 @@ class ProcessRunner():
         return bool_list
 
     def start(self, index):
-        """Start a specific process. The same can be achieved using:\n
+        """
+        Start a specific process. The same can be achieved using:\n.
 
-               runner.processes()[index].start()
+            runner.processes()[index].start()
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           index : int
-               The index of the process.
+        index : int
+            The index of the process.
         """
 
         try:
@@ -456,7 +503,9 @@ class ProcessRunner():
         num_processes = self.nProcesses()
 
         if index < -num_processes or index > num_processes - 1:
-            raise IndexError(f"'index' is out of range: [-{num_processes}:{num_processes-1}]")
+            raise IndexError(
+                f"'index' is out of range: [-{num_processes}:{num_processes-1}]"
+            )
 
         # Map negative indices back into positive range.
         if index < 0:
@@ -471,26 +520,27 @@ class ProcessRunner():
         self._processes[index].start()
 
     def startAll(self, serial=False, batch_size=None, max_retries=5):
-        """Start all of the processes.
+        """
+        Start all of the processes.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           serial : bool
-               Whether to start the processes in serial, i.e. wait for a
-               process to finish before starting the next. When running
-               in parallel (serial=False) care should be taken to ensure
-               that each process doesn't consume too many resources. We
-               normally intend for the ProcessRunner to be used to manage
-               single core processes.
+        serial : bool
+            Whether to start the processes in serial, i.e. wait for a
+            process to finish before starting the next. When running
+            in parallel (serial=False) care should be taken to ensure
+            that each process doesn't consume too many resources. We
+            normally intend for the ProcessRunner to be used to manage
+            single core processes.
 
-           batch_size : int
-               When running in parallel, how many processes to run at any
-               one time. If set to None, then the batch size will be set
-               to the output of multiprocess.cpu_count().
+        batch_size : int
+            When running in parallel, how many processes to run at any
+            one time. If set to None, then the batch size will be set
+            to the output of multiprocess.cpu_count().
 
-           max_retries : int
-               How many times to retry a process if it fails.
+        max_retries : int
+            How many times to retry a process if it fails.
         """
 
         if self.nProcesses() == 0:
@@ -508,6 +558,7 @@ class ProcessRunner():
                 raise ValueError("'batch_size' must be > 1.")
         else:
             from multiprocessing import cpu_count
+
             batch_size = cpu_count()
 
         if not type(max_retries) is int:
@@ -523,8 +574,9 @@ class ProcessRunner():
             self._is_killed = False
 
             # Create the thread.
-            self._thread = _threading.Thread(target=self._run_processes,
-                                             args=[serial, batch_size, max_retries])
+            self._thread = _threading.Thread(
+                target=self._run_processes, args=[serial, batch_size, max_retries]
+            )
 
             # Daemonize the thread.
             self._thread.daemon = True
@@ -536,26 +588,27 @@ class ProcessRunner():
             print("ProcessRunner already started!")
 
     def _run_processes(self, serial=False, batch_size=None, max_retries=5):
-        """Helper function to run all of the processes in a background thread.
+        """
+        Helper function to run all of the processes in a background thread.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           serial : bool
-               Whether to start the processes in serial, i.e. wait for a
-               process to finish before starting the next. When running
-               in parallel (serial=False) care should be taken to ensure
-               that each process doesn't consume too many resources. We
-               normally indend for the ProcessRunner to be used to manage
-               single core processes.
+        serial : bool
+            Whether to start the processes in serial, i.e. wait for a
+            process to finish before starting the next. When running
+            in parallel (serial=False) care should be taken to ensure
+            that each process doesn't consume too many resources. We
+            normally indend for the ProcessRunner to be used to manage
+            single core processes.
 
-           batch_size : int
-               When running in parallel, how many processes to run at any
-               one time. If set to None, then the batch size will be set
-               to the output of multiprocess.cpu_count().
+        batch_size : int
+            When running in parallel, how many processes to run at any
+            one time. If set to None, then the batch size will be set
+            to the output of multiprocess.cpu_count().
 
-           max_retries : int
-               How many times to retry a process if it fails.
+        max_retries : int
+            How many times to retry a process if it fails.
         """
 
         if self.nProcesses() == 0:
@@ -573,6 +626,7 @@ class ProcessRunner():
                 raise ValueError("'batch_size' must be > 1.")
         else:
             from multiprocessing import cpu_count
+
             batch_size = cpu_count()
 
         if not type(max_retries) is int:
@@ -692,15 +746,16 @@ class ProcessRunner():
                 p.wait()
 
     def kill(self, index):
-        """Kill a specific process. The same can be achieved using:\n
+        """
+        Kill a specific process. The same can be achieved using:\n.
 
-               runner.processes()[index].kill()
+            runner.processes()[index].kill()
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           index : int
-               The index of the process.
+        index : int
+            The index of the process.
         """
 
         try:
@@ -711,7 +766,9 @@ class ProcessRunner():
         num_processes = self.nProcesses()
 
         if index < -num_processes or index > num_processes - 1:
-            raise IndexError(f"'index' is out of range: [-{num_processes}:{num_processes-1}]")
+            raise IndexError(
+                f"'index' is out of range: [-{num_processes}:{num_processes-1}]"
+            )
 
         # Map negative indices back into positive range.
         if index < 0:
@@ -744,13 +801,14 @@ class ProcessRunner():
                     p.start()
 
     def runTime(self):
-        """Return the run time for each process.
+        """
+        Return the run time for each process.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           run_time : [ BioSimSpace.Types.Time ]
-               A list containing the run time of each process.
+        run_time : [ BioSimSpace.Types.Time ]
+            A list containing the run time of each process.
         """
 
         run_time = []
@@ -761,20 +819,21 @@ class ProcessRunner():
         return run_time
 
     def _nest_directories(self, processes):
-        """Helper function to nest processes inside the runner's working
-           directory.
+        """
+        Helper function to nest processes inside the runner's working
+        directory.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           processes : [:class:`Process <BioSimSpace.Process>`]
-               A list of process objects.
+        processes : [:class:`Process <BioSimSpace.Process>`]
+            A list of process objects.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           new_processes : [:class:`Process <BioSimSpace.Process>`]
-               A list of procesess with updated working directories.
+        new_processes : [:class:`Process <BioSimSpace.Process>`]
+            A list of procesess with updated working directories.
         """
 
         # Create the list of new processes.
@@ -787,10 +846,29 @@ class ProcessRunner():
 
             # Create a new process object using the nested directory.
             if process._package_name == "SOMD":
-                new_processes.append(type(process)(_System(process._system), process._protocol,
-                    process._exe, process._name, process._platform, new_dir, process._seed, process._property_map))
+                new_processes.append(
+                    type(process)(
+                        _System(process._system),
+                        process._protocol,
+                        process._exe,
+                        process._name,
+                        process._platform,
+                        new_dir,
+                        process._seed,
+                        process._property_map,
+                    )
+                )
             else:
-                new_processes.append(type(process)(_System(process._system), process._protocol,
-                    process._exe, process._name, new_dir, process._seed, process._property_map))
+                new_processes.append(
+                    type(process)(
+                        _System(process._system),
+                        process._protocol,
+                        process._exe,
+                        process._name,
+                        new_dir,
+                        process._seed,
+                        process._property_map,
+                    )
+                )
 
         return new_processes

@@ -1,62 +1,89 @@
 from sire.legacy.MM import InternalFF, IntraCLJFF, IntraFF
-from sire.legacy.Mol import AtomIdx, PartialMolecule
+from sire.legacy.Mol import AtomIdx, Element, PartialMolecule
 from sire.legacy.Maths import Vector
 
 import BioSimSpace.Sandpit.Exscientia as BSS
 
 import pytest
 
+
 def test_flex_align():
     # Load the ligands.
-    s0 = BSS.IO.readMolecules(BSS.IO.glob("test/input/ligands/ligand01*"))
-    s1 = BSS.IO.readMolecules(BSS.IO.glob("test/input/ligands/ligand02*"))
+    s0 = BSS.IO.readMolecules(
+        BSS.IO.glob("test/Sandpit/Exscientia/input/ligands/ligand01*")
+    )
+    s1 = BSS.IO.readMolecules(
+        BSS.IO.glob("test/Sandpit/Exscientia/input/ligands/ligand02*")
+    )
 
     # Extract the molecules.
     m0 = s0.getMolecules()[0]
     m1 = s1.getMolecules()[0]
 
     # Get the best mapping between the molecules that contains the prematch.
-    mapping = BSS.Align.matchAtoms(m0, m1, timeout=BSS.Units.Time.second,
-                                   scoring_function="rmsd_flex_align")
+    mapping = BSS.Align.matchAtoms(
+        m0, m1, timeout=BSS.Units.Time.second, scoring_function="rmsd_flex_align"
+    )
 
     # I don't know what the mapping should be. For the moment,
     # I will assume that what came out is correct, i.e.
-    expect = {28: 12, 0: 13, 29: 14, 1: 15, 3: 16, 4: 21, 5: 20, 6: 19, 26: 18, 27: 17, 49: 38, 48: 39, 31: 40, 30: 41, 2: 37}
+    expect = {
+        28: 12,
+        0: 13,
+        29: 14,
+        1: 15,
+        3: 16,
+        4: 21,
+        5: 20,
+        6: 19,
+        26: 18,
+        27: 17,
+        49: 38,
+        48: 39,
+        31: 40,
+        30: 41,
+        2: 37,
+    }
 
     for key, value in mapping.items():
         assert value == expect[key]
 
+
 # Parameterise the function with a set of valid atom pre-matches.
-@pytest.mark.parametrize("prematch", [{3 : 1},
-                                      {5 : 9},
-                                      {4 : 5},
-                                      {1 : 0}])
+@pytest.mark.parametrize("prematch", [{3: 1}, {5: 9}, {4: 5}, {1: 0}])
 def test_prematch(prematch):
     # Load the ligands.
-    s0 = BSS.IO.readMolecules(BSS.IO.glob("test/input/ligands/ligand01*"))
-    s1 = BSS.IO.readMolecules(BSS.IO.glob("test/input/ligands/ligand02*"))
+    s0 = BSS.IO.readMolecules(
+        BSS.IO.glob("test/Sandpit/Exscientia/input/ligands/ligand01*")
+    )
+    s1 = BSS.IO.readMolecules(
+        BSS.IO.glob("test/Sandpit/Exscientia/input/ligands/ligand02*")
+    )
 
     # Extract the molecules.
     m0 = s0.getMolecules()[0]
     m1 = s1.getMolecules()[0]
 
     # Get the best mapping between the molecules that contains the prematch.
-    mapping = BSS.Align.matchAtoms(m0, m1, timeout=BSS.Units.Time.second,
-                                   prematch=prematch)
+    mapping = BSS.Align.matchAtoms(
+        m0, m1, timeout=BSS.Units.Time.second, prematch=prematch
+    )
 
     # Check that the prematch key:value pair is in the mapping.
     for key, value in prematch.items():
         assert mapping[key] == value
 
+
 # Parameterise the function with a set of invalid atom pre-matches.
-@pytest.mark.parametrize("prematch", [{-1 :  1},
-                                      {50 :  9},
-                                      { 4 : 48},
-                                      { 1 : -1}])
+@pytest.mark.parametrize("prematch", [{-1: 1}, {50: 9}, {4: 48}, {1: -1}])
 def test_invalid_prematch(prematch):
     # Load the ligands.
-    s0 = BSS.IO.readMolecules(BSS.IO.glob("test/input/ligands/ligand01*"))
-    s1 = BSS.IO.readMolecules(BSS.IO.glob("test/input/ligands/ligand02*"))
+    s0 = BSS.IO.readMolecules(
+        BSS.IO.glob("test/Sandpit/Exscientia/input/ligands/ligand01*")
+    )
+    s1 = BSS.IO.readMolecules(
+        BSS.IO.glob("test/Sandpit/Exscientia/input/ligands/ligand02*")
+    )
 
     # Extract the molecules.
     m0 = s0.getMolecules()[0]
@@ -64,18 +91,23 @@ def test_invalid_prematch(prematch):
 
     # Assert that the invalid prematch raises a ValueError.
     with pytest.raises(ValueError):
-        mapping = BSS.Align.matchAtoms(m0, m1, timeout=BSS.Units.Time.second,
-                                       prematch=prematch)
+        mapping = BSS.Align.matchAtoms(
+            m0, m1, timeout=BSS.Units.Time.second, prematch=prematch
+        )
 
 
 @pytest.fixture()
 def propane():
-    return BSS.Parameters.parameterise("CCC", "openff_unconstrained-2.0.0").getMolecule()
+    return BSS.Parameters.parameterise(
+        "CCC", "openff_unconstrained-2.0.0"
+    ).getMolecule()
 
 
 @pytest.fixture()
 def butane():
-    return BSS.Parameters.parameterise("CCCC", "openff_unconstrained-2.0.0").getMolecule()
+    return BSS.Parameters.parameterise(
+        "CCCC", "openff_unconstrained-2.0.0"
+    ).getMolecule()
 
 
 @pytest.fixture()
@@ -112,8 +144,12 @@ def test_propane_butane_1_4(propane_butane, tmp_path_factory):
 
 def test_merge():
     # Load the ligands.
-    s0 = BSS.IO.readMolecules(BSS.IO.glob("test/input/ligands/ligand31*"))
-    s1 = BSS.IO.readMolecules(BSS.IO.glob("test/input/ligands/ligand38*"))
+    s0 = BSS.IO.readMolecules(
+        BSS.IO.glob("test/Sandpit/Exscientia/input/ligands/ligand31*")
+    )
+    s1 = BSS.IO.readMolecules(
+        BSS.IO.glob("test/Sandpit/Exscientia/input/ligands/ligand38*")
+    )
 
     # Extract the molecules.
     m0 = s0.getMolecules()[0]
@@ -241,12 +277,16 @@ def test_merge():
 
 @pytest.fixture(scope="module")
 def roi_mol0():
-    return BSS.IO.readMolecules(BSS.IO.glob("test/Sandpit/Exscientia/input/ligands/wild*"))[0]
+    return BSS.IO.readMolecules(
+        BSS.IO.glob("test/Sandpit/Exscientia/input/ligands/wild*")
+    )[0]
 
 
 @pytest.fixture(scope="module")
 def roi_mol1():
-    return BSS.IO.readMolecules(BSS.IO.glob("test/Sandpit/Exscientia/input/ligands/mutated*"))[0]
+    return BSS.IO.readMolecules(
+        BSS.IO.glob("test/Sandpit/Exscientia/input/ligands/mutated*")
+    )[0]
 
 
 @pytest.fixture(scope="module")
@@ -271,10 +311,16 @@ def roi_merged_mol(roi_mol0, roi_mol1):
         for idx in range(0, mol.nAtoms()):
             if idx in coord_dict:
                 vec = coord_dict[idx]
-                vec = Vector(vec.x().angstroms().value(),
-                             vec.y().angstroms().value(),
-                             vec.z().angstroms().value())
-                edit_mol = edit_mol.atom(AtomIdx(idx)).setProperty("coordinates", vec).molecule()
+                vec = Vector(
+                    vec.x().angstroms().value(),
+                    vec.y().angstroms().value(),
+                    vec.z().angstroms().value(),
+                )
+                edit_mol = (
+                    edit_mol.atom(AtomIdx(idx))
+                    .setProperty("coordinates", vec)
+                    .molecule()
+                )
         mol._sire_object = edit_mol.commit()
 
     mol0_res_name, mol0_res_idx = get_res_info(roi_mol0)
@@ -307,7 +353,9 @@ def roi_merged_mol(roi_mol0, roi_mol1):
     update_coordinate(roi_mol0, coord_dict)
 
     # Create the merged molecule.
-    merged_mol = BSS.Align.merge(roi_mol0, roi_mol1, mapping=mapping, roi=[mut0_idx, mut1_idx])
+    merged_mol = BSS.Align.merge(
+        roi_mol0, roi_mol1, mapping=mapping, roi=[mut0_idx, mut1_idx]
+    )
 
     return merged_mol
 
@@ -386,8 +434,12 @@ def test_roi_nonbonded0(roi_merged_mol, roi_intraclj0, roi_intraff0, roi_pmap0):
     intraff_merged = IntraFF("intraclj")
     intraclj_merged.add(roi_merged_mol._sire_object, roi_pmap0)
     intraff_merged.add(roi_merged_mol._sire_object, roi_pmap0)
-    assert roi_intraclj0.energy().value() == pytest.approx(intraclj_merged.energy().value())
-    assert roi_intraff0.energy().value() == pytest.approx(intraff_merged.energy().value())
+    assert roi_intraclj0.energy().value() == pytest.approx(
+        intraclj_merged.energy().value()
+    )
+    assert roi_intraff0.energy().value() == pytest.approx(
+        intraff_merged.energy().value()
+    )
 
 
 def test_roi_nonbonded1(roi_merged_mol, roi_intraclj1, roi_intraff1, roi_pmap1):
@@ -396,8 +448,12 @@ def test_roi_nonbonded1(roi_merged_mol, roi_intraclj1, roi_intraff1, roi_pmap1):
     intraff_merged = IntraFF("intraclj")
     intraclj_merged.add(roi_merged_mol._sire_object, roi_pmap1)
     intraff_merged.add(roi_merged_mol._sire_object, roi_pmap1)
-    assert roi_intraclj1.energy().value() == pytest.approx(intraclj_merged.energy().value())
-    assert roi_intraff1.energy().value() == pytest.approx(intraff_merged.energy().value())
+    assert roi_intraclj1.energy().value() == pytest.approx(
+        intraclj_merged.energy().value()
+    )
+    assert roi_intraff1.energy().value() == pytest.approx(
+        intraff_merged.energy().value()
+    )
 
 
 def test_roi_bonded0(roi_mol0, roi_merged_mol, roi_pmap0, roi_internal0):
@@ -408,7 +464,9 @@ def test_roi_bonded0(roi_mol0, roi_merged_mol, roi_pmap0, roi_internal0):
     roi_internal_merged = InternalFF("internal")
     roi_internal_merged.setStrict(True)
     roi_internal_merged.add(amber_mol._sire_object)
-    assert roi_internal0.energy().value() == pytest.approx(roi_internal_merged.energy().value())
+    assert roi_internal0.energy().value() == pytest.approx(
+        roi_internal_merged.energy().value()
+    )
 
 
 def test_roi_bonded1(roi_mol1, roi_merged_mol, roi_pmap1, roi_internal1):
@@ -419,14 +477,22 @@ def test_roi_bonded1(roi_mol1, roi_merged_mol, roi_pmap1, roi_internal1):
     roi_internal_merged = InternalFF("internal")
     roi_internal_merged.setStrict(True)
     roi_internal_merged.add(amber_mol._sire_object)
-    assert roi_internal1.energy().value() == pytest.approx(roi_internal_merged.energy().value())
+    assert roi_internal1.energy().value() == pytest.approx(
+        roi_internal_merged.energy().value()
+    )
 
 
-@pytest.mark.xfail(reason="Mapping generated with latest RDKit which requires sanitization no longer triggers the exception")
+@pytest.mark.xfail(
+    reason="Mapping generated with latest RDKit which requires sanitization no longer triggers the exception"
+)
 def test_ring_breaking_three_membered():
     # Load the ligands.
-    s0 = BSS.IO.readMolecules(BSS.IO.glob("test/input/ligands/CAT-13a*"))
-    s1 = BSS.IO.readMolecules(BSS.IO.glob("test/input/ligands/CAT-17g*"))
+    s0 = BSS.IO.readMolecules(
+        BSS.IO.glob("test/Sandpit/Exscientia/input/ligands/CAT-13a*")
+    )
+    s1 = BSS.IO.readMolecules(
+        BSS.IO.glob("test/Sandpit/Exscientia/input/ligands/CAT-17g*")
+    )
 
     # Extract the molecules.
     m0 = s0.getMolecules()[0]
@@ -445,11 +511,18 @@ def test_ring_breaking_three_membered():
     # Now check that we can merge if we allow ring breaking.
     m2 = BSS.Align.merge(m0, m1, mapping, allow_ring_breaking=True)
 
-@pytest.mark.xfail(reason="Mapping generated with latest RDKit which requires sanitization no longer triggers the exception")
+
+@pytest.mark.xfail(
+    reason="Mapping generated with latest RDKit which requires sanitization no longer triggers the exception"
+)
 def test_ring_breaking_five_membered():
     # Load the ligands.
-    s0 = BSS.IO.readMolecules(BSS.IO.glob("test/input/ligands/ligand31*"))
-    s1 = BSS.IO.readMolecules(BSS.IO.glob("test/input/ligands/ligand04*"))
+    s0 = BSS.IO.readMolecules(
+        BSS.IO.glob("test/Sandpit/Exscientia/input/ligands/ligand31*")
+    )
+    s1 = BSS.IO.readMolecules(
+        BSS.IO.glob("test/Sandpit/Exscientia/input/ligands/ligand04*")
+    )
 
     # Extract the molecules.
     m0 = s0.getMolecules()[0]
@@ -468,11 +541,18 @@ def test_ring_breaking_five_membered():
     # Now check that we can merge if we allow ring breaking.
     m2 = BSS.Align.merge(m0, m1, mapping, allow_ring_breaking=True)
 
-@pytest.mark.xfail(reason="Mapping generated with latest RDKit which requires sanitization no longer triggers the exception")
+
+@pytest.mark.xfail(
+    reason="Mapping generated with latest RDKit which requires sanitization no longer triggers the exception"
+)
 def test_ring_breaking_six_membered():
     # Load the ligands.
-    s0 = BSS.IO.readMolecules(BSS.IO.glob("test/input/ligands/ligand31*"))
-    s1 = BSS.IO.readMolecules(BSS.IO.glob("test/input/ligands/ligand38*"))
+    s0 = BSS.IO.readMolecules(
+        BSS.IO.glob("test/Sandpit/Exscientia/input/ligands/ligand31*")
+    )
+    s1 = BSS.IO.readMolecules(
+        BSS.IO.glob("test/Sandpit/Exscientia/input/ligands/ligand38*")
+    )
 
     # Extract the molecules.
     m0 = s0.getMolecules()[0]
@@ -491,14 +571,32 @@ def test_ring_breaking_six_membered():
     # Now check that we can merge if we allow ring breaking.
     m2 = BSS.Align.merge(m0, m1, mapping, allow_ring_breaking=True)
 
-@pytest.mark.parametrize("ligands", [ pytest.param(["CAT-13c", "CAT-17i"], marks=pytest.mark.xfail(reason="Mapping generated with latest RDKit which requires sanitization no longer triggers the exception")),
-                                     pytest.param(["CAT-13e", "CAT-17g"], marks=pytest.mark.xfail(reason="Mapping generated with latest RDKit which requires sanitization no longer triggers the exception"))
-                                     ],
-                        )
+
+@pytest.mark.parametrize(
+    "ligands",
+    [
+        pytest.param(
+            ["CAT-13c", "CAT-17i"],
+            marks=pytest.mark.xfail(
+                reason="Mapping generated with latest RDKit which requires sanitization no longer triggers the exception"
+            ),
+        ),
+        pytest.param(
+            ["CAT-13e", "CAT-17g"],
+            marks=pytest.mark.xfail(
+                reason="Mapping generated with latest RDKit which requires sanitization no longer triggers the exception"
+            ),
+        ),
+    ],
+)
 def test_ring_size_change(ligands):
     # Load the ligands.
-    s0 = BSS.IO.readMolecules(BSS.IO.glob("test/input/ligands/%s.*" % ligands[0]))
-    s1 = BSS.IO.readMolecules(BSS.IO.glob("test/input/ligands/%s.*" % ligands[1]))
+    s0 = BSS.IO.readMolecules(
+        BSS.IO.glob("test/Sandpit/Exscientia/input/ligands/%s.*" % ligands[0])
+    )
+    s1 = BSS.IO.readMolecules(
+        BSS.IO.glob("test/Sandpit/Exscientia/input/ligands/%s.*" % ligands[1])
+    )
 
     # Extract the molecules.
     m0 = s0.getMolecules()[0]
@@ -515,54 +613,74 @@ def test_ring_size_change(ligands):
         m2 = BSS.Align.merge(m0, m1, mapping)
 
     # Now check that we can merge if we allow ring breaking.
-    m2 = BSS.Align.merge(m0, m1, mapping, allow_ring_breaking=True, allow_ring_size_change=True)
+    m2 = BSS.Align.merge(
+        m0, m1, mapping, allow_ring_breaking=True, allow_ring_size_change=True
+    )
+
 
 # Parameterise the function with a valid mapping.
-@pytest.mark.parametrize("ligands, mapping", [(("grow1", "grow2"),
-                                               {2 : 21,
-                                                4 : 23,
-                                                6 : 25,
-                                                8 : 27,
-                                                10 : 18,
-                                                1 : 19,
-                                                0 : 20,
-                                                11 : 16,
-                                                12 : 17,
-                                                13 : 14,
-                                                15 : 13,
-                                                18 : 11,
-                                                20 : 9,
-                                                22 : 8,
-                                                23 : 5,
-                                                16 : 6,
-                                                24 : 3,
-                                                26 : 1,
-                                                27 : 0,
-                                                9 : 28,
-                                                5 : 24,
-                                                3 : 22,
-                                                7 : 26,
-                                                14 : 15,
-                                                19 : 12,
-                                                21 : 10,
-                                                17 : 7,
-                                                25 : 4}),
-                                               (("grow3", "grow4"),
-                                               {1: 6,
-                                                2: 7,
-                                                3: 8,
-                                                4: 9,
-                                                5: 10,
-                                                6: 11,
-                                                14: 21,
-                                                13: 20,
-                                                12: 19,
-                                                11: 18,
-                                                10: 17})])
+@pytest.mark.parametrize(
+    "ligands, mapping",
+    [
+        (
+            ("grow1", "grow2"),
+            {
+                2: 21,
+                4: 23,
+                6: 25,
+                8: 27,
+                10: 18,
+                1: 19,
+                0: 20,
+                11: 16,
+                12: 17,
+                13: 14,
+                15: 13,
+                18: 11,
+                20: 9,
+                22: 8,
+                23: 5,
+                16: 6,
+                24: 3,
+                26: 1,
+                27: 0,
+                9: 28,
+                5: 24,
+                3: 22,
+                7: 26,
+                14: 15,
+                19: 12,
+                21: 10,
+                17: 7,
+                25: 4,
+            },
+        ),
+        (
+            ("grow3", "grow4"),
+            {
+                1: 6,
+                2: 7,
+                3: 8,
+                4: 9,
+                5: 10,
+                6: 11,
+                14: 21,
+                13: 20,
+                12: 19,
+                11: 18,
+                10: 17,
+            },
+        ),
+    ],
+)
 def test_grow_whole_ring(ligands, mapping):
     # Load the ligands.
-    s0 = BSS.IO.readMolecules(BSS.IO.glob(f"test/input/ligands/{ligands[0]}*"))
-    s1 = BSS.IO.readMolecules(BSS.IO.glob(f"test/input/ligands/{ligands[1]}*"))
+    s0 = BSS.IO.readMolecules(
+        BSS.IO.glob(f"test/Sandpit/Exscientia/input/ligands/{ligands[0]}*")
+    )
+    s1 = BSS.IO.readMolecules(
+        BSS.IO.glob(f"test/Sandpit/Exscientia/input/ligands/{ligands[1]}*")
+    )
 
     # Extract the molecules.
     m0 = s0.getMolecules()[0]
@@ -574,10 +692,15 @@ def test_grow_whole_ring(ligands, mapping):
     # Check that we can merge without allowing ring breaking.
     m2 = BSS.Align.merge(m0, m1, mapping)
 
+
 def test_hydrogen_mass_repartitioning():
     # Load the ligands.
-    s0 = BSS.IO.readMolecules(BSS.IO.glob("test/input/ligands/ligand31*"))
-    s1 = BSS.IO.readMolecules(BSS.IO.glob("test/input/ligands/ligand38*"))
+    s0 = BSS.IO.readMolecules(
+        BSS.IO.glob("test/Sandpit/Exscientia/input/ligands/ligand31*")
+    )
+    s1 = BSS.IO.readMolecules(
+        BSS.IO.glob("test/Sandpit/Exscientia/input/ligands/ligand38*")
+    )
 
     # Extract the molecules.
     m0 = s0.getMolecules()[0]
@@ -592,25 +715,54 @@ def test_hydrogen_mass_repartitioning():
     # Create the merged molecule.
     merged = BSS.Align.merge(m0, m1, mapping, allow_ring_breaking=True)
 
+    # Create a dummy element.
+    dummy = Element("Xx")
+
+    # Get the elements in either end state.
+    elements0 = merged._sire_object.property("element0").toVector()
+    elements1 = merged._sire_object.property("element1").toVector()
+
     # Work out the initial mass of the system.
     initial_mass0 = 0
-    for mass in merged._sire_object.property("mass0").toVector():
-        initial_mass0 += mass.value()
+    for idx, mass in enumerate(merged._sire_object.property("mass0").toVector()):
+        if elements0[idx] != dummy:
+            initial_mass0 += mass.value()
     initial_mass1 = 0
-    for mass in merged._sire_object.property("mass1").toVector():
-        initial_mass1 += mass.value()
+    for idx, mass in enumerate(merged._sire_object.property("mass1").toVector()):
+        if elements1[idx] != dummy:
+            initial_mass1 += mass.value()
 
     # Repartition the hydrogen mass.
     merged.repartitionHydrogenMass()
 
+    # Lists to store the mass of dummy atoms in the two end states.
+    dummy_masses0 = []
+    dummy_masses1 = []
+
+    # Extract the modified end state masses.
+    masses0 = merged._sire_object.property("mass0").toVector()
+    masses1 = merged._sire_object.property("mass1").toVector()
+
     # Work out the final mass of the system.
     final_mass0 = 0
-    for mass in merged._sire_object.property("mass0").toVector():
-        final_mass0 += mass.value()
+    for idx, mass in enumerate(masses0):
+        if elements0[idx] != dummy:
+            final_mass0 += mass.value()
+        else:
+            dummy_masses0.append((idx, mass))
     final_mass1 = 0
-    for mass in merged._sire_object.property("mass1").toVector():
-        final_mass1 += mass.value()
+    for idx, mass in enumerate(masses1):
+        if elements1[idx] != dummy:
+            final_mass1 += mass.value()
+        else:
+            dummy_masses1.append((idx, mass))
 
     # Assert the the masses are approximately the same.
     assert final_mass0 == pytest.approx(initial_mass0)
     assert final_mass1 == pytest.approx(initial_mass1)
+
+    # Assert that the dummy atom masses are the same in both end states.
+    for idx, mass0 in dummy_masses0:
+        assert mass0 == masses1[idx]
+    for idx, mass1 in dummy_masses1:
+        assert mass1 == masses0[idx]

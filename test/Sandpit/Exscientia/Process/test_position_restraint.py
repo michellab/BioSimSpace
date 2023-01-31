@@ -95,7 +95,11 @@ def protocol(request, restraint, free_energy, minimisation, equilibration, produ
 @pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
 def test_gromacs(protocol, system, ref_system, tmp_path):
     proc = BSS.Process.Gromacs(
-        system, protocol, reference_system=ref_system, work_dir=str(tmp_path), ignore_warnings=True
+        system,
+        protocol,
+        reference_system=ref_system,
+        work_dir=str(tmp_path),
+        ignore_warnings=True,
     )
 
     # We have the restraints
@@ -105,13 +109,18 @@ def test_gromacs(protocol, system, ref_system, tmp_path):
 
     # We have generated a separate restraint reference
     assert os.path.exists(proc._ref_file)
-    contents_ref, contents_gro = open(proc._ref_file).readlines(), open(proc._gro_file).readlines()
+    contents_ref, contents_gro = (
+        open(proc._ref_file).readlines(),
+        open(proc._gro_file).readlines(),
+    )
     diff = list(unified_diff(contents_ref, contents_gro))
     assert len(diff)
 
 
 def test_amber(protocol, system, ref_system, tmp_path):
-    proc = BSS.Process.Amber(system, protocol, reference_system=ref_system, work_dir=str(tmp_path))
+    proc = BSS.Process.Amber(
+        system, protocol, reference_system=ref_system, work_dir=str(tmp_path)
+    )
 
     # We have the restraints
     with open(tmp_path / "amber.cfg", "r") as f:
@@ -121,7 +130,10 @@ def test_amber(protocol, system, ref_system, tmp_path):
 
     # We have generated a separate restraint reference
     assert os.path.exists(proc._ref_file)
-    contents_ref, contents_rst = open(proc._ref_file).readlines(), open(proc._rst_file).readlines()
+    contents_ref, contents_rst = (
+        open(proc._ref_file).readlines(),
+        open(proc._rst_file).readlines(),
+    )
     diff = list(unified_diff(contents_ref, contents_rst))
     assert len(diff)
 

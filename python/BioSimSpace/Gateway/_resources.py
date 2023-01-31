@@ -1,13 +1,13 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2022
+# Copyright: 2017-2023
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
 # BioSimSpace is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 2 of the License, or
+# the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
 # BioSimSpace is distributed in the hope that it will be useful,
@@ -19,9 +19,7 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-"""
-Functionality for finding and managing hardware resources.
-"""
+"""Functionality for finding and managing hardware resources."""
 
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
@@ -30,7 +28,8 @@ __all__ = ["ResourceManager"]
 
 import argparse as _argparse
 
-class ResourceManager():
+
+class ResourceManager:
     """A class for finding and managing hardware resources."""
 
     def __init__(self):
@@ -42,14 +41,23 @@ class ResourceManager():
         self._gpus = None
 
         # Create the argument parser.
-        self._parser = _argparse.ArgumentParser(prog="BioSimSpace",
-                                                description="Command-line parser for hardware resources",
-                                                add_help=False, allow_abbrev=False)
+        self._parser = _argparse.ArgumentParser(
+            prog="BioSimSpace",
+            description="Command-line parser for hardware resources",
+            add_help=False,
+            allow_abbrev=False,
+        )
 
         # Add the arguments.
-        self._parser.add_argument("--nodes", type=int, help="The number of hardware nodes.")
-        self._parser.add_argument("--cpus", type=int, help="The number of hardware central processing units.")
-        self._parser.add_argument("--gpus", type=int, help="The number of hardware graphics processors.")
+        self._parser.add_argument(
+            "--nodes", type=int, help="The number of hardware nodes."
+        )
+        self._parser.add_argument(
+            "--cpus", type=int, help="The number of hardware central processing units."
+        )
+        self._parser.add_argument(
+            "--gpus", type=int, help="The number of hardware graphics processors."
+        )
 
     def _initialise(self):
         """Initialise the resource manager."""
@@ -70,24 +78,26 @@ class ResourceManager():
                     self.setGPUs(value)
 
     def getNodes(self):
-        """Return the number of nodes.
+        """
+        Return the number of nodes.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           nodes : int
-               The number of nodes.
+        nodes : int
+            The number of nodes.
         """
         return self._nodes
 
     def setNodes(self, nodes):
-        """Set the number of nodes.
+        """
+        Set the number of nodes.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           nodes : int
-               The number of nodes.
+        nodes : int
+            The number of nodes.
         """
 
         if not type(nodes) is int:
@@ -99,24 +109,26 @@ class ResourceManager():
         self._nodes = nodes
 
     def getCPUs(self):
-        """Return the number of cpus.
+        """
+        Return the number of cpus.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           cpus : int
-               The number of CPUs.
+        cpus : int
+            The number of CPUs.
         """
         return self._cpus
 
     def setCPUs(self, cpus):
-        """Set the number of CPUs.
+        """
+        Set the number of CPUs.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           cpus : int
-               The number of cpus.
+        cpus : int
+            The number of cpus.
         """
 
         if not type(cpus) is int:
@@ -128,24 +140,26 @@ class ResourceManager():
         self._cpus = cpus
 
     def getGPUs(self):
-        """Return the number of GPUs.
+        """
+        Return the number of GPUs.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           gpus : int
-               The number of GPUs.
+        gpus : int
+            The number of GPUs.
         """
         return self._gpus
 
     def setGPUs(self, gpus):
-        """Set the number of GPUs.
+        """
+        Set the number of GPUs.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           gpus : int
-               The number of GPUs.
+        gpus : int
+            The number of GPUs.
         """
 
         if not type(gpus) is int:

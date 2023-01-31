@@ -1,13 +1,13 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2022
+# Copyright: 2017-2023
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
 # BioSimSpace is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 2 of the License, or
+# the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
 # BioSimSpace is distributed in the hope that it will be useful,
@@ -19,18 +19,17 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-"""
-A charge type.
-"""
+"""A charge type."""
 
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Charge"]
 
-from sire import units as _SireUnits
+from sire.legacy import Units as _SireUnits
 
 from ._type import Type as _Type
+
 
 class Charge(_Type):
     """A charge type."""
@@ -39,107 +38,119 @@ class Charge(_Type):
     _sire_units = ["e_charge", "coulomb"]
 
     # Dictionary of allowed units.
-    _supported_units = { "ELECTRON CHARGE" : _SireUnits.e_charge,
-                         "COULOMB"         : _SireUnits.coulomb }
+    _supported_units = {
+        "ELECTRON CHARGE": _SireUnits.e_charge,
+        "COULOMB": _SireUnits.coulomb,
+    }
 
     # Map unit abbreviations to the full name.
-    _abbreviations = { "E" : "ELECTRON CHARGE",
-                       "C" : "COULOMB" }
+    _abbreviations = {"E": "ELECTRON CHARGE", "C": "COULOMB"}
 
     # Print formatting.
-    _print_format = { "ELECTRON CHARGE" : "|e|",
-                      "COULOMB"         : "C" }
+    _print_format = {"ELECTRON CHARGE": "|e|", "COULOMB": "C"}
 
     # Documentation strings.
-    _doc_strings = { "ELECTRON CHARGE" : "A charge in electron charge.",
-                     "COULOMB"         : "A charge in Coulomb." }
+    _doc_strings = {
+        "ELECTRON CHARGE": "A charge in electron charge.",
+        "COULOMB": "A charge in Coulomb.",
+    }
 
     # Null type unit for avoiding issue printing configargparse help.
     _default_unit = "ELECTRON CHARGE"
 
-    # The dimension mask.
-    #              Angle, Charge, Length, Mass, Quantity, Temperature, Time
-    _dimensions = (    0,      1,      0,    0,        0,           0,    0)
+    # The dimension mask:
+    #     Angle, Charge, Length, Mass, Quantity, Temperature, Time
+    _dimensions = (0, 1, 0, 0, 0, 0, 0)
 
     def __init__(self, *args):
-        """Constructor.
+        """
+        Constructor.
 
-           ``*args`` can be a value and unit, or a string representation
-           of the charge, e.g. "0.2 e".
+        ``*args`` can be a value and unit, or a string representation
+        of the charge, e.g. "0.2 e".
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           value : float
-               The value.
+        value : float
+            The value.
 
-           unit : str
-               The unit.
+        unit : str
+            The unit.
 
-           string : str
-               A string representation of the charge.
+        string : str
+            A string representation of the charge.
 
-           Examples
-           --------
+        Examples
+        --------
 
-           Create an object representing a charge of 27.8 electron charge
-           print the charge in Coulomb.
+        Create an object representing a charge of 27.8 electron charge
+        print the charge in Coulomb.
 
-           >>> import BioSimSpace as BSS
-           >>> charge = BSS.Types.Charge(27.8, "e")
-           >>> print(charge.coulomb())
+        >>> import BioSimSpace as BSS
+        >>> charge = BSS.Types.Charge(27.8, "e")
+        >>> print(charge.coulomb())
 
-           The same as above, except passing a string representation of the
-           charge to the constructor.
+        The same as above, except passing a string representation of the
+        charge to the constructor.
 
-           >>> import BioSimSpace as BSS
-           >>> charge = BSS.Types.Charge("3.1 atm")
-           >>> print(charge.coulomb())
+        >>> import BioSimSpace as BSS
+        >>> charge = BSS.Types.Charge("3.1 atm")
+        >>> print(charge.coulomb())
 
-           The string matching is extremeley flexible, so all of the following
-           would be valid arguments: "27.8 e", "27.8 electron charge",
-           "2.78e1 e".
+        The string matching is extremeley flexible, so all of the following
+        would be valid arguments: "27.8 e", "27.8 electron charge",
+        "2.78e1 e".
         """
 
         # Call the base class constructor.
         super().__init__(*args)
 
     def electron_charge(self):
-        """Return the charge in electron charge.
-
-           Returns
-           -------
-
-           charge : :class:`Charge <BioSimSpace.Types.Charge>`
-               The charge in electron charge.
         """
-        return Charge((self._value * self._supported_units[self._unit]).to(_SireUnits.e_charge), "ELECTRON CHARGE")
+        Return the charge in electron charge.
+
+        Returns
+        -------
+
+        charge : :class:`Charge <BioSimSpace.Types.Charge>`
+            The charge in electron charge.
+        """
+        return Charge(
+            (self._value * self._supported_units[self._unit]).to(_SireUnits.e_charge),
+            "ELECTRON CHARGE",
+        )
 
     def coulomb(self):
-        """Return the charge in Coulomb.
-
-           Returns
-           -------
-
-           charge : :class:`Charge <BioSimSpace.Types.Charge>`
-               The charge in Coulomb.
         """
-        return Charge((self._value * self._supported_units[self._unit]).to(_SireUnits.coulomb), "COULOMB")
+        Return the charge in Coulomb.
+
+        Returns
+        -------
+
+        charge : :class:`Charge <BioSimSpace.Types.Charge>`
+            The charge in Coulomb.
+        """
+        return Charge(
+            (self._value * self._supported_units[self._unit]).to(_SireUnits.coulomb),
+            "COULOMB",
+        )
 
     def _to_default_unit(self, mag=None):
-        """Internal method to return an object of the same type in the default unit.
+        """
+        Internal method to return an object of the same type in the default unit.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           mag : float
-               The value (optional).
+        mag : float
+            The value (optional).
 
-           Returns
-           -------
+        Returns
+        -------
 
-           charge : :class:`Charge <BioSimSpace.Types.Charge>`
-               The charge in the default unit of electron charge.
+        charge : :class:`Charge <BioSimSpace.Types.Charge>`
+            The charge in the default unit of electron charge.
         """
         if mag is None:
             return self.electron_charge()
@@ -147,26 +158,29 @@ class Charge(_Type):
             return Charge(mag, "ELECTRON CHARGE")
 
     def _convert_to(self, unit):
-        """Return the charge in a different unit.
+        """
+        Return the charge in a different unit.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           unit : str
-               The unit to convert to.
+        unit : str
+            The unit to convert to.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           charge : :class:`Charge <BioSimSpace.Types.Charge>`
-               The charge in the specified unit.
+        charge : :class:`Charge <BioSimSpace.Types.Charge>`
+            The charge in the specified unit.
         """
         if unit == "ELECTRON CHARGE":
             return self.electron_charge()
         elif unit == "COULOMB":
             return self.coulomb()
         else:
-            raise ValueError("Supported units are: '%s'" % list(self._supported_units.keys()))
+            raise ValueError(
+                "Supported units are: '%s'" % list(self._supported_units.keys())
+            )
 
     def _validate_unit(self, unit):
         """Validate that the unit are supported."""
@@ -184,7 +198,7 @@ class Charge(_Type):
         unit = unit.replace("ELEC", "E")
 
         # Strip all instances of CHARGE.
-        unit = unit.replace("CHARGE", "");
+        unit = unit.replace("CHARGE", "")
 
         # Strip all instances of -.
         unit = unit.replace("-", "")
@@ -202,23 +216,26 @@ class Charge(_Type):
         if unit in self._abbreviations:
             return self._abbreviations[unit]
         else:
-            raise ValueError("Supported units are: '%s'" % list(self._supported_units.keys()))
+            raise ValueError(
+                "Supported units are: '%s'" % list(self._supported_units.keys())
+            )
 
     @staticmethod
     def _to_sire_format(unit):
-        """Reformat the unit string so it adheres to the Sire unit formatting.
+        """
+        Reformat the unit string so it adheres to the Sire unit formatting.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           unit : str
-               A string representation of the unit.
+        unit : str
+            A string representation of the unit.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           sire_unit : str
-               The unit string in Sire compatible format.
+        sire_unit : str
+            The unit string in Sire compatible format.
         """
 
         unit = unit.replace("coulombs", "coulomb")

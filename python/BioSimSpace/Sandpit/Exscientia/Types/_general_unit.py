@@ -1,13 +1,13 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2022
+# Copyright: 2017-2023
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
 # BioSimSpace is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 2 of the License, or
+# the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
 # BioSimSpace is distributed in the hope that it will be useful,
@@ -19,48 +19,50 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-"""
-A general unit based type.
-"""
+"""A general unit based type."""
 
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["GeneralUnit"]
 
-from sire.units import GeneralUnit as _GeneralUnit
+from sire.legacy.Units import GeneralUnit as _GeneralUnit
 
 from ._base_units import *
 from ._type import Type as _Type
 
+
 class GeneralUnit(_Type):
     """A general unit type."""
 
-    _dimension_chars = ["A",    # Angle
-                        "C",    # Charge
-                        "L",    # Length
-                        "M",    # Mass
-                        "Q",    # Quantity
-                        "t",    # Temperature
-                        "T"]    # Time
+    _dimension_chars = [
+        "A",  # Angle
+        "C",  # Charge
+        "L",  # Length
+        "M",  # Mass
+        "Q",  # Quantity
+        "t",  # Temperature
+        "T",
+    ]  # Time
 
     def __new__(cls, *args):
-        """Constructor.
+        """
+        Constructor.
 
-           ``*args`` can be a value and unit, or a string representation
-           of the type, e.g. "30 kcal_per_mol / angstrom squared".
+        ``*args`` can be a value and unit, or a string representation
+        of the type, e.g. "30 kcal_per_mol / angstrom squared".
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           value : float
-               The value.
+        value : float
+            The value.
 
-           unit : str
-               The unit.
+        unit : str
+            The unit.
 
-           string : str
-               A string representation of the unit type.
+        string : str
+            A string representation of the unit type.
         """
 
         # This operator may be called when unpickling an object. Catch empty
@@ -108,27 +110,32 @@ class GeneralUnit(_Type):
                     general_unit = general_unit._sire_unit
 
             else:
-                raise TypeError("__new__() missing positional argument(s): "
-                                "'string' or 'sire.units.GeneralUnit'. "
-                                f"Passed argument {_args[0]} is a {type(_args[0])}")
+                raise TypeError(
+                    "__new__() missing positional argument(s): "
+                    "'string' or 'sire.units.GeneralUnit'. "
+                    f"Passed argument {_args[0]} is a {type(_args[0])}"
+                )
 
         # No arguments.
         else:
-            raise TypeError("__new__() missing positional argument(s): 'value' and 'unit', "
-                            "or 'string' or 'Sire.Units.GeneralUnit'")
+            raise TypeError(
+                "__new__() missing positional argument(s): 'value' and 'unit', "
+                "or 'string' or 'Sire.Units.GeneralUnit'"
+            )
 
         # Scale the general unit by the value.
         general_unit = value * general_unit
 
         # Store the dimension mask.
-        dimensions = (general_unit.ANGLE(),
-                      general_unit.CHARGE(),
-                      general_unit.LENGTH(),
-                      general_unit.MASS(),
-                      general_unit.QUANTITY(),
-                      general_unit.TEMPERATURE(),
-                      general_unit.TIME()
-                     )
+        dimensions = (
+            general_unit.ANGLE(),
+            general_unit.CHARGE(),
+            general_unit.LENGTH(),
+            general_unit.MASS(),
+            general_unit.QUANTITY(),
+            general_unit.TEMPERATURE(),
+            general_unit.TIME(),
+        )
 
         # This is a dimensionless quantity, return the value as a float.
         if all(x == 0 for x in dimensions):
@@ -143,22 +150,23 @@ class GeneralUnit(_Type):
             return super(GeneralUnit, cls).__new__(cls)
 
     def __init__(self, *args):
-        """Constructor.
+        """
+        Constructor.
 
-           ``*args`` can be a value and unit, or a string representation
-           of the type, e.g. "30 kcal_per_mol / angstrom squared".
+        ``*args`` can be a value and unit, or a string representation
+        of the type, e.g. "30 kcal_per_mol / angstrom squared".
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           value : float
-               The value.
+        value : float
+            The value.
 
-           unit : str
-               The unit.
+        unit : str
+            The unit.
 
-           string : str
-               A string representation of the unit type.
+        string : str
+            A string representation of the unit type.
         """
 
         value = 1
@@ -195,14 +203,18 @@ class GeneralUnit(_Type):
                 general_unit = self._from_string(string)._sire_unit
 
             else:
-                raise TypeError("__init__() missing positional argument(s): "
-                                "'string' or 'sire.units.GeneralUnit'. "
-                                f"Passed value {_args[0]} is a {type(_args[0])}")
+                raise TypeError(
+                    "__init__() missing positional argument(s): "
+                    "'string' or 'sire.units.GeneralUnit'. "
+                    f"Passed value {_args[0]} is a {type(_args[0])}"
+                )
 
         # No arguments.
         else:
-            raise TypeError("__init__() missing positional argument(s): 'value' and 'unit', "
-                            "or 'string' or 'sire.units.GeneralUnit'")
+            raise TypeError(
+                "__init__() missing positional argument(s): 'value' and 'unit', "
+                "or 'string' or 'sire.units.GeneralUnit'"
+            )
 
         # Need to rescale the value since the units might have been
         # converted to the default for this GeneralUnit.
@@ -210,14 +222,15 @@ class GeneralUnit(_Type):
         self._value = self._sire_unit.value()
 
         # Store the dimension mask.
-        self._dimensions = (general_unit.ANGLE(),
-                            general_unit.CHARGE(),
-                            general_unit.LENGTH(),
-                            general_unit.MASS(),
-                            general_unit.QUANTITY(),
-                            general_unit.TEMPERATURE(),
-                            general_unit.TIME()
-                           )
+        self._dimensions = (
+            general_unit.ANGLE(),
+            general_unit.CHARGE(),
+            general_unit.LENGTH(),
+            general_unit.MASS(),
+            general_unit.QUANTITY(),
+            general_unit.TEMPERATURE(),
+            general_unit.TIME(),
+        )
 
         # Create the unit string.
         self._unit = ""
@@ -252,10 +265,9 @@ class GeneralUnit(_Type):
         """Addition operator."""
 
         # Addition of another object with the same dimensions.
-        if isinstance(other, _Type) and \
-           other._dimensions == self._dimensions:
-               temp = self._sire_unit + other._to_sire_unit()
-               return GeneralUnit(temp)
+        if isinstance(other, _Type) and other._dimensions == self._dimensions:
+            temp = self._sire_unit + other._to_sire_unit()
+            return GeneralUnit(temp)
 
         # Addition of a string.
         elif isinstance(other, str):
@@ -263,17 +275,18 @@ class GeneralUnit(_Type):
             return self + temp
 
         else:
-            raise TypeError("unsupported operand type(s) for +: '%s' and '%s'"
-                % (self.__class__.__qualname__, other.__class__.__qualname__))
+            raise TypeError(
+                "unsupported operand type(s) for +: '%s' and '%s'"
+                % (self.__class__.__qualname__, other.__class__.__qualname__)
+            )
 
     def __sub__(self, other):
         """Subtraction operator."""
 
         # Subtraction of another object with the same dimensions.
-        if isinstance(other, _Type) and \
-           other._dimensions == self._dimensions:
-               temp = self._sire_unit - other._to_sire_unit()
-               return GeneralUnit(temp)
+        if isinstance(other, _Type) and other._dimensions == self._dimensions:
+            temp = self._sire_unit - other._to_sire_unit()
+            return GeneralUnit(temp)
 
         # Addition of a string.
         elif isinstance(other, str):
@@ -281,8 +294,10 @@ class GeneralUnit(_Type):
             return self - temp
 
         else:
-            raise TypeError("unsupported operand type(s) for -: '%s' and '%s'"
-                % (self.__class__.__qualname__, other.__class__.__qualname__))
+            raise TypeError(
+                "unsupported operand type(s) for -: '%s' and '%s'"
+                % (self.__class__.__qualname__, other.__class__.__qualname__)
+            )
 
     def __mul__(self, other):
         """Multiplication operator."""
@@ -301,14 +316,15 @@ class GeneralUnit(_Type):
             temp = self._sire_unit * other._to_sire_unit()
 
             # Create the dimension mask.
-            dimensions = (temp.ANGLE(),
-                          temp.CHARGE(),
-                          temp.LENGTH(),
-                          temp.MASS(),
-                          temp.QUANTITY(),
-                          temp.TEMPERATURE(),
-                          temp.TIME()
-                         )
+            dimensions = (
+                temp.ANGLE(),
+                temp.CHARGE(),
+                temp.LENGTH(),
+                temp.MASS(),
+                temp.QUANTITY(),
+                temp.TEMPERATURE(),
+                temp.TIME(),
+            )
 
             # Return as an existing type if the dimensions match.
             try:
@@ -317,8 +333,10 @@ class GeneralUnit(_Type):
                 return GeneralUnit(temp)
 
         else:
-            raise TypeError("unsupported operand type(s) for *: '%s' and '%s'"
-                % (self.__class__.__qualname__, other.__class__.__qualname__))
+            raise TypeError(
+                "unsupported operand type(s) for *: '%s' and '%s'"
+                % (self.__class__.__qualname__, other.__class__.__qualname__)
+            )
 
     def __rmul__(self, other):
         """Multiplication operator."""
@@ -343,14 +361,15 @@ class GeneralUnit(_Type):
             temp = self._sire_unit / other._to_sire_unit()
 
             # Create the dimension mask.
-            dimensions = (temp.ANGLE(),
-                          temp.CHARGE(),
-                          temp.LENGTH(),
-                          temp.MASS(),
-                          temp.QUANTITY(),
-                          temp.TEMPERATURE(),
-                          temp.TIME()
-                         )
+            dimensions = (
+                temp.ANGLE(),
+                temp.CHARGE(),
+                temp.LENGTH(),
+                temp.MASS(),
+                temp.QUANTITY(),
+                temp.TEMPERATURE(),
+                temp.TIME(),
+            )
 
             # Return as an existing type if the dimensions match.
             try:
@@ -364,8 +383,10 @@ class GeneralUnit(_Type):
             return self / obj
 
         else:
-            raise TypeError("unsupported operand type(s) for /: '%s' and '%s'"
-                % (self.__class__.__qualname__, other.__class__.__qualname__))
+            raise TypeError(
+                "unsupported operand type(s) for /: '%s' and '%s'"
+                % (self.__class__.__qualname__, other.__class__.__qualname__)
+            )
 
     def __rtruediv__(self, other):
         """Reverse division operator."""
@@ -384,14 +405,15 @@ class GeneralUnit(_Type):
             temp = other._to_sire_unit() / self._sire_unit
 
             # Create the dimension mask.
-            dimensions = (temp.ANGLE(),
-                          temp.CHARGE(),
-                          temp.LENGTH(),
-                          temp.MASS(),
-                          temp.QUANTITY(),
-                          temp.TEMPERATURE(),
-                          temp.TIME()
-                         )
+            dimensions = (
+                temp.ANGLE(),
+                temp.CHARGE(),
+                temp.LENGTH(),
+                temp.MASS(),
+                temp.QUANTITY(),
+                temp.TEMPERATURE(),
+                temp.TIME(),
+            )
 
             # Return as an existing type if the dimensions match.
             try:
@@ -405,35 +427,38 @@ class GeneralUnit(_Type):
             return obj / self
 
         else:
-            raise TypeError("unsupported operand type(s) for /: '%s' and '%s'"
-                % (self.__class__.__qualname__, other.__class__.__qualname__))
+            raise TypeError(
+                "unsupported operand type(s) for /: '%s' and '%s'"
+                % (self.__class__.__qualname__, other.__class__.__qualname__)
+            )
 
     def __pow__(self, other):
         """Power operator."""
 
         if type(other) is not int:
-            raise TypeError("unsupported operand type(s) for ^: '%s' and '%s'"
-                % (self.__class__.__qualname__, other.__class__.__qualname__))
+            raise TypeError(
+                "unsupported operand type(s) for ^: '%s' and '%s'"
+                % (self.__class__.__qualname__, other.__class__.__qualname__)
+            )
 
         if other == 0:
             return GeneralUnit(self._sire_unit / self._sire_unit)
 
         # Multiply the Sire GeneralUnit 'other' times.
         temp = self._sire_unit
-        for x in range(0, abs(other)-1):
+        for x in range(0, abs(other) - 1):
             temp = temp * self._sire_unit
 
         if other > 0:
             return GeneralUnit(temp)
         else:
-            return GeneralUnit(1/temp)
+            return GeneralUnit(1 / temp)
 
     def __lt__(self, other):
         """Less than operator."""
 
         # Compare to another object of the same type and dimensions.
-        if isinstance(other, _Type) and \
-           other._dimensions == self._dimensions:
+        if isinstance(other, _Type) and other._dimensions == self._dimensions:
             return self._value < other._value
 
         # Compare with a string.
@@ -442,19 +467,22 @@ class GeneralUnit(_Type):
             if other._dimensions == self._dimensions:
                 return self._value < other._value
             else:
-                raise TypeError("unorderable types: '%s' < '%s'"
-                    % (self.__class__.__qualname__, other.__class__.__qualname__))
+                raise TypeError(
+                    "unorderable types: '%s' < '%s'"
+                    % (self.__class__.__qualname__, other.__class__.__qualname__)
+                )
 
         else:
-            raise TypeError("unorderable types: '%s' < '%s'"
-                % (self.__class__.__qualname__, other.__class__.__qualname__))
+            raise TypeError(
+                "unorderable types: '%s' < '%s'"
+                % (self.__class__.__qualname__, other.__class__.__qualname__)
+            )
 
     def __le__(self, other):
         """Less than or equal to operator."""
 
         # Compare to another object of the same type and dimensions.
-        if isinstance(other, _Type) and \
-           other._dimensions == self._dimensions:
+        if isinstance(other, _Type) and other._dimensions == self._dimensions:
             return self._value <= other._value
 
         # Compare with a string.
@@ -463,19 +491,22 @@ class GeneralUnit(_Type):
             if other._dimensions == self._dimensions:
                 return self._value <= other._value
             else:
-                raise TypeError("unorderable types: '%s' <= '%s'"
-                    % (self.__class__.__qualname__, other.__class__.__qualname__))
+                raise TypeError(
+                    "unorderable types: '%s' <= '%s'"
+                    % (self.__class__.__qualname__, other.__class__.__qualname__)
+                )
 
         else:
-            raise TypeError("unorderable types: '%s' <= '%s'"
-                % (self.__class__.__qualname__, other.__class__.__qualname__))
+            raise TypeError(
+                "unorderable types: '%s' <= '%s'"
+                % (self.__class__.__qualname__, other.__class__.__qualname__)
+            )
 
     def __eq__(self, other):
         """Equals to operator."""
 
         # Compare to another object of the same type and dimensions.
-        if isinstance(other, _Type) and \
-           other._dimensions == self._dimensions:
+        if isinstance(other, _Type) and other._dimensions == self._dimensions:
             return self._value == other._value
 
         # Compare with a string.
@@ -493,8 +524,7 @@ class GeneralUnit(_Type):
         """Not equals to operator."""
 
         # Compare to another object of the same type and dimensions.
-        if isinstance(other, _Type) and \
-           other._dimensions == self._dimensions:
+        if isinstance(other, _Type) and other._dimensions == self._dimensions:
             return self._value != other._value
 
         # Compare with a string.
@@ -512,8 +542,7 @@ class GeneralUnit(_Type):
         """Greater than or equal to operator."""
 
         # Compare to another object of the same type and dimensions.
-        if isinstance(other, _Type) and \
-           other._dimensions == self._dimensions:
+        if isinstance(other, _Type) and other._dimensions == self._dimensions:
             return self._value >= other._value
 
         # Compare with a string.
@@ -522,19 +551,22 @@ class GeneralUnit(_Type):
             if other._dimensions == self._dimensions:
                 return self._value >= other._value
             else:
-                raise TypeError("unorderable types: '%s' >= '%s'"
-                    % (self.__class__.__qualname__, other.__class__.__qualname__))
+                raise TypeError(
+                    "unorderable types: '%s' >= '%s'"
+                    % (self.__class__.__qualname__, other.__class__.__qualname__)
+                )
 
         else:
-            raise TypeError("unorderable types: '%s' >= '%s'"
-                % (self.__class__.__qualname__, other.__class__.__qualname__))
+            raise TypeError(
+                "unorderable types: '%s' >= '%s'"
+                % (self.__class__.__qualname__, other.__class__.__qualname__)
+            )
 
     def __gt__(self, other):
         """Greater than operator."""
 
         # Compare to another object of the same type and dimensions.
-        if isinstance(other, _Type) and \
-           other._dimensions == self._dimensions:
+        if isinstance(other, _Type) and other._dimensions == self._dimensions:
             return self._value > other._value
 
         # Compare with a string.
@@ -543,154 +575,172 @@ class GeneralUnit(_Type):
             if other._dimensions == self._dimensions:
                 return self._value > other._value
             else:
-                raise TypeError("unorderable types: '%s' > '%s'"
-                    % (self.__class__.__qualname__, other.__class__.__qualname__))
+                raise TypeError(
+                    "unorderable types: '%s' > '%s'"
+                    % (self.__class__.__qualname__, other.__class__.__qualname__)
+                )
 
         else:
-            raise TypeError("unorderable types: '%s' > '%s'"
-                % (self.__class__.__qualname__, other.__class__.__qualname__))
+            raise TypeError(
+                "unorderable types: '%s' > '%s'"
+                % (self.__class__.__qualname__, other.__class__.__qualname__)
+            )
 
     def unit(self):
-        """Return the powers of the unit in each dimension.
+        """
+        Return the powers of the unit in each dimension.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           unit : str
-               The powers of the unit in each dimension.
+        unit : str
+            The powers of the unit in each dimension.
         """
         return self._unit
 
     def dimensions(self):
-        """Return the dimensions of this type. This is a tuple
-           containing the power in each dimension.
+        """
+        Return the dimensions of this type. This is a tuple
+        containing the power in each dimension.
 
-           Returns : (int, int, int, int, int, int)
-               The power in each dimension: 'angle', 'charge', 'length',
-               'mass', 'quantity', 'temperature', and 'time'.
+        Returns : (int, int, int, int, int, int)
+            The power in each dimension: 'angle', 'charge', 'length',
+            'mass', 'quantity', 'temperature', and 'time'.
         """
         return self._dimensions
 
     def angle(self):
-        """Return the power of this general unit in the 'angle' dimension.
+        """
+        Return the power of this general unit in the 'angle' dimension.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           angle : int
-               The power of the general unit in the 'angle' dimension.
+        angle : int
+            The power of the general unit in the 'angle' dimension.
         """
         return self._dimensions[0]
 
     def charge(self):
-        """Return the power of this general unit in the 'charge' dimension.
+        """
+        Return the power of this general unit in the 'charge' dimension.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           charge : int
-               The power of the general unit in the 'charge' dimension.
+        charge : int
+            The power of the general unit in the 'charge' dimension.
         """
         return self._dimensions[1]
 
     def length(self):
-        """Return the power of this general unit in the 'length' dimension.
+        """
+        Return the power of this general unit in the 'length' dimension.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           length : int
-               The power of the general unit in the 'length' dimension.
+        length : int
+            The power of the general unit in the 'length' dimension.
         """
         return self._dimensions[2]
 
     def mass(self):
-        """Return the power of this general unit in the 'mass' dimension.
+        """
+        Return the power of this general unit in the 'mass' dimension.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           mass : int
-               The power of the general unit in the 'mass' dimension.
+        mass : int
+            The power of the general unit in the 'mass' dimension.
         """
         return self._dimensions[3]
 
     def quantity(self):
-        """Return the power of this general unit in the 'quantity' dimension.
+        """
+        Return the power of this general unit in the 'quantity' dimension.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           quantity : int
-               The power of the general unit in the 'quantity' dimension.
+        quantity : int
+            The power of the general unit in the 'quantity' dimension.
         """
         return self._dimensions[4]
 
     def temperature(self):
-        """Return the power of this general unit in the 'temperature' dimension.
+        """
+        Return the power of this general unit in the 'temperature' dimension.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           temperature : int
-               The power of the general unit in the 'temperature' dimension.
+        temperature : int
+            The power of the general unit in the 'temperature' dimension.
         """
         return self._dimensions[5]
 
     def time(self):
-        """Return the power of this general unit in the 'time' dimension.
+        """
+        Return the power of this general unit in the 'time' dimension.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           time : int
-               The power of the general unit in the 'time' dimension.
+        time : int
+            The power of the general unit in the 'time' dimension.
         """
         return self._dimensions[6]
 
     def _to_sire_unit(self):
-        """Return the internal Sire Unit object to which this type corresponds.
+        """
+        Return the internal Sire Unit object to which this type corresponds.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           sire_unit : Sire.Units.GeneralUnit
-               The internal Sire Unit object that is being wrapped.
+        sire_unit : Sire.Units.GeneralUnit
+            The internal Sire Unit object that is being wrapped.
         """
         return self._sire_unit
 
     @staticmethod
     def _from_sire_unit(sire_unit):
-        """Convert from a Sire GeneralUnit object.
+        """
+        Convert from a Sire GeneralUnit object.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           sire_unit : Sire.Units.GeneralUnit
-               A Sire GeneralUnit object.
+        sire_unit : Sire.Units.GeneralUnit
+            A Sire GeneralUnit object.
         """
 
         if not isinstance(sire_unit, _GeneralUnit):
-            raise TypeError("'sire_unit' must be of type 'sire.units.GeneralUnit'. "
-                            f"Value {sire_unit} is of type {type(sire_unit)}")
+            raise TypeError(
+                "'sire_unit' must be of type 'sire.units.GeneralUnit'. "
+                f"Value {sire_unit} is of type {type(sire_unit)}"
+            )
 
         return GeneralUnit(sire_unit)
 
     @classmethod
     def _from_string(cls, string):
-        """Convert a string to an object of the same type.
+        """
+        Convert a string to an object of the same type.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           string : str
-               The string to interpret.
+        string : str
+            The string to interpret.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           type : :class:`Type <BioSimSpace.Types>`
-               The type object.
+        type : :class:`Type <BioSimSpace.Types>`
+            The type object.
         """
 
         string_copy = string
@@ -722,13 +772,17 @@ class GeneralUnit(_Type):
 
                 # The bytecode must contain names.
                 if not code.co_names:
-                    raise ValueError(f"Could not infer GeneralUnit from string '{string}'") from None
+                    raise ValueError(
+                        f"Could not infer GeneralUnit from string '{string}'"
+                    ) from None
 
                 # Make sure the co_names only contains names within the allowed
                 # sire_units_local dictionary.
                 for name in code.co_names:
                     if name not in _sire_units_locals:
-                        raise ValueError(f"Could not infer GeneralUnit from string '{string}'") from None
+                        raise ValueError(
+                            f"Could not infer GeneralUnit from string '{string}'"
+                        ) from None
 
                 general_unit = eval(string, {}, _sire_units_locals)
 
@@ -736,7 +790,9 @@ class GeneralUnit(_Type):
                 return GeneralUnit(general_unit)
 
             except Exception as e:
-                raise ValueError(f"Could not infer GeneralUnit from string '{string}'") from None
+                raise ValueError(
+                    f"Could not infer GeneralUnit from string '{string}'"
+                ) from None
 
         else:
             raise TypeError("'string' must be of type 'str'")

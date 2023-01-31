@@ -1,13 +1,13 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2022
+# Copyright: 2017-2023
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
 # BioSimSpace is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 2 of the License, or
+# the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
 # BioSimSpace is distributed in the hope that it will be useful,
@@ -19,9 +19,7 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-"""
-Functionality for production protocols.
-"""
+"""Functionality for production protocols."""
 
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
@@ -166,7 +164,8 @@ class Production(_Protocol, _PositionRestraintMixin):
             return f"BioSimSpace.Protocol.Production({self._get_parm()})"
 
     def getTimeStep(self):
-        """Return the time step.
+        """
+        Return the time step.
 
         Returns
         -------
@@ -177,7 +176,8 @@ class Production(_Protocol, _PositionRestraintMixin):
         return self._timestep
 
     def setTimeStep(self, timestep):
-        """Set the time step.
+        """
+        Set the time step.
 
         Parameters
         ----------
@@ -191,7 +191,8 @@ class Production(_Protocol, _PositionRestraintMixin):
             raise TypeError("'timestep' must be of type 'BioSimSpace.Types.Time'")
 
     def getRunTime(self):
-        """Return the running time.
+        """
+        Return the running time.
 
         Returns
         -------
@@ -202,7 +203,8 @@ class Production(_Protocol, _PositionRestraintMixin):
         return self._runtime
 
     def setRunTime(self, runtime):
-        """Set the running time.
+        """
+        Set the running time.
 
         Parameters
         ----------
@@ -216,7 +218,8 @@ class Production(_Protocol, _PositionRestraintMixin):
             raise TypeError("'runtime' must be of type 'BioSimSpace.Types.Time'")
 
     def getTemperature(self):
-        """Return temperature.
+        """
+        Return temperature.
 
         Returns
         -------
@@ -227,7 +230,8 @@ class Production(_Protocol, _PositionRestraintMixin):
         return self._temperature
 
     def setTemperature(self, temperature):
-        """Set the temperature.
+        """
+        Set the temperature.
 
         Parameters
         ----------
@@ -243,7 +247,8 @@ class Production(_Protocol, _PositionRestraintMixin):
             )
 
     def getPressure(self):
-        """Return the pressure.
+        """
+        Return the pressure.
 
         Returns
         -------
@@ -254,7 +259,8 @@ class Production(_Protocol, _PositionRestraintMixin):
         return self._pressure
 
     def setPressure(self, pressure):
-        """Set the pressure.
+        """
+        Set the pressure.
 
         Parameters
         ----------
@@ -268,7 +274,8 @@ class Production(_Protocol, _PositionRestraintMixin):
             raise TypeError("'pressure' must be of type 'BioSimSpace.Types.Pressure'")
 
     def getReportInterval(self):
-        """Return the interval between reporting statistics. (In integration steps.)
+        """
+        Return the interval between reporting statistics. (In integration steps.).
 
         Returns
         -------
@@ -279,7 +286,8 @@ class Production(_Protocol, _PositionRestraintMixin):
         return self._report_interval
 
     def setReportInterval(self, report_interval):
-        """Set the interval at which statistics are reported. (In integration steps.)
+        """
+        Set the interval at which statistics are reported. (In integration steps.).
 
         Parameters
         ----------
@@ -297,8 +305,9 @@ class Production(_Protocol, _PositionRestraintMixin):
         self._report_interval = report_interval
 
     def getRestartInterval(self):
-        """Return the interval between saving restart confiugrations, and/or
-        trajectory frames. (In integration steps.)
+        """
+        Return the interval between saving restart confiugrations, and/or
+        trajectory frames. (In integration steps.).
 
         Returns
         -------
@@ -310,8 +319,9 @@ class Production(_Protocol, _PositionRestraintMixin):
         return self._restart_interval
 
     def setRestartInterval(self, restart_interval):
-        """Set the interval between saving restart confiugrations, and/or
-        trajectory frames. (In integration steps.)
+        """
+        Set the interval between saving restart confiugrations, and/or
+        trajectory frames. (In integration steps.).
 
         Parameters
         ----------
@@ -330,7 +340,8 @@ class Production(_Protocol, _PositionRestraintMixin):
         self._restart_interval = restart_interval
 
     def getFirstStep(self):
-        """Return the first time step.
+        """
+        Return the first time step.
 
         Returns
         -------
@@ -341,7 +352,8 @@ class Production(_Protocol, _PositionRestraintMixin):
         return self._first_step
 
     def setFirstStep(self, first_step):
-        """Set the initial time step.
+        """
+        Set the initial time step.
 
         Parameters
         ----------
@@ -359,7 +371,8 @@ class Production(_Protocol, _PositionRestraintMixin):
             self._first_step = _math.ceil(first_step)
 
     def isRestart(self):
-        """Return whether this restart simulation.
+        """
+        Return whether this restart simulation.
 
         Returns
         -------
@@ -370,7 +383,8 @@ class Production(_Protocol, _PositionRestraintMixin):
         return self._restart
 
     def setRestart(self, restart):
-        """Set the restart flag.
+        """
+        Set the restart flag.
 
         Parameters
         ----------

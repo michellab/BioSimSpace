@@ -5,10 +5,12 @@ import pytest
 import os
 import warnings as _warnings
 
+
 @pytest.fixture
 def system(scope="session"):
     """Re-use the same molecuar system for each test."""
     return BSS.IO.readMolecules("test/Sandpit/Exscientia/input/amber/ala/*")
+
 
 def test_minimise(system):
     """Test a minimisation protocol."""
@@ -19,6 +21,7 @@ def test_minimise(system):
     # Run the process and check that it finishes without error.
     assert run_process(system, protocol)
 
+
 def test_equilibrate(system):
     """Test an equilibration protocol."""
 
@@ -27,6 +30,7 @@ def test_equilibrate(system):
 
     # Run the process and check that it finishes without error.
     assert run_process(system, protocol)
+
 
 def test_production(system):
     """Test a production protocol."""
@@ -37,15 +41,37 @@ def test_production(system):
     # Run the process and check that it finishes without error.
     assert run_process(system, protocol)
 
+
+def test_free_energy():
+    """Test a free energy perturbation protocol."""
+
+    # Load the perturbable system.
+    system = BSS.IO.readPerturbableSystem(
+        "test/Sandpit/Exscientia/input/morphs/perturbable_system0.prm7",
+        "test/Sandpit/Exscientia/input/morphs/perturbable_system0.rst7",
+        "test/Sandpit/Exscientia/input/morphs/perturbable_system1.prm7",
+        "test/Sandpit/Exscientia/input/morphs/perturbable_system1.rst7",
+    )
+
+    # Create a short FEP protocol.
+    protocol = BSS.Protocol.FreeEnergy(
+        runtime=0.1 * BSS.Units.Time.picosecond, report_interval=50, restart_interval=50
+    )
+
+    # Run the process and check that it finishes without error.
+    assert run_process(system[0].toSystem(), protocol)
+
+
 def test_pert_file():
     """Test the perturbation file writer."""
 
     # Load the perturbable molecule.
     mol = BSS.IO.readPerturbableSystem(
-            "test/Sandpit/Exscientia/input/morphs/morph0.prm7",
-            "test/Sandpit/Exscientia/input/morphs/morph0.rst7",
-            "test/Sandpit/Exscientia/input/morphs/morph1.prm7",
-            "test/Sandpit/Exscientia/input/morphs/morph1.rst7")[0]
+        "test/Sandpit/Exscientia/input/morphs/morph0.prm7",
+        "test/Sandpit/Exscientia/input/morphs/morph0.rst7",
+        "test/Sandpit/Exscientia/input/morphs/morph1.prm7",
+        "test/Sandpit/Exscientia/input/morphs/morph1.rst7",
+    )[0]
 
     # Create the perturbation file.
     BSS.Process._somd._to_pert_file(mol)
@@ -56,17 +82,19 @@ def test_pert_file():
     # Remove the temporary perturbation file.
     os.remove("MORPH.pert")
 
+
 def test_pert_res_num():
     """Test that the perturbable residue number is correct when
-       the molecules in the system are re-ordered.
+    the molecules in the system are re-ordered.
     """
 
     # Load the perturbable system.
     system = BSS.IO.readPerturbableSystem(
-            "test/Sandpit/Exscientia/input/morphs/perturbable_system0.prm7",
-            "test/Sandpit/Exscientia/input/morphs/perturbable_system0.rst7",
-            "test/Sandpit/Exscientia/input/morphs/perturbable_system1.prm7",
-            "test/Sandpit/Exscientia/input/morphs/perturbable_system1.rst7")
+        "test/Sandpit/Exscientia/input/morphs/perturbable_system0.prm7",
+        "test/Sandpit/Exscientia/input/morphs/perturbable_system0.rst7",
+        "test/Sandpit/Exscientia/input/morphs/perturbable_system1.prm7",
+        "test/Sandpit/Exscientia/input/morphs/perturbable_system1.rst7",
+    )
 
     # Create a default free energy protocol.
     protocol = BSS.Protocol.FreeEnergy()
@@ -104,6 +132,7 @@ def test_pert_res_num():
     # For the second system, the perturbable residue is second.
     assert unique1[0] == "perturbed residue number = 2"
 
+
 def run_process(system, protocol):
     """Helper function to run various simulation protocols."""
 
@@ -121,8 +150,11 @@ def run_process(system, protocol):
     # if this is the case, the test will pass with a warning
     if res:
         with open(os.path.join(process.workDir(), "test.out"), "r") as hnd:
-            if ("RuntimeError: Particle coordinate is nan" in hnd.read()):
-                _warnings.warn("Test raised RuntimeError: Particle coordinate is nan", RuntimeWarning)
+            if "RuntimeError: Particle coordinate is nan" in hnd.read():
+                _warnings.warn(
+                    "Test raised RuntimeError: Particle coordinate is nan",
+                    RuntimeWarning,
+                )
                 res = False
 
     return not res

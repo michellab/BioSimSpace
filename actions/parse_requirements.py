@@ -1,8 +1,6 @@
-
-
 def parse_requirements(filename):
     """Parse the requirements and return (in conda notation)
-       the requirements for this system
+    the requirements for this system.
     """
     try:
         from pip_requirements_parser import RequirementsFile

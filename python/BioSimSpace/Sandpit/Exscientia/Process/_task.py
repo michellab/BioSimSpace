@@ -1,13 +1,13 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2022
+# Copyright: 2017-2023
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
 # BioSimSpace is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 2 of the License, or
+# the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
 # BioSimSpace is distributed in the hope that it will be useful,
@@ -19,9 +19,7 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-"""
-Functionality for running background tasks.
-"""
+"""Functionality for running background tasks."""
 
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
@@ -38,14 +36,16 @@ import zipfile as _zipfile
 
 from .. import _is_notebook
 
+
 def _wrap_task(task):
-    """A simple wrapper function to run a background tasks and catch exceptions.
+    """
+    A simple wrapper function to run a background tasks and catch exceptions.
 
-       Parameters
-       ----------
+    Parameters
+    ----------
 
-       task : :class:`Task <BioSimSpace.Process.Task>`
-           A handle to the task object.
+    task : :class:`Task <BioSimSpace.Process.Task>`
+        A handle to the task object.
     """
 
     # Try to run the task and grab the result.
@@ -56,23 +56,25 @@ def _wrap_task(task):
     except Exception as e:
         task._result = e
 
-class Task():
+
+class Task:
     """Base class for running a background task."""
 
     def __init__(self, name=None, work_dir=None, auto_start=False):
-        """Constructor.
+        """
+        Constructor.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           name : str
-               The name of the task.
+        name : str
+            The name of the task.
 
-           work_dir : str
-               The working directory for the task.
+        work_dir : str
+            The working directory for the task.
 
-           auto_start : bool
-               Whether to immediately start the task.
+        auto_start : bool
+            Whether to immediately start the task.
         """
 
         # Don't allow user to create an instance of this base class.
@@ -152,13 +154,14 @@ class Task():
         self._thread.start()
 
     def workDir(self):
-        """Return the working directory for the task.
+        """
+        Return the working directory for the task.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           work_dir : str
-               The path of the working directory.
+        work_dir : str
+            The path of the working directory.
         """
         return self._work_dir
 
@@ -182,46 +185,50 @@ class Task():
         return self._result
 
     def isStarted(self):
-        """Return whether the task has been started.
+        """
+        Return whether the task has been started.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           is_started : bool
-               Whether the task has been started.
+        is_started : bool
+            Whether the task has been started.
         """
         return self._is_started
 
     def isError(self):
-        """Return whether the task exited with an error.
+        """
+        Return whether the task exited with an error.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           is_error : bool
-               Whether the task exited with an error.
+        is_error : bool
+            Whether the task exited with an error.
         """
         return self._is_error
 
     def isFinished(self):
-        """Return whether the task has finished.
+        """
+        Return whether the task has finished.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           is_finished : bool
-               Whether the task has finished.
+        is_finished : bool
+            Whether the task has finished.
         """
         return self._is_finished
 
     def getException(self):
-        """Return the exception.
+        """
+        Return the exception.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           exception : Exception
-               The exception.
+        exception : Exception
+            The exception.
         """
         if self._is_error:
             return self._result
@@ -229,13 +236,14 @@ class Task():
             return None
 
     def getErrorMessage(self):
-        """Return the error message.
+        """
+        Return the error message.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           error : str
-               The error message.
+        error : str
+            The error message.
         """
         if self._is_error:
             return self._error_message
@@ -243,22 +251,23 @@ class Task():
             return None
 
     def getOutput(self, filename=None, file_link=False):
-        """Return a zip file containing the output of the task.
+        """
+        Return a zip file containing the output of the task.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           filename : str
-               The name of the output archive.
+        filename : str
+            The name of the output archive.
 
-           file_link : bool
-               Whether to return a FileLink when working in Jupyter.
+        file_link : bool
+            Whether to return a FileLink when working in Jupyter.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           file_link : str, IPython.lib.display.FileLink
-               The name of, or link to, a zipfile containing the output.
+        file_link : str, IPython.lib.display.FileLink
+            The name of, or link to, a zipfile containing the output.
         """
 
         # The user has specified a working directory, return its name.
@@ -306,7 +315,9 @@ class Task():
                 f_link = _FileLink(zipname)
 
                 # Set the download attribute so that JupyterLab doesn't try to open the file.
-                f_link.html_link_str = f"<a href='%s' target='_blank' download='{zipname}'>%s</a>"
+                f_link.html_link_str = (
+                    f"<a href='%s' target='_blank' download='{zipname}'>%s</a>"
+                )
 
                 # Return a link to the archive.
                 return f_link

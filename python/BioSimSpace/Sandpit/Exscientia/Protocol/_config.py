@@ -1,7 +1,7 @@
 import math as _math
 import warnings as _warnings
 
-from sire import units as _SireUnits
+from sire.legacy import Units as _SireUnits
 
 from .. import Protocol as _Protocol
 from ..Align._squash import _amber_mask_from_indices, _squashed_atom_mapping
@@ -13,7 +13,8 @@ class ConfigFactory:
     """A class for generating a config based on a template protocol."""
 
     def __init__(self, system, protocol):
-        """Constructor.
+        """
+        Constructor.
 
         Parameters
         ----------
@@ -136,7 +137,8 @@ class ConfigFactory:
         return option_dict
 
     def generateAmberConfig(self, extra_options=None, extra_lines=None):
-        """Outputs the current protocol in a format compatible with AMBER.
+        """
+        Outputs the current protocol in a format compatible with AMBER.
 
         Parameters
         ----------
@@ -347,7 +349,8 @@ class ConfigFactory:
         return total_lines
 
     def generateGromacsConfig(self, extra_options=None, extra_lines=None):
-        """Outputs the current protocol in a format compatible with GROMACS.
+        """
+        Outputs the current protocol in a format compatible with GROMACS.
 
         Parameters
         ----------
@@ -555,7 +558,8 @@ class ConfigFactory:
         return total_lines
 
     def generateSomdConfig(self, extra_options=None, extra_lines=None):
-        """Outputs the current protocol in a format compatible with SOMD.
+        """
+        Outputs the current protocol in a format compatible with SOMD.
 
         Parameters
         ----------

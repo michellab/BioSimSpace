@@ -1,4 +1,3 @@
-
 # Script that collects as much as it can from a failed conda build so that it can
 # be stored as a GitHub Actions artifact for download and further debugging
 
@@ -29,14 +28,16 @@ output_filename = os.path.join(build_dir, "failed.tar.bz2")
 
 print(f"Zipping up {zipdirs} to {output_filename}")
 
+
 def filter_function(tarinfo):
     filename = tarinfo.name
-    #print(filename)
-    if filename.find('.git') != -1:
-        #print("excluded!")
+    # print(filename)
+    if filename.find(".git") != -1:
+        # print("excluded!")
         return None
     else:
         return tarinfo
+
 
 with tarfile.open(output_filename, "w:bz2") as tar:
     for dir in zipdirs:
