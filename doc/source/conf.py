@@ -294,6 +294,7 @@ autodoc_default_options = {
     "special-members": False,
     "exclude-members": "__dict__,__weakref__",  # Exclude "standard" methods.
     "private-members": False,
+    "inherited-members": True,
 }
 
 # spell checking
