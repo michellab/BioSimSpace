@@ -22,7 +22,7 @@ OpenBioSim | BioSimSpace
 Python framework for biomolecular simulation. With it you can:
 
 * Write robust and portable biomolecular :ref:`workflow components <ref_nodes>` that work on different hardware, with different software packages, and that can be run in different ways, e.g. command-line, `Jupyter <https://jupyter.org>`__.
-* Interact with molecular-simulation processes in real time.
+* Start, stop, and monitor molecular simulation processes within interactive Python environments.
 
 BioSimSpace is distributed and supported as an open source community project by
 `OpenBioSim <https://openbiosim.org>`__.
