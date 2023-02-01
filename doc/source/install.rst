@@ -4,20 +4,134 @@
 Installation
 ============
 
-Conda install
-=============
+1. No-installation - Run in a web browser
+=========================================
 
-The easiest way to install BioSimSpace is using our `conda channel <https://anaconda.org/openbiosim/repo>`__.
-BioSimSpace is built using dependencies from `conda-forge <https://conda-forge.org/>`__,
-so please ensure that the channel takes strict priority. We recommend using
-`Mambaforge <https://github.com/conda-forge/miniforge#mambaforge>`__.
+We run a completely free `JupyterHub <https://try.openbiosim.org>`__ on
+which we have BioSimSpace installed.
 
-To create a new environment:
+This is at `try.openbiosim.org <https://try.openbiosim.org>`__.
+You only need a `GitHub account <https://github.com>`__, which is
+used to log into the server.
+
+Simply go to `try.openbiosim.org <https://try.openbiosim.org>`__ in your
+web browser, and log in using your `GitHub account <https://github.com>`__.
+This will start a Jupyter Lab instance. In here you can start a terminal,
+and then use :mod:`BioSimSpace` directly via ``ipython``. Or you can start a Jupyter
+notebook and use :mod:`BioSimSpace` there.
+
+To import :mod:`BioSimSpace`, at a Python prompt type
+
+>>> import BioSimSpace as BSS
+
+If this imports without errors, then everything is working.
+We encourage you to take a look at :doc:`the tutorials <tutorials/index>`
+to learn how to use :mod:`BioSimSpace` or the
+:doc:`quickstart guide <quickstart/index>` if you want an overview.
+
+.. note::
+
+   This free JupyterHub server is limited. You only have up to 2 GB of
+   memory and at most 1 processor core. Disk storage is temporary,
+   and any data will be lost when you log out. Because it only
+   supports a limited number of concurrent users, inactive sessions will be
+   automatically stopped and logged out after 20 minutes. Please only
+   use this service to explore and learn :mod:`BioSimSpace`.
+   Do not use it for production work.
+
+2. Easy installation - Run in a conda environment
+=================================================
+
+The easiest way to install :mod:`BioSimSpace` is in a new
+`conda environment <https://anaconda.org>`__.
+
+You can use any conda environment or installation. We recommend using
+`mambaforge <https://github.com/conda-forge/miniforge#mambaforge>`__,
+as this is pre-configured to use `conda-forge <https://conda-forge.org>`__,
+and bundles `mamba <https://mamba.readthedocs.io/en/latest/>`__, which
+is a fast drop-in replacement for `conda <https://conda.io>`__.
+
+.. _Install_Mambaforge:
+Either... Install a new copy of ``mambaforge``
+----------------------------------------------
+
+To install a new copy of
+`mambaforge <https://github.com/conda-forge/miniforge#mambaforge>`__,
+first download a ``Mambaforge`` from
+`this page <https://github.com/conda-forge/miniforge#mambaforge>`__ that
+matches your operating system and processor.
+
+Install ``Mambaforge`` following the
+`instructions here <https://github.com/conda-forge/miniforge#install>`__.
+
+Once installed, you should be able to run the ``mamba`` command to
+install other packages (e.g. ``mamba -h`` will print out help on
+how to use the ``mamba`` command).
+
+Or... Use an existing anaconda/miniconda install
+------------------------------------------------
+
+If you want to use an existing anaconda or miniconda installation,
+then first open a terminal with that distribution activated.
+For example, open a terminal via anaconda navigator, or
+open a terminal and run
+``source /path/to/conda/bin/activate``, where ``/path/to/conda`` is
+the full path to your anaconda or miniconda installation.
+
+You should now be able to run the ``conda`` command to install other
+packages (e.g. ``conda -h`` will print out help on how to use the
+``conda`` command). We highly recommend that you use ``mamba`` as a
+drop-in replacement for ``conda``, so first install ``mamba``.
 
 .. code-block:: bash
 
-    mamba create -n openbiosim -c conda-forge -c openbiosim biosimspace
-    mamba activate openbiosim
+   $ conda install -c conda-forge mamba
+
+This should install mamba. If this fails, then your anaconda or miniconda
+environment is likely quite full, or else it is outdated. We recommend
+going back and following `the instructions <_Install_Mambaforge>`
+to install a new copy of ``mambaforge``.
+
+If this works, then you should now be able to run the ``mamba`` command
+to install other packages (e.g. ``mamba -h`` will print out help
+on how to use the ``mamba`` command).
+
+And then... Install BioSimSpace into a new environment
+------------------------------------------------------
+
+We recommend that :mod:`BioSimSpace` is installed into a new (clean) environment.
+This minimises the risk of failures caused by incompatible dependencies.
+
+BioSimSpace is currently packaged for Python 3.8 and Python 3.9. We will start
+by creating a Python 3.9 environment that we will call ``openbiosim``.
+
+.. code-block:: bash
+
+   $ mamba create -n openbiosim "python<3.10"
+
+.. note::
+
+   We use ``python<3.10`` as this will install the most recent 3.9
+   release of python.
+
+We can now install :mod:`BioSimSpace` into that environment by typing
+
+.. code-block:: bash
+
+   $ mamba install -n openbiosim -c openbiosim biosimspace
+
+.. note::
+
+   The option ``-n openbiosim`` tells ``mamba`` to install :mod:`BioSimSpace`
+   into the ``openbiosim`` environment. The option ``-c openbiosim``
+   tells ``mamba`` to install :mod:`BioSimSpace` from the ``openbiosim``
+   conda channel.
+
+If you want the latest development release, then install by typing
+
+.. code-block:: bash
+
+   $ mamba install -n openbiosim -c "openbiosim/label/dev" biosimspace
 
 To install the latest development version you can use:
 
@@ -26,22 +140,84 @@ To install the latest development version you can use:
     mamba create -n openbiosim-dev -c conda-forge -c openbiosim/label/dev biosimspace
     mamba activate openbiosim-dev
 
-When updating the development version it is generally advised to update `Sire <https://github.com/openbiosim/sire>`_
-at the same time:
+To run :mod:`BioSimSpace`, you must now activate the ``openbiosim`` environment.
+You can do this by typing
 
 .. code-block:: bash
 
-    mamba update -c conda-forge -c openbiosim/label/dev biosimspace sire
+   $ conda activate openbiosim
 
-Unless you add the required channels to your Conda configuration, then you'll
-need to add them when updating, e.g., for the development package:
+You can now start a Python session (e.g. running ``python``, or
+``ipython`` or ``jupyter lab`` if you installed those). At the
+Python prompt you can import :mod:`BioSimSpace` by typing
+
+>>> import BioSimSpace as BSS
+
+If this imports without errors, then everything is working.
+We encourage you to take a look at :doc:`the tutorials <tutorials/index>`
+to learn how to use :mod:`BioSimSpace` or the
+:doc:`quickstart guide <quickstart/index>` if you want an overview.
+
+3. Also easy installation - Run in a container
+==============================================
+
+Another route to install :mod:`BioSimSpace` is to download and run our
+pre-built containers. These can be run via
+`docker <https://www.docker.com>`__ (on Linux, MacOS and Windows)
+or via `podman <https://podman.io>`__ (on Linux) on Intel (X86-64)
+or ARM64 processors.
+
+To run via `docker <https://www.docker.com>`__, simply type;
 
 .. code-block:: bash
 
-    mamba update -c conda-forge -c openbiosim/label/dev biosimspace
+   $ docker run -p 8888:8888 -it openbiosim/biosimspace:latest
 
-For developers
-==============
+or, via `podman <https://podman.io>`__, type;
+
+.. code-block:: bash
+
+   $ podman run -p 8888:8888 -it openbiosim/biosimspace:latest
+
+This will download the container from
+`hub.docker.com <https://hub.docker.com/r/openbiosim/biosimspace>`__ and
+will start a command prompt in that container.
+
+You can now type ``python``, ``ipython`` or ``jupyter lab``
+to start a python, ipython or jupyter lab session.
+
+.. note::
+
+   The option ``-p 8888:8888`` tells docker/podman to redirect
+   port ``8888`` on your computer to port ``8888`` in the
+   container. This will let you open a browser and navigate to
+   the URL printed by ``jupyter lab`` if you are using jupyter.
+   You can drop this option if you don't want to use
+   ``jupyter lab``.
+
+.. note::
+
+   You can map directories from your computer into the container
+   by using the ``-v`` option. For example,
+   ``-v $HOME/input:/home/openbiosim/input`` would map your
+   ``input`` folder in your home directory to the ``input`` folder
+   in the home directory of the container. This will let :mod:`BioSimSpace`
+   read and write files on your computer.
+
+You can now start a Python session (e.g. running ``python``, or
+``ipython`` or ``jupyter lab`` if you installed those). At the
+Python prompt you can import :mod:`biosimspace` by typing
+
+>>> import BioSimSpace as BSS
+
+If this imports without errors, then everything is working.
+We encourage you to take a look at :doc:`the tutorials <tutorials/index>`
+to learn how to use :mod:`BioSimSpace` or the
+:doc:`quickstart guide <quickstart/index>` if you want an overview.
+
+
+4. Harder installation - Compile from source
+============================================
 
 The following documents a full installation of BioSimSpace from source. Before
 starting, you'll need a working `Git <https://git-scm.com>`__ installation.
@@ -94,8 +270,8 @@ environment variable ``BSS_SKIP_DEPENDENCIES``, e.g.
 
    BSS_SKIP_DEPENDENCIES=True python setup.py install
 
-Common issues
-=============
+5. Common issues
+================
 
 * If you experience problems with `Matplotlib <https://matplotlib.org>`__ when
   importing BioSimSpace on macOS, e.g.
@@ -116,8 +292,8 @@ BioSimSpace on a remote server without X forwarding.
 * If you experience problems with `Jupyter <https://jupyter.org>`__ permissions,
   try removing ``$HOME/.jupyter`` or ``$HOME/.local/share/jupyter``
 
-External dependencies
-=====================
+6. External dependencies
+========================
 
 Several additional packages are required for full access to all of BioSimSpace's
 functionality. Please download and install these packages according to their
