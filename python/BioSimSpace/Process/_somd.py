@@ -454,13 +454,11 @@ class Somd(_process.Process):
 
         # Run the process in the working directory.
         with _Utils.cd(self._work_dir):
-
             # Create the arguments string list.
             args = self.getArgStringList()
 
             # Write the command-line process to a README.txt file.
             with open("README.txt", "w") as f:
-
                 # Set the command-line string.
                 self._command = "%s " % self._exe + self.getArgString()
 
@@ -832,7 +830,6 @@ class Somd(_process.Process):
 
         # Additional files for free energy simulations.
         if isinstance(self._protocol, _Protocol.FreeEnergy):
-
             file = "%s/gradients.dat" % self._work_dir
             if _os.path.isfile(file):
                 _os.remove(file)
@@ -977,7 +974,6 @@ def _to_pert_file(
 
     # If there are duplicate names, then we need to rename the atoms.
     if sum(atom_names.values()) > len(names):
-
         # Make the molecule editable.
         edit_mol = mol.edit()
 
@@ -1203,10 +1199,8 @@ def _to_pert_file(
                     if atom.property("element0") == _SireMol.Element(
                         "X"
                     ) or atom.property("element1") == _SireMol.Element("X"):
-
                         # If perturbing TO dummy:
                         if atom.property("element1") == _SireMol.Element("X"):
-
                             atom_type1 = atom_type0
 
                             # In this step, only remove charges from soft-core perturbations.
@@ -1243,7 +1237,6 @@ def _to_pert_file(
                     if atom.property("element0") == _SireMol.Element(
                         "X"
                     ) or atom.property("element1") == _SireMol.Element("X"):
-
                         # If perturbing TO dummy:
                         if atom.property("element1") == _SireMol.Element("X"):
                             # allow atom types to change.
@@ -1259,7 +1252,6 @@ def _to_pert_file(
 
                         # If perturbing FROM dummy:
                         else:
-
                             # All terms have already been perturbed in "5_grow_soft".
                             atom_type1 = atom_type0
                             LJ0_value = LJ1_value = (
@@ -1283,7 +1275,6 @@ def _to_pert_file(
                     if atom.property("element0") == _SireMol.Element(
                         "X"
                     ) or atom.property("element1") == _SireMol.Element("X"):
-
                         # If perturbing TO dummy:
                         if atom.property("element1") == _SireMol.Element("X"):
                             # atom types have already been changed.
@@ -1318,7 +1309,6 @@ def _to_pert_file(
                     if atom.property("element0") == _SireMol.Element(
                         "X"
                     ) or atom.property("element1") == _SireMol.Element("X"):
-
                         # If perturbing TO dummy:
                         if atom.property("element1") == _SireMol.Element("X"):
                             # atom types have already been changed.
@@ -1355,7 +1345,6 @@ def _to_pert_file(
                     if atom.property("element0") == _SireMol.Element(
                         "X"
                     ) or atom.property("element1") == _SireMol.Element("X"):
-
                         # If perturbing TO dummy:
                         if atom.property("element1") == _SireMol.Element("X"):
                             # atom types have already been changed.
@@ -1570,7 +1559,6 @@ def _to_pert_file(
 
             # Check that an atom in the bond is perturbed.
             if _has_pert_atom([idx0, idx1], pert_idxs):
-
                 # Cast the bonds as AmberBonds.
                 amber_bond0 = _SireMM.AmberBond(bond0.function(), _SireCAS.Symbol("r"))
                 amber_bond1 = _SireMM.AmberBond(bond1.function(), _SireCAS.Symbol("r"))
@@ -1598,7 +1586,6 @@ def _to_pert_file(
 
                 # Only write record if the bond parameters change.
                 if has_dummy or amber_bond0 != amber_bond1:
-
                     # Start bond record.
                     file.write("    bond\n")
 
@@ -1880,7 +1867,6 @@ def _to_pert_file(
 
             # Check that an atom in the angle is perturbed.
             if _has_pert_atom([idx0, idx1, idx2], pert_idxs):
-
                 # Cast the functions as AmberAngles.
                 amber_angle0 = _SireMM.AmberAngle(
                     angle0.function(), _SireCAS.Symbol("theta")
@@ -1910,7 +1896,6 @@ def _to_pert_file(
 
                 # Only write record if the angle parameters change.
                 if has_dummy or amber_angle0 != amber_angle1:
-
                     # Start angle record.
                     file.write("    angle\n")
 
@@ -2201,7 +2186,6 @@ def _to_pert_file(
             dihedrals_shared_idx.values(),
             key=lambda idx_pair: sort_dihedrals(dihedrals0, idx_pair[0]),
         ):
-
             # Get the dihedral potentials.
             dihedral0 = dihedrals0[idx0]
             dihedral1 = dihedrals1[idx1]
@@ -2214,7 +2198,6 @@ def _to_pert_file(
 
             # Check that an atom in the dihedral is perturbed.
             if _has_pert_atom([idx0, idx1, idx2, idx3], pert_idxs):
-
                 # Cast the functions as AmberDihedrals.
                 amber_dihedral0 = _SireMM.AmberDihedral(
                     dihedral0.function(), _SireCAS.Symbol("phi")
@@ -2262,7 +2245,6 @@ def _to_pert_file(
 
                 # Only write record if the dihedral parameters change.
                 if zero_k or force_write or amber_dihedral0 != amber_dihedral1:
-
                     # Initialise a null dihedral.
                     null_dihedral = _SireMM.AmberDihedral()
 
@@ -2271,7 +2253,6 @@ def _to_pert_file(
                         amber_dihedral0 == null_dihedral
                         and amber_dihedral1 == null_dihedral
                     ):
-
                         # Start dihedral record.
                         file.write("    dihedral\n")
 
@@ -2615,7 +2596,6 @@ def _to_pert_file(
 
             # Check that an atom in the improper is perturbed.
             if _has_pert_atom([idx0, idx1, idx2, idx3], pert_idxs):
-
                 # Cast the functions as AmberDihedrals.
                 amber_dihedral0 = _SireMM.AmberDihedral(
                     improper0.function(), _SireCAS.Symbol("phi")
@@ -2663,7 +2643,6 @@ def _to_pert_file(
 
                 # Only write record if the improper parameters change.
                 if zero_k or force_write or amber_dihedral0 != amber_dihedral1:
-
                     # Initialise a null dihedral.
                     null_dihedral = _SireMM.AmberDihedral()
 
@@ -2672,7 +2651,6 @@ def _to_pert_file(
                         amber_dihedral0 == null_dihedral
                         and amber_dihedral1 == null_dihedral
                     ):
-
                         # Start improper record.
                         file.write("    improper\n")
 

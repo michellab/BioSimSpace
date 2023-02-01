@@ -207,6 +207,7 @@ class Restraint:
 
     def _gromacs_boresch(self):
         """Format the Gromacs string for boresch restraint."""
+
         # Format the atoms into index list
         def format_index(key_list):
             formated_index = []

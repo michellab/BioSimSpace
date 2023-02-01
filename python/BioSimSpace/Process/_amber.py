@@ -421,7 +421,6 @@ class Amber(_process.Process):
 
         # Skip if the user has passed a custom protocol.
         if not isinstance(self._protocol, _Protocol.Custom):
-
             # Append a reference file if this a restrained equilibration.
             if isinstance(self._protocol, _Protocol.Equilibration):
                 if self._protocol.getRestraint() is not None:
@@ -456,13 +455,11 @@ class Amber(_process.Process):
 
         # Run the process in the working directory.
         with _Utils.cd(self._work_dir):
-
             # Create the arguments string list.
             args = self.getArgStringList()
 
             # Write the command-line process to a README.txt file.
             with open("README.txt", "w") as file:
-
                 # Set the command-line string.
                 self._command = "%s " % self._exe + self.getArgString()
 
@@ -1607,19 +1604,14 @@ class Amber(_process.Process):
 
         # Open the file for reading.
         with open(self._nrg_file, "r") as file:
-
             # Loop over all of the lines.
             for line in file:
-
                 # Skip empty lines and summary reports.
                 if len(line) > 0 and line[0] != "|":
-
                     # The output format is different for minimisation protocols.
                     if isinstance(self._protocol, _Protocol.Minimisation):
-
                         # No equals sign in the line.
                         if "=" not in line:
-
                             # Split the line using whitespace.
                             data = line.upper().split()
 
@@ -1631,7 +1623,6 @@ class Amber(_process.Process):
 
                         # Process the header record.
                         if is_header:
-
                             # Split the line using whitespace.
                             data = line.upper().split()
 
@@ -1660,7 +1651,6 @@ class Amber(_process.Process):
 
                     # Append each record to the dictionary.
                     for key, value in records:
-
                         # Strip whitespace from the record key.
                         key = key.strip()
 

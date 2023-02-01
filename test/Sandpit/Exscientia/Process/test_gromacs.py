@@ -1,12 +1,16 @@
+import numpy as np
+import pytest
+
 import BioSimSpace.Sandpit.Exscientia as BSS
 from BioSimSpace.Sandpit.Exscientia.Align import decouple
-from BioSimSpace.Sandpit.Exscientia.Units.Length import angstrom
-from BioSimSpace.Sandpit.Exscientia.Units.Angle import radian
-from BioSimSpace.Sandpit.Exscientia.Units.Energy import kcal_per_mol
 from BioSimSpace.Sandpit.Exscientia.FreeEnergy import Restraint
+from BioSimSpace.Sandpit.Exscientia.Units.Angle import radian
+from BioSimSpace.Sandpit.Exscientia.Units.Energy import kcal_per_mol, kj_per_mol
+from BioSimSpace.Sandpit.Exscientia.Units.Length import angstrom
+from BioSimSpace.Sandpit.Exscientia.Units.Pressure import bar
 from BioSimSpace.Sandpit.Exscientia.Units.Temperature import kelvin
-
-import pytest
+from BioSimSpace.Sandpit.Exscientia.Units.Time import picosecond
+from BioSimSpace.Sandpit.Exscientia.Units.Volume import nanometer3
 
 # Make sure GROMSCS is installed.
 has_gromacs = BSS._gmx_exe is not None
@@ -138,7 +142,8 @@ def test_restraints(perturbable_system, restraint):
 @pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
 def test_write_restraint(system, tmp_path):
     """Test if the restraint has been written in a way that could be processed
-    correctly."""
+    correctly.
+    """
     ligand = ligand = BSS.IO.readMolecules(
         [f"{url}/ligand01.prm7.bz2", f"{url}/ligand01.rst7.bz2"]
     ).getMolecule(0)
@@ -204,3 +209,74 @@ def run_process(system, protocol, **kwargs):
 
     # Return the process exit code.
     return not process.isError()
+
+
+class TestGetRecord:
+    @staticmethod
+    @pytest.fixture()
+    def setup(system, tmpdir_factory):
+        workdir = tmpdir_factory.mktemp("out")
+        (workdir / "gromacs.edr").mklinkto(
+            "test/Sandpit/Exscientia/output/gromacs/gromacs.edr"
+        )
+        protocol = BSS.Protocol.Production(
+            runtime=BSS.Types.Time(60, "picosecond"),
+            timestep=BSS.Types.Time(4, "femtosecond"),
+            report_interval=200,
+        )
+        process = BSS.Process.Gromacs(system, protocol, work_dir=str(workdir))
+        process._update_energy_dict()
+        return process
+
+    @pytest.mark.parametrize(
+        "func,time_series,value,unit",
+        [
+            ("getStep", True, 0, 1),
+            ("getStep", False, 15000, 1),
+            ("getTime", True, 0.0, picosecond),
+            ("getTime", False, 60.0, picosecond),
+            ("getBondEnergy", True, 191.762558, kj_per_mol),
+            ("getBondEnergy", False, 214.545654, kj_per_mol),
+            ("getAngleEnergy", True, 908.064758, kj_per_mol),
+            ("getAngleEnergy", False, 925.678772, kj_per_mol),
+            ("getProperEnergy", True, 521.629150, kj_per_mol),
+            ("getProperEnergy", False, 507.826538, kj_per_mol),
+            ("getImproperEnergy", True, 0.000000, kj_per_mol),
+            ("getImproperEnergy", False, 0.000000, kj_per_mol),
+            ("getLennardJones14", True, 149.906967, kj_per_mol),
+            ("getLennardJones14", False, 163.615982, kj_per_mol),
+            ("getLennardJonesSR", True, 8568.126953, kj_per_mol),
+            ("getLennardJonesSR", False, 8971.750000, kj_per_mol),
+            ("getCoulomb14", True, -11420.338867, kj_per_mol),
+            ("getCoulomb14", False, -11493.004883, kj_per_mol),
+            ("getCoulombSR", True, -63410.824219, kj_per_mol),
+            ("getCoulombSR", False, -64019.128906, kj_per_mol),
+            ("getCoulombReciprocal", True, 586.427307, kj_per_mol),
+            ("getCoulombReciprocal", False, 251.100098, kj_per_mol),
+            ("getDispersionCorrection", True, -575.343933, kj_per_mol),
+            ("getDispersionCorrection", False, -577.368042, kj_per_mol),
+            ("getPotentialEnergy", True, -64480.589844, kj_per_mol),
+            ("getPotentialEnergy", False, -65054.984375, kj_per_mol),
+            ("getKineticEnergy", True, 11556.777344, kj_per_mol),
+            ("getKineticEnergy", False, 11280.177734, kj_per_mol),
+            ("getTotalEnergy", True, -52923.812500, kj_per_mol),
+            ("getTotalEnergy", False, -53774.804688, kj_per_mol),
+            ("getConservedEnergy", True, -52937.847656, kj_per_mol),
+            ("getConservedEnergy", False, -51628.320312, kj_per_mol),
+            ("getTemperature", True, 306.766907, kelvin),
+            ("getTemperature", False, 299.424744, kelvin),
+            ("getPressure", True, 119.490417, bar),
+            ("getPressure", False, 756.571045, bar),
+            ("getPressureDC", True, -214.083145, bar),
+            ("getPressureDC", False, -215.590363, bar),
+            ("getVolume", True, 44.679958, nanometer3),
+            ("getVolume", False, 44.523510, nanometer3),
+        ],
+    )
+    def test_get(self, setup, func, time_series, value, unit):
+        energy = getattr(setup, func)(time_series, block=False)
+        if time_series:
+            assert len(energy) == 76
+            np.testing.assert_almost_equal(energy[0] / unit, value, decimal=3)
+        else:
+            np.testing.assert_almost_equal(energy / unit, value, decimal=3)

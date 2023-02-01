@@ -186,7 +186,6 @@ _gmx_version = None
 
 # Try using the GROMACS exe to get the version and data directory.
 if _gmx_exe is not None:
-
     import shlex as _shlex
     import subprocess as _subprocess
 
@@ -209,7 +208,6 @@ if _gmx_exe is not None:
 
     # Get the data prefix.
     if _proc.returncode == 0:
-
         for _line in _proc.stdout.split("\n"):
             # Extract the "Data prefix" from the output.
             if "Data prefix" in _line:

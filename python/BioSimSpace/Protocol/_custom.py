@@ -90,7 +90,6 @@ class Custom(_Protocol):
 
         # The user has passed a path to a file.
         elif _os.path.isfile(config):
-
             # Clear the existing config.
             self._config = []
 

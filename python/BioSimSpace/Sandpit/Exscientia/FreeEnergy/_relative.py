@@ -667,7 +667,6 @@ class Relative:
         for lambda_, mbar_value, mbar_error in zip(
             delta_f_.index, delta_f_.iloc[0, :], d_delta_f_.iloc[0, :]
         ):
-
             # Append the data.
             data.append(
                 (

@@ -569,13 +569,11 @@ class Gromacs(_process.Process):
 
         # Run the process in the working directory.
         with _Utils.cd(self._work_dir):
-
             # Create the arguments string list.
             args = self.getArgStringList()
 
             # Write the command-line process to a README.txt file.
             with open("README.txt", "w") as f:
-
                 # Set the command-line string.
                 self._command = "%s " % self._exe + self.getArgString()
 
@@ -1792,7 +1790,6 @@ class Gromacs(_process.Process):
         restraint = self._protocol.getRestraint()
 
         if restraint is not None:
-
             # Get the force constant in units of kJ_per_mol/nanometer**2
             force_constant = self._protocol.getForceConstant()._sire_unit
             force_constant = force_constant.to(
@@ -1851,7 +1848,6 @@ class Gromacs(_process.Process):
 
             # A keyword restraint.
             if isinstance(restraint, str):
-
                 # The number of restraint files.
                 num_restraint = 1
 
@@ -1860,14 +1856,12 @@ class Gromacs(_process.Process):
                 for mol_type_idx, (mol_type, mol_idxs) in enumerate(
                     moltypes_sys_idx.items()
                 ):
-
                     # Initialise a list of restrained atom indices.
                     restrained_atoms = []
 
                     # Loop over each molecule in the system that matches this
                     # type and append any atoms matching the restraint.
                     for idx, mol_idx in enumerate(mol_idxs):
-
                         # Get the indices of any restrained atoms in this molecule,
                         # making sure that indices are relative to the molecule.
                         atom_idxs = self._system.getRestraintAtoms(
@@ -1935,7 +1929,6 @@ class Gromacs(_process.Process):
 
             # A user-defined list of atoms indices.
             else:
-
                 # Create an empty multi-dict for each molecule type.
                 mol_atoms = {}
                 for mol_type in gro_system.uniqueTypes():
@@ -1967,7 +1960,6 @@ class Gromacs(_process.Process):
                 # Loop over all of the molecule types and create a position
                 # restraint file for each.
                 for mol_type_idx, (mol_type, atom_idxs) in enumerate(mol_atoms.items()):
-
                     # Write the position restraint file for this molecule.
                     if len(atom_idxs) > 0:
                         # Create the file names.
@@ -2041,17 +2033,14 @@ class Gromacs(_process.Process):
 
         # Append any new records to the stdout dictionary.
         while x < num_lines:
-
             # We've hit any energy record section.
             if lines[x].strip() == "Energies (kJ/mol)":
-
                 # Initialise lists to hold all of the key/value pairs.
                 keys = []
                 values = []
 
                 # Loop until we reach a blank line, or the end of the lines.
                 while True:
-
                     # End of file.
                     if x + 2 >= num_lines:
                         break
@@ -2233,7 +2222,6 @@ class Gromacs(_process.Process):
         """
         # Grab the last frame from the GRO file.
         with _Utils.cd(self._work_dir):
-
             # Do we need to get coordinates for the lambda=1 state.
             if "is_lambda1" in self._property_map:
                 is_lambda1 = True
@@ -2306,7 +2294,6 @@ class Gromacs(_process.Process):
         # Grab the last frame from the current trajectory file.
         try:
             with _Utils.cd(self._work_dir):
-
                 # Do we need to get coordinates for the lambda=1 state.
                 if "is_lambda1" in self._property_map:
                     is_lambda1 = True

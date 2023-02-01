@@ -71,7 +71,7 @@ def restraint():
 
 
 def test_sanity(restraint):
-    "Sanity check"
+    """Sanity check."""
     assert isinstance(restraint, Restraint)
 
 
@@ -82,7 +82,7 @@ class TestGromacsOutput:
         return restraint.toString(engine="Gromacs").split("\n")
 
     def test_sanity(self, Topology):
-        "Sanity check"
+        """Sanity check."""
         assert "intermolecular_interactions" in Topology[0]
 
     def test_bond(self, Topology):

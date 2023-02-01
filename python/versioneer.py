@@ -23,7 +23,6 @@ the embedded version string" step from your release process. Making a new
 release should be as easy as recording a new tag in your version-control
 system, and maybe making new tarballs.
 
-
 ## Quick Install
 
 * `pip install versioneer` to somewhere to your $PATH
@@ -239,7 +238,6 @@ APIs like cryptographic checksums.
 [Bug #71](https://github.com/warner/python-versioneer/issues/71) investigates
 this question.
 
-
 ## Updating Versioneer
 
 To upgrade your project to a new release of Versioneer, do the following:
@@ -264,7 +262,6 @@ installation by editing setup.py . Alternatively, it might go the other
 direction and include code from all supported VCS systems, reducing the
 number of intermediate scripts.
 
-
 ## License
 
 To make Versioneer easier to embed, all its code is dedicated to the public
@@ -272,7 +269,6 @@ domain. The `_version.py` that it creates is also in the public domain.
 Specifically, both are released under the Creative Commons "Public Domain
 Dedication" license (CC0-1.0), as described in
 https://creativecommons.org/publicdomain/zero/1.0/ .
-
 """
 
 from __future__ import print_function

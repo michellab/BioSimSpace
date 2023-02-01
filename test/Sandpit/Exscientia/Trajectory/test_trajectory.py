@@ -96,7 +96,8 @@ def test_coords(traj_mdtraj, traj_mdanalysis):
 )
 def test_coords_pdb(traj_mdtraj, traj_mdanalysis_pdb):
     """Make sure that frames from both backends have comparable coordinates
-    when a PDB intermediate topology is used for reconstruction."""
+    when a PDB intermediate topology is used for reconstruction.
+    """
 
     # Extract the first and last frame from each trajectory.
     frames0 = traj_mdtraj.getFrames([0, -1])

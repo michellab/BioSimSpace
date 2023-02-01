@@ -357,7 +357,6 @@ class Process:
 
         # The user has passed a path to a file.
         elif _os.path.isfile(config):
-
             # Clear the existing config.
             self._plumed_config = []
 
@@ -555,7 +554,6 @@ class Process:
         # Make sure the values of the bounds match the types of the collective
         # variables to which they correspond.
         for x, bound in enumerate(bounds):
-
             # Extract the unit of the collective variable. (Its type)
             unit = units[names[x]]
 
@@ -605,13 +603,11 @@ class Process:
 
         # Loop over all records.
         for x in range(0, min_records):
-
             # Whether this record is valid.
             is_valid = True
 
             # Loop over all collective variables.
             for y in range(0, self._plumed._num_colvar):
-
                 # Extract the corresponding collective variable sample.
                 colvar = colvars[y][x]
 
@@ -1265,7 +1261,6 @@ class Process:
 
         # The user has passed a path to a file.
         elif _os.path.isfile(config):
-
             # Clear the existing config.
             self._config = []
 
@@ -1307,7 +1302,6 @@ class Process:
 
         # A path to a file.
         elif _os.path.isfile(config):
-
             # Read the contents of the file.
             with open(config, "r") as file:
                 for line in file:

@@ -1,21 +1,18 @@
-import itertools as _it
 import math as _math
 import warnings as _warnings
 
 from sire.legacy import Units as _SireUnits
 
-from ..Align._merge import _squash
-from .._Exceptions import IncompatibleError as _IncompatibleError
-from ..Units.Time import nanosecond as _nanosecond
-
 from .. import Protocol as _Protocol
+from ..Align._squash import _amber_mask_from_indices, _squashed_atom_mapping
+from .._Exceptions import IncompatibleError as _IncompatibleError
 
 
 class ConfigFactory:
     # TODO: Integrate this class better into the other Protocols.
     """A class for generating a config based on a template protocol."""
 
-    def __init__(self, system, protocol, squashed_system=None):
+    def __init__(self, system, protocol):
         """
         Constructor.
 
@@ -25,14 +22,10 @@ class ConfigFactory:
         system : :class:`System <BioSimSpace._SireWrappers.System>`
             The molecular system.
 
-        protocol : :class:`Protocol <BioSimSpace.Protocol>`
-
-        squashed_system : :class:`System <BioSimSpace._SireWrappers.System>`
-            (Optional) an AMBER-compatible squashed system.
+           protocol : :class:`Protocol <BioSimSpace.Protocol>`
         """
         self.system = system
         self.protocol = protocol
-        self.squashed_system = squashed_system
 
     @property
     def _has_box(self):
@@ -56,7 +49,10 @@ class ConfigFactory:
             report_interval = 100
         else:
             report_interval = self.protocol.getReportInterval()
-            if report_interval > self._steps:
+            if self._steps == 0:
+                # Deal with the case where we just want single point energy.
+                report_interval = 1
+            elif report_interval > self._steps:
                 report_interval = self._steps
         return report_interval
 
@@ -89,47 +85,6 @@ class ConfigFactory:
             steps = _math.ceil(self.protocol.getRunTime() / self.protocol.getTimeStep())
         return steps
 
-    def _amber_mask_from_indices(self, atom_idxs):
-        """Internal helper function to create an AMBER restraint mask from a
-        list of atom indices.
-
-        Parameters
-        ----------
-
-        atom_idxs : [int]
-            A list of atom indices.
-
-        Returns
-        -------
-
-        restraint_mask : str
-            The AMBER restraint mask.
-        """
-        # AMBER has a restriction on the number of characters in the restraint
-        # mask (not documented) so we can't just use comma-separated atom
-        # indices. Instead we loop through the indices and use hyphens to
-        # separate contiguous blocks of indices, e.g. 1-23,34-47,...
-
-        if atom_idxs:
-            # AMBER masks are 1-indexed, while BioSimSpace indices are 0-indexed.
-            atom_idxs = [x + 1 for x in sorted(list(set(atom_idxs)))]
-            if not all(isinstance(x, int) for x in atom_idxs):
-                raise TypeError("'atom_idxs' must be a list of 'int' types.")
-            groups = []
-            initial_idx = atom_idxs[0]
-            for prev_idx, curr_idx in _it.zip_longest(atom_idxs, atom_idxs[1:]):
-                if curr_idx != prev_idx + 1 or curr_idx is None:
-                    if initial_idx == prev_idx:
-                        groups += [str(initial_idx)]
-                    else:
-                        groups += [f"{initial_idx}-{prev_idx}"]
-                    initial_idx = curr_idx
-            mask = "@" + ",".join(groups)
-        else:
-            mask = ""
-
-        return mask
-
     def _generate_amber_fep_masks(self, timestep):
         """Internal helper function which generates timasks and scmasks based on the system.
 
@@ -145,62 +100,37 @@ class ConfigFactory:
         option_dict : dict
             A dictionary of AMBER-compatible options.
         """
-        # Squash the system into an AMBER-friendly format.
-        if self.squashed_system is None:
-            self.squashed_system, _ = _squash(self.system)
+        # Get the merged to squashed atom mapping of the whole system for both endpoints.
+        atom_mapping0 = _squashed_atom_mapping(self.system, is_lambda1=False)
+        atom_mapping1 = _squashed_atom_mapping(self.system, is_lambda1=True)
 
-        # Get the perturbed molecules and the corresponding squashed molecules.
-        pertmols = self.system.getPerturbableMolecules()
-        pertmol_offset = len(self.system) - len(pertmols)
-        squashed_pertmols = self.squashed_system[pertmol_offset:]
-        atom_offsets = [0] + list(
-            _it.accumulate(mol.nAtoms() for mol in self.squashed_system.getMolecules())
-        )
-
-        # Find the perturbed atom indices withing the squashed system.
-        mols0_indices, mols1_indices = [], []
-        dummy0_indices, dummy1_indices = [], []
-        for i, pertmol in enumerate(pertmols):
-            mol0 = squashed_pertmols[2 * i]
-            mol1 = squashed_pertmols[2 * i + 1]
-            atom_offset0 = atom_offsets[pertmol_offset + 2 * i]
-            atom_offset1 = atom_offset0 + mol0.nAtoms()
-            mols0_indices += list(range(atom_offset0, atom_offset1))
-            mols1_indices += list(range(atom_offset1, atom_offset1 + mol1.nAtoms()))
-            nondummy_indices0 = [
-                atom.index()
-                for atom in pertmol.getAtoms()
-                if "du" not in atom._sire_object.property("ambertype0")
-            ]
-            nondummy_indices1 = [
-                atom.index()
-                for atom in pertmol.getAtoms()
-                if "du" not in atom._sire_object.property("ambertype1")
-            ]
-            dummy0_indices += [
-                atom_offset0 + nondummy_indices0.index(atom.index())
-                for atom in pertmol.getAtoms()
-                if "du" in atom._sire_object.property("ambertype1")
-            ]
-            dummy1_indices += [
-                atom_offset1 + nondummy_indices1.index(atom.index())
-                for atom in pertmol.getAtoms()
-                if "du" in atom._sire_object.property("ambertype0")
-            ]
+        # Generate the ti and dummy masks.
+        mcs0_indices, mcs1_indices, dummy0_indices, dummy1_indices = [], [], [], []
+        for i in range(self.system.nAtoms()):
+            if i not in atom_mapping0:
+                dummy1_indices.append(atom_mapping1[i])
+            elif i not in atom_mapping1:
+                dummy0_indices.append(atom_mapping0[i])
+            # The TI region is defined by all different squashed atoms that are mapped to the same merged atom.
+            elif atom_mapping0[i] != atom_mapping1[i]:
+                mcs0_indices.append(atom_mapping0[i])
+                mcs1_indices.append(atom_mapping1[i])
+        ti0_indices = mcs0_indices + dummy0_indices
+        ti1_indices = mcs1_indices + dummy1_indices
 
         # Define whether HMR is used based on the timestep.
         # When HMR is used, there can be no SHAKE.
         if timestep >= 0.004:
             no_shake_mask = ""
         else:
-            no_shake_mask = self._amber_mask_from_indices(mols0_indices + mols1_indices)
+            no_shake_mask = _amber_mask_from_indices(mcs0_indices + mcs1_indices)
 
         # Create an option dict with amber masks generated from the above indices.
         option_dict = {
-            "timask1": f'"{self._amber_mask_from_indices(mols0_indices)}"',
-            "timask2": f'"{self._amber_mask_from_indices(mols1_indices)}"',
-            "scmask1": f'"{self._amber_mask_from_indices(dummy0_indices)}"',
-            "scmask2": f'"{self._amber_mask_from_indices(dummy1_indices)}"',
+            "timask1": f'"{_amber_mask_from_indices(ti0_indices)}"',
+            "timask2": f'"{_amber_mask_from_indices(ti1_indices)}"',
+            "scmask1": f'"{_amber_mask_from_indices(dummy0_indices)}"',
+            "scmask2": f'"{_amber_mask_from_indices(dummy1_indices)}"',
             "noshakemask": f'"{no_shake_mask}"',
         }
 
@@ -287,7 +217,7 @@ class ConfigFactory:
             protocol_dict["iwrap"] = 1  # Wrap the coordinates.
 
         # Restraints.
-        if isinstance(self.protocol, _Protocol.Equilibration):
+        if isinstance(self.protocol, _Protocol._PositionRestraintMixin):
             # Restrain the backbone.
             restraint = self.protocol.getRestraint()
 
@@ -298,16 +228,24 @@ class ConfigFactory:
                 else:
                     atom_idxs = restraint
 
+                # Convert to a squashed representation, if needed
+                if isinstance(self.protocol, _Protocol._FreeEnergyMixin):
+                    atom_mapping0 = _squashed_atom_mapping(
+                        self.system, is_lambda1=False
+                    )
+                    atom_mapping1 = _squashed_atom_mapping(self.system, is_lambda1=True)
+                    atom_idxs = sorted(
+                        {atom_mapping0[x] for x in atom_idxs if x in atom_mapping0}
+                        | {atom_mapping1[x] for x in atom_idxs if x in atom_mapping1}
+                    )
+
                 # Don't add restraints if there are no atoms to restrain.
                 if len(atom_idxs) > 0:
                     # Generate the restraint mask based on atom indices.
-                    restraint_mask = self._amber_mask_from_indices(
-                        [i + 1 for i in atom_idxs]
-                    )
+                    restraint_mask = _amber_mask_from_indices(atom_idxs)
 
                     # The restraintmask cannot be more than 256 characters.
                     if len(restraint_mask) > 256:
-
                         # AMBER has a limit on the length of the restraintmask
                         # so it's easy to overflow if we are matching by index
                         # on a large protein. As such, handle "backbone" and
@@ -435,7 +373,7 @@ class ConfigFactory:
         # Define some miscellaneous defaults.
         protocol_dict = {
             "nstlog": self._report_interval,  # Interval between writing to the log file.
-            "nstenergy": self._restart_interval,  # Interval between writing to the energy file.
+            "nstenergy": self._report_interval,  # Interval between writing to the energy file.
             "nstxout-compressed": self._restart_interval,  # Interval between writing to the trajectory file.
         }
 
@@ -482,12 +420,6 @@ class ConfigFactory:
             protocol_dict["coulombtype"] = "Cut-off"  # Plain cut-off.
         protocol_dict["vdwtype"] = "Cut-off"  # Twin-range van der Waals cut-off.
 
-        # Restraints.
-        if isinstance(self.protocol, _Protocol.Equilibration):
-            protocol_dict[
-                "refcoord-scaling"
-            ] = "com"  # The actual restraints need to be defined elsewhere.
-
         # Pressure control.
         if not isinstance(self.protocol, _Protocol.Minimisation):
             if self.protocol.getPressure() is not None:
@@ -520,14 +452,9 @@ class ConfigFactory:
             if isinstance(self.protocol, _Protocol.Equilibration):
                 if self.protocol.isConstantTemp():
                     temp = "%.2f" % self.protocol.getStartTemperature().kelvin().value()
-                    protocol_dict["ref-t"] = temp
-                    protocol_dict["gen-vel"] = "yes"
-                    protocol_dict["gen-temp"] = temp
                 else:
                     # still need a reference temperature for each group, even when heating/cooling
-                    protocol_dict["ref-t"] = (
-                        "%.2f" % self.protocol.getEndTemperature().kelvin().value()
-                    )
+                    temp = "%.2f" % self.protocol.getEndTemperature().kelvin().value()
                     # Work out the final time of the simulation.
                     timestep = self.protocol.getTimeStep().picoseconds().value()
                     end_time = _math.floor(timestep * self._steps)
@@ -546,9 +473,13 @@ class ConfigFactory:
                         self.protocol.getEndTemperature().kelvin().value(),
                     )
             else:
-                protocol_dict["ref-t"] = (
-                    "%.2f" % self.protocol.getTemperature().kelvin().value()
-                )
+                temp = "%.2f" % self.protocol.getTemperature().kelvin().value()
+            protocol_dict["ref-t"] = temp
+
+            # Regenerate the velocity if this is not a restart
+            if not self.protocol.isRestart():
+                protocol_dict["gen-vel"] = "yes"
+                protocol_dict["gen-temp"] = temp
 
         # Free energies.
         if isinstance(self.protocol, _Protocol._FreeEnergyMixin):
@@ -610,8 +541,12 @@ class ConfigFactory:
             protocol_dict[
                 "init-lambda-state"
             ] = self.protocol.getLambdaIndex()  # Current lambda value.
-            protocol_dict["nstcalcenergy"] = 200  # Calculate energies every 200 steps.
-            protocol_dict["nstdhdl"] = 200  # Write gradients every 200 steps.
+            protocol_dict[
+                "nstcalcenergy"
+            ] = self._report_interval  # Calculate energies every report_interval steps.
+            protocol_dict[
+                "nstdhdl"
+            ] = self._report_interval  # Write gradients every report_interval steps.
 
         # Put everything together in a line-by-line format.
         total_dict = {**protocol_dict, **extra_options}
@@ -711,7 +646,7 @@ class ConfigFactory:
 
         # Restraints.
         if (
-            isinstance(self.protocol, _Protocol.Equilibration)
+            isinstance(self.protocol, _Protocol._PositionRestraintMixin)
             and self.protocol.getRestraint() is not None
         ):
             raise _IncompatibleError("We currently don't support restraints with SOMD.")

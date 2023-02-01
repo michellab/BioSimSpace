@@ -55,6 +55,7 @@ authors = (
 
 _installed_list = None
 
+
 # Function to check if a conda dependency has been installed
 def is_installed(dep: str, conda: str):
     global _installed_list

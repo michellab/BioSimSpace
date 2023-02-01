@@ -1222,7 +1222,6 @@ class OpenMM(_process.Process):
 
         # Run the process in the working directory.
         with _Utils.cd(self._work_dir):
-
             # Create the arguments string list.
             # The name of the Python script (config file) is the first argument.
             args = ["%s" % self._config_file]
@@ -1230,7 +1229,6 @@ class OpenMM(_process.Process):
 
             # Write the command-line process to a README.txt file.
             with open("README.txt", "w") as f:
-
                 # Set the command-line string.
                 self._command = (
                     "%s %s " % (self._exe, self._config_file) + self.getArgString()
@@ -1277,7 +1275,6 @@ class OpenMM(_process.Process):
         try:
             # Handle minimisation protocols separately.
             if isinstance(self._protocol, _Protocol.Minimisation):
-
                 # Do we need to get coordinates for the lambda=1 state.
                 if "is_lambda1" in self._property_map:
                     is_lambda1 = True
@@ -2121,7 +2118,6 @@ class OpenMM(_process.Process):
 
         # Append any new records to the stdout dictionary.
         for line in lines:
-
             # Strip leading/trailing whitespace.
             line = line.strip()
 

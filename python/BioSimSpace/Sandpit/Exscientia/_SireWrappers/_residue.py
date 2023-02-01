@@ -114,7 +114,6 @@ class Residue(_SireWrapper):
 
         # Slice.
         if isinstance(key, slice):
-
             # Create a list to hold the atoms.
             atoms = []
 

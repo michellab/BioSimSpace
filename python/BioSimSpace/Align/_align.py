@@ -234,7 +234,6 @@ def generateNetwork(
 
     # Validate the scores file.
     if links_file is not None:
-
         if not isinstance(links_file, str):
             raise TypeError("'links_file' must be of type 'str'")
 
@@ -490,7 +489,6 @@ def generateNetwork(
     # If the user has specified a forced number of edges, adjust the network
     # to match the query. We have three situations to deal with.
     if n_edges_forced:
-
         # sort the list of excluded edges by LOMAP score.
         edges_excluded.sort(key=lambda x: x[2], reverse=True)
 
@@ -963,7 +961,6 @@ def matchAtoms(
     # Sometimes RDKit fails to generate a mapping that includes the prematch.
     # If so, then try generating a mapping using the MCS routine from Sire.
     if len(mappings) == 1 and mappings[0] == prematch:
-
         # Warn that we've fallen back on using Sire.
         if prematch != {}:
             _warnings.warn("RDKit mapping didn't include prematch. Using Sire MCS.")
@@ -1263,7 +1260,6 @@ def flexAlign(
 
     # Execute in the working directory.
     with _Utils.cd(work_dir):
-
         # Write the two molecules to PDB files.
         _IO.saveMolecules("molecule0", molecule0, "PDB", property_map=property_map0)
         _IO.saveMolecules("molecule1", molecule1, "PDB", property_map=property_map1)
@@ -1975,7 +1971,6 @@ def _score_sire_mappings(
 
     # Loop over all of the mappings.
     for mapping in sire_mappings:
-
         # Check that the mapping contains the pre-match.
         is_valid = True
         for idx0, idx1 in prematch.items():

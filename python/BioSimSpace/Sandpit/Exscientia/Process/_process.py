@@ -46,6 +46,8 @@ from sire.legacy import Mol as _SireMol
 from .. import _is_interactive, _is_notebook
 from .._Exceptions import IncompatibleError as _IncompatibleError
 from ..Protocol import Metadynamics as _Metadynamics
+from ..Protocol import Equilibration as _Equilibration
+from ..Protocol import Production as _Production
 from ..Protocol._protocol import Protocol as _Protocol
 from .._SireWrappers import System as _System
 from ..Types._type import Type as _Type
@@ -80,8 +82,7 @@ class Process:
         property_map={},
         restraint=None,
     ):
-        """
-        Constructor.
+        """Constructor.
 
         Parameters
         ----------
@@ -117,9 +118,10 @@ class Process:
             calculations.
         """
 
-        # Don't allow user to create an instance of this base class.
+        # Warn user when create an instance of this base class.
+        # The class is used for testing.
         if type(self) is Process:
-            raise Exception("<Process> must be subclassed.")
+            _warnings.warn("<Process> must be subclassed.")
 
         # Check that the system is valid.
         if not isinstance(system, _System):
@@ -188,7 +190,6 @@ class Process:
 
         # Copy the passed system, protocol, and process name.
         self._system = system.copy()
-        self._protocol = protocol
 
         # Flag whether the system contains water molecules.
         self._has_water = system.nWaterMolecules() > 0
@@ -208,6 +209,7 @@ class Process:
         # Set the random number seed.
         if seed is None:
             self._is_seeded = False
+
             self._seed = None
         else:
             self._is_seeded = True
@@ -219,6 +221,10 @@ class Process:
 
         # Set the map.
         self._property_map = property_map.copy()
+
+        # Ensure that the restart is off when the system doesn't have velocity
+        protocol = self._check_protocol_restart(protocol, system)
+        self._protocol = protocol
 
         # Set the timer and running time None.
         self._timer = None
@@ -271,6 +277,26 @@ class Process:
             _SireMol.MolIdx(x): _SireMol.MolIdx(x)
             for x in range(0, self._system.nMolecules())
         }
+
+    def _check_protocol_restart(self, protocol, system):
+        """This function checks if the restart setting in the protocol is
+        consistent with the velocity in the system.
+        """
+        # Ensure that the restart is off when the system doesn't have velocity
+        if (
+            isinstance(protocol, (_Equilibration, _Production))
+            and protocol.isRestart()
+            and not self._has_velocity(system)
+        ):
+            _warnings.warn(
+                "The system doesn't have velocity, the restart will be set to off."
+            )
+            protocol.setRestart(False)
+        return protocol
+
+    def _has_velocity(self, system):
+        velocity_prop = self._property_map.get("velocity", "velocity")
+        return system[0]._sire_object.hasProperty(velocity_prop)
 
     def __str__(self):
         """Return a human readable string representation of the object."""
@@ -359,7 +385,6 @@ class Process:
 
         # The user has passed a path to a file.
         elif _os.path.isfile(config):
-
             # Clear the existing config.
             self._plumed_config = []
 
@@ -558,7 +583,6 @@ class Process:
         # Make sure the values of the bounds match the types of the collective
         # variables to which they correspond.
         for x, bound in enumerate(bounds):
-
             # Extract the unit of the collective variable. (Its type)
             unit = units[names[x]]
 
@@ -608,13 +632,11 @@ class Process:
 
         # Loop over all records.
         for x in range(0, min_records):
-
             # Whether this record is valid.
             is_valid = True
 
             # Loop over all collective variables.
             for y in range(0, self._plumed._num_colvar):
-
                 # Extract the corresponding collective variable sample.
                 colvar = colvars[y][x]
 
@@ -1268,7 +1290,6 @@ class Process:
 
         # The user has passed a path to a file.
         elif _os.path.isfile(config):
-
             # Clear the existing config.
             self._config = []
 
@@ -1310,7 +1331,6 @@ class Process:
 
         # A path to a file.
         elif _os.path.isfile(config):
-
             # Read the contents of the file.
             with open(config, "r") as file:
                 for line in file:

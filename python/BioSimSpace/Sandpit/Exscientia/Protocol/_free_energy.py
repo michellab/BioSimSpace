@@ -33,6 +33,7 @@ from .. import Types as _Types
 
 from ._free_energy_mixin import _FreeEnergyMixin
 from ._production import Production as _Production
+from .. import Units as _Units
 
 
 class FreeEnergy(_Production, _FreeEnergyMixin):
@@ -54,9 +55,10 @@ class FreeEnergy(_Production, _FreeEnergyMixin):
         first_step=0,
         restart=False,
         perturbation_type="full",
+        restraint=None,
+        force_constant=10 * _Units.Energy.kcal_per_mol / _Units.Area.angstrom2,
     ):
-        """
-        Constructor.
+        """Constructor.
 
         Parameters
         ----------
@@ -111,6 +113,27 @@ class FreeEnergy(_Production, _FreeEnergyMixin):
 
              Currently perturubation_type != "full" is only supported by
              BioSimSpace.Process.Somd.
+
+        restraint : str, [int]
+            The type of restraint to perform. This should be one of the
+            following options:
+                "backbone"
+                     Protein backbone atoms. The matching is done by a name
+                     template, so is unreliable on conversion between
+                     molecular file formats.
+                "heavy"
+                     All non-hydrogen atoms that aren't part of water
+                     molecules or free ions.
+                "all"
+                     All atoms that aren't part of water molecules or free
+                     ions.
+            Alternatively, the user can pass a list of atom indices for
+            more fine-grained control. If None, then no restraints are used.
+
+        force_constant : :class:`GeneralUnit <BioSimSpace.Types._GeneralUnit>`, float
+            The force constant for the restraint potential. If a 'float' is
+            passed, then default units of 'kcal_per_mol / angstrom**2' will
+            be used.
         """
 
         # Call the base class constructors.
@@ -124,6 +147,8 @@ class FreeEnergy(_Production, _FreeEnergyMixin):
             restart_interval=restart_interval,
             first_step=first_step,
             restart=restart,
+            restraint=restraint,
+            force_constant=force_constant,
         )
 
         _FreeEnergyMixin.__init__(
@@ -136,40 +161,23 @@ class FreeEnergy(_Production, _FreeEnergyMixin):
             perturbation_type=perturbation_type,
         )
 
+    def _get_parm(self):
+        """Return a string representation of the parameters."""
+
+        return ", ".join(
+            [_Production._get_parm(self), _FreeEnergyMixin._get_parm(self)]
+        )
+
     def __str__(self):
         """Return a human readable string representation of the object."""
         if self._is_customised:
             return "<BioSimSpace.Protocol.Custom>"
         else:
-            return (
-                "<BioSimSpace.Protocol.FreeEnergy: lam=%5.4f, lam_vals=%r, timestep=%s, "
-                "runtime=%s, temperature=%s, pressure=%s, report_interval=%d, restart_interval=%d>"
-            ) % (
-                self._lambda,
-                self._lambda_vals,
-                self._timestep,
-                self._runtime,
-                self._temperature,
-                self._pressure,
-                self._report_interval,
-                self._restart_interval,
-            )
+            return f"<BioSimSpace.Protocol.FreeEnergy: {self._get_parm()}>"
 
     def __repr__(self):
         """Return a string showing how to instantiate the object."""
         if self._is_customised:
-            return "<BioSimSpace.Protocol.Custom>"
+            return "BioSimSpace.Protocol.Custom"
         else:
-            return (
-                "BioSimSpace.Protocol.FreeEnergy(lam=%5.4f, lam_vals=%r, timestep=%s, "
-                "runtime=%s, temperature=%s, pressure=%s, report_interval=%d, restart_interval=%d)"
-            ) % (
-                self._lambda,
-                self._lambda_vals,
-                self._timestep,
-                self._runtime,
-                self._temperature,
-                self._pressure,
-                self._report_interval,
-                self._restart_interval,
-            )
+            return f"BioSimSpace.Protocol.FreeEnergy({self._get_parm()})"

@@ -511,7 +511,6 @@ class Relative:
 
         # First leg.
         with open("%s/bar.xvg" % work_dir) as file:
-
             # Read all of the lines into a list.
             lines = []
             for line in file:
@@ -640,12 +639,10 @@ class Relative:
 
         # First leg.
         with open("%s/mbar.txt" % work_dir) as file:
-
             # Process the MBAR data.
             for line in file:
                 # Process the overlap matrix.
                 if "#Overlap matrix" in line:
-
                     # Get the next row.
                     row = next(file)
 

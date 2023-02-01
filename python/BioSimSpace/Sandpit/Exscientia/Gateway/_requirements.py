@@ -699,7 +699,6 @@ class FileSet(Requirement):
 
         # We should receive a list of strings.
         if isinstance(value, (list, tuple)):
-
             # A single file was passed.
             if len(value) == 1:
                 # Remove whitespace and split on commas.
@@ -707,7 +706,6 @@ class FileSet(Requirement):
 
             # Loop over all strings.
             for file in value:
-
                 # Check the types.
                 if not isinstance(file, str):
                     raise TypeError("The value should be of type 'str'")
@@ -1803,7 +1801,6 @@ def _validate_unit_requirement(value, unit_type):
 
         # Use a regular expression to extract the value and unit.
         except ValueError:
-
             # Strip white space from the string.
             value = value.replace(" ", "")
 
@@ -1868,10 +1865,8 @@ def _unarchive(name):
 
     # Check whether this is a tar compressed file.
     for tar_name in tarfiles:
-
         # Found a match.
         if tar_name in name.lower():
-
             # The list of decompressed files.
             files = []
 

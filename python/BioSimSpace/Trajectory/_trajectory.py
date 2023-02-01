@@ -292,7 +292,6 @@ class Trajectory:
 
         # Trajectory and topology files.
         elif isinstance(trajectory, str) and isinstance(topology, str):
-
             # Make sure the trajectory file exists.
             if not _os.path.isfile(trajectory):
                 raise IOError("Trajectory file doesn't exist: '%s'" % trajectory)
@@ -575,7 +574,6 @@ class Trajectory:
 
         # Loop over all indices.
         for x in indices:
-
             # Make sure the frame index is within range.
             if x > 0 and x >= n_frames:
                 raise ValueError(

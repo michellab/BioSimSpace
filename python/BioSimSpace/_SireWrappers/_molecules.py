@@ -178,7 +178,6 @@ class Molecules(_SireWrapper):
 
         # Slice.
         if isinstance(key, slice):
-
             # Create a list to hold the molecules.
             molecules = []
 

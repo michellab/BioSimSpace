@@ -209,7 +209,6 @@ class System(_SireWrapper):
 
         # Slice.
         if isinstance(key, slice):
-
             # Create a list to hold the molecules.
             molecules = []
 
@@ -1532,10 +1531,8 @@ class System(_SireWrapper):
 
         # Search the entire system.
         if mol_index is None:
-
             # Only search the system directly if there are no perturbable molecules.
             if self.nPerturbableMolecules() == 0:
-
                 # Backbone restraints.
                 if restraint == "backbone":
                     # Find all N, CA, C, and O atoms in protein residues.
@@ -1791,7 +1788,6 @@ class System(_SireWrapper):
 
         # Loop over all of the molecules.
         for idx, mol in enumerate(mols):
-
             # Extract the atomic coordinates and append them to the vector.
             try:
                 if "coordinates" in property_map:
@@ -1851,7 +1847,6 @@ class System(_SireWrapper):
 
         # Loop over all of the molecules.
         for mol in molecules:
-
             # Create a copy of the molecule.
             new_mol = _Molecule(mol)
 
@@ -2014,7 +2009,6 @@ class System(_SireWrapper):
         waters = self.getWaterMolecules()
 
         if len(waters) > 0:
-
             # Don't perform conversion if the topology already matches the
             # the template for the desired format.
 

@@ -77,6 +77,7 @@ from .._SireWrappers import Molecules as _Molecules
 from .._SireWrappers import System as _System
 from .. import _Utils
 
+
 # Context manager for capturing stdout.
 # Taken from:
 # https://stackoverflow.com/questions/16571150/how-to-capture-stdout-output-from-a-python-function-call
@@ -594,7 +595,8 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
     try to save it to all supported file formats.
 
     >>> import BioSimSpace as BSS
-    >>> system = BSS.IO.readMolecules(["ala.rst7", "ala.prm7"])
+    >>> files = BSS.IO.expand(BSS.tutorialUrl(), ["ala.top", "ala.crd"], ".bz2")
+    >>> system = BSS.IO.readMolecules(files)
     >>> for format in BSS.IO.fileFormats():
     ...     try:
     ...         BSS.IO.saveMolecules("test", system, format)
@@ -606,7 +608,8 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
     property along the way.
 
     >>> import BioSimSpace as BSS
-    >>> system = BSS.IO.readMolecules(["ala.rst7", "ala.prm7"], property_map={"charge" : "my-charge"})
+    >>> files = BSS.IO.expand(BSS.tutorialUrl(), ["ala.top", "ala.crd"], ".bz2")
+    >>> system = BSS.IO.readMolecules(files, property_map={"charge" : "my-charge"})
     >>> BSS.IO.saveMolecules("test", system, ["gro87", "grotop"], property_map={"charge" : "my-charge"})
     """
 
@@ -706,7 +709,6 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
 
     # Save the system using each file format.
     for format in formats:
-
         # Copy an existing file if it exists in the cache.
         ext = _check_cache(system._sire_object, format, filebase)
         if ext:
@@ -720,7 +722,6 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
         # that uses geometric combining rules. While we can write this to file
         # the information is lost on read.
         if format == "PRM7":
-
             # Get the name of the "forcefield" property.
             forcefield = _property_map.get("forcefield", "forcefield")
 
@@ -934,7 +935,6 @@ def readPerturbableSystem(top0, coords0, top1, coords1, property_map={}):
         and not top1.startswith(prefixes)
         and not coords1.startswith(prefixes)
     ):
-
         # lamba = 0 coordinates.
         try:
             _SireIO.AmberRst7(coords0)

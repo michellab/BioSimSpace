@@ -20,8 +20,7 @@ class _FreeEnergyMixin(_Protocol):
         num_lam=11,
         perturbation_type="full",
     ):
-        """
-        Constructor.
+        """Constructor.
 
         Parameters
         ----------
@@ -63,23 +62,26 @@ class _FreeEnergyMixin(_Protocol):
         # Set the perturbation type. Default is "full", i.e. onestep protocol.
         self.setPerturbationType(perturbation_type)
 
+    def _get_parm(self):
+        """Return a string representation of the parameters."""
+        return (
+            f"lam={self._lambda.to_string()}, "
+            f"lam_vals={self._lambda_vals.to_string()}"
+        )
+
     def __str__(self):
         """Return a human readable string representation of the object."""
         if self._is_customised:
             return "<BioSimSpace.Protocol.Custom>"
         else:
-            return (
-                "<BioSimSpace.Protocol._FreeEnergyMixin: lam=\n%s, lam_vals=\n%s>"
-            ) % (self._lambda.to_string(), self._lambda_vals.to_string())
+            return f"<BioSimSpace.Protocol._FreeEnergyMixin: {self._get_parm()}>"
 
     def __repr__(self):
         """Return a string showing how to instantiate the object."""
         if self._is_customised:
-            return "<BioSimSpace.Protocol.Custom>"
+            return "BioSimSpace.Protocol.Custom"
         else:
-            return (
-                "<BioSimSpace.Protocol._FreeEnergyMixin: lam=\n%s, lam_vals=\n%s>"
-            ) % (self._lambda.to_string(), self._lambda_vals.to_string())
+            return f"BioSimSpace.Protocol._FreeEnergyMixin({self._get_parm()})"
 
     def getPerturbationType(self):
         """

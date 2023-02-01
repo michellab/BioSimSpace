@@ -569,7 +569,6 @@ class ProcessRunner:
 
         # Set up the background thread.
         if self._thread is None or not self._thread.is_alive():
-
             # Flag that the runner is alive.
             self._is_killed = False
 
@@ -682,10 +681,8 @@ class ProcessRunner:
 
             # Loop until all processes have finished.
             while num_finished < self.nProcesses() and not self._is_killed:
-
                 # Only submit more processes if we're below the batch size.
                 if self.nRunning() < batch_size:
-
                     # Loop over all queued processes until we've submitted batch_size.
                     queued = self.queued()
                     for idx in queued:

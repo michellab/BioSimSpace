@@ -275,7 +275,6 @@ class Task:
 
         # Don't recreate an existing zip file.
         if self._zipfile is None:
-
             # Create the file name.
             if filename is None:
                 if self._name is None:

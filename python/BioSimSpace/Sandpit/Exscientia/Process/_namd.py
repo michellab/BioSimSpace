@@ -221,10 +221,8 @@ class Namd(_process.Process):
 
         # Open the PSF file for reading.
         with open(self._psf_file) as file:
-
             # Loop over all lines.
             for line in file:
-
                 # There are improper records.
                 if "!NIMPHI" in line:
                     has_impropers = True
@@ -660,10 +658,8 @@ class Namd(_process.Process):
 
         # Run the process in the working directory.
         with _Utils.cd(self._work_dir):
-
             # Write the command-line process to a README.txt file.
             with open("README.txt", "w") as file:
-
                 # Set the command-line string.
                 self._command = "%s %s.cfg" % (self._exe, self._name)
 
@@ -1983,14 +1979,12 @@ class Namd(_process.Process):
 
         # Now search backwards through the list to find the last TIMING record.
         for _, record in reversed(list(enumerate(self._stdout))):
-
             # Split the record using whitespace.
             data = record.split()
 
             # We've found a TIMING record.
             if len(data) > 0:
                 if data[0] == "TIMING:":
-
                     # Try to find the "hours" record.
                     # If found, return the entry precedeing it.
                     try:
@@ -2026,7 +2020,6 @@ class Namd(_process.Process):
 
             # Make sure there is at least one record.
             if len(data) > 0:
-
                 # Store the updated energy title.
                 if data[0] == "ETITLE:":
                     self._stdout_title = data[1:]
@@ -2083,10 +2076,8 @@ class Namd(_process.Process):
 
         # Keyword restraint.
         if isinstance(restraint, str):
-
             # Loop over all molecules by number.
             for x, mol in enumerate(s):
-
                 # Get the indices of the restrained atoms for this molecule.
                 atoms = s.getRestraintAtoms(
                     restraint, x, is_absolute=False, allow_zero_matches=True
@@ -2117,7 +2108,6 @@ class Namd(_process.Process):
 
         # A user-defined list of atoms.
         elif isinstance(restraint, (list, tuple)):
-
             # Create an empty multi dict for each MolNum.
             mol_atoms = {}
             for num in s._mol_nums:
@@ -2139,7 +2129,6 @@ class Namd(_process.Process):
 
             # Now loop over the multi-dict.
             for num, idxs in mol_atoms.items():
-
                 # Extract the molecule and make it editable.
                 edit_mol = s._sire_object[num].edit()
 

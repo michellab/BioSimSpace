@@ -387,7 +387,6 @@ def merge(
                 info1.atomIdx(bond.atom0()) in atoms1_idx
                 or info1.atomIdx(bond.atom1()) in atoms1_idx
             ):
-
                 # Extract the bond information.
                 atom0 = info1.atomIdx(bond.atom0())
                 atom1 = info1.atomIdx(bond.atom1())
@@ -435,7 +434,6 @@ def merge(
                 or info1.atomIdx(angle.atom1()) in atoms1_idx
                 or info1.atomIdx(angle.atom2()) in atoms1_idx
             ):
-
                 # Extract the angle information.
                 atom0 = info1.atomIdx(angle.atom0())
                 atom1 = info1.atomIdx(angle.atom1())
@@ -487,7 +485,6 @@ def merge(
                 or info1.atomIdx(dihedral.atom2()) in atoms1_idx
                 or info1.atomIdx(dihedral.atom3()) in atoms1_idx
             ):
-
                 # Extract the dihedral information.
                 atom0 = info1.atomIdx(dihedral.atom0())
                 atom1 = info1.atomIdx(dihedral.atom1())
@@ -541,7 +538,6 @@ def merge(
                 or info1.atomIdx(improper.atom2()) in atoms1_idx
                 or info1.atomIdx(improper.atom3()) in atoms1_idx
             ):
-
                 # Extract the improper information.
                 atom0 = info1.atomIdx(improper.atom0())
                 atom1 = info1.atomIdx(improper.atom1())
@@ -683,7 +679,6 @@ def merge(
                 info0.atomIdx(bond.atom0()) in atoms0_idx
                 or info0.atomIdx(bond.atom1()) in atoms0_idx
             ):
-
                 # Extract the bond information.
                 atom0 = info0.atomIdx(bond.atom0())
                 atom1 = info0.atomIdx(bond.atom1())
@@ -736,7 +731,6 @@ def merge(
                 or info0.atomIdx(angle.atom1()) in atoms0_idx
                 or info0.atomIdx(angle.atom2()) in atoms0_idx
             ):
-
                 # Extract the angle information.
                 atom0 = info0.atomIdx(angle.atom0())
                 atom1 = info0.atomIdx(angle.atom1())
@@ -793,7 +787,6 @@ def merge(
                 or info0.atomIdx(dihedral.atom2()) in atoms0_idx
                 or info0.atomIdx(dihedral.atom3()) in atoms0_idx
             ):
-
                 # Extract the dihedral information.
                 atom0 = info0.atomIdx(dihedral.atom0())
                 atom1 = info0.atomIdx(dihedral.atom1())
@@ -851,7 +844,6 @@ def merge(
                 or info0.atomIdx(improper.atom2()) in atoms0_idx
                 or info0.atomIdx(improper.atom3()) in atoms0_idx
             ):
-
                 # Extract the improper information.
                 atom0 = info0.atomIdx(improper.atom0())
                 atom1 = info0.atomIdx(improper.atom1())
@@ -933,7 +925,6 @@ def merge(
 
             # The connectivity has changed.
             if c0.connectionType(idx, idy) != conn.connectionType(idx, idy):
-
                 # The connectivity changed for an unknown reason.
                 if not (is_ring_broken or is_ring_size_change) and not force:
                     raise _IncompatibleError(
@@ -990,7 +981,6 @@ def merge(
 
             # The connectivity has changed.
             if c1.connectionType(idx, idy) != conn.connectionType(idx_map, idy_map):
-
                 # The connectivity changed for an unknown reason.
                 if not (is_ring_broken or is_ring_size_change) and not force:
                     raise _IncompatibleError(
