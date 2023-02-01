@@ -128,7 +128,7 @@ class Config:
 
     def isRestart(self):
         """
-        Return whether this is a restart simulation
+        Return whether this is a restart simulation.
 
         Returns
         -------

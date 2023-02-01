@@ -44,8 +44,8 @@ def test_molecule_combine():
     protocol = BSS.Protocol.Minimisation(steps=1)
 
     # Create processes to single point calculations with GROMACS.
-    p0 = BSS.Process.Gromacs(m0.toSystem(), protocol, extra_options={"nsteps" : 0})
-    p1 = BSS.Process.Gromacs(m1.toSystem(), protocol, extra_options={"nsteps" : 0})
+    p0 = BSS.Process.Gromacs(m0.toSystem(), protocol, extra_options={"nsteps": 0})
+    p1 = BSS.Process.Gromacs(m1.toSystem(), protocol, extra_options={"nsteps": 0})
     p01 = BSS.Process.Gromacs(
         (m0 + m1).toSystem(), protocol, extra_options={"nsteps": 0}
     )

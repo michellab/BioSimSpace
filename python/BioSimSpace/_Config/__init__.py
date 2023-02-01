@@ -22,7 +22,6 @@
 """
 .. currentmodule:: BioSimSpace._Config
 
-
 Classes
 =======
 

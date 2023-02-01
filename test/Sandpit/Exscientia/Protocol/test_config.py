@@ -23,6 +23,7 @@ has_openff = _have_imported(_openff)
 # Store the tutorial URL.
 url = BSS.tutorialUrl()
 
+
 class TestAmberRBFE:
     @pytest.fixture(scope="class")
     def system(self):

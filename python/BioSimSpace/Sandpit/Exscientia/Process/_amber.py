@@ -283,7 +283,7 @@ class Amber(_process.Process):
         self._config_file = "%s/%s.cfg" % (self._work_dir, name)
 
         # Set the reference system
-        self._ref_file = f"{self._work_dir}/{name}_ref.rst7"
+        self._ref_file = f"{self._work_dir}/{name}_ref"
         self._ref_system = reference_system
 
         # Create the list of input files.
@@ -302,8 +302,9 @@ class Amber(_process.Process):
 
         # Create the reference file
         if self._ref_system is not None and self._protocol.getRestraint() is not None:
-            self._write_system(self._ref_system, coord_file=self._ref_file)
+            self._write_system(self._ref_system, ref_file=self._ref_file)
         else:
+            self._ref_file += ".rst7"
             _shutil.copy(self._rst_file, self._ref_file)
 
         # Generate the AMBER configuration file.
@@ -320,7 +321,7 @@ class Amber(_process.Process):
         # Return the list of input files.
         return self._input_files
 
-    def _write_system(self, system, coord_file=None, topol_file=None):
+    def _write_system(self, system, coord_file=None, topol_file=None, ref_file=None):
         """Validates an input system and makes some internal modifications to it,
         if needed, before writing it out to a coordinate and/or a topology file.
 
@@ -335,6 +336,9 @@ class Amber(_process.Process):
 
         topol_file : str or None
             The topology file to which to write out the system.
+
+        ref_file : str or None
+            The coordinate file for the reference system used for position restraints.
 
         Returns
         -------
@@ -370,6 +374,21 @@ class Amber(_process.Process):
                 )
                 self._rst_file += ".rst7"
                 self._input_files.append(self._rst_file)
+            except Exception as e:
+                msg = "Failed to write system to 'RST7' format."
+                if _isVerbose():
+                    raise IOError(msg) from e
+                else:
+                    raise IOError(msg) from None
+
+        # RST file (reference for position restraints).
+        if ref_file is not None:
+            try:
+                _IO.saveMolecules(
+                    self._ref_file, system, "rst7", property_map=self._property_map
+                )
+                self._ref_file += ".rst7"
+                self._input_files.append(self._ref_file)
             except Exception as e:
                 msg = "Failed to write system to 'RST7' format."
                 if _isVerbose():

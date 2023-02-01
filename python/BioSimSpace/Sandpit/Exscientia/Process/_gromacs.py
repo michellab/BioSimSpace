@@ -208,7 +208,7 @@ class Gromacs(_process.Process):
         self._config_file = "%s/%s.mdp" % (self._work_dir, name)
 
         # Set the reference system
-        self._ref_file = f"{self._work_dir}/{name}_ref.gro"
+        self._ref_file = f"{self._work_dir}/{name}_ref"
         self._ref_system = reference_system
 
         # Create the list of input files.
@@ -243,8 +243,9 @@ class Gromacs(_process.Process):
 
         # Create the reference file
         if self._ref_system is not None and self._protocol.getRestraint() is not None:
-            self._write_system(self._ref_system, coord_file=self._ref_file)
+            self._write_system(self._ref_system, ref_file=self._ref_file)
         else:
+            self._ref_file += ".gro"
             _shutil.copy(self._gro_file, self._ref_file)
 
         # Create the binary input file name.
@@ -265,7 +266,7 @@ class Gromacs(_process.Process):
         # Return the list of input files.
         return self._input_files
 
-    def _write_system(self, system, coord_file=None, topol_file=None):
+    def _write_system(self, system, coord_file=None, topol_file=None, ref_file=None):
         """Validates an input system and makes some internal modifications to it,
         if needed, before writing it out to a coordinate and/or a topology file.
 
@@ -280,6 +281,9 @@ class Gromacs(_process.Process):
 
         topol_file : str or None
             The topology file to which to write out the system.
+
+        ref_file : str or None
+            The file to which to write out the reference system for position restraints.
         """
         # Create a copy of the system.
         system = system.copy()
@@ -328,7 +332,7 @@ class Gromacs(_process.Process):
                 self._property_map.get("space", "space"), space
             )
 
-        # GRO87 file.
+        # GRO87 coordinate files.
         if coord_file is not None:
             _IO.saveMolecules(
                 coord_file, system, "gro87", property_map=self._property_map
@@ -336,9 +340,15 @@ class Gromacs(_process.Process):
             self._gro_file += ".gro"
             self._input_files.append(self._gro_file)
 
+        # GRO87 reference files.
+        if ref_file is not None:
+            _IO.saveMolecules(
+                ref_file, system, "gro87", property_map=self._property_map
+            )
+            self._ref_file += ".gro"
+
         # TOP file.
         if topol_file is not None:
-            top.writeToFile(topol_file)
             _IO.saveMolecules(
                 topol_file, system, "grotop", property_map=self._property_map
             )
@@ -2260,7 +2270,6 @@ class Gromacs(_process.Process):
         -------
         str
             The formatted name of the energy term.
-
         """
         # Convert to upper case.
         key = key.upper()

@@ -9,14 +9,24 @@ import pytest
 url = BSS.tutorialUrl()
 
 
-def test_flex_align():
-    # Load the ligands.
-    s0 = BSS.IO.readMolecules([f"{url}/ligand01.prm7.bz2", f"{url}/ligand01.rst7.bz2"])
-    s1 = BSS.IO.readMolecules([f"{url}/ligand02.prm7.bz2", f"{url}/ligand02.rst7.bz2"])
+@pytest.fixture(scope="session")
+def system0():
+    return BSS.IO.readMolecules(
+        [f"{url}/ligand01.prm7.bz2", f"{url}/ligand01.rst7.bz2"]
+    )
 
+
+@pytest.fixture(scope="session")
+def system1():
+    return BSS.IO.readMolecules(
+        [f"{url}/ligand02.prm7.bz2", f"{url}/ligand02.rst7.bz2"]
+    )
+
+
+def test_flex_align(system0, system1):
     # Extract the molecules.
-    m0 = s0.getMolecules()[0]
-    m1 = s1.getMolecules()[0]
+    m0 = system0.getMolecules()[0]
+    m1 = system1.getMolecules()[0]
 
     # Get the best mapping between the molecules that contains the prematch.
     mapping = BSS.Align.matchAtoms(
@@ -49,14 +59,10 @@ def test_flex_align():
 
 # Parameterise the function with a set of valid atom pre-matches.
 @pytest.mark.parametrize("prematch", [{3: 1}, {5: 9}, {4: 5}, {1: 0}])
-def test_prematch(prematch):
-    # Load the ligands.
-    s0 = BSS.IO.readMolecules([f"{url}/ligand01.prm7.bz2", f"{url}/ligand01.rst7.bz2"])
-    s1 = BSS.IO.readMolecules([f"{url}/ligand02.prm7.bz2", f"{url}/ligand02.rst7.bz2"])
-
+def test_prematch(system0, system1, prematch):
     # Extract the molecules.
-    m0 = s0.getMolecules()[0]
-    m1 = s1.getMolecules()[0]
+    m0 = system0.getMolecules()[0]
+    m1 = system1.getMolecules()[0]
 
     # Get the best mapping between the molecules that contains the prematch.
     mapping = BSS.Align.matchAtoms(
@@ -70,14 +76,10 @@ def test_prematch(prematch):
 
 # Parameterise the function with a set of invalid atom pre-matches.
 @pytest.mark.parametrize("prematch", [{-1: 1}, {50: 9}, {4: 48}, {1: -1}])
-def test_invalid_prematch(prematch):
-    # Load the ligands.
-    s0 = BSS.IO.readMolecules([f"{url}/ligand01.prm7.bz2", f"{url}/ligand01.rst7.bz2"])
-    s1 = BSS.IO.readMolecules([f"{url}/ligand02.prm7.bz2", f"{url}/ligand02.rst7.bz2"])
-
+def test_invalid_prematch(system0, system1, prematch):
     # Extract the molecules.
-    m0 = s0.getMolecules()[0]
-    m1 = s1.getMolecules()[0]
+    m0 = system0.getMolecules()[0]
+    m1 = system1.getMolecules()[0]
 
     # Assert that the invalid prematch raises a ValueError.
     with pytest.raises(ValueError):

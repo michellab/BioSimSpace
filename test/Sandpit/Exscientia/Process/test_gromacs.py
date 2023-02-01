@@ -1,4 +1,5 @@
 import numpy as np
+import shutil
 import pytest
 
 import BioSimSpace.Sandpit.Exscientia as BSS
@@ -214,17 +215,17 @@ def run_process(system, protocol, **kwargs):
 class TestGetRecord:
     @staticmethod
     @pytest.fixture()
-    def setup(system, tmpdir_factory):
-        workdir = tmpdir_factory.mktemp("out")
-        (workdir / "gromacs.edr").mklinkto(
-            "test/Sandpit/Exscientia/output/gromacs/gromacs.edr"
-        )
+    def setup(system):
         protocol = BSS.Protocol.Production(
             runtime=BSS.Types.Time(60, "picosecond"),
             timestep=BSS.Types.Time(4, "femtosecond"),
             report_interval=200,
         )
-        process = BSS.Process.Gromacs(system, protocol, work_dir=str(workdir))
+        process = BSS.Process.Gromacs(system, protocol)
+        shutil.copyfile(
+            "test/Sandpit/Exscientia/output/gromacs.edr",
+            process.workDir() + "/gromacs.edr",
+        )
         process._update_energy_dict()
         return process
 
