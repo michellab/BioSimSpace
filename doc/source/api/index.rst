@@ -26,8 +26,8 @@ of packages.
    index_Solvent
    index_Trajectory
    index_Types
-   index_Config
    index_Units
+   index_Config
    index_Exceptions
    index_SireWrappers
    index_Utils
