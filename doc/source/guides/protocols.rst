@@ -23,9 +23,12 @@ Customising protocols
 
 Often a user may wish to customise the protocols that are provided by
 BioSimSpace. For a particular molecular dynamics engine, this can be
-done *after* the creation of a process by using helper methods, such as
-``setConfig``. This is useful if you wish to make small tweaks to the default
-protocols. For example, see the :class:`BioSimSpace.Process.Amber <BioSimSpace.Process.Amber>`
+done during the instation of a process by using the ``extra_options`` and
+``extra_lines`` parameters. These will override any defaults set by the
+protocol. Alternatively, after creating a process you can use the
+the helper methods, such as ``setConfig``. This is useful if you wish to
+make small tweaks to the default protocols. For example, see the
+:class:`BioSimSpace.Process.Amber <BioSimSpace.Process.Amber>`
 documentation. (Command-line arguments can be configured in a similar way.)
 Alternatively, a user can directly generate a completely custom procotol using
 :class:`BioSimSpace.Protocol.Custom <BioSimSpace.Protocol.Custom>`, which
@@ -39,11 +42,10 @@ engine, i.e. a script written with a custom protocol is no longer
 interoperable since it will only work on a different computer if the *same*
 simulation engine happens to be installed there.
 
-Another way to customise the existing protocols is to *override* the private
-``_generate_config`` method in the classes for each of the simulation
-:ref:`processes <ref-Process>`. This could be done in your own Python module,
-which could be installed alongside BioSimSpace to provide an alternative
-interoperable implementation of the protocols.
+Another way to customise the existing protocols is to *override* the
+``createConfig`` methods in the classes used for
+:data:`configuration file generation <BioSimSpace._Config>`
+for the molecular dynamics enegines.
 
 Writing protocols
 =================
@@ -60,10 +62,13 @@ steps:
    the configuration options, along with checking the type and value of the
    user input.
 2. Update the private ``_generate_config`` method in each of the :ref:`Process <ref-Process>`
-   classes that support the protocol to translate the high-level options
-   into package specific configuration files. There is no need to make
-   modifications to the process classes that don't support the protocol,
-   since a :class:`BioSimSpace._Exceptions.IncompatibleError <BioSimSpace._Exceptions.IncompatibleError>`
+   classes that support the protocol and add functionality to the
+   ``createConfig`` method to the appropriate
+   :data:`configuration file generator <BioSimSpace._Config>` to translate
+   the high-level options into package specific configuration files. There
+   is no need to make modifications to the process classes that don't
+   support the protocol, since a
+   :data:`BioSimSpace._Exceptions.IncompatibleError <BioSimSpace._Exceptions.IncompatibleError>`
    will be raised if the user attempts to create a process to implement
    the protocol.
 3. Some protocols require specific command-line arguments to be passed to
