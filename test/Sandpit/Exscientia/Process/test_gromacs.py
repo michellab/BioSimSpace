@@ -212,6 +212,7 @@ def run_process(system, protocol, **kwargs):
     return not process.isError()
 
 
+@pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
 class TestGetRecord:
     @staticmethod
     @pytest.fixture()
