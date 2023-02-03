@@ -9,14 +9,14 @@ company supporting open-source development of fostering academic/industrial coll
 within the biomolecular simulation community. Our software is hosted via the `OpenBioSim`
 `<GitHub <https://github.com/OpenBioSim/biosimspace>`__ organisation.
 
-`2023.1.0 <https://github.com/openbiosim/biosimspace/compare/2023.1.0...2022.3.0>`_ - January 31 2023
------------------------------------------------------------------------------------------------------
+`2023.1.0 <https://github.com/openbiosim/biosimspace/compare/2022.3.0...2023.1.0>`_ - Feb 03 2023
+-------------------------------------------------------------------------------------------------
 
 * Wrapped the new `sire.load <https://sire.openbiosim.org/api/sire.html#sire.load>`__ function to allow loading of URLs.
 * Add basic file caching support to avoid re-writing files for the same molecular system.
-* Added :data:`BioSimSpace._Config` sub-package to simplify the generation of configuration files for molecular dynamics engines and improve flexiblity. (Based on code written by `@msuruzhon <https://github.com/msuruzhon>`_.)
-* Deprecated `BioSimSpace.IO.glob` since globbing is now performed automatically.
-* Apply `black <https://github.com/psf/black>`__ autoformatter to entire codebase.
+* Added :data:`BioSimSpace._Config` sub-package to simplify the generation of configuration files for molecular dynamics engines and improve flexiblity. (Adapted from code written by `@msuruzhon <https://github.com/msuruzhon>`_.)
+* Deprecated ``BioSimSpace.IO.glob`` since globbing is now performed automatically.
+* Autoformat entire codebase using `black <https://github.com/psf/black>`__.
 * Fix issues following Sire 2023 API updates.
 * Update documentation for new OpenBioSim website.
 
