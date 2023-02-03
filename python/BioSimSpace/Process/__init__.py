@@ -91,10 +91,12 @@ get the minimised molecular system.
    minimised = process.getSystem()
 """
 
+# Note that the OpenMM module is named differently to avoid import errors on Windows for py39+
+
 from ._amber import *
 from ._gromacs import *
 from ._namd import *
-from ._openmm import *
+from .__openmm import *
 from ._plumed import *
 from ._process_runner import *
 from ._somd import *

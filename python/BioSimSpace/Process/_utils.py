@@ -29,7 +29,7 @@ __all__ = ["engines", "createProcess"]
 from ._amber import *
 from ._gromacs import *
 from ._namd import *
-from ._openmm import *
+from .__openmm import *
 from ._process_runner import *
 from ._somd import *
 
