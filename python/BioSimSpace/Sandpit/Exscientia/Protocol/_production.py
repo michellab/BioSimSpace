@@ -29,10 +29,9 @@ __all__ = ["Production"]
 import math as _math
 import warnings as _warnings
 
-from .. import Types as _Types
-
-from ._protocol import Protocol as _Protocol
 from ._position_restraint import _PositionRestraintMixin
+from ._protocol import Protocol as _Protocol
+from .. import Types as _Types
 from .. import Units as _Units
 
 
@@ -45,6 +44,7 @@ class Production(_Protocol, _PositionRestraintMixin):
         runtime=_Types.Time(1, "nanosecond"),
         temperature=_Types.Temperature(300, "kelvin"),
         pressure=_Types.Pressure(1, "atmosphere"),
+        tau_t=_Types.Time(1, "picosecond"),
         report_interval=200,
         restart_interval=1000,
         first_step=0,
@@ -68,6 +68,9 @@ class Production(_Protocol, _PositionRestraintMixin):
 
         pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
             The pressure. Pass pressure=None to use the NVT ensemble.
+
+        tau_t : :class:`Time <BioSimSpace.Types.Time>`
+            Time constant for thermostat coupling.
 
         report_interval : int
             The frequency at which statistics are recorded. (In integration steps.)
@@ -120,6 +123,9 @@ class Production(_Protocol, _PositionRestraintMixin):
             self.setPressure(pressure)
         else:
             self._pressure = None
+
+        # Set the time constant for the thermostat
+        self.setTauT(tau_t)
 
         # Set the report interval.
         self.setReportInterval(report_interval)
@@ -216,6 +222,33 @@ class Production(_Protocol, _PositionRestraintMixin):
             self._runtime = runtime
         else:
             raise TypeError("'runtime' must be of type 'BioSimSpace.Types.Time'")
+
+    def getTauT(self):
+        """
+        Return the time constant for the thermostat.
+
+        Returns
+        -------
+
+        runtime : :class:`Time <BioSimSpace.Types.Time>`
+            The time constant for the thermostat.
+        """
+        return self._tau_t
+
+    def setTauT(self, tau_t):
+        """
+        Set the time constant for the thermostat.
+
+        Parameters
+        ----------
+
+        tau_t : :class:`Time <BioSimSpace.Types.Time>`
+            The time constant for the thermostat.
+        """
+        if isinstance(tau_t, _Types.Time):
+            self._tau_t = tau_t
+        else:
+            raise TypeError("'tau_t' must be of type 'BioSimSpace.Types.Time'")
 
     def getTemperature(self):
         """

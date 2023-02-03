@@ -1,13 +1,15 @@
+import BioSimSpace.Sandpit.Exscientia as BSS
 import pandas as pd
 import pytest
-
-import BioSimSpace.Sandpit.Exscientia as BSS
+from BioSimSpace.Sandpit.Exscientia.Align._decouple import decouple
 from BioSimSpace.Sandpit.Exscientia.Protocol import (
     ConfigFactory,
+    Equilibration,
+    Production,
     FreeEnergyMinimisation,
     FreeEnergyEquilibration,
+    FreeEnergy,
 )
-from BioSimSpace.Sandpit.Exscientia.Align._decouple import decouple
 
 
 class TestAmberRBFE:
@@ -39,6 +41,15 @@ class TestAmberRBFE:
         expected_res = {"ntr=1", 'restraintmask="@1,25,46"', "restraint_wt=4.3"}
         assert expected_res.issubset(res)
 
+    @pytest.mark.parametrize(
+        "protocol", [Equilibration, Production, FreeEnergyEquilibration, FreeEnergy]
+    )
+    def test_tau_t(self, system, protocol):
+        config = ConfigFactory(system, protocol(tau_t=BSS.Types.Time(2, "picosecond")))
+        res = [x.strip().strip(",") for x in config.generateAmberConfig()]
+        expected_res = {"gamma_ln=0.50000"}
+        assert expected_res.issubset(res)
+
 
 # Make sure GROMACS is installed.
 has_gromacs = BSS._gmx_exe is not None
@@ -54,6 +65,15 @@ class TestGromacsRBFE:
         m0 = BSS.Align.rmsdAlign(m0, m1, atom_mapping)
         merged = BSS.Align.merge(m0, m1)
         return merged.toSystem()
+
+    @pytest.mark.parametrize(
+        "protocol", [Equilibration, Production, FreeEnergyEquilibration, FreeEnergy]
+    )
+    def test_tau_t(self, system, protocol):
+        config = ConfigFactory(system, protocol(tau_t=BSS.Types.Time(2, "picosecond")))
+        res = config.generateGromacsConfig()
+        expected_res = {"tau-t = 2.00000"}
+        assert expected_res.issubset(res)
 
     @pytest.mark.skipif(
         has_gromacs is False, reason="Requires GROMACS to be installed."

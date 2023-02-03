@@ -1,6 +1,5 @@
 import math as _math
 import warnings as _warnings
-
 from sire.legacy import Units as _SireUnits
 
 from .. import Protocol as _Protocol
@@ -295,7 +294,9 @@ class ConfigFactory:
         # Temperature control.
         if not isinstance(self.protocol, _Protocol.Minimisation):
             protocol_dict["ntt"] = 3  # Langevin dynamics.
-            protocol_dict["gamma_ln"] = 2  # Collision frequency (ps).
+            protocol_dict["gamma_ln"] = "{:.5f}".format(
+                1 / self.protocol.getTauT().picoseconds().value()
+            )  # Collision frequency (ps^-1).
             if isinstance(self.protocol, _Protocol.Equilibration):
                 temp0 = self.protocol.getStartTemperature().kelvin().value()
                 temp1 = self.protocol.getEndTemperature().kelvin().value()
@@ -427,9 +428,11 @@ class ConfigFactory:
                 # Don't use barostat for vacuum simulations.
                 if self._has_box and self._has_water:
                     protocol_dict["pcoupl"] = "c-rescale"  # Barostat type.
-                    protocol_dict[
-                        "tau-p"
-                    ] = 1  # 1ps time constant for pressure coupling.
+                    # Do the MC move every 100 steps to be the same as AMBER.
+                    protocol_dict["nstpcouple"] = 100
+                    # 4ps time constant for pressure coupling.
+                    # As the tau-p has to be 10 times larger than nstpcouple * dt (4 fs)
+                    protocol_dict["tau-p"] = 4
                     protocol_dict[
                         "ref-p"
                     ] = f"{self.protocol.getPressure().bar().value():.5f}"  # Pressure in bar.
@@ -448,7 +451,9 @@ class ConfigFactory:
             protocol_dict[
                 "tc-grps"
             ] = "system"  # A single temperature group for the entire system.
-            protocol_dict["tau-t"] = 2  # Collision frequency (ps).
+            protocol_dict["tau-t"] = "{:.5f}".format(
+                self.protocol.getTauT().picoseconds().value()
+            )  # Collision frequency (ps).
 
             if isinstance(self.protocol, _Protocol.Equilibration):
                 if self.protocol.isConstantTemp():
