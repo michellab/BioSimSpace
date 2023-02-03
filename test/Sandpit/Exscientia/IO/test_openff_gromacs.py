@@ -1,4 +1,5 @@
 import BioSimSpace.Sandpit.Exscientia as BSS
+from BioSimSpace.Sandpit.Exscientia._Utils import _try_import, _have_imported
 
 import os
 import pytest
@@ -16,10 +17,14 @@ else:
 # Check whether GROMACS is installed.
 has_gromacs = BSS._gmx_exe is not None
 
+# Make sure openff is installed.
+_openff = _try_import("openff")
+has_openff = _have_imported(_openff)
+
 
 @pytest.mark.skipif(
-    has_amber is False or has_gromacs is False,
-    reason="Requires that both AMBER and GROMACS are installed.",
+    has_amber is False or has_gromacs is False or has_openff is False,
+    reason="Requires that AMBER, GROMACS, and OpenFF are installed.",
 )
 def test_molecule_combine():
     """Single point energy comparison to make sure that GROMACS

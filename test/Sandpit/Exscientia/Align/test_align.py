@@ -3,8 +3,13 @@ from sire.legacy.Mol import AtomIdx, Element, PartialMolecule
 from sire.legacy.Maths import Vector
 
 import BioSimSpace.Sandpit.Exscientia as BSS
+from BioSimSpace.Sandpit.Exscientia._Utils import _try_import, _have_imported
 
 import pytest
+
+# Make sure openff is installed.
+_openff = _try_import("openff")
+has_openff = _have_imported(_openff)
 
 # Store the tutorial URL.
 url = BSS.tutorialUrl()
@@ -111,6 +116,7 @@ def propane_butane(propane, butane):
     return BSS.Align.merge(propane, butane, mapping)
 
 
+@pytest.mark.skipif(has_openff is False, reason="Requires OpenFF to be installed.")
 def test_propane_butane_1_4(propane_butane, tmp_path_factory):
     # This is a regression test for a bug introduced in a recent commit
     # I don't know of a more rational way of checking it so I am doing it the old-fashioned way
