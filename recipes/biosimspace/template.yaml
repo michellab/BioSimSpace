@@ -25,8 +25,8 @@ test:
     - SIRE_DONT_PHONEHOME
     - SIRE_SILENT_PHONEHOME
   requires:
+    - pytest
     - black 23      # [linux and x86_64 and py39]
-    - pytest        # [linux and x86_64 and py39]
     - pytest-black  # [linux and x86_64 and py39]
     - ambertools    # [linux and x86_64]
     - gromacs       # [linux and x86_64]
