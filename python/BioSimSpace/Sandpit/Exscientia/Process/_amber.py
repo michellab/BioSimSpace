@@ -369,9 +369,7 @@ class Amber(_process.Process):
         if coord_file is not None:
             try:
                 file = _os.path.splitext(coord_file)[0]
-                _IO.saveMolecules(
-                    file, system, "rst7", property_map=self._property_map
-                )
+                _IO.saveMolecules(file, system, "rst7", property_map=self._property_map)
             except Exception as e:
                 msg = "Failed to write system to 'RST7' format."
                 if _isVerbose():
@@ -383,9 +381,7 @@ class Amber(_process.Process):
         if ref_file is not None:
             try:
                 file = _os.path.splitext(ref_file)[0]
-                _IO.saveMolecules(
-                    file, system, "rst7", property_map=self._property_map
-                )
+                _IO.saveMolecules(file, system, "rst7", property_map=self._property_map)
             except Exception as e:
                 msg = "Failed to write system to 'RST7' format."
                 if _isVerbose():
@@ -397,9 +393,7 @@ class Amber(_process.Process):
         if topol_file is not None:
             try:
                 file = _os.path.splitext(topol_file)[0]
-                _IO.saveMolecules(
-                    file, system, "prm7", property_map=self._property_map
-                )
+                _IO.saveMolecules(file, system, "prm7", property_map=self._property_map)
             except Exception as e:
                 msg = "Failed to write system to 'PRM7' format."
                 if _isVerbose():

@@ -26,13 +26,9 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["FreeEnergy"]
 
-import math as _math
-import warnings as _warnings
-
-from .. import Types as _Types
-
 from ._free_energy_mixin import _FreeEnergyMixin
 from ._production import Production as _Production
+from .. import Types as _Types
 from .. import Units as _Units
 
 
@@ -50,6 +46,7 @@ class FreeEnergy(_Production, _FreeEnergyMixin):
         runtime=_Types.Time(4, "nanosecond"),
         temperature=_Types.Temperature(300, "kelvin"),
         pressure=_Types.Pressure(1, "atmosphere"),
+        tau_t=_Types.Time(1, "picosecond"),
         report_interval=200,
         restart_interval=1000,
         first_step=0,
@@ -89,6 +86,9 @@ class FreeEnergy(_Production, _FreeEnergyMixin):
 
         pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
             The pressure. Pass pressure=None to use the NVT ensemble.
+
+        tau_t : :class:`Time <BioSimSpace.Types.Time>`
+            Time constant for thermostat coupling.
 
         report_interval : int
             The frequency at which statistics are recorded. (In integration steps.)
@@ -143,6 +143,7 @@ class FreeEnergy(_Production, _FreeEnergyMixin):
             runtime=runtime,
             temperature=temperature,
             pressure=pressure,
+            tau_t=tau_t,
             report_interval=report_interval,
             restart_interval=restart_interval,
             first_step=first_step,

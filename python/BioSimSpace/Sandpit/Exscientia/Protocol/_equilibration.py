@@ -50,6 +50,7 @@ class Equilibration(_Protocol, _PositionRestraintMixin):
         temperature_end=_Types.Temperature(300, "kelvin"),
         temperature=None,
         pressure=None,
+        tau_t=_Types.Time(1, "picosecond"),
         report_interval=200,
         restart_interval=1000,
         restraint=None,
@@ -81,6 +82,9 @@ class Equilibration(_Protocol, _PositionRestraintMixin):
         pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
             The pressure. If None, then the simulation is run using the NVT ensemble.
             If set to a value, then the simulation is run using the NPT ensemble.
+
+        tau_t : :class:`Time <BioSimSpace.Types.Time>`
+            Time constant for thermostat coupling.
 
         report_interval : int
             The frequency at which statistics are recorded. (In integration steps.)
@@ -149,6 +153,9 @@ class Equilibration(_Protocol, _PositionRestraintMixin):
             self.setPressure(pressure)
         else:
             self._pressure = None
+
+        # Set the time constant for the thermostat
+        self.setTauT(tau_t)
 
         # Set the report interval.
         self.setReportInterval(report_interval)
@@ -305,6 +312,33 @@ class Equilibration(_Protocol, _PositionRestraintMixin):
             raise TypeError(
                 "'temperature_end' must be of type 'BioSimSpace.Types.Temperature'"
             )
+
+    def getTauT(self):
+        """
+        Return the time constant for the thermostat.
+
+        Returns
+        -------
+
+        runtime : :class:`Time <BioSimSpace.Types.Time>`
+            The time constant for the thermostat.
+        """
+        return self._tau_t
+
+    def setTauT(self, tau_t):
+        """
+        Set the time constant for the thermostat.
+
+        Parameters
+        ----------
+
+        tau_t : :class:`Time <BioSimSpace.Types.Time>`
+            The time constant for the thermostat.
+        """
+        if isinstance(tau_t, _Types.Time):
+            self._tau_t = tau_t
+        else:
+            raise TypeError("'tau_t' must be of type 'BioSimSpace.Types.Time'")
 
     def getPressure(self):
         """

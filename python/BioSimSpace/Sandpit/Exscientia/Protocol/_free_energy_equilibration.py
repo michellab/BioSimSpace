@@ -23,6 +23,7 @@ class FreeEnergyEquilibration(_Equilibration, _FreeEnergyMixin):
         temperature_end=_Types.Temperature(300, "kelvin"),
         temperature=None,
         pressure=None,
+        tau_t=_Types.Time(1, "picosecond"),
         report_interval=200,
         restart_interval=1000,
         restraint=None,
@@ -69,6 +70,9 @@ class FreeEnergyEquilibration(_Equilibration, _FreeEnergyMixin):
         pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
             The pressure. If this argument is omitted then the simulation
             is run using the NVT ensemble.
+
+        tau_t : :class:`Time <BioSimSpace.Types.Time>`
+            Time constant for thermostat coupling.
 
         report_interval : int
             The frequency at which statistics are recorded. (In integration steps.)
@@ -123,6 +127,7 @@ class FreeEnergyEquilibration(_Equilibration, _FreeEnergyMixin):
             temperature_end=temperature_end,
             temperature=temperature,
             pressure=pressure,
+            tau_t=tau_t,
             report_interval=report_interval,
             restart_interval=restart_interval,
             restraint=restraint,

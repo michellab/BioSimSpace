@@ -249,15 +249,11 @@ class Gromacs(_process.Process):
 
         # GRO87 file.
         file = _os.path.splitext(self._gro_file)[0]
-        _IO.saveMolecules(
-            file, system, "gro87", property_map=self._property_map
-        )
+        _IO.saveMolecules(file, system, "gro87", property_map=self._property_map)
 
         # TOP file.
         file = _os.path.splitext(self._top_file)[0]
-        _IO.saveMolecules(
-            file, system, "grotop", property_map=self._property_map
-        )
+        _IO.saveMolecules(file, system, "grotop", property_map=self._property_map)
 
         # Create the binary input file name.
         self._tpr_file = "%s/%s.tpr" % (self._work_dir, self._name)
