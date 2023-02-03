@@ -273,8 +273,8 @@ class Amber(_process.Process):
         self._is_watching = False
 
         # The names of the input files.
-        self._rst_file = "%s/%s" % (self._work_dir, name)
-        self._top_file = "%s/%s" % (self._work_dir, name)
+        self._rst_file = "%s/%s.rst7" % (self._work_dir, name)
+        self._top_file = "%s/%s.prm7" % (self._work_dir, name)
 
         # The name of the trajectory file.
         self._traj_file = "%s/%s.nc" % (self._work_dir, name)
@@ -283,11 +283,11 @@ class Amber(_process.Process):
         self._config_file = "%s/%s.cfg" % (self._work_dir, name)
 
         # Set the reference system
-        self._ref_file = f"{self._work_dir}/{name}_ref"
+        self._ref_file = f"{self._work_dir}/{name}_ref.rst7"
         self._ref_system = reference_system
 
         # Create the list of input files.
-        self._input_files = [self._config_file]
+        self._input_files = [self._config_file, self._rst_file, self._top_file]
 
         # Now set up the working directory for the process.
         self._setup()
@@ -304,7 +304,6 @@ class Amber(_process.Process):
         if self._ref_system is not None and self._protocol.getRestraint() is not None:
             self._write_system(self._ref_system, ref_file=self._ref_file)
         else:
-            self._ref_file += ".rst7"
             _shutil.copy(self._rst_file, self._ref_file)
 
         # Generate the AMBER configuration file.
@@ -369,11 +368,10 @@ class Amber(_process.Process):
         # RST file (coordinates).
         if coord_file is not None:
             try:
+                file = _os.path.splitext(coord_file)[0]
                 _IO.saveMolecules(
-                    self._rst_file, system, "rst7", property_map=self._property_map
+                    file, system, "rst7", property_map=self._property_map
                 )
-                self._rst_file += ".rst7"
-                self._input_files.append(self._rst_file)
             except Exception as e:
                 msg = "Failed to write system to 'RST7' format."
                 if _isVerbose():
@@ -384,11 +382,10 @@ class Amber(_process.Process):
         # RST file (reference for position restraints).
         if ref_file is not None:
             try:
+                file = _os.path.splitext(ref_file)[0]
                 _IO.saveMolecules(
-                    self._ref_file, system, "rst7", property_map=self._property_map
+                    file, system, "rst7", property_map=self._property_map
                 )
-                self._ref_file += ".rst7"
-                self._input_files.append(self._ref_file)
             except Exception as e:
                 msg = "Failed to write system to 'RST7' format."
                 if _isVerbose():
@@ -399,12 +396,10 @@ class Amber(_process.Process):
         # PRM file (topology).
         if topol_file is not None:
             try:
+                file = _os.path.splitext(topol_file)[0]
                 _IO.saveMolecules(
-                    self._top_file, system, "prm7", property_map=self._property_map
+                    file, system, "prm7", property_map=self._property_map
                 )
-                self._top_file += ".prm7"
-                self._input_files.append(self._top_file)
-
             except Exception as e:
                 msg = "Failed to write system to 'PRM7' format."
                 if _isVerbose():

@@ -195,8 +195,8 @@ class Gromacs(_process.Process):
         self._eng_file = "%s/%s.edr" % (self._work_dir, name)
 
         # The names of the input files.
-        self._gro_file = "%s/%s" % (self._work_dir, name)
-        self._top_file = "%s/%s" % (self._work_dir, name)
+        self._gro_file = "%s/%s.gro" % (self._work_dir, name)
+        self._top_file = "%s/%s.top" % (self._work_dir, name)
 
         # The name of the trajectory file.
         self._traj_file = "%s/%s.trr" % (self._work_dir, name)
@@ -208,11 +208,11 @@ class Gromacs(_process.Process):
         self._config_file = "%s/%s.mdp" % (self._work_dir, name)
 
         # Set the reference system
-        self._ref_file = f"{self._work_dir}/{name}_ref"
+        self._ref_file = f"{self._work_dir}/{name}_ref.gro"
         self._ref_system = reference_system
 
         # Create the list of input files.
-        self._input_files = [self._config_file]
+        self._input_files = [self._config_file, self._gro_file, self._top_file]
 
         # Initialise the PLUMED interface object.
         self._plumed = None
@@ -245,7 +245,6 @@ class Gromacs(_process.Process):
         if self._ref_system is not None and self._protocol.getRestraint() is not None:
             self._write_system(self._ref_system, ref_file=self._ref_file)
         else:
-            self._ref_file += ".gro"
             _shutil.copy(self._gro_file, self._ref_file)
 
         # Create the binary input file name.
@@ -334,30 +333,28 @@ class Gromacs(_process.Process):
 
         # GRO87 coordinate files.
         if coord_file is not None:
+            file = _os.path.splitext(coord_file)[0]
             _IO.saveMolecules(
-                coord_file, system, "gro87", property_map=self._property_map
+                file, system, "gro87", property_map=self._property_map
             )
-            self._gro_file += ".gro"
-            self._input_files.append(self._gro_file)
 
         # GRO87 reference files.
         if ref_file is not None:
+            file = _os.path.splitext(ref_file)[0]
             _IO.saveMolecules(
-                ref_file, system, "gro87", property_map=self._property_map
+                file, system, "gro87", property_map=self._property_map
             )
-            self._ref_file += ".gro"
 
         # TOP file.
         if topol_file is not None:
+            file = _os.path.splitext(topol_file)[0]
             _IO.saveMolecules(
-                topol_file, system, "grotop", property_map=self._property_map
+                file, system, "grotop", property_map=self._property_map
             )
-            self._top_file += ".top"
-            self._input_files.append(self._top_file)
 
             # Write the restraint to the topology file
             if self._restraint:
-                with open(self._top_file, "a") as f:
+                with open(topol_file, "a") as f:
                     f.write("\n")
                     f.write(self._restraint.toString(engine="GROMACS"))
 

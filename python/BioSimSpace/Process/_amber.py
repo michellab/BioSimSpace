@@ -274,8 +274,8 @@ class Amber(_process.Process):
         self._is_watching = False
 
         # The names of the input files.
-        self._rst_file = "%s/%s" % (self._work_dir, name)
-        self._top_file = "%s/%s" % (self._work_dir, name)
+        self._rst_file = "%s/%s.rst7" % (self._work_dir, name)
+        self._top_file = "%s/%s.prm7" % (self._work_dir, name)
 
         # The name of the trajectory file.
         self._traj_file = "%s/%s.nc" % (self._work_dir, name)
@@ -284,7 +284,7 @@ class Amber(_process.Process):
         self._config_file = "%s/%s.cfg" % (self._work_dir, name)
 
         # Create the list of input files.
-        self._input_files = [self._config_file]
+        self._input_files = [self._config_file, self._rst_file, self._top_file]
 
         # Now set up the working directory for the process.
         self._setup()
@@ -305,11 +305,10 @@ class Amber(_process.Process):
 
         # RST file (coordinates).
         try:
+            file = _os.path.splitext(self._rst_file)[0]
             _IO.saveMolecules(
                 self._rst_file, system, "rst7", property_map=self._property_map
             )
-            self._rst_file += ".rst7"
-            self._input_files.append(self._rst_file)
         except Exception as e:
             msg = "Failed to write system to 'RST7' format."
             if _isVerbose():
@@ -319,12 +318,10 @@ class Amber(_process.Process):
 
         # PRM file (topology).
         try:
+            file = _os.path.splitext(self._top_file)[0]
             _IO.saveMolecules(
                 self._top_file, system, "prm7", property_map=self._property_map
             )
-            self._top_file += ".prm7"
-            self._input_files.append(self._top_file)
-
         except Exception as e:
             msg = "Failed to write system to 'PRM7' format."
             if _isVerbose():
