@@ -124,6 +124,7 @@ def test_amber(protocol, system, tmp_path):
             assert "ntx=1" in cfg
 
 
+@pytest.mark.skipif(has_openff is False, reason="Requires OpenFF to be installed.")
 @pytest.mark.parametrize("restart", [True, False])
 @pytest.mark.parametrize("name", ["system", "system_vel"])
 @pytest.mark.parametrize(
