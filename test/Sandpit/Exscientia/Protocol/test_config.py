@@ -30,7 +30,7 @@ url = BSS.tutorialUrl()
 class TestAmberRBFE:
     @pytest.fixture(scope="class")
     def system(self):
-        m1 = BSS.IO.readMolecules(
+        m0 = BSS.IO.readMolecules(
             [f"{url}/CAT-13c.prm7.bz2", f"{url}/CAT-13c.rst7.bz2"]
         ).getMolecule(0)
         m1 = BSS.IO.readMolecules(
