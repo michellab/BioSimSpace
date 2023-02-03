@@ -7,6 +7,9 @@ from BioSimSpace.Sandpit.Exscientia._Utils import _try_import, _have_imported
 
 import pytest
 
+# Make sure antechamber is installed.
+has_antechamber = BSS.Parameters._Protocol._amber._antechamber_exe is not None
+
 # Make sure openff is installed.
 _openff = _try_import("openff")
 has_openff = _have_imported(_openff)
@@ -116,7 +119,10 @@ def propane_butane(propane, butane):
     return BSS.Align.merge(propane, butane, mapping)
 
 
-@pytest.mark.skipif(has_openff is False, reason="Requires OpenFF to be installed.")
+@pytest.mark.skipif(
+    has_antechamber is False or has_openff is False,
+    reason="Requires AmberTools/antechamber and OpenFF to be installed.",
+)
 def test_propane_butane_1_4(propane_butane, tmp_path_factory):
     # This is a regression test for a bug introduced in a recent commit
     # I don't know of a more rational way of checking it so I am doing it the old-fashioned way
