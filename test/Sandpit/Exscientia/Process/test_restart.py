@@ -24,6 +24,9 @@ has_gromacs = BSS._gmx_exe is not None
 _openff = _try_import("openff")
 has_openff = _have_imported(_openff)
 
+# Make sure antechamber is installed.
+has_antechamber = BSS.Parameters._Protocol._amber._antechamber_exe is not None
+
 
 @pytest.fixture
 def system():
@@ -124,7 +127,10 @@ def test_amber(protocol, system, tmp_path):
             assert "ntx=1" in cfg
 
 
-@pytest.mark.skipif(has_openff is False, reason="Requires OpenFF to be installed.")
+@pytest.mark.skipif(
+    has_antechamber is False or has_openff is False,
+    reason="Requires AmberTools/antechamber and OpenFF to be installed.",
+)
 @pytest.mark.parametrize("restart", [True, False])
 @pytest.mark.parametrize("name", ["system", "system_vel"])
 @pytest.mark.parametrize(
