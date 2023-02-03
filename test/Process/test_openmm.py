@@ -22,11 +22,14 @@ def test_minimise(system):
     assert run_process(system, protocol)
 
 
-def test_equilibrate(system):
+@pytest.mark.parametrize("restraint", ["backbone", "heavy", "all", "none"])
+def test_equilibrate(system, restraint):
     """Test an equilibration protocol."""
 
     # Create a short equilibration protocol.
-    protocol = BSS.Protocol.Equilibration(runtime=BSS.Types.Time(0.001, "nanoseconds"))
+    protocol = BSS.Protocol.Equilibration(
+        runtime=BSS.Types.Time(0.001, "nanoseconds"), restraint=restraint
+    )
 
     # Run the process and check that it finishes without error.
     assert run_process(system, protocol)
