@@ -75,11 +75,3 @@ jobs:
 #
       - name: Build Conda package using mamba build
         run: conda mambabuild -c conda-forge -c openbiosim/label/dev ${{ github.workspace }}/biosimspace/recipes/biosimspace
-#
-      - name: Upload Conda package
-        run: python ${{ github.workspace }}/biosimspace/actions/upload_package.py
-        env:
-          SRC_DIR: ${{ github.workspace }}/biosimspace
-          BUILD_DIR: ${{ github.workspace }}/build
-          ANACONDA_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
-        if: github.event_name != 'pull_request'
