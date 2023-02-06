@@ -57,7 +57,7 @@ jobs:
           use-mamba: true
 #
       - name: Clone the devel branch (push to devel)
-        run: git clone https://github.com/${{ env.REPO }}
+        run: git clone https://github.com/${{ env.REPO }} biosimspace
         if: github.event_name != 'pull_request'
 #
       - name: Clone the feature branch (pull request to devel)
