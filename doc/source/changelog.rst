@@ -9,6 +9,13 @@ company supporting open-source development of fostering academic/industrial coll
 within the biomolecular simulation community. Our software is hosted via the `OpenBioSim`
 `<GitHub <https://github.com/OpenBioSim/biosimspace>`__ organisation.
 
+`2023.1.1 <https://github.com/openbiosim/biosimspace/compare/2023.1.0...2023.1.1>`_ - Feb 07 2023
+-------------------------------------------------------------------------------------------------
+
+* Minor fixes to website documentation.
+* Fixed issues with API documentation introduced by `pydocstringformatter <https://pypi.org/project/pydocstringformatter>`__.
+* Fix globbing of GROMACS trajectory files.
+
 `2023.1.0 <https://github.com/openbiosim/biosimspace/compare/2022.3.0...2023.1.0>`_ - Feb 03 2023
 -------------------------------------------------------------------------------------------------
 

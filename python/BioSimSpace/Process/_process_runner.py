@@ -484,7 +484,7 @@ class ProcessRunner:
 
     def start(self, index):
         """
-        Start a specific process. The same can be achieved using:\n.
+        Start a specific process. The same can be achieved using:\n
 
             runner.processes()[index].start()
 
@@ -744,7 +744,7 @@ class ProcessRunner:
 
     def kill(self, index):
         """
-        Kill a specific process. The same can be achieved using:\n.
+        Kill a specific process. The same can be achieved using:\n
 
             runner.processes()[index].kill()
 
