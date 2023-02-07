@@ -28,8 +28,8 @@ __all__ = ["Gromacs"]
 
 from .._Utils import _try_import
 
+import glob as _glob
 import os as _os
-
 _pygtail = _try_import("pygtail")
 import shutil as _shutil
 import shlex as _shlex
@@ -2387,7 +2387,7 @@ class Gromacs(_process.Process):
         # Check that the current trajectory file is found.
         if not _os.path.isfile(self._traj_file):
             # If not, first check for any trr extension.
-            traj_file = _IO.glob("%s/*.trr" % self._work_dir)
+            traj_file = _glob.glob("%s/*.trr" % self._work_dir)
 
             # Store the number of trr files.
             num_trr = len(traj_file)
@@ -2397,7 +2397,7 @@ class Gromacs(_process.Process):
                 return traj_file[0]
             else:
                 # Now check for any xtc files.
-                traj_file = _IO.glob("%s/*.xtc" % self._work_dir)
+                traj_file = _glob.glob("%s/*.xtc" % self._work_dir)
 
                 if len(traj_file) == 1:
                     return traj_file[0]
