@@ -1,13 +1,13 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2022
+# Copyright: 2017-2023
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
 # BioSimSpace is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 2 of the License, or
+# the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
 # BioSimSpace is distributed in the hope that it will be useful,
@@ -47,17 +47,19 @@ from ..Types import Length as _Length
 
 from ._sire_wrapper import SireWrapper as _SireWrapper
 
+
 class Molecule(_SireWrapper):
     """A container class for storing a molecule."""
 
     def __init__(self, molecule):
-        """Constructor.
+        """
+        Constructor.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           molecule : Sire.Mol.Molecule, :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
-               A Sire or BioSimSpace Molecule object.
+        molecule : Sire.Mol.Molecule, :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+            A Sire or BioSimSpace Molecule object.
         """
 
         # Set the force field variable. This records the force field with which
@@ -100,19 +102,29 @@ class Molecule(_SireWrapper):
 
         # Invalid type.
         else:
-            raise TypeError(f"'molecule' (type {type(molecule)}) must be of type 'Sire.Mol.Molecule' "
-                            "or 'BioSimSpace._SireWrappers.Molecule'.")
+            raise TypeError(
+                f"'molecule' (type {type(molecule)}) must be of type 'Sire.Mol.Molecule' "
+                "or 'BioSimSpace._SireWrappers.Molecule'."
+            )
 
         # Flag that this object holds multiple atoms.
         self._is_multi_atom = True
 
     def __str__(self):
         """Return a human readable string representation of the object."""
-        return "<BioSimSpace.Molecule: number=%d, nAtoms=%d, nResidues=%d>" % (self.number(), self.nAtoms(), self.nResidues())
+        return "<BioSimSpace.Molecule: number=%d, nAtoms=%d, nResidues=%d>" % (
+            self.number(),
+            self.nAtoms(),
+            self.nResidues(),
+        )
 
     def __repr__(self):
         """Return a string showing how to instantiate the object."""
-        return "<BioSimSpace.Molecule: number=%d, nAtoms=%d, nResidues=%d>" % (self.number(), self.nAtoms(), self.nResidues())
+        return "<BioSimSpace.Molecule: number=%d, nAtoms=%d, nResidues=%d>" % (
+            self.number(),
+            self.nAtoms(),
+            self.nResidues(),
+        )
 
     def __add__(self, other):
         """Addition operator."""
@@ -150,9 +162,11 @@ class Molecule(_SireWrapper):
 
         # Unsupported.
         else:
-            raise TypeError("'other' must be of type 'BioSimSpace._SireWrappers.System', "
-                            "'BioSimSpace._SireWrappers.Molecule', 'BioSimSpace._SireWrappers.Molecules' "
-                            "or a list of 'BioSimSpace._SireWrappers.Molecule' types")
+            raise TypeError(
+                "'other' must be of type 'BioSimSpace._SireWrappers.System', "
+                "'BioSimSpace._SireWrappers.Molecule', 'BioSimSpace._SireWrappers.Molecules' "
+                "or a list of 'BioSimSpace._SireWrappers.Molecule' types"
+            )
 
         # Create a new Molecules container.
         return _Molecules(molecules)
@@ -161,59 +175,62 @@ class Molecule(_SireWrapper):
         """Return whether other is in self."""
 
         if not isinstance(other, (_Atom, _Residue)):
-            raise TypeError("'other' must be of type 'BioSimSpace._SireWrappers.Atom' "
-                            "or 'BioSimSpace._SireWrappers.Residue'.")
+            raise TypeError(
+                "'other' must be of type 'BioSimSpace._SireWrappers.Atom' "
+                "or 'BioSimSpace._SireWrappers.Residue'."
+            )
 
         # Return whether the object comes from this molecule.
         return self._sire_object.molecule() == other._sire_object.molecule()
 
     def copy(self):
-        """Return a copy of this Molecule.
+        """
+        Return a copy of this Molecule.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, \
-               A copy of the object.
+        molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+            A copy of the object.
         """
         # Copy the Sire object.
         mol = self._sire_object.__deepcopy__()
 
         # Give the molecule a unique number.
-        mol = mol.edit() \
-                 .renumber(_SireMol.MolNum.getUniqueNumber()) \
-                 .commit().molecule()
+        mol = mol.edit().renumber(_SireMol.MolNum.getUniqueNumber()).commit().molecule()
 
         return Molecule(mol)
 
     def number(self):
-        """Return the number of the molecule. Each molecule has a unique
-           identification number.
+        """
+        Return the number of the molecule. Each molecule has a unique
+        identification number.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           mol_num : int
-               The unique number of the molecule.
+        mol_num : int
+            The unique number of the molecule.
         """
         return self._sire_object.number().value()
 
     def coordinates(self, property_map={}):
-        """Return the coordinates of the atoms in the molecule.
+        """
+        Return the coordinates of the atoms in the molecule.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           property_map : dict
-               A dictionary that maps system "properties" to their user defined
-               values. This allows the user to refer to properties with their
-               own naming scheme, e.g. { "charge" : "my-charge" }
+        property_map : dict
+            A dictionary that maps system "properties" to their user defined
+            values. This allows the user to refer to properties with their
+            own naming scheme, e.g. { "charge" : "my-charge" }
 
-           Returns
-           -------
+        Returns
+        -------
 
-           [coordinates] : [class:`Coordinate <BioSimSpace.Types.Coordinate>`]
-               The coordinates of the atoms in the molecule.
+        [coordinates] : [class:`Coordinate <BioSimSpace.Types.Coordinate>`]
+            The coordinates of the atoms in the molecule.
         """
         prop = property_map.get("coordinates", "coordinates")
 
@@ -222,9 +239,13 @@ class Molecule(_SireWrapper):
             sire_coord = self._sire_object.property(prop).toVector()
             coordinates = []
             for coord in sire_coord:
-                coordinates.append(_Coordinate(_Length(coord[0], "Angstrom"),
-                                               _Length(coord[1], "Angstrom"),
-                                               _Length(coord[2], "Angstrom")))
+                coordinates.append(
+                    _Coordinate(
+                        _Length(coord[0], "Angstrom"),
+                        _Length(coord[1], "Angstrom"),
+                        _Length(coord[2], "Angstrom"),
+                    )
+                )
         except:
             return None
 
@@ -232,13 +253,14 @@ class Molecule(_SireWrapper):
         return coordinates
 
     def getResidues(self):
-        """Return a list containing the residues in the molecule.
+        """
+        Return a list containing the residues in the molecule.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           residues : [:class:`Residue <BioSimSpace._SireWrappers.Residue>`]
-               The list of residues in the molecule.
+        residues : [:class:`Residue <BioSimSpace._SireWrappers.Residue>`]
+            The list of residues in the molecule.
         """
         residues = []
         for residue in self._sire_object.residues():
@@ -246,13 +268,14 @@ class Molecule(_SireWrapper):
         return residues
 
     def getAtoms(self):
-        """Return a list containing the atoms in the molecule.
+        """
+        Return a list containing the atoms in the molecule.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           atoms : [:class:`Atom <BioSimSpace._SireWrappers.Atom>`]
-               The list of atoms in the molecule.
+        atoms : [:class:`Atom <BioSimSpace._SireWrappers.Atom>`]
+            The list of atoms in the molecule.
         """
         atoms = []
         for atom in self._sire_object.atoms():
@@ -260,28 +283,29 @@ class Molecule(_SireWrapper):
         return atoms
 
     def extract(self, indices, renumber=False, property_map={}):
-        """Extract atoms at the specified indices from the molecule to create
-           a new molecule.
+        """
+        Extract atoms at the specified indices from the molecule to create
+        a new molecule.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           indices : [ int ]
-               The indices of the atoms to extract.
+        indices : [ int ]
+            The indices of the atoms to extract.
 
-           renumber : bool
-               Whether the returned molecule has the same number as the original.
+        renumber : bool
+            Whether the returned molecule has the same number as the original.
 
-           property_map : dict
-               A dictionary that maps system "properties" to their user defined
-               values. This allows the user to refer to properties with their
-               own naming scheme, e.g. { "charge" : "my-charge" }
+        property_map : dict
+            A dictionary that maps system "properties" to their user defined
+            values. This allows the user to refer to properties with their
+            own naming scheme, e.g. { "charge" : "my-charge" }
 
-           Returns
-           -------
+        Returns
+        -------
 
-           molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
-               The extracted molecule.
+        molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+            The extracted molecule.
         """
 
         # TODO: This method is slow for large molecules. Re-write in pure C++
@@ -331,9 +355,11 @@ class Molecule(_SireWrapper):
             for idx in indices_:
                 selection.select(idx)
 
-            partial_mol = _SireMol.PartialMolecule(mol._sire_object, selection) \
-                        .extract()                                              \
-                        .molecule()
+            partial_mol = (
+                _SireMol.PartialMolecule(mol._sire_object, selection)
+                .extract()
+                .molecule()
+            )
         except Exception as e:
             msg = "Unable to create partial molecule!"
             if _isVerbose():
@@ -350,10 +376,9 @@ class Molecule(_SireWrapper):
         # Remove the "intrascale" property, since this doesn't correspond to the
         # extracted molecule.
         if has_intrascale:
-            partial_mol = partial_mol.edit()        \
-                        .removeProperty(intrascale) \
-                        .molecule()                 \
-                        .commit()
+            partial_mol = (
+                partial_mol.edit().removeProperty(intrascale).molecule().commit()
+            )
 
             # Recreate the molecule.
             mol = Molecule(partial_mol)
@@ -374,7 +399,9 @@ class Molecule(_SireWrapper):
 
             # Add the intrascale property back into the molecule.
             edit_mol = mol._sire_object.edit()
-            edit_mol.setProperty(intrascale, gro_sys[_SireMol.MolIdx(0)].property("intrascale"))
+            edit_mol.setProperty(
+                intrascale, gro_sys[_SireMol.MolIdx(0)].property("intrascale")
+            )
 
             # Recreate the molecule.
             mol = Molecule(edit_mol.commit())
@@ -385,90 +412,97 @@ class Molecule(_SireWrapper):
         return mol
 
     def molecule0(self):
-        """Return the component of the merged molecule at lambda = 0.
+        """
+        Return the component of the merged molecule at lambda = 0.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
-               The component of the merged molecule at lambda = 0.
-               Returns None if this isn't a merged molecule.
+        molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+            The component of the merged molecule at lambda = 0.
+            Returns None if this isn't a merged molecule.
         """
         return self._molecule0
 
     def molecule1(self):
-        """Return the component of the merged molecule at lambda = 1.
+        """
+        Return the component of the merged molecule at lambda = 1.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
-               The component of the merged molecule at lambda = 1.
-               Returns None if this isn't a merged molecule.
+        molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+            The component of the merged molecule at lambda = 1.
+            Returns None if this isn't a merged molecule.
         """
         return self._molecule1
 
     def nAtoms(self):
-        """Return the number of atoms in the molecule.
+        """
+        Return the number of atoms in the molecule.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           num_atoms : int
-               The number of atoms in the molecule.
+        num_atoms : int
+            The number of atoms in the molecule.
         """
         return self._sire_object.nAtoms()
 
     def nResidues(self):
-        """Return the number of residues in the molecule.
+        """
+        Return the number of residues in the molecule.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           num_residues : int
-               The number of residues in the molecule.
+        num_residues : int
+            The number of residues in the molecule.
         """
         return self._sire_object.nResidues()
 
     def nChains(self):
-        """Return the number of chains in the molecule.
+        """
+        Return the number of chains in the molecule.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           num_chains : int
-               The number of chains in the molecule.
+        num_chains : int
+            The number of chains in the molecule.
         """
         return self._sire_object.nChains()
 
     def isPerturbable(self):
-        """Whether this molecule is perturbable, i.e. it can be used in a
-           free-energy perturbation simulation.
+        """
+        Whether this molecule is perturbable, i.e. it can be used in a
+        free-energy perturbation simulation.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           is_perturbable : bool
-               Whether the molecule is perturbable.
+        is_perturbable : bool
+            Whether the molecule is perturbable.
         """
         return self._is_perturbable
 
     def isWater(self, property_map={}):
-        """Whether this is a water molecule.
+        """
+        Whether this is a water molecule.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           property_map : dict
-               A dictionary that maps system "properties" to their user defined
-               values. This allows the user to refer to properties with their
-               own naming scheme, e.g. { "charge" : "my-charge" }
+        property_map : dict
+            A dictionary that maps system "properties" to their user defined
+            values. This allows the user to refer to properties with their
+            own naming scheme, e.g. { "charge" : "my-charge" }
 
-           Returns
-           -------
+        Returns
+        -------
 
-           is_water : bool
-               Whether this is a water molecule.
+        is_water : bool
+            Whether this is a water molecule.
         """
 
         if not isinstance(property_map, dict):
@@ -477,21 +511,22 @@ class Molecule(_SireWrapper):
         return _SireIO.isWater(self._sire_object, property_map)
 
     def isAmberWater(self, property_map={}):
-        """Whether this is an AMBER format water molecule.
+        """
+        Whether this is an AMBER format water molecule.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           property_map : dict
-               A dictionary that maps system "properties" to their user defined
-               values. This allows the user to refer to properties with their
-               own naming scheme, e.g. { "charge" : "my-charge" }
+        property_map : dict
+            A dictionary that maps system "properties" to their user defined
+            values. This allows the user to refer to properties with their
+            own naming scheme, e.g. { "charge" : "my-charge" }
 
-           Returns
-           -------
+        Returns
+        -------
 
-           is_amber_water : bool
-               Whether this molecule is an AMBER format water.
+        is_amber_water : bool
+            Whether this molecule is an AMBER format water.
         """
 
         if not isinstance(property_map, dict):
@@ -500,20 +535,21 @@ class Molecule(_SireWrapper):
         return _SireIO.isAmberWater(self._sire_object, property_map)
 
     def isGromacsWater(self, property_map={}):
-        """Whether this is a GROMACS format water molecule.
+        """
+        Whether this is a GROMACS format water molecule.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           property_map : dict
-               A dictionary that maps system "properties" to their user defined
-               values. This allows the user to refer to properties with their
+        property_map : dict
+            A dictionary that maps system "properties" to their user defined
+            values. This allows the user to refer to properties with their
 
-           Returns
-           -------
+        Returns
+        -------
 
-           is_gromacs_water : bool
-               Whether this molecule is a GROMACS format water.
+        is_gromacs_water : bool
+            Whether this molecule is a GROMACS format water.
         """
 
         if not isinstance(property_map, dict):
@@ -522,52 +558,54 @@ class Molecule(_SireWrapper):
         return _SireIO.isGromacsWater(self._sire_object, property_map)
 
     def toSystem(self):
-        """Convert a single Molecule to a System.
+        """
+        Convert a single Molecule to a System.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           system : :class:`System <BioSimSpace._SireWrappers.System>`
+        system : :class:`System <BioSimSpace._SireWrappers.System>`
         """
         return _System(self)
 
     def search(self, query, property_map={}):
-        """Search the molecule for atoms and residues. Search results will be
-           reduced to their minimal representation, i.e. a residue containing
-           a single atom will be returned as a atom.
+        """
+        Search the molecule for atoms and residues. Search results will be
+        reduced to their minimal representation, i.e. a residue containing
+        a single atom will be returned as a atom.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           query : str
-               The search query.
+        query : str
+            The search query.
 
-           property_map : dict
-               A dictionary that maps system "properties" to their user defined
-               values. This allows the user to refer to properties with their
-               own naming scheme, e.g. { "charge" : "my-charge" }
+        property_map : dict
+            A dictionary that maps system "properties" to their user defined
+            values. This allows the user to refer to properties with their
+            own naming scheme, e.g. { "charge" : "my-charge" }
 
-           Returns
-           -------
+        Returns
+        -------
 
-           results : [:class:`Atom <BioSimSpace._SireWrappers.Atom>`, \
-                      :class:`Residue <BioSimSpace._SireWrappers.Residue>`, ...]
-               A list of objects matching the search query.
+        results : [:class:`Atom <BioSimSpace._SireWrappers.Atom>`, \
+                   :class:`Residue <BioSimSpace._SireWrappers.Residue>`, ...]
+            A list of objects matching the search query.
 
-           Examples
-           --------
+        Examples
+        --------
 
-           Search for all residues named ALA.
+        Search for all residues named ALA.
 
-           >>> result = molecule.search("resname ALA")
+        >>> result = molecule.search("resname ALA")
 
-           Search for all oxygen or hydrogen atoms.
+        Search for all oxygen or hydrogen atoms.
 
-           >>> result = molecule.search("element oxygen or element hydrogen")
+        >>> result = molecule.search("element oxygen or element hydrogen")
 
-           Search for atom index 23.
+        Search for atom index 23.
 
-           >>> result = molecule.search("atomidx 23")
+        >>> result = molecule.search("atomidx 23")
         """
 
         if not isinstance(query, str):
@@ -601,30 +639,37 @@ class Molecule(_SireWrapper):
 
         return _SearchResult(search_result)
 
-    def makeCompatibleWith(self, molecule, property_map={}, overwrite=True,
-            rename_atoms=False, verbose=False):
-        """Make this molecule compatible with passed one, i.e. match atoms and
-           add all additional properties from the passed molecule while preserving
-           the topology and naming/numbering convention of this molecule.
+    def makeCompatibleWith(
+        self,
+        molecule,
+        property_map={},
+        overwrite=True,
+        rename_atoms=False,
+        verbose=False,
+    ):
+        """
+        Make this molecule compatible with passed one, i.e. match atoms and
+        add all additional properties from the passed molecule while preserving
+        the topology and naming/numbering convention of this molecule.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           molecule : Sire.Mol.Molecule, :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, \
-                      Sire.System.System, :class:`System <Sire._SireWrappers.System>`
-               The molecule, or system of molecules, to match with.
+        molecule : Sire.Mol.Molecule, :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, \
+                   Sire.System.System, :class:`System <Sire._SireWrappers.System>`
+            The molecule, or system of molecules, to match with.
 
-           property_map : dict
-               A map between property names and user supplied names.
+        property_map : dict
+            A map between property names and user supplied names.
 
-           overwrite : bool
-               Whether to overwrite any duplicate properties.
+        overwrite : bool
+            Whether to overwrite any duplicate properties.
 
-           rename_atoms : bool
-               Whether to rename atoms if they have changed.
+        rename_atoms : bool
+            Whether to rename atoms if they have changed.
 
-           verbose : bool
-               Whether to report status updates to stdout.
+        verbose : bool
+            Whether to report status updates to stdout.
         """
 
         # Validate input.
@@ -641,7 +686,9 @@ class Molecule(_SireWrapper):
             mol1 = molecule._sire_object
             is_system = True
         else:
-            raise TypeError("'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule', or 'Sire.Mol.Molecule'")
+            raise TypeError(
+                "'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule', or 'Sire.Mol.Molecule'"
+            )
 
         if not isinstance(property_map, dict):
             raise TypeError("'property_map' must be of type 'dict'")
@@ -670,11 +717,15 @@ class Molecule(_SireWrapper):
         # The new molecule must have the same number of atoms.
         if num_atoms1 != num_atoms0:
             if is_system:
-                raise _IncompatibleError("The passed system is incompatible with the original! "
-                                         "self.nAtoms() = %d, other.nAtoms() = %d" % (num_atoms0, num_atoms1))
+                raise _IncompatibleError(
+                    "The passed system is incompatible with the original! "
+                    "self.nAtoms() = %d, other.nAtoms() = %d" % (num_atoms0, num_atoms1)
+                )
             else:
-                raise _IncompatibleError("The passed molecule is incompatible with the original! "
-                                         "self.nAtoms() = %d, other.nAtoms() = %d" % (num_atoms0, num_atoms1))
+                raise _IncompatibleError(
+                    "The passed molecule is incompatible with the original! "
+                    "self.nAtoms() = %d, other.nAtoms() = %d" % (num_atoms0, num_atoms1)
+                )
 
         # Whether the atoms have been renamed.
         is_renamed = False
@@ -708,7 +759,10 @@ class Molecule(_SireWrapper):
                 is_reordered = matcher.changesOrder(mol0, mol1)
 
             if verbose:
-                print("\nAtom matching successful.\nAtom indices %s reordered." % ("" if is_reordered else "not"))
+                print(
+                    "\nAtom matching successful.\nAtom indices %s reordered."
+                    % ("" if is_reordered else "not")
+                )
 
             # Get a list of the property keys for each molecule.
             props0 = mol0.propertyKeys()
@@ -746,9 +800,13 @@ class Molecule(_SireWrapper):
                             if verbose:
                                 print("  %s" % _property_map[prop])
                             try:
-                                edit_mol = edit_mol.setProperty(_property_map[prop], mol1.property(prop))
+                                edit_mol = edit_mol.setProperty(
+                                    _property_map[prop], mol1.property(prop)
+                                )
                             except Exception as e:
-                                msg = "Failed to set property '%s'" % _property_map[prop]
+                                msg = (
+                                    "Failed to set property '%s'" % _property_map[prop]
+                                )
                                 if _isVerbose():
                                     raise _IncompatibleError(msg) from e
                                 else:
@@ -776,12 +834,25 @@ class Molecule(_SireWrapper):
                             # If so, add it to the matching atom in this molecule.
                             if mol1.atom(idx1).hasProperty(prop):
                                 if verbose:
-                                    print("  %-20s %s --> %s" % (_property_map[prop], idx1, idx0))
+                                    print(
+                                        "  %-20s %s --> %s"
+                                        % (_property_map[prop], idx1, idx0)
+                                    )
                                 try:
-                                    edit_mol = edit_mol.atom(idx0).setProperty(_property_map[prop], mol1.atom(idx1).property(prop)).molecule()
+                                    edit_mol = (
+                                        edit_mol.atom(idx0)
+                                        .setProperty(
+                                            _property_map[prop],
+                                            mol1.atom(idx1).property(prop),
+                                        )
+                                        .molecule()
+                                    )
                                     seen_prop[prop] = True
                                 except Exception as e:
-                                    msg = "Failed to copy property '%s' from %s to %s." % (_property_map[prop], idx1, idx0)
+                                    msg = (
+                                        "Failed to copy property '%s' from %s to %s."
+                                        % (_property_map[prop], idx1, idx0)
+                                    )
                                     if _isVerbose():
                                         raise _IncompatibleError(msg) from e
                                     else:
@@ -814,9 +885,14 @@ class Molecule(_SireWrapper):
                                 # Try making it compatible with the original molecule.
                                 if hasattr(propty, "makeCompatibleWith"):
                                     try:
-                                        propty = propty.makeCompatibleWith(mol0, inv_matches)
+                                        propty = propty.makeCompatibleWith(
+                                            mol0, inv_matches
+                                        )
                                     except Exception as e:
-                                        msg = "Incompatible property: %s" % _property_map[prop]
+                                        msg = (
+                                            "Incompatible property: %s"
+                                            % _property_map[prop]
+                                        )
                                         if _isVerbose():
                                             raise _IncompatibleError(msg) from e
                                         else:
@@ -841,7 +917,11 @@ class Molecule(_SireWrapper):
 
                     # Try to rename the atom.
                     try:
-                        edit_mol = edit_mol.atom(idx0).rename(mol1.atom(idx1).name()).molecule()
+                        edit_mol = (
+                            edit_mol.atom(idx0)
+                            .rename(mol1.atom(idx1).name())
+                            .molecule()
+                        )
                     except Exception as e:
                         msg = "Failed to rename atom: %s --> %s" % (name0, name1)
                         if _isVerbose():
@@ -891,10 +971,10 @@ class Molecule(_SireWrapper):
             edit_mol = mol0.edit()
 
             # Create objects to hold all of the potential terms.
-            bonds      = _SireMM.TwoAtomFunctions(edit_mol.info())
-            angles     = _SireMM.ThreeAtomFunctions(edit_mol.info())
-            dihedrals  = _SireMM.FourAtomFunctions(edit_mol.info())
-            impropers  = _SireMM.FourAtomFunctions(edit_mol.info())
+            bonds = _SireMM.TwoAtomFunctions(edit_mol.info())
+            angles = _SireMM.ThreeAtomFunctions(edit_mol.info())
+            dihedrals = _SireMM.FourAtomFunctions(edit_mol.info())
+            impropers = _SireMM.FourAtomFunctions(edit_mol.info())
 
             # Next we need to work out what properties can be set at the atom level,
             # and which are associated with the molecule as a whole.
@@ -924,13 +1004,15 @@ class Molecule(_SireWrapper):
 
             # Create a list of excluded molecular properties. These are ones that
             # must be re-mapped manually and set by hand.
-            excluded_props = [property_map.get("bond", "bond"),
-                              property_map.get("angle", "angle"),
-                              property_map.get("dihedral", "dihedral"),
-                              property_map.get("improper", "improper"),
-                              property_map.get("connectivity", "connectivity"),
-                              property_map.get("intrascale", "intrascale"),
-                              property_map.get("parameters", "parameters")]
+            excluded_props = [
+                property_map.get("bond", "bond"),
+                property_map.get("angle", "angle"),
+                property_map.get("dihedral", "dihedral"),
+                property_map.get("improper", "improper"),
+                property_map.get("connectivity", "connectivity"),
+                property_map.get("intrascale", "intrascale"),
+                property_map.get("parameters", "parameters"),
+            ]
 
             # Loop over all atoms within each molecule. We set the allowed atomic
             # properties and build the molecular ones as we go.
@@ -957,7 +1039,11 @@ class Molecule(_SireWrapper):
 
                         # Try to rename the atom.
                         try:
-                            edit_mol = edit_mol.atom(idx0).rename(mol1.atom(idx1).name()).molecule()
+                            edit_mol = (
+                                edit_mol.atom(idx0)
+                                .rename(mol1.atom(idx1).name())
+                                .molecule()
+                            )
                         except Exception as e:
                             msg = "Failed to rename atom: %s --> %s" % (name0, name1)
                             if _isVerbose():
@@ -972,9 +1058,17 @@ class Molecule(_SireWrapper):
                             if verbose:
                                 print("  %-20s %s --> %s" % (prop, idx1, idx0))
                             try:
-                                edit_mol = edit_mol.atom(idx0).setProperty(prop, mol.atom(idx1).property(prop)).molecule()
+                                edit_mol = (
+                                    edit_mol.atom(idx0)
+                                    .setProperty(prop, mol.atom(idx1).property(prop))
+                                    .molecule()
+                                )
                             except Exception as e:
-                                msg = "Failed to copy property '%s' from %s to %s." % (prop, idx1, idx0)
+                                msg = "Failed to copy property '%s' from %s to %s." % (
+                                    prop,
+                                    idx1,
+                                    idx0,
+                                )
                                 if _isVerbose():
                                     raise _IncompatibleError(msg) from e
                                 else:
@@ -986,7 +1080,9 @@ class Molecule(_SireWrapper):
                     prop = property_map.get(prop, prop)
 
                     # This is a new property, or we're allowed to overwrite, and it's not excluded.
-                    if ((not mol0.hasProperty(prop)) or overwrite) and prop not in excluded_props:
+                    if (
+                        (not mol0.hasProperty(prop)) or overwrite
+                    ) and prop not in excluded_props:
                         if verbose:
                             print("  %s" % prop)
 
@@ -1185,8 +1281,10 @@ class Molecule(_SireWrapper):
                     edit_mol.removeProperty(prop)
                 mol = edit_mol.commit()
                 # Convert to a "GROMACS system" using the GroTop parser.
-                gro_system = _SireIO.GroTop(Molecule(mol).toSystem()._sire_object,
-                             _SireBase.PropertyMap(property_map)).toSystem()
+                gro_system = _SireIO.GroTop(
+                    Molecule(mol).toSystem()._sire_object,
+                    _SireBase.PropertyMap(property_map),
+                ).toSystem()
                 # Extract the only molecule in the system.
                 gro_mol = gro_system[_SireMol.MolIdx(0)]
                 edit_mol = mol.edit()
@@ -1203,18 +1301,19 @@ class Molecule(_SireWrapper):
             self._sire_object = edit_mol.commit()
 
     def translate(self, vector, property_map={}):
-        """Translate each molecule in the container.
+        """
+        Translate each molecule in the container.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           vector : [:class:`Length <BioSimSpace.Types.Length>`]
-               The translation vector in Angstroms.
+        vector : [:class:`Length <BioSimSpace.Types.Length>`]
+            The translation vector in Angstroms.
 
-           property_map : dict
-               A dictionary that maps system "properties" to their user defined
-               values. This allows the user to refer to properties with their
-               own naming scheme, e.g. { "charge" : "my-charge" }
+        property_map : dict
+            A dictionary that maps system "properties" to their user defined
+            values. This allows the user to refer to properties with their
+            own naming scheme, e.g. { "charge" : "my-charge" }
         """
 
         # Convert tuple to a list.
@@ -1224,7 +1323,9 @@ class Molecule(_SireWrapper):
         # Validate input.
         if isinstance(vector, list):
             if len(vector) != 3:
-                raise ValueError("'vector' must contain 3 items, i.e. x, y, z components!")
+                raise ValueError(
+                    "'vector' must contain 3 items, i.e. x, y, z components!"
+                )
             vec = []
             for x in vector:
                 if type(x) is int:
@@ -1234,8 +1335,10 @@ class Molecule(_SireWrapper):
                 elif isinstance(x, _Length):
                     vec.append(x.angstroms().value())
                 else:
-                    raise TypeError("'vector' must contain 'int', 'float', or "
-                                    "'BioSimSpace.Types.Length' types only!")
+                    raise TypeError(
+                        "'vector' must contain 'int', 'float', or "
+                        "'BioSimSpace.Types.Length' types only!"
+                    )
         else:
             raise TypeError("'vector' must be of type 'list' or 'tuple'")
 
@@ -1250,47 +1353,57 @@ class Molecule(_SireWrapper):
         if self._is_perturbable:
             # lambda = 0
             _property_map["coordinates"] = "coordinates0"
-            mol = self._sire_object.move().translate(_SireMaths.Vector(vec), _property_map).commit()
+            mol = (
+                self._sire_object.move()
+                .translate(_SireMaths.Vector(vec), _property_map)
+                .commit()
+            )
 
             # lambda = 1
             _property_map["coordinates"] = "coordinates1"
             mol = mol.move().translate(_SireMaths.Vector(vec), _property_map).commit()
 
         else:
-            mol = self._sire_object.move().translate(_SireMaths.Vector(vec), _property_map).commit()
+            mol = (
+                self._sire_object.move()
+                .translate(_SireMaths.Vector(vec), _property_map)
+                .commit()
+            )
 
         # Update the internal molecule object.
         self._sire_object = mol
 
-    def repartitionHydrogenMass(self, factor=4, water="no",
-            use_coordinates=False, property_map={}):
-        """Redistrubute mass of heavy atoms connected to bonded hydrogens into
-           the hydrogen atoms. This allows the use of larger simulation
-           integration time steps without encountering instabilities related
-           to high-frequency hydrogen motion.
+    def repartitionHydrogenMass(
+        self, factor=4, water="no", use_coordinates=False, property_map={}
+    ):
+        """
+        Redistrubute mass of heavy atoms connected to bonded hydrogens into
+        the hydrogen atoms. This allows the use of larger simulation
+        integration time steps without encountering instabilities related
+        to high-frequency hydrogen motion.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           factor : float
-               The repartioning scale factor. Hydrogen masses are scaled by this
-               amount.
+        factor : float
+            The repartioning scale factor. Hydrogen masses are scaled by this
+            amount.
 
-           water : str
-               Whether to repartition masses for water molecules. Options are
-               "yes", "no", and "exclusive", which can be used to repartition
-               masses for water molecules only.
+        water : str
+            Whether to repartition masses for water molecules. Options are
+            "yes", "no", and "exclusive", which can be used to repartition
+            masses for water molecules only.
 
-           use_coordinates : bool
-               Whether to use the current molecular coordinates to work out
-               the connectivity before repartitioning. If False, the information
-               from the molecular topology, e.g. force field, will be used, if
-               present.
+        use_coordinates : bool
+            Whether to use the current molecular coordinates to work out
+            the connectivity before repartitioning. If False, the information
+            from the molecular topology, e.g. force field, will be used, if
+            present.
 
-           property_map : dict
-               A dictionary that maps system "properties" to their user defined
-               values. This allows the user to refer to properties with their
-               own naming scheme, e.g. { "charge" : "my-charge" }
+        property_map : dict
+            A dictionary that maps system "properties" to their user defined
+            values. This allows the user to refer to properties with their
+            own naming scheme, e.g. { "charge" : "my-charge" }
         """
 
         # Convert int to float.
@@ -1311,10 +1424,7 @@ class Molecule(_SireWrapper):
         water = water.replace(" ", "").lower()
 
         # Allowed options and mapping to Sire flag.
-        water_options = {"no" : 0,
-                         "yes" : 1,
-                         "exclusive" : 2
-                        }
+        water_options = {"no": 0, "yes": 1, "exclusive": 2}
 
         if water not in water_options:
             water_string = ", ".join(f"'{x}'" for x in water_options)
@@ -1335,25 +1445,60 @@ class Molecule(_SireWrapper):
 
         # Handle perturbable molecules separately.
         if self.isPerturbable():
+            # Search for dummies in both end states.
+            try:
+                dummies0 = self.search(
+                    "element Xx", property_map={"element": "element0"}
+                )
+            except:
+                dummies0 = []
+            try:
+                dummies1 = self.search(
+                    "element Xx", property_map={"element": "element1"}
+                )
+            except:
+                dummies1 = []
+
             # Repartition masses for the lambda=0 state.
-            pmap = { "mass"         : "mass0",
-                     "element"      : "element0",
-                     "coordinates"  : "coordinates0"
-                   }
+            pmap = {
+                "mass": "mass0",
+                "element": "element0",
+                "coordinates": "coordinates0",
+            }
             self._sire_object = _SireIO.repartitionHydrogenMass(
-                    self._sire_object, factor, water_options[water], pmap)
+                self._sire_object, factor, water_options[water], pmap
+            )
 
             # Repartition masses for the lambda=1 state.
-            pmap = { "mass"         : "mass1",
-                     "element"      : "element1",
-                     "coordinates"  : "coordinates1"
-                   }
+            pmap = {
+                "mass": "mass1",
+                "element": "element1",
+                "coordinates": "coordinates1",
+            }
             self._sire_object = _SireIO.repartitionHydrogenMass(
-                    self._sire_object, factor, water_options[water], pmap)
+                self._sire_object, factor, water_options[water], pmap
+            )
+
+            # Now replace atom dummy atom masses with the reparitioned mass
+            # from the opposite end state.
+
+            edit_mol = self._sire_object.edit()
+
+            for dummy in dummies0:
+                idx = dummy._sire_object.index()
+                mass1 = self._sire_object.atom(idx).property("mass1")
+                edit_mol = edit_mol.atom(idx).setProperty("mass0", mass1).molecule()
+            for dummy in dummies1:
+                idx = dummy._sire_object.index()
+                mass0 = self._sire_object.atom(idx).property("mass0")
+                edit_mol = edit_mol.atom(idx).setProperty("mass1", mass0).molecule()
+
+            self._sire_object = edit_mol.commit()
 
         else:
             self._sire_object = _SireIO.repartitionHydrogenMass(
-                    self._sire_object, factor, water_options[water], pmap)
+                self._sire_object, factor, water_options[water], pmap
+            )
 
     def _getPropertyMap0(self):
         """Generate a property map for the lambda = 0 state of the merged molecule."""
@@ -1387,7 +1532,9 @@ class Molecule(_SireWrapper):
             mol0 = self._sire_object.property("molecule0")
             mol1 = self._sire_object.property("molecule1")
         except:
-            raise _IncompatibleError("The merged molecule doesn't have the required properties!")
+            raise _IncompatibleError(
+                "The merged molecule doesn't have the required properties!"
+            )
 
         # Store the components.
         self._molecule0 = Molecule(mol0)
@@ -1397,22 +1544,25 @@ class Molecule(_SireWrapper):
         self._is_perturbable = True
 
     def _fixCharge(self, property_map={}):
-        """Make the molecular charge an integer value.
+        """
+        Make the molecular charge an integer value.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           property_map : dict
-               A dictionary that maps "properties" in this molecule to their
-               user defined values. This allows the user to refer to properties
-               with their own naming scheme, e.g. { "charge" : "my-charge" }
+        property_map : dict
+            A dictionary that maps "properties" in this molecule to their
+            user defined values. This allows the user to refer to properties
+            with their own naming scheme, e.g. { "charge" : "my-charge" }
         """
 
         # Get the user defined charge property.
         prop = property_map.get("charge", "charge")
 
         if not self._sire_object.hasProperty(prop):
-            raise _IncompatibleError("Molecule does not have charge property: '%s'." % prop)
+            raise _IncompatibleError(
+                "Molecule does not have charge property: '%s'." % prop
+            )
 
         # Calculate the charge.
         charge = self.charge(property_map=property_map).value()
@@ -1436,39 +1586,43 @@ class Molecule(_SireWrapper):
         for atom in edit_mol.atoms():
             charge = edit_mol.atom(atom.index()).property(prop).value()
             charge = -(charge + delta)
-            edit_mol = edit_mol.atom(atom.index()) \
-                               .setProperty(prop, charge * _SireUnits.e_charge) \
-                               .molecule()
+            edit_mol = (
+                edit_mol.atom(atom.index())
+                .setProperty(prop, charge * _SireUnits.e_charge)
+                .molecule()
+            )
 
         # Update the Sire molecule.
         self._sire_object = edit_mol.commit()
 
-    def _toRegularMolecule(self, property_map={},
-            is_lambda1=False, convert_amber_dummies=False):
-        """Internal function to convert a merged molecule to a regular molecule.
+    def _toRegularMolecule(
+        self, property_map={}, is_lambda1=False, convert_amber_dummies=False
+    ):
+        """
+        Internal function to convert a merged molecule to a regular molecule.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           property_map : dict
-               A dictionary that maps system "properties" to their user defined
-               values. This allows the user to refer to properties with their
-               own naming scheme, e.g. { "charge" : "my-charge" }
+        property_map : dict
+            A dictionary that maps system "properties" to their user defined
+            values. This allows the user to refer to properties with their
+            own naming scheme, e.g. { "charge" : "my-charge" }
 
-           is_lambda1 : bool
-               Whether to use the molecule at the lambda = 1 end state.
-               By default, the state at lambda = 0 is used.
+        is_lambda1 : bool
+            Whether to use the molecule at the lambda = 1 end state.
+            By default, the state at lambda = 0 is used.
 
-           convert_amber_dummies : bool
-               Whether to convert dummies to the correct AMBER formatting for
-               non-FEP simulations. This will replace the "du" ambertype
-               and "Xx" element with the properties from the other end state.
+        convert_amber_dummies : bool
+            Whether to convert dummies to the correct AMBER formatting for
+            non-FEP simulations. This will replace the "du" ambertype
+            and "Xx" element with the properties from the other end state.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           molecule : BioSimSpace._SireWrappers.Molecule
-               The molecule at the chosen end state.
+        molecule : BioSimSpace._SireWrappers.Molecule
+            The molecule at the chosen end state.
         """
 
         if not isinstance(is_lambda1, bool):
@@ -1541,10 +1695,16 @@ class Molecule(_SireWrapper):
 
                 # Replace the ambertype.
                 for dummy in search:
-                    mol = mol.atom(dummy.index()) \
-                             .setProperty(amber_type, amber_types[dummy.index().value()]).molecule()
-                    mol = mol.atom(dummy.index()) \
-                             .setProperty(element, elements[dummy.index().value()]).molecule()
+                    mol = (
+                        mol.atom(dummy.index())
+                        .setProperty(amber_type, amber_types[dummy.index().value()])
+                        .molecule()
+                    )
+                    mol = (
+                        mol.atom(dummy.index())
+                        .setProperty(element, elements[dummy.index().value()])
+                        .molecule()
+                    )
 
                 # Delete redundant properties.
                 mol = mol.removeProperty("ambertype0").molecule()
@@ -1556,30 +1716,31 @@ class Molecule(_SireWrapper):
         return Molecule(mol.commit())
 
     def _extractMolecule(self, property_map={}, is_lambda1=False):
-        """Internal function to extract an "original" molecule from a merged
-           molecule, i.e. one of the original molecules that was used to
-           create the merge.
+        """
+        Internal function to extract an "original" molecule from a merged
+        molecule, i.e. one of the original molecules that was used to
+        create the merge.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           property_map : dict
-               A dictionary that maps system "properties" to their user defined
-               values. This allows the user to refer to properties with their
-               own naming scheme, e.g. { "charge" : "my-charge" }
+        property_map : dict
+            A dictionary that maps system "properties" to their user defined
+            values. This allows the user to refer to properties with their
+            own naming scheme, e.g. { "charge" : "my-charge" }
 
-           is_lambda1 : bool
-               Whether to use the molecule at the lambda = 1 end state.
-               By default, the state at lambda = 0 is used.
+        is_lambda1 : bool
+            Whether to use the molecule at the lambda = 1 end state.
+            By default, the state at lambda = 0 is used.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           molecule : BioSimSpace._SireWrappers.Molecule
-               The molecule at the chosen end state, with dummy atoms removed.
+        molecule : BioSimSpace._SireWrappers.Molecule
+            The molecule at the chosen end state, with dummy atoms removed.
 
-           dummy_indices : [ int ]
-               The indices of any dummy atoms in the original molecule.
+        dummy_indices : [ int ]
+            The indices of any dummy atoms in the original molecule.
         """
 
         if not isinstance(is_lambda1, bool):
@@ -1625,32 +1786,38 @@ class Molecule(_SireWrapper):
             return mol.extract(non_dummies), dummies
 
     def _getPerturbationIndices(self):
-        """Return the indices of the atoms that are perturbed, i.e. those
-           that change one of the following properties: "ambertype", "LJ",
-           or "charge".
+        """
+        Return the indices of the atoms that are perturbed, i.e. those
+        that change one of the following properties: "ambertype", "LJ",
+        or "charge".
 
-           Returns
-           -------
+        Returns
+        -------
 
-           idxs : [int]
-               The indices of the atoms that are perturbed.
+        idxs : [int]
+            The indices of the atoms that are perturbed.
         """
 
         idxs = []
 
         if not self._is_perturbable:
-            _warn("You are trying to get the perturbation indices for a "
-                  "molecule that isn't perturbable!")
+            _warn(
+                "You are trying to get the perturbation indices for a "
+                "molecule that isn't perturbable!"
+            )
             return idxs
 
         for idx, atom in enumerate(self.getAtoms()):
             atom = atom._sire_object
-            if atom.property("ambertype0") != atom.property("ambertype1") or \
-               atom.property("LJ0") != atom.property("LJ1")               or \
-               atom.property("charge0") != atom.property("charge1"):
-               idxs.append(idx)
+            if (
+                atom.property("ambertype0") != atom.property("ambertype1")
+                or atom.property("LJ0") != atom.property("LJ1")
+                or atom.property("charge0") != atom.property("charge1")
+            ):
+                idxs.append(idx)
 
         return idxs
+
 
 # Import at bottom of module to avoid circular dependency.
 from ._atom import Atom as _Atom

@@ -3,10 +3,12 @@ import BioSimSpace as BSS
 import math
 import pytest
 
+
 @pytest.fixture
 def system(scope="session"):
     """Re-use the same molecuar system for each test."""
     return BSS.IO.readMolecules("test/input/amber/ala/*")
+
 
 # Parameterise the function with a set of molecule indices.
 @pytest.mark.parametrize("index", [0, -1])
@@ -14,6 +16,7 @@ def test_molecule_equivalence(system, index):
     # Make sure that we get the same molecule, however we extract it from
     # the system.
     assert system[index] == system.getMolecules()[index] == system.getMolecule(index)
+
 
 def test_iterators(system):
     # Iterate over all molecules in the system, either directly,
@@ -36,11 +39,12 @@ def test_iterators(system):
     # Iterate over the search result and make sure we match all molecules.
     for idx, mol in enumerate(search_result):
         # Sire automatically converts objects to their smallest types
-        # (e.g. residue, atom etc.)
+        # (e.g. residue, atom etc.)
         if hasattr(mol, "toMolecule"):
             mol = mol.toMolecule()
 
         assert mol == system[idx] == molecules[idx] == system.getMolecule(idx)
+
 
 def test_atom_reindexing(system):
     # Search for all oxygen atoms in water molecules water molecules within
@@ -61,6 +65,7 @@ def test_atom_reindexing(system):
         # Increment the index. (3-point water.)
         index += 3
 
+
 def test_residue_reindexing(system):
     # Search for all waters by residue name.
     results = system.search("resname WAT")
@@ -77,6 +82,7 @@ def test_residue_reindexing(system):
         assert system.getIndex(residue) == index
 
         index += 1
+
 
 def test_molecule_reindexing(system):
     # Search for all waters by residue name.
@@ -97,6 +103,7 @@ def test_molecule_reindexing(system):
         assert system.getIndex(residue.toMolecule()) == index
 
         index += 1
+
 
 def test_contains(system):
     # Extract the first molecule.
@@ -131,6 +138,7 @@ def test_contains(system):
     # Make sure the atom isn't in the residue.
     assert a not in r
 
+
 def test_contains_combine(system):
     # Extract the first two molecules.
     m0 = system[0]
@@ -146,6 +154,7 @@ def test_contains_combine(system):
     assert m0 in s1
     assert m1 in s0
     assert m1 in s1
+
 
 def test_get_atom(system):
     # Make sure atom extraction works using absolute or relative indices,
@@ -163,12 +172,14 @@ def test_get_atom(system):
     assert system.getAtom(22) == system[7].getAtoms()[1]
     assert system.getAtom(1883) == system[-1].getAtoms()[-1]
 
+
 def test_get_residue(system):
     # Make sure residue extraction works using absolute or relative indices,
     # i.e. absolute within the system, or relative to a molecule.
     assert system.getResidue(0) == system[0].getResidues()[0]
     assert system.getResidue(3) == system[1].getResidues()[0]
     assert system.getResidue(632) == system[-1].getResidues()[-1]
+
 
 def test_molecule_reordering(system):
     # Make sure that molecules are added to a container in the correct order.
@@ -183,11 +194,40 @@ def test_molecule_reordering(system):
 
 
 # Parameterise the function with a set of molecule indices.
-@pytest.mark.parametrize("restraint, expected",
-                       [("backbone", [4, 5, 6, 8, 14, 15, 16]),
-                        ("heavy", [1, 4, 5, 6, 8, 10, 14, 15, 16, 18]),
-                        ("all", [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21])
-                       ])
+@pytest.mark.parametrize(
+    "restraint, expected",
+    [
+        ("backbone", [4, 5, 6, 8, 14, 15, 16]),
+        ("heavy", [1, 4, 5, 6, 8, 10, 14, 15, 16, 18]),
+        (
+            "all",
+            [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                20,
+                21,
+            ],
+        ),
+    ],
+)
 def test_restraint_atoms(system, restraint, expected):
     # Get the restraint atoms for the specicied restraint.
     atoms = system.getRestraintAtoms(restraint)
@@ -200,6 +240,7 @@ def test_restraint_atoms(system, restraint, expected):
 
     # Make sure the indices are as expected.
     assert atoms == expected
+
 
 def test_get_box(system):
     # Get the box dimensions and angles from the system.
@@ -217,9 +258,10 @@ def test_get_box(system):
     for a0, a1 in zip(angles, expected_angles):
         assert math.isclose(a0.value(), a1.value(), rel_tol=1e-4)
 
+
 def test_set_box(system):
     # Generate box dimensions and angles for a truncated octahedron.
-    box, angles = BSS.Box.truncatedOctahedron(30*BSS.Units.Length.angstrom)
+    box, angles = BSS.Box.truncatedOctahedron(30 * BSS.Units.Length.angstrom)
 
     # Set the box dimensions in the system.
     system.setBox(box, angles)
@@ -240,6 +282,7 @@ def test_set_box(system):
     # Check that the angles match.
     for a0, a1 in zip(angles, expected_angles):
         assert math.isclose(a0.value(), a1.value(), rel_tol=1e-4)
+
 
 def test_molecule_replace(system):
     # Make sure that molecule ordering is preserved when a molecule is

@@ -1,13 +1,13 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2022
+# Copyright: 2017-2023
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
 # BioSimSpace is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 2 of the License, or
+# the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
 # BioSimSpace is distributed in the hope that it will be useful,
@@ -19,97 +19,102 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-"""
-An area type.
-"""
+"""An area type."""
 
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Area"]
 
-from sire import units as _SireUnits
+from sire.legacy import Units as _SireUnits
 
 from ._type import Type as _Type
+
 
 class Area(_Type):
     """An area type."""
 
     # A list of the supported Sire unit names.
-    _sire_units = ["meter2",
-                   "nanometer2",
-                   "angstrom2",
-                   "picometer2"]
+    _sire_units = ["meter2", "nanometer2", "angstrom2", "picometer2"]
 
     # Dictionary of allowed units.
-    _supported_units = { "METER2"      : _SireUnits.meter2,
-                         "NANOMETER2"  : _SireUnits.nanometer2,
-                         "ANGSTROM2"   : _SireUnits.angstrom2,
-                         "PICOMETER2"  : _SireUnits.picometer2 }
+    _supported_units = {
+        "METER2": _SireUnits.meter2,
+        "NANOMETER2": _SireUnits.nanometer2,
+        "ANGSTROM2": _SireUnits.angstrom2,
+        "PICOMETER2": _SireUnits.picometer2,
+    }
 
     # Map unit abbreviations to the full name.
-    _abbreviations = { "M2"  : "METER2",
-                       "NM2" : "NANOMETER2",
-                       "A2"  : "ANGSTROM2",
-                       "PM2" : "PICOMETER2" }
+    _abbreviations = {
+        "M2": "METER2",
+        "NM2": "NANOMETER2",
+        "A2": "ANGSTROM2",
+        "PM2": "PICOMETER2",
+    }
 
     # Print format.
-    _print_format = { "METER2"      : "m^2",
-                      "NANOMETER2"  : "nm^2",
-                      "ANGSTROM2"   : "A^2",
-                      "PICOMETER2"  : "pm^2" }
+    _print_format = {
+        "METER2": "m^2",
+        "NANOMETER2": "nm^2",
+        "ANGSTROM2": "A^2",
+        "PICOMETER2": "pm^2",
+    }
 
     # Documentation strings.
-    _doc_strings = { "METER2"      : "An area in square meters.",
-                     "NANOMETER2"  : "An area in square nanometers.",
-                     "ANGSTROM2"   : "An area in square Angstrom.",
-                     "PICOMETER2"  : "An area in square picometers." }
+    _doc_strings = {
+        "METER2": "An area in square meters.",
+        "NANOMETER2": "An area in square nanometers.",
+        "ANGSTROM2": "An area in square Angstrom.",
+        "PICOMETER2": "An area in square picometers.",
+    }
 
     # Null type unit for avoiding issue printing configargparse help.
     _default_unit = "ANGSTROM2"
 
-    # The dimension mask.
-    #              Angle, Charge, Length, Mass, Quantity, Temperature, Time
-    _dimensions = (    0,      0,      2,    0,        0,           0,    0)
+    # The dimension mask:
+    #     Angle, Charge, Length, Mass, Quantity, Temperature, Time
+    _dimensions = (0, 0, 2, 0, 0, 0, 0)
 
     def __init__(self, *args):
-        """Constructor.
+        """
+        Constructor.
 
-           ``*args`` can be a value and unit, or a string representation
-           of the area, e.g. "30 nm^2".
+        ``*args`` can be a value and unit, or a string representation
+        of the area, e.g. "30 nm^2".
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           value : float
-               The value.
+        value : float
+            The value.
 
-           unit : str
-               The unit.
+        unit : str
+            The unit.
 
-           string : str
-               A string representation of the area.
+        string : str
+            A string representation of the area.
 
-           Examples
-           --------
+        Examples
+        --------
 
-           Create an object representing an area of 30 square nanometers then
-           print the area in square Angstrom.
+        Create an object representing an area of 30 square nanometers then
+        print the area in square Angstrom.
 
-           >>> import BioSimSpace as BSS
-           >>> area = BSS.Types.Area(30, "nm^2")
-           >>> print(area.angstroms2())
+        >>> import BioSimSpace as BSS
+        >>> area = BSS.Types.Area(30, "nm^2")
+        >>> print(area.angstroms2())
 
-           The same as above, except passing a string representation of the
-           area to the constructor.
+        The same as above, except passing a string representation of the
+        area to the constructor.
 
-           >>> import BioSimSpace as BSS
-           >>> area = BSS.Types.Area("30 nm^2")
-           >>> print(area.angstroms2())
+        >>> import BioSimSpace as BSS
+        >>> area = BSS.Types.Area("30 nm^2")
+        >>> print(area.angstroms2())
 
-           The string matching is extremeley flexible, so all of the following
-           would be valid arguments: "30 nm^2", "30 square nanometers",
-           "30 nanometers squared".
+        The string matching is extremeley flexible, so all of the following
+        would be valid arguments: "30 nm^2", "30 square nanometers",
+        "30 nanometers squared".
         """
 
         # Call the base class constructor.
@@ -142,6 +147,7 @@ class Area(_Type):
         # Multiplication by another type.
         elif isinstance(other, _Type):
             from ._general_unit import GeneralUnit as _GeneralUnit
+
             return _GeneralUnit(self._to_sire_unit() * other._to_sire_unit())
 
         # Multiplication by a string.
@@ -150,11 +156,15 @@ class Area(_Type):
                 length = _Length(other)
                 return self * length
             except:
-                raise ValueError("Could not convert the string to a 'BioSimSpace.Types.Length'")
+                raise ValueError(
+                    "Could not convert the string to a 'BioSimSpace.Types.Length'"
+                )
 
         else:
-            raise TypeError("unsupported operand type(s) for *: '%s' and '%s'"
-                % (self.__class__.__qualname__, other.__class__.__qualname__))
+            raise TypeError(
+                "unsupported operand type(s) for *: '%s' and '%s'"
+                % (self.__class__.__qualname__, other.__class__.__qualname__)
+            )
 
     def __rmul__(self, other):
         """Multiplication operator."""
@@ -186,6 +196,7 @@ class Area(_Type):
         # Division by another type.
         elif isinstance(other, _Type):
             from ._general_unit import GeneralUnit as _GeneralUnit
+
             return _GeneralUnit(self._to_sire_unit() / other._to_sire_unit())
 
         # Division by a string.
@@ -198,71 +209,92 @@ class Area(_Type):
                     area = Area(other)
                     return self / area
                 except:
-                    raise ValueError("Could not convert the string to a "
-                                     "'BioSimSpace.Types.Length' or a 'BioSimSpace.Types.Area'.")
+                    raise ValueError(
+                        "Could not convert the string to a "
+                        "'BioSimSpace.Types.Length' or a 'BioSimSpace.Types.Area'."
+                    )
 
         else:
-            raise TypeError("unsupported operand type(s) for /: '%s' and '%s'"
-                % (self.__class__.__qualname__, other.__class__.__qualname__))
+            raise TypeError(
+                "unsupported operand type(s) for /: '%s' and '%s'"
+                % (self.__class__.__qualname__, other.__class__.__qualname__)
+            )
 
     def meters2(self):
-        """Return the area in square meters.
-
-           Returns
-           -------
-
-           area : :class:`Area <BioSimSpace.Types.Area>`
-               The area in square meters.
         """
-        return Area((self._value * self._supported_units[self._unit]).to(_SireUnits.meter2), "METER2")
+        Return the area in square meters.
+
+        Returns
+        -------
+
+        area : :class:`Area <BioSimSpace.Types.Area>`
+            The area in square meters.
+        """
+        return Area(
+            (self._value * self._supported_units[self._unit]).to(_SireUnits.meter2),
+            "METER2",
+        )
 
     def nanometers2(self):
-        """Return the area in square nanometers.
-
-           Returns
-           -------
-
-           area : :class:`Area <BioSimSpace.Types.Area>`
-               The area in square nanometers.
         """
-        return Area((self._value * self._supported_units[self._unit]).to(_SireUnits.nanometer2), "NANOMETER2")
+        Return the area in square nanometers.
+
+        Returns
+        -------
+
+        area : :class:`Area <BioSimSpace.Types.Area>`
+            The area in square nanometers.
+        """
+        return Area(
+            (self._value * self._supported_units[self._unit]).to(_SireUnits.nanometer2),
+            "NANOMETER2",
+        )
 
     def angstroms2(self):
-        """Return the area in square Angstrom.
-
-           Returns
-           -------
-
-           area : :class:`Area <BioSimSpace.Types.Area>`
-               The area in square Angstrom.
         """
-        return Area((self._value * self._supported_units[self._unit]).to(_SireUnits.angstrom2), "ANGSTROM2")
+        Return the area in square Angstrom.
+
+        Returns
+        -------
+
+        area : :class:`Area <BioSimSpace.Types.Area>`
+            The area in square Angstrom.
+        """
+        return Area(
+            (self._value * self._supported_units[self._unit]).to(_SireUnits.angstrom2),
+            "ANGSTROM2",
+        )
 
     def picometers2(self):
-        """Return the area in square picometers.
-
-           Returns
-           -------
-
-           area : :class:`Area <BioSimSpace.Types.Area>`
-               The area in square picometers.
         """
-        return Area((self._value * self._supported_units[self._unit]).to(_SireUnits.picometer2), "PICOMETER2")
+        Return the area in square picometers.
+
+        Returns
+        -------
+
+        area : :class:`Area <BioSimSpace.Types.Area>`
+            The area in square picometers.
+        """
+        return Area(
+            (self._value * self._supported_units[self._unit]).to(_SireUnits.picometer2),
+            "PICOMETER2",
+        )
 
     def _to_default_unit(self, mag=None):
-        """Internal method to return an object of the same type in the default unit.
+        """
+        Internal method to return an object of the same type in the default unit.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           mag : float
-               The value (optional).
+        mag : float
+            The value (optional).
 
-           Returns
-           -------
+        Returns
+        -------
 
-           area : :class:`Area <BioSimSpace.Types.Area>`
-               The area in the default unit of square Angstrom.
+        area : :class:`Area <BioSimSpace.Types.Area>`
+            The area in the default unit of square Angstrom.
         """
         if mag is None:
             return self.angstroms2()
@@ -270,19 +302,20 @@ class Area(_Type):
             return Area(mag, "ANGSTROM2")
 
     def _convert_to(self, unit):
-        """Return the area in a different unit.
+        """
+        Return the area in a different unit.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           unit : str
-               The unit to convert to.
+        unit : str
+            The unit to convert to.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           area : :class:`Area <BioSimSpace.Types.Area>`
-               The area in the specified unit.
+        area : :class:`Area <BioSimSpace.Types.Area>`
+            The area in the specified unit.
         """
         if unit == "METER2":
             return self.meters2()
@@ -293,7 +326,9 @@ class Area(_Type):
         elif unit == "PICOMETER2":
             return self.picometers2()
         else:
-            raise ValueError("Supported units are: '%s'" % list(self._supported_units.keys()))
+            raise ValueError(
+                "Supported units are: '%s'" % list(self._supported_units.keys())
+            )
 
     def _validate_unit(self, unit):
         """Validate that the unit is supported."""
@@ -322,7 +357,7 @@ class Area(_Type):
         # to write, e.g. "square nm" or "nm squared".
         index = unit.find("2")
         if index != -1:
-            unit = unit[0:index] + unit[index+1:] + "2"
+            unit = unit[0:index] + unit[index + 1 :] + "2"
 
         # Check that the unit is supported.
         if unit in self._supported_units:
@@ -330,23 +365,26 @@ class Area(_Type):
         elif unit in self._abbreviations:
             return self._abbreviations[unit]
         else:
-            raise ValueError("Supported units are: '%s'" % list(self._supported_units.keys()))
+            raise ValueError(
+                "Supported units are: '%s'" % list(self._supported_units.keys())
+            )
 
     @staticmethod
     def _to_sire_format(unit):
-        """Reformat the unit string so it adheres to the Sire unit formatting.
+        """
+        Reformat the unit string so it adheres to the Sire unit formatting.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           unit : str
-               A string representation of the unit.
+        unit : str
+            A string representation of the unit.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           sire_unit : str
-               The unit string in Sire compatible format.
+        sire_unit : str
+            The unit string in Sire compatible format.
         """
 
         unit = unit.replace("angstroms", "angstrom")
@@ -361,6 +399,7 @@ class Area(_Type):
         unit = unit.replace("meter-2", "(1/meter2)")
 
         return unit
+
 
 # Import at bottom of module to avoid circular dependency.
 from ._length import Length as _Length

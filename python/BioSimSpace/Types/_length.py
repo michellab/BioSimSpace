@@ -1,13 +1,13 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2022
+# Copyright: 2017-2023
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
 # BioSimSpace is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 2 of the License, or
+# the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
 # BioSimSpace is distributed in the hope that it will be useful,
@@ -19,106 +19,116 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-"""
-A length type.
-"""
+"""A length type."""
 
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Length"]
 
-from sire import units as _SireUnits
+from sire.legacy import Units as _SireUnits
 
 from ._type import Type as _Type
+
 
 class Length(_Type):
     """A length type."""
 
     # A list of the supported Sire unit names.
-    _sire_units = ["meter",
-                   "centimeter",
-                   "millimeter",
-                   "nanometer",
-                   "angstrom",
-                   "picometer"]
+    _sire_units = [
+        "meter",
+        "centimeter",
+        "millimeter",
+        "nanometer",
+        "angstrom",
+        "picometer",
+    ]
 
     # Dictionary of allowed units.
-    _supported_units = { "METER"      : _SireUnits.meter,
-                         "CENTIMETER" : _SireUnits.centimeter,
-                         "MILLIMETER" : _SireUnits.millimeter,
-                         "NANOMETER"  : _SireUnits.nanometer,
-                         "ANGSTROM"   : _SireUnits.angstrom,
-                         "PICOMETER"  : _SireUnits.picometer }
+    _supported_units = {
+        "METER": _SireUnits.meter,
+        "CENTIMETER": _SireUnits.centimeter,
+        "MILLIMETER": _SireUnits.millimeter,
+        "NANOMETER": _SireUnits.nanometer,
+        "ANGSTROM": _SireUnits.angstrom,
+        "PICOMETER": _SireUnits.picometer,
+    }
 
     # Map unit abbreviations to the full name.
-    _abbreviations = { "M"  : "METER",
-                       "CM" : "CENTIMETER",
-                       "MM" : "MILLIMETER",
-                       "NM" : "NANOMETER",
-                       "A"  : "ANGSTROM",
-                       "PM" : "PICOMETER" }
+    _abbreviations = {
+        "M": "METER",
+        "CM": "CENTIMETER",
+        "MM": "MILLIMETER",
+        "NM": "NANOMETER",
+        "A": "ANGSTROM",
+        "PM": "PICOMETER",
+    }
 
     # Print format.
-    _print_format = { "METER"      : "m",
-                      "CENTIMETER" : "cm",
-                      "MILLIMETER" : "mm",
-                      "NANOMETER"  : "nm",
-                      "ANGSTROM"   : "A",
-                      "PICOMETER"  : "pm" }
+    _print_format = {
+        "METER": "m",
+        "CENTIMETER": "cm",
+        "MILLIMETER": "mm",
+        "NANOMETER": "nm",
+        "ANGSTROM": "A",
+        "PICOMETER": "pm",
+    }
 
     # Documentation strings.
-    _doc_strings = { "METER"      : "A length in meters.",
-                     "CENTIMETER" : "A length in centimeters.",
-                     "MILLIMETER" : "A length in millimeters.",
-                     "NANOMETER"  : "A length in nanometers.",
-                     "ANGSTROM"   : "A length in Angstrom.",
-                     "PICOMETER"  : "A length in picometers." }
+    _doc_strings = {
+        "METER": "A length in meters.",
+        "CENTIMETER": "A length in centimeters.",
+        "MILLIMETER": "A length in millimeters.",
+        "NANOMETER": "A length in nanometers.",
+        "ANGSTROM": "A length in Angstrom.",
+        "PICOMETER": "A length in picometers.",
+    }
 
     # Null type unit for avoiding issue printing configargparse help.
     _default_unit = "ANGSTROM"
 
-    # The dimension mask.
-    #              Angle, Charge, Length, Mass, Quantity, Temperature, Time
-    _dimensions = (    0,      0,      1,    0,        0,           0,    0)
+    # The dimension mask:
+    #     Angle, Charge, Length, Mass, Quantity, Temperature, Time
+    _dimensions = (0, 0, 1, 0, 0, 0, 0)
 
     def __init__(self, *args):
-        """Constructor.
+        """
+        Constructor.
 
-           ``*args`` can be a value and unit, or a string representation
-           of the length, e.g. "12 Angstrom".
+        ``*args`` can be a value and unit, or a string representation
+        of the length, e.g. "12 Angstrom".
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           value : float
-               The value.
+        value : float
+            The value.
 
-           unit : str
-               The unit.
+        unit : str
+            The unit.
 
-           string : str
-               A string representation of the length.
+        string : str
+            A string representation of the length.
 
-           Examples
-           --------
+        Examples
+        --------
 
-           Create an object representing a length of 148.6 Angstrom then
-           print the length in nanometers.
+        Create an object representing a length of 148.6 Angstrom then
+        print the length in nanometers.
 
-           >>> import BioSimSpace as BSS
-           >>> length = BSS.Types.Length(148.6, "A")
-           >>> print(length.nanometers())
+        >>> import BioSimSpace as BSS
+        >>> length = BSS.Types.Length(148.6, "A")
+        >>> print(length.nanometers())
 
-           The same as above, except passing a string representation of the
-           length to the constructor.
+        The same as above, except passing a string representation of the
+        length to the constructor.
 
-           >>> import BioSimSpace as BSS
-           >>> length = BSS.Types.Length("148.6 A")
-           >>> print(length.nanometers())
+        >>> import BioSimSpace as BSS
+        >>> length = BSS.Types.Length("148.6 A")
+        >>> print(length.nanometers())
 
-           The string matching is extremeley flexible, so all of the following
-           would be valid arguments: "148.6 A", "148.6 angstrom", "1.48e2 Angstrom".
+        The string matching is extremeley flexible, so all of the following
+        would be valid arguments: "148.6 A", "148.6 angstrom", "1.48e2 Angstrom".
         """
 
         # Call the base class constructor.
@@ -156,6 +166,7 @@ class Length(_Type):
         # Multiplication by another type.
         elif isinstance(other, _Type):
             from ._general_unit import GeneralUnit as _GeneralUnit
+
             return _GeneralUnit(self._to_sire_unit() * other._to_sire_unit())
 
         # Multiplication by a string.
@@ -168,10 +179,15 @@ class Length(_Type):
                     area = _Area(other)
                     return self * area
                 except:
-                    raise ValueError("Could not convert the string to a 'BioSimSpace.Length' "
-                                     "or 'BioSimSpace.Area' type.")
+                    raise ValueError(
+                        "Could not convert the string to a 'BioSimSpace.Length' "
+                        "or 'BioSimSpace.Area' type."
+                    )
         else:
-            raise TypeError("unsupported operand type(s) for *: '%s' and '%s'" % (type(self), type(other)))
+            raise TypeError(
+                "unsupported operand type(s) for *: '%s' and '%s'"
+                % (type(self), type(other))
+            )
 
     def __rmul__(self, other):
         """Multiplication operator."""
@@ -191,97 +207,122 @@ class Length(_Type):
 
         # Area.
         if other == 2:
-            mag = self.angstroms().value()**2
+            mag = self.angstroms().value() ** 2
             return _Area(mag, "A2")
 
         # Volume.
         if other == 3:
-            mag = self.angstroms().value()**3
+            mag = self.angstroms().value() ** 3
             return _Volume(mag, "A3")
 
         else:
             return super().__pow__(other)
 
     def meters(self):
-        """Return the length in meters.
-
-           Returns
-           -------
-
-           length : :class:`Length <BioSimSpace.Types.Length>`
-               The length in meters.
         """
-        return Length((self._value * self._supported_units[self._unit]).to(_SireUnits.meter), "METER")
+        Return the length in meters.
+
+        Returns
+        -------
+
+        length : :class:`Length <BioSimSpace.Types.Length>`
+            The length in meters.
+        """
+        return Length(
+            (self._value * self._supported_units[self._unit]).to(_SireUnits.meter),
+            "METER",
+        )
 
     def centimeters(self):
-        """Return the length in centimeters.
-
-           Returns
-           -------
-
-           length : :class:`Length <BioSimSpace.Types.Length>`
-               The length in centimeters.
         """
-        return Length((self._value * self._supported_units[self._unit]).to(_SireUnits.centimeter), "CENTIMETER")
+        Return the length in centimeters.
+
+        Returns
+        -------
+
+        length : :class:`Length <BioSimSpace.Types.Length>`
+            The length in centimeters.
+        """
+        return Length(
+            (self._value * self._supported_units[self._unit]).to(_SireUnits.centimeter),
+            "CENTIMETER",
+        )
 
     def millimeters(self):
-        """Return the length in millimeters.
-
-           Returns
-           -------
-
-           length : :class:`Length <BioSimSpace.Types.Length>`
-               The length in millimeters.
         """
-        return Length((self._value * self._supported_units[self._unit]).to(_SireUnits.millimeter), "MILLIMETER")
+        Return the length in millimeters.
+
+        Returns
+        -------
+
+        length : :class:`Length <BioSimSpace.Types.Length>`
+            The length in millimeters.
+        """
+        return Length(
+            (self._value * self._supported_units[self._unit]).to(_SireUnits.millimeter),
+            "MILLIMETER",
+        )
 
     def nanometers(self):
-        """Return the length in nanometers.
-
-           Returns
-           -------
-
-           length : :class:`Length <BioSimSpace.Types.Length>`
-               The length in nanometers.
         """
-        return Length((self._value * self._supported_units[self._unit]).to(_SireUnits.nanometer), "NANOMETER")
+        Return the length in nanometers.
+
+        Returns
+        -------
+
+        length : :class:`Length <BioSimSpace.Types.Length>`
+            The length in nanometers.
+        """
+        return Length(
+            (self._value * self._supported_units[self._unit]).to(_SireUnits.nanometer),
+            "NANOMETER",
+        )
 
     def angstroms(self):
-        """Return the length in angstroms.
-
-           Returns
-           -------
-
-           length : :class:`Length <BioSimSpace.Types.Length>`
-               The length in angstrom.
         """
-        return Length((self._value * self._supported_units[self._unit]).to(_SireUnits.angstrom), "ANGSTROM")
+        Return the length in angstroms.
+
+        Returns
+        -------
+
+        length : :class:`Length <BioSimSpace.Types.Length>`
+            The length in angstrom.
+        """
+        return Length(
+            (self._value * self._supported_units[self._unit]).to(_SireUnits.angstrom),
+            "ANGSTROM",
+        )
 
     def picometers(self):
-        """Return the length in picometers.
-
-           Returns
-           -------
-
-           length : :class:`Length <BioSimSpace.Types.Length>`
-               The length in picometers.
         """
-        return Length((self._value * self._supported_units[self._unit]).to(_SireUnits.picometer), "PICOMETER")
+        Return the length in picometers.
+
+        Returns
+        -------
+
+        length : :class:`Length <BioSimSpace.Types.Length>`
+            The length in picometers.
+        """
+        return Length(
+            (self._value * self._supported_units[self._unit]).to(_SireUnits.picometer),
+            "PICOMETER",
+        )
 
     def _to_default_unit(self, mag=None):
-        """Internal method to return an object of the same type in the default unit.
+        """
+        Internal method to return an object of the same type in the default unit.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           mag : float
-              The value (optional).
+        mag : float
+           The value (optional).
 
-           Returns
-           -------
+        Returns
+        -------
 
-           length : :class:`Length <BioSimSpace.Types.Length>`
-               The length in the default unit of Angstrom.
+        length : :class:`Length <BioSimSpace.Types.Length>`
+            The length in the default unit of Angstrom.
         """
         if mag is None:
             return self.angstroms()
@@ -289,19 +330,20 @@ class Length(_Type):
             return Length(mag, "ANGSTROM")
 
     def _convert_to(self, unit):
-        """Return the length in a different unit.
+        """
+        Return the length in a different unit.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           unit : str
-               The unit to convert to.
+        unit : str
+            The unit to convert to.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           length : :class:`Length <BioSimSpace.Types.Length>`
-               The length in the specified unit.
+        length : :class:`Length <BioSimSpace.Types.Length>`
+            The length in the specified unit.
         """
         if unit == "METER":
             return self.meters()
@@ -316,7 +358,9 @@ class Length(_Type):
         elif unit == "PICOMETER":
             return self.picometers()
         else:
-            raise ValueError("Supported units are: '%s'" % list(self._supported_units.keys()))
+            raise ValueError(
+                "Supported units are: '%s'" % list(self._supported_units.keys())
+            )
 
     def _validate_unit(self, unit):
         """Validate that the unit are supported."""
@@ -337,23 +381,26 @@ class Length(_Type):
         elif unit in self._abbreviations:
             return self._abbreviations[unit]
         else:
-            raise ValueError("Supported units are: '%s'" % list(self._supported_units.keys()))
+            raise ValueError(
+                "Supported units are: '%s'" % list(self._supported_units.keys())
+            )
 
     @staticmethod
     def _to_sire_format(unit):
-        """Reformat the unit string so it adheres to the Sire unit formatting.
+        """
+        Reformat the unit string so it adheres to the Sire unit formatting.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           unit : str
-               A string representation of the unit.
+        unit : str
+            A string representation of the unit.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           sire_unit : str
-               The unit string in Sire compatible format.
+        sire_unit : str
+            The unit string in Sire compatible format.
         """
 
         unit = unit.replace("nm", "nanometer")
@@ -368,6 +415,7 @@ class Length(_Type):
         unit = unit.replace("meter-1", "(1/meter)")
 
         return unit
+
 
 # Import at bottom of module to avoid circular dependency.
 from ._area import Area as _Area

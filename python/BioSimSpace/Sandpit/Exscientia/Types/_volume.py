@@ -1,13 +1,13 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2022
+# Copyright: 2017-2023
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
 # BioSimSpace is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 2 of the License, or
+# the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
 # BioSimSpace is distributed in the hope that it will be useful,
@@ -19,97 +19,102 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-"""
-A volume type.
-"""
+"""A volume type."""
 
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Volume"]
 
-from sire import units as _SireUnits
+from sire.legacy import Units as _SireUnits
 
 from ._type import Type as _Type
+
 
 class Volume(_Type):
     """A volume type."""
 
     # A list of the supported Sire unit names.
-    _sire_units = ["meter3",
-                   "nanometer3",
-                   "angstrom3",
-                   "picometer3"]
+    _sire_units = ["meter3", "nanometer3", "angstrom3", "picometer3"]
 
     # Dictionary of allowed units.
-    _supported_units = { "METER3"      : _SireUnits.meter3,
-                         "NANOMETER3"  : _SireUnits.nanometer3,
-                         "ANGSTROM3"   : _SireUnits.angstrom3,
-                         "PICOMETER3"  : _SireUnits.picometer3 }
+    _supported_units = {
+        "METER3": _SireUnits.meter3,
+        "NANOMETER3": _SireUnits.nanometer3,
+        "ANGSTROM3": _SireUnits.angstrom3,
+        "PICOMETER3": _SireUnits.picometer3,
+    }
 
     # Map unit abbreviations to the full name.
-    _abbreviations = { "M3"  : "METER3",
-                       "NM3" : "NANOMETER3",
-                       "A3"  : "ANGSTROM3",
-                       "PM3" : "PICOMETER3" }
+    _abbreviations = {
+        "M3": "METER3",
+        "NM3": "NANOMETER3",
+        "A3": "ANGSTROM3",
+        "PM3": "PICOMETER3",
+    }
 
     # Dictionary of allowed units.
-    _print_format = { "METER3"      : "m^3",
-                      "NANOMETER3"  : "nm^3",
-                      "ANGSTROM3"   : "A^3",
-                      "PICOMETER3"  : "pm^3" }
+    _print_format = {
+        "METER3": "m^3",
+        "NANOMETER3": "nm^3",
+        "ANGSTROM3": "A^3",
+        "PICOMETER3": "pm^3",
+    }
 
     # Documentation strings.
-    _doc_strings = { "METER3"      : "A volume in cube meters.",
-                     "NANOMETER3"  : "A volume in cube nanometers.",
-                     "ANGSTROM3"   : "A volume in cube Angstrom.",
-                     "PICOMETER3"  : "A volume in cube picometers." }
+    _doc_strings = {
+        "METER3": "A volume in cube meters.",
+        "NANOMETER3": "A volume in cube nanometers.",
+        "ANGSTROM3": "A volume in cube Angstrom.",
+        "PICOMETER3": "A volume in cube picometers.",
+    }
 
     # Null type unit for avoiding issue printing configargparse help.
     _default_unit = "ANGSTROM3"
 
-    # The dimension mask.
-    #              Angle, Charge, Length, Mass, Quantity, Temperature, Time
-    _dimensions = (    0,      0,      3,    0,        0,           0,    0)
+    # The dimension mask:
+    #     Angle, Charge, Length, Mass, Quantity, Temperature, Time
+    _dimensions = (0, 0, 3, 0, 0, 0, 0)
 
     def __init__(self, *args):
-        """Constructor.
+        """
+        Constructor.
 
-           ``*args`` can be a value and unit, or a string representation
-           of the volume, e.g. "100 pm^3".
+        ``*args`` can be a value and unit, or a string representation
+        of the volume, e.g. "100 pm^3".
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           value : float
-               The value.
+        value : float
+            The value.
 
-           unit : str
-               The unit.
+        unit : str
+            The unit.
 
-           string : str
-               A string representation of the volume.
+        string : str
+            A string representation of the volume.
 
-           Examples
-           --------
+        Examples
+        --------
 
-           Create an object representing a volume of 100 cube nanometers then
-           print the volume in cube Angstrom.
+        Create an object representing a volume of 100 cube nanometers then
+        print the volume in cube Angstrom.
 
-           >>> import BioSimSpace as BSS
-           >>> volume = BSS.Types.Volume(100, "nm^3")
-           >>> print(volume.angstroms3())
+        >>> import BioSimSpace as BSS
+        >>> volume = BSS.Types.Volume(100, "nm^3")
+        >>> print(volume.angstroms3())
 
-           The same as above, except passing a string representation of the
-           volume to the constructor.
+        The same as above, except passing a string representation of the
+        volume to the constructor.
 
-           >>> import BioSimSpace as BSS
-           >>> volume = BSS.Types.Volume("100 nm^3")
-           >>> print(volume.angstroms3())
+        >>> import BioSimSpace as BSS
+        >>> volume = BSS.Types.Volume("100 nm^3")
+        >>> print(volume.angstroms3())
 
-           The string matching is extremeley flexible, so all of the following
-           would be valid arguments: "100 nm^3", "100 cube nanometers",
-           "100 nanometers cubed".
+        The string matching is extremeley flexible, so all of the following
+        would be valid arguments: "100 nm^3", "100 cube nanometers",
+        "100 nanometers cubed".
         """
 
         # Call the base class constructor.
@@ -144,6 +149,7 @@ class Volume(_Type):
         # Division by another type.
         elif isinstance(other, _Type):
             from ._general_unit import GeneralUnit as _GeneralUnit
+
             return _GeneralUnit(self._to_sire_unit() / other._to_sire_unit())
 
         # Division by a string.
@@ -160,71 +166,92 @@ class Volume(_Type):
                         volume = Volume(other)
                         return self / volume
                     except:
-                        raise ValueError("Could not convert the string to a "
-                                         "'BioSimSpace.Types.Length', 'BioSimSpace.Types.Area', "
-                                         "or 'BioSimSpace.Types.Volume'")
+                        raise ValueError(
+                            "Could not convert the string to a "
+                            "'BioSimSpace.Types.Length', 'BioSimSpace.Types.Area', "
+                            "or 'BioSimSpace.Types.Volume'"
+                        )
         else:
-            raise TypeError("unsupported operand type(s) for /: '%s' and '%s'"
-                % (self.__class__.__qualname__, other.__class__.__qualname__))
+            raise TypeError(
+                "unsupported operand type(s) for /: '%s' and '%s'"
+                % (self.__class__.__qualname__, other.__class__.__qualname__)
+            )
 
     def meters3(self):
-        """Return the volume in cubic meters.
-
-           Returns
-           -------
-
-           volume : :class:`Volume <BioSimSpace.Types.Volume>`
-               The volume in cubic meters.
         """
-        return Volume((self._value * self._supported_units[self._unit]).to(_SireUnits.meter3), "METER3")
+        Return the volume in cubic meters.
+
+        Returns
+        -------
+
+        volume : :class:`Volume <BioSimSpace.Types.Volume>`
+            The volume in cubic meters.
+        """
+        return Volume(
+            (self._value * self._supported_units[self._unit]).to(_SireUnits.meter3),
+            "METER3",
+        )
 
     def nanometers3(self):
-        """Return the volume in cubic nanometers.
-
-           Returns
-           -------
-
-           volume : :class:`Volume <BioSimSpace.Types.Volume>`
-               The volume in cubic nanometers.
         """
-        return Volume((self._value * self._supported_units[self._unit]).to(_SireUnits.nanometer3), "NANOMETER3")
+        Return the volume in cubic nanometers.
+
+        Returns
+        -------
+
+        volume : :class:`Volume <BioSimSpace.Types.Volume>`
+            The volume in cubic nanometers.
+        """
+        return Volume(
+            (self._value * self._supported_units[self._unit]).to(_SireUnits.nanometer3),
+            "NANOMETER3",
+        )
 
     def angstroms3(self):
-        """Return the volume in cubic Angstrom.
-
-           Returns
-           -------
-
-           volume : :class:`Volume <BioSimSpace.Types.Volume>`
-               The volume in cubic Angstrom.
         """
-        return Volume((self._value * self._supported_units[self._unit]).to(_SireUnits.angstrom3), "ANGSTROM3")
+        Return the volume in cubic Angstrom.
+
+        Returns
+        -------
+
+        volume : :class:`Volume <BioSimSpace.Types.Volume>`
+            The volume in cubic Angstrom.
+        """
+        return Volume(
+            (self._value * self._supported_units[self._unit]).to(_SireUnits.angstrom3),
+            "ANGSTROM3",
+        )
 
     def picometers3(self):
-        """Return the volume in cubic picometers.
-
-           Returns
-           -------
-
-           volume : :class:`Volume <BioSimSpace.Types.Volume>`
-               The volume in cubic picometers.
         """
-        return Volume((self._value * self._supported_units[self._unit]).to(_SireUnits.picometer3), "PICOMETER3")
+        Return the volume in cubic picometers.
+
+        Returns
+        -------
+
+        volume : :class:`Volume <BioSimSpace.Types.Volume>`
+            The volume in cubic picometers.
+        """
+        return Volume(
+            (self._value * self._supported_units[self._unit]).to(_SireUnits.picometer3),
+            "PICOMETER3",
+        )
 
     def _to_default_unit(self, mag=None):
-        """Internal method to return an object of the same type in the default unit.
+        """
+        Internal method to return an object of the same type in the default unit.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           mag : float
-               The value (optional).
+        mag : float
+            The value (optional).
 
-           Returns
-           -------
+        Returns
+        -------
 
-           volume : :class:`Volume <BioSimSpace.Types.Volume>`
-               The volume in the default unit of cubic Angstrom.
+        volume : :class:`Volume <BioSimSpace.Types.Volume>`
+            The volume in the default unit of cubic Angstrom.
         """
         if mag is None:
             return self.angstroms3()
@@ -232,19 +259,20 @@ class Volume(_Type):
             return Volume(mag, "ANGSTROM3")
 
     def _convert_to(self, unit):
-        """Return the volume in a different unit.
+        """
+        Return the volume in a different unit.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           unit : str
-               The unit to convert to.
+        unit : str
+            The unit to convert to.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           volume : :class:`Volume <BioSimSpace.Types.Volume>`
-               The volume in the specified unit.
+        volume : :class:`Volume <BioSimSpace.Types.Volume>`
+            The volume in the specified unit.
         """
         if unit == "METER3":
             return self.meters3()
@@ -255,7 +283,9 @@ class Volume(_Type):
         elif unit == "PICOMETER3":
             return self.picometers3()
         else:
-            raise ValueError("Supported units are: '%s'" % list(self._supported_units.keys()))
+            raise ValueError(
+                "Supported units are: '%s'" % list(self._supported_units.keys())
+            )
 
     def _validate_unit(self, unit):
         """Validate that the unit are supported."""
@@ -284,7 +314,7 @@ class Volume(_Type):
         # to write, e.g. "cube nm" or "nm cubed".
         index = unit.find("3")
         if index != -1:
-            unit = unit[0:index] + unit[index+1:] + "3"
+            unit = unit[0:index] + unit[index + 1 :] + "3"
 
         # Check that the unit is supported.
         if unit in self._supported_units:
@@ -292,23 +322,26 @@ class Volume(_Type):
         elif unit in self._abbreviations:
             return self._abbreviations[unit]
         else:
-            raise ValueError("Supported units are: '%s'" % list(self._supported_units.keys()))
+            raise ValueError(
+                "Supported units are: '%s'" % list(self._supported_units.keys())
+            )
 
     @staticmethod
     def _to_sire_format(unit):
-        """Reformat the unit string so it adheres to the Sire unit formatting.
+        """
+        Reformat the unit string so it adheres to the Sire unit formatting.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           unit : str
-               A string representation of the unit.
+        unit : str
+            A string representation of the unit.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           sire_unit : str
-               The unit string in Sire compatible format.
+        sire_unit : str
+            The unit string in Sire compatible format.
         """
 
         unit = unit.replace("angstroms", "angstrom")
@@ -323,6 +356,7 @@ class Volume(_Type):
         unit = unit.replace("meter-3", "(1/meter3)")
 
         return unit
+
 
 # Import at bottom of module to avoid circular dependency.
 from ._area import Area as _Area

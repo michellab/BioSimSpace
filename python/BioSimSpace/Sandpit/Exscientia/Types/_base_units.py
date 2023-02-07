@@ -1,13 +1,13 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2022
+# Copyright: 2017-2023
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
 # BioSimSpace is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 2 of the License, or
+# the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
 # BioSimSpace is distributed in the hope that it will be useful,
@@ -22,9 +22,7 @@
 # The set of supported base units. General unit based types can be created
 # by combining these, e.g. via multiplication or division.
 
-__all__ = ["_base_units",
-           "_base_dimensions",
-           "_sire_units_locals"]
+__all__ = ["_base_units", "_base_dimensions", "_sire_units_locals"]
 
 from ._angle import *
 from ._area import *
@@ -37,6 +35,7 @@ from ._time import *
 from ._volume import *
 
 import sys as _sys
+
 _namespace = _sys.modules[__name__]
 
 # Create the list of base unit types.
@@ -50,7 +49,7 @@ for unit in _base_units:
 # maps between the unit name and the Sire unit object, allowing us to
 # use eval to parse arbitrary expressions based in these units from the
 # command-line.
-import sire.units as _SireUnits
+import sire.legacy.Units as _SireUnits
 
 _sire_units_locals = {}
 

@@ -1,13 +1,12 @@
-
 # coding: utf-8
 
 # Author: Julien Michel<br>
 # Email:&nbsp;&nbsp; julien.michel@ed.ac.uk
-# 
+#
 # # equilibration
-# 
+#
 # This notebook runs a 3 step equilibration using AMBER.
-# 
+#
 # TODO) Make this MD package agnostic
 
 # In[1]:
@@ -25,14 +24,23 @@ node = BSS.Gateway.Node("A node to equilibrate a solvated molecule.")
 # In[3]:
 
 
-node.addAuthor(name="Julien Michel", email="julien.michel@ed.ac.uk", affiliation="University of Edimnburgh")
+node.addAuthor(
+    name="Julien Michel",
+    email="julien.michel@ed.ac.uk",
+    affiliation="University of Edimnburgh",
+)
 node.setLicense("GPLv3")
 
 
 # In[4]:
 
 
-node.addInput("input", BSS.Gateway.FileSet(help="Topology and coordinate files describing the solvated system"))
+node.addInput(
+    "input",
+    BSS.Gateway.FileSet(
+        help="Topology and coordinate files describing the solvated system"
+    ),
+)
 
 node.addInput("output", BSS.Gateway.String(help="The root name of the output files."))
 
@@ -40,7 +48,12 @@ node.addInput("output", BSS.Gateway.String(help="The root name of the output fil
 # In[5]:
 
 
-node.addOutput("nodeoutput", BSS.Gateway.FileSet(help="The parameterised and solvated molecular system in AMBER format."))
+node.addOutput(
+    "nodeoutput",
+    BSS.Gateway.FileSet(
+        help="The parameterised and solvated molecular system in AMBER format."
+    ),
+)
 
 
 # In[6]:
@@ -103,10 +116,12 @@ minimised = process.getSystem()
 
 # TODO Extend API so can restrain everything but water
 # Use loop to run until target T achieved
-protocol = BSS.Protocol.Equilibration(runtime=BSS.Types.Time(0.01, "nanosecond"),
-                                      temperature_start=BSS.Types.Temperature(0, "kelvin"), 
-                                      temperature_end=BSS.Types.Temperature(300, "kelvin"), 
-                                      restraint="backbone")
+protocol = BSS.Protocol.Equilibration(
+    runtime=BSS.Types.Time(0.01, "nanosecond"),
+    temperature_start=BSS.Types.Temperature(0, "kelvin"),
+    temperature_end=BSS.Types.Temperature(300, "kelvin"),
+    restraint="backbone",
+)
 
 
 # In[15]:
@@ -143,8 +158,12 @@ temps = process.getTemperature(time_series=True)
 
 
 # Generate a plot of volume vs temperature.
-plotT = BSS.Notebook.plot(process.getTime(time_series=True),
-    temps, xlabel="Time (ns)", ylabel="Temperature (K)")
+plotT = BSS.Notebook.plot(
+    process.getTime(time_series=True),
+    temps,
+    xlabel="Time (ns)",
+    ylabel="Temperature (K)",
+)
 
 
 # In[21]:
@@ -158,12 +177,14 @@ nvt_equilibrated = process.getSystem()
 # In[48]:
 
 
-# TODO 
+# TODO
 # Use loop to run until target density achieved
 # Allow setting of target pressure from constructor
-protocol = BSS.Protocol.Equilibration(runtime=BSS.Types.Time(0.01, "nanosecond"),
-                                      temperature=BSS.Types.Temperature(300, "kelvin"), 
-                                      ensemble="NPT")
+protocol = BSS.Protocol.Equilibration(
+    runtime=BSS.Types.Time(0.01, "nanosecond"),
+    temperature=BSS.Types.Temperature(300, "kelvin"),
+    ensemble="NPT",
+)
 
 
 # In[49]:
@@ -178,14 +199,14 @@ process = BSS.Process.Amber(nvt_equilibrated, protocol, name="equilibrate-npt")
 
 
 config = process.getConfig()
-print (config)
+print(config)
 
 
 # In[51]:
 
 
 config[-1] = "iwrap=1,"
-config.append(' /')
+config.append(" /")
 
 
 # In[52]:
@@ -215,7 +236,7 @@ process.wait()
 # In[ ]:
 
 
-#process.getDensity()
+# process.getDensity()
 
 
 # In[56]:
@@ -228,8 +249,9 @@ vols = process.getVolume(time_series=True)
 
 
 # Generate a plot of volume vs temperature.
-plotV = BSS.Notebook.plot(process.getTime(time_series=True),
-    vols, xlabel="Time (ns)", ylabel="Volume (A3^3)")
+plotV = BSS.Notebook.plot(
+    process.getTime(time_series=True), vols, xlabel="Time (ns)", ylabel="Volume (A3^3)"
+)
 
 
 # In[58]:
@@ -243,11 +265,13 @@ npt_equilibrated = process.getSystem()
 # In[59]:
 
 
-node.setOutput("nodeoutput", BSS.IO.saveMolecules(node.getInput("output"), npt_equilibrated, ["rst7"]))
+node.setOutput(
+    "nodeoutput",
+    BSS.IO.saveMolecules(node.getInput("output"), npt_equilibrated, ["rst7"]),
+)
 
 
 # In[60]:
 
 
 node.validate()
-

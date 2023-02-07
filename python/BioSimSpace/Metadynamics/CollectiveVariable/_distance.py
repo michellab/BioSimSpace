@@ -1,13 +1,13 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2022
+# Copyright: 2017-2023
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
 # BioSimSpace is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 2 of the License, or
+# the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
 # BioSimSpace is distributed in the hope that it will be useful,
@@ -19,9 +19,7 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-"""
-Functionality for distance based collective variables.
-"""
+"""Functionality for distance based collective variables."""
 
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
@@ -36,68 +34,81 @@ from .._grid import Grid as _Grid
 from ...Types import Coordinate as _Coordinate
 from ...Types import Length as _Length
 
+
 class Distance(_CollectiveVariable):
     """A class for distance based collective variables."""
 
-    def __init__(self, atom0, atom1, hill_width=_Length(0.1, "nanometer"),
-            weights0=None, weights1=None, is_com0=None, is_com1=None,
-            lower_bound=None, upper_bound=None, grid=None,
-            component=None, pbc=True):
-        """Constructor.
+    def __init__(
+        self,
+        atom0,
+        atom1,
+        hill_width=_Length(0.1, "nanometer"),
+        weights0=None,
+        weights1=None,
+        is_com0=None,
+        is_com1=None,
+        lower_bound=None,
+        upper_bound=None,
+        grid=None,
+        component=None,
+        pbc=True,
+    ):
+        """
+        Constructor.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           atom0 : int, [int, int, ...], :class:`Coordinate <BioSimSpace.Types.Coordinate>`
-               The atom, group of atoms, or coordinate, that the distance
-               will be measured from.
+        atom0 : int, [int, int, ...], :class:`Coordinate <BioSimSpace.Types.Coordinate>`
+            The atom, group of atoms, or coordinate, that the distance
+            will be measured from.
 
-           atom1 : int, [int, int, ...], :class:`Coordinate <BioSimSpace.Types.Coordinate>`
-               The atom, group of atoms, or coordinate, that the distance
-               will be measured to.
+        atom1 : int, [int, int, ...], :class:`Coordinate <BioSimSpace.Types.Coordinate>`
+            The atom, group of atoms, or coordinate, that the distance
+            will be measured to.
 
-           hill_width : :class:`Length <BioSimSpace.Types.Length>`
-               The width of the Gaussian hill used to sample this variable.
+        hill_width : :class:`Length <BioSimSpace.Types.Length>`
+            The width of the Gaussian hill used to sample this variable.
 
-           weights0 : [float]
-               A list of weights to be used when computing the center of the
-               first atom group. This is ignored when a single index is passed
-               for 'atom0'.
+        weights0 : [float]
+            A list of weights to be used when computing the center of the
+            first atom group. This is ignored when a single index is passed
+            for 'atom0'.
 
-           weights1 : [float]
-               A list of weights to be used when computing the center of the
-               second atom group. This is ignored when a single index is passed
-               for 'atom1'.
+        weights1 : [float]
+            A list of weights to be used when computing the center of the
+            second atom group. This is ignored when a single index is passed
+            for 'atom1'.
 
-           is_com0 : bool
-               Whether to compute the center of mass of the first atom group.
-               If True, this option will take precedence over any weights
-               passed in via 'weights0'.
+        is_com0 : bool
+            Whether to compute the center of mass of the first atom group.
+            If True, this option will take precedence over any weights
+            passed in via 'weights0'.
 
-           is_com1 : bool
-               Whether to compute the center of mass of the second atom group.
-               If True, this option will take precedence over any weights
-               passed in via 'weights1'.
+        is_com1 : bool
+            Whether to compute the center of mass of the second atom group.
+            If True, this option will take precedence over any weights
+            passed in via 'weights1'.
 
-           lower_bound : :class:`Bound <BioSimSpace.Metadynamics.Bound>`
-               A lower bound on the value of the collective variable.
+        lower_bound : :class:`Bound <BioSimSpace.Metadynamics.Bound>`
+            A lower bound on the value of the collective variable.
 
-           upper_bound : :class:`Bound <BioSimSpace.Metadynamics.Bound>`
-               An upper bound on the value of the collective variable.
+        upper_bound : :class:`Bound <BioSimSpace.Metadynamics.Bound>`
+            An upper bound on the value of the collective variable.
 
-           grid : :class:`Grid <BioSimSpace.Metadynamics.Grid>`
-               The grid on which the collective variable will be sampled.
-               This can help speed up long metadynamics simulations where
-               the number of Gaussian kernels can become prohibitive.
+        grid : :class:`Grid <BioSimSpace.Metadynamics.Grid>`
+            The grid on which the collective variable will be sampled.
+            This can help speed up long metadynamics simulations where
+            the number of Gaussian kernels can become prohibitive.
 
-           component : str
-               Whether to use the 'x', 'y', or 'z' component of the distance
-               as the collective variable. If None, then the full Euclidean
-               distance is used.
+        component : str
+            Whether to use the 'x', 'y', or 'z' component of the distance
+            as the collective variable. If None, then the full Euclidean
+            distance is used.
 
-           pbc : bool
-               Whether to use periodic boundary conditions when computing the
-               collective variable.
+        pbc : bool
+            Whether to use periodic boundary conditions when computing the
+            collective variable.
         """
 
         # Call the base class constructor.
@@ -169,8 +180,8 @@ class Distance(_CollectiveVariable):
         if self._grid is not None:
             string += ", grid=%s" % self._grid
         if self._component is not None:
-            string += ", component=%r"% self._component
-        string += ", pbc=%s"% self._pbc
+            string += ", component=%r" % self._component
+        string += ", pbc=%s" % self._pbc
         string += ">"
         return string
 
@@ -179,15 +190,16 @@ class Distance(_CollectiveVariable):
         return self.__str__()
 
     def setAtom0(self, atom0):
-        """Set the atom, atoms, or coordinate from which the distance will be
-           measured.
+        """
+        Set the atom, atoms, or coordinate from which the distance will be
+        measured.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           atom0 : int, [int, int, ...], [:class:`Length <BioSimSpace.Types.Length>`]
-               The atom, group of atoms, or coordinate, that the distance
-               will be measured from.
+        atom0 : int, [int, int, ...], [:class:`Length <BioSimSpace.Types.Length>`]
+            The atom, group of atoms, or coordinate, that the distance
+            will be measured from.
         """
 
         # Convert tuples to a list.
@@ -208,8 +220,10 @@ class Distance(_CollectiveVariable):
 
         # Invalid type.
         else:
-            raise TypeError("'atom0' must be of type 'int', a list of 'int' types, "
-                            "or a 'BioSimSpace.Types.Coordinate' type.")
+            raise TypeError(
+                "'atom0' must be of type 'int', a list of 'int' types, "
+                "or a 'BioSimSpace.Types.Coordinate' type."
+            )
 
         # Store the existing value.
         old_value = self._atom0
@@ -226,28 +240,30 @@ class Distance(_CollectiveVariable):
                 raise
 
     def getAtom0(self):
-        """Return the atom, atoms, or coordinate, that the distance will be
-           measured from.
+        """
+        Return the atom, atoms, or coordinate, that the distance will be
+        measured from.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           atom0 : int, [int, int, ...], [:class:`Length <BioSimSpace.Types.Length>`]
-               The atom, group of atoms, or coordinate, that the distance
-               will be measured from.
+        atom0 : int, [int, int, ...], [:class:`Length <BioSimSpace.Types.Length>`]
+            The atom, group of atoms, or coordinate, that the distance
+            will be measured from.
         """
         return self._atom0
 
     def setAtom1(self, atom1):
-        """Set the atom, atoms, or coordinate to which the distance will be
-           measured.
+        """
+        Set the atom, atoms, or coordinate to which the distance will be
+        measured.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           atom1 : int, [int, int, ...], [:class:`Length <BioSimSpace.Types.Length>`]
-               The atom, group of atoms, or coordinate, that the distance
-               will be measured to.
+        atom1 : int, [int, int, ...], [:class:`Length <BioSimSpace.Types.Length>`]
+            The atom, group of atoms, or coordinate, that the distance
+            will be measured to.
         """
 
         # Convert tuples to a list.
@@ -268,8 +284,10 @@ class Distance(_CollectiveVariable):
 
         # Invalid type.
         else:
-            raise TypeError("'atom1' must be of type 'int', a list of 'int' types, "
-                            "or a 'BioSimSpace.Types.Coordinate' type.")
+            raise TypeError(
+                "'atom1' must be of type 'int', a list of 'int' types, "
+                "or a 'BioSimSpace.Types.Coordinate' type."
+            )
 
         # Store the existing value.
         old_value = self._atom1
@@ -286,24 +304,26 @@ class Distance(_CollectiveVariable):
                 raise
 
     def getAtom1(self):
-        """Return the atom, atoms, or coordinate, that the distance will be
-           measured to.
+        """
+        Return the atom, atoms, or coordinate, that the distance will be
+        measured to.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           atom1 : int, [int, int, ...], [:class:`Length <BioSimSpace.Types.Length>`]
-               The atom, group of atoms, or coordinate, that the distance
-               will be measured to.
+        atom1 : int, [int, int, ...], [:class:`Length <BioSimSpace.Types.Length>`]
+            The atom, group of atoms, or coordinate, that the distance
+            will be measured to.
         """
         return self._atom1
 
     def setHillWidth(self, hill_width):
-        """Set the width of the Gaussian hills used to bias this collective
-           variable.
+        """
+        Set the width of the Gaussian hills used to bias this collective
+        variable.
 
-           hill_width : :class:`Length <BioSimSpace.Types.Length>`
-               The width of the Gaussian hill.
+        hill_width : :class:`Length <BioSimSpace.Types.Length>`
+            The width of the Gaussian hill.
         """
         if not isinstance(hill_width, _Length):
             raise TypeError("'hill_width' must be of type 'BioSimSpace.Types.Length'")
@@ -315,27 +335,29 @@ class Distance(_CollectiveVariable):
         self._hill_width = hill_width.nanometers()
 
     def getHillWidth(self):
-        """Return the width of the Gaussian hill used to bias this collective
-           variable.
+        """
+        Return the width of the Gaussian hill used to bias this collective
+        variable.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           hill_width : :class:`Length <BioSimSpace.Types.Length>`
-               The width of the Gaussian hill.
+        hill_width : :class:`Length <BioSimSpace.Types.Length>`
+            The width of the Gaussian hill.
         """
         return self._hill_width
 
     def setWeights0(self, weights0=None):
-        """Set the weights to be used when computing the center of the first
-           atom group. Can be called with no arguments to clear the weights.
+        """
+        Set the weights to be used when computing the center of the first
+        atom group. Can be called with no arguments to clear the weights.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           weights0 : [float]
-               A list of weights to be used when computing the center of the
-               first atom group.
+        weights0 : [float]
+            A list of weights to be used when computing the center of the
+            first atom group.
         """
 
         if weights0 is None:
@@ -369,15 +391,16 @@ class Distance(_CollectiveVariable):
                 raise
 
     def getWeights0(self):
-        """Get the weights to be used when computing the center of the first
-           atom group.
+        """
+        Get the weights to be used when computing the center of the first
+        atom group.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           weights0 : [float]
-               A list of weights to be used when computing the center of the
-               first atom group.
+        weights0 : [float]
+            A list of weights to be used when computing the center of the
+            first atom group.
         """
         if self._weights0 is None:
             return None
@@ -385,15 +408,16 @@ class Distance(_CollectiveVariable):
             return self._weights0.copy()
 
     def setWeights1(self, weights1=None):
-        """Set the weights to be used when computing the center of the second
-           atom group. Can be called with no arguments to clear the weights.
+        """
+        Set the weights to be used when computing the center of the second
+        atom group. Can be called with no arguments to clear the weights.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           weights1 : [float]
-               A list of weights to be used when computing the center of the
-               second atom group.
+        weights1 : [float]
+            A list of weights to be used when computing the center of the
+            second atom group.
         """
 
         if weights1 is None:
@@ -427,15 +451,16 @@ class Distance(_CollectiveVariable):
                 raise
 
     def getWeights1(self):
-        """Get the weights to be used when computing the center of the second
-           atom group.
+        """
+        Get the weights to be used when computing the center of the second
+        atom group.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           weights1 : [float]
-               A list of weights to be used when computing the center of the
-               second atom group.
+        weights1 : [float]
+            A list of weights to be used when computing the center of the
+            second atom group.
         """
         if self._weights1 is None:
             return None
@@ -443,15 +468,16 @@ class Distance(_CollectiveVariable):
             return self._weights1.copy()
 
     def setCoM0(self, is_com=None):
-        """Set whether to compute the center of mass of the first atom group.
-           If True, this option will take precedence over any weights that may
-           have been set. Can be called with no arguments to clear the data.
+        """
+        Set whether to compute the center of mass of the first atom group.
+        If True, this option will take precedence over any weights that may
+        have been set. Can be called with no arguments to clear the data.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           is_com : bool
-               Whether to compute the center of mass of each atom group.
+        is_com : bool
+            Whether to compute the center of mass of each atom group.
         """
         if is_com is None:
             self._is_com0 = None
@@ -474,28 +500,30 @@ class Distance(_CollectiveVariable):
                 raise
 
     def getCoM0(self):
-        """Whether to compute the center of mass of the first atom group. If
-           True, this option will take precedence over any weights that may
-           have been set.
+        """
+        Whether to compute the center of mass of the first atom group. If
+        True, this option will take precedence over any weights that may
+        have been set.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           is_com0 : bool
-               Whether to compute the center of mass of the first atom group.
+        is_com0 : bool
+            Whether to compute the center of mass of the first atom group.
         """
         return self._is_com0
 
     def setCoM1(self, is_com=None):
-        """Set whether to compute the center of mass of the second atom group.
-           If True, this option will take precedence over any weights that may
-           have been set. Can be called with no arguments to clear the data.
+        """
+        Set whether to compute the center of mass of the second atom group.
+        If True, this option will take precedence over any weights that may
+        have been set. Can be called with no arguments to clear the data.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           is_com : bool
-               Whether to compute the center of mass of each atom group.
+        is_com : bool
+            Whether to compute the center of mass of each atom group.
         """
         if is_com is None:
             self._is_com0 = None
@@ -518,29 +546,31 @@ class Distance(_CollectiveVariable):
                 raise
 
     def getCoM1(self):
-        """Whether to compute the center of mass of the first second group. If
-           True, this option will take precedence over any weights that may
-           have been set.
+        """
+        Whether to compute the center of mass of the first second group. If
+        True, this option will take precedence over any weights that may
+        have been set.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           is_com1 : bool
-               Whether to compute the center of mass of the first atom group.
+        is_com1 : bool
+            Whether to compute the center of mass of the first atom group.
         """
         return self._is_com1
 
     def setComponent(self, component=None):
-        """Whether to use the 'x', 'y', or 'z' component of the distance
-           as the collective variable. If unset, then the full Euclidean
-           distance is used. Can be called with no argument to clear the
-           data.
+        """
+        Whether to use the 'x', 'y', or 'z' component of the distance
+        as the collective variable. If unset, then the full Euclidean
+        distance is used. Can be called with no argument to clear the
+        data.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           component : str
-               'x', 'y', or 'z'
+        component : str
+            'x', 'y', or 'z'
         """
         if component is None:
             self._component = None
@@ -560,41 +590,44 @@ class Distance(_CollectiveVariable):
         self._component = component
 
     def getComponent(self):
-        """Whether to use the 'x', 'y', or 'z' component of the distance
-           as the collective variable. If unset, then the full Euclidean
-           distance is used.
+        """
+        Whether to use the 'x', 'y', or 'z' component of the distance
+        as the collective variable. If unset, then the full Euclidean
+        distance is used.
 
-           Returns
-           --------
+        Returns
+        -------
 
-           component : str
-               'x', 'y', or 'z'
+        component : str
+            'x', 'y', or 'z'
         """
         return self._component
 
     def setPeriodicBoundaries(self, pbc):
-        """Set whether to use periodic_boundaries when calculating the
-           collective variable.
+        """
+        Set whether to use periodic_boundaries when calculating the
+        collective variable.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           pbc : bool
-               Whether to use periodic boundaries conditions.
+        pbc : bool
+            Whether to use periodic boundaries conditions.
         """
         if not isinstance(pbc, bool):
             raise TypeError("'pbc' must be of type 'bool'")
         self._pbc = pbc
 
     def getPeriodicBoundaries(self):
-        """Return whether to take account of periodic boundary conditions
-           when computing the collective variable.
+        """
+        Return whether to take account of periodic boundary conditions
+        when computing the collective variable.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           pbc : bool
-               Whether to use periodic boundaries conditions.
+        pbc : bool
+            Whether to use periodic boundaries conditions.
         """
         return self._pbc
 
@@ -603,39 +636,53 @@ class Distance(_CollectiveVariable):
 
         if self._weights0 is not None:
             if not isinstance(self._atom0, list):
-                raise ValueError("'weights0' only valid when 'atom0' is a "
-                                 "list of atom indices.")
+                raise ValueError(
+                    "'weights0' only valid when 'atom0' is a " "list of atom indices."
+                )
             elif len(self._weights0) != len(self._atom0):
-                raise ValueError("'weights0' not consistent with 'atom0': "
-                                 "len(weights0) = %d, len(atom0) = %d"
-                                 % (len(self._weights0), len(self._atom0)))
+                raise ValueError(
+                    "'weights0' not consistent with 'atom0': "
+                    "len(weights0) = %d, len(atom0) = %d"
+                    % (len(self._weights0), len(self._atom0))
+                )
 
         if self._weights1 is not None:
             if not isinstance(self._atom1, list):
-                raise ValueError("'weights1' only valid when 'atom1' is a "
-                                 "list of atom indices.")
+                raise ValueError(
+                    "'weights1' only valid when 'atom1' is a " "list of atom indices."
+                )
             elif len(self._weights1) != len(self._atom1):
-                raise ValueError("'weights1' not consistent with 'atom1': "
-                                 "len(weights1) = %d, len(atom1) = %d"
-                                 % (len(self._weights1), len(self._atom1)))
+                raise ValueError(
+                    "'weights1' not consistent with 'atom1': "
+                    "len(weights1) = %d, len(atom1) = %d"
+                    % (len(self._weights1), len(self._atom1))
+                )
 
         if self._is_com0 == True:
             if not isinstance(self._atom0, list):
-                raise ValueError("'is_com0=True but atom0 is not a list of indices. "
-                                 "Cannot compute center without atom group!")
+                raise ValueError(
+                    "'is_com0=True but atom0 is not a list of indices. "
+                    "Cannot compute center without atom group!"
+                )
         if self._is_com1 == True:
             if not isinstance(self._atom1, list):
-                raise ValueError("'is_com1=True but atom1 is not a list of indices. "
-                                 "Cannot compute center without atom group!")
+                raise ValueError(
+                    "'is_com1=True but atom1 is not a list of indices. "
+                    "Cannot compute center without atom group!"
+                )
 
         if self._lower_bound is not None:
             if not isinstance(self._lower_bound.getValue(), _Length):
-                raise TypeError("'lower_bound' must be of type 'BioSimSpace.Types.Length'")
+                raise TypeError(
+                    "'lower_bound' must be of type 'BioSimSpace.Types.Length'"
+                )
             # Convert to default unit.
             self._lower_bound.setValue(self._lower_bound.getValue().nanometers())
         if self._upper_bound is not None:
             if not isinstance(self._upper_bound.getValue(), _Length):
-                raise TypeError("'upper_bound' must be of type 'BioSimSpace.Types.Length'")
+                raise TypeError(
+                    "'upper_bound' must be of type 'BioSimSpace.Types.Length'"
+                )
             # Convert to default unit.
             self._upper_bound.setValue(self._upper_bound.getValue().nanometers())
         if self._lower_bound is not None and self._upper_bound is not None:
@@ -644,16 +691,26 @@ class Distance(_CollectiveVariable):
 
         if self._grid is not None:
             if not isinstance(self._grid.getMinimum(), _Length):
-                raise TypeError("'grid' minimum must be of type 'BioSimSpace.Types.Length'")
+                raise TypeError(
+                    "'grid' minimum must be of type 'BioSimSpace.Types.Length'"
+                )
             # Convert to default unit.
             self._grid.setMinimum(self._grid.getMinimum().nanometers())
             if not isinstance(self._grid.getMaximum(), _Length):
-                raise TypeError("Grid 'maximum' must be of type 'BioSimSpace.Types.Length'")
+                raise TypeError(
+                    "Grid 'maximum' must be of type 'BioSimSpace.Types.Length'"
+                )
             # Convert to default unit.
             self._grid.setMaximum(self._grid.getMaximum().nanometers())
-            if self._lower_bound is not None and self._grid.getMinimum() > self._lower_bound.getValue():
+            if (
+                self._lower_bound is not None
+                and self._grid.getMinimum() > self._lower_bound.getValue()
+            ):
                 raise ValueError("'lower_bound' is less than 'grid' minimum.")
-            if self._upper_bound is not None and self._grid.getMaximum() < self._upper_bound.getValue():
+            if (
+                self._upper_bound is not None
+                and self._grid.getMaximum() < self._upper_bound.getValue()
+            ):
                 raise ValueError("'upper_bound' is greater than 'grid' maximum.")
 
             # If the number of bins isn't specified, estimate it out from the hill width.

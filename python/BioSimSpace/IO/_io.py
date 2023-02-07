@@ -1,13 +1,13 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2022
+# Copyright: 2017-2023
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
 # BioSimSpace is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 2 of the License, or
+# the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
 # BioSimSpace is distributed in the hope that it will be useful,
@@ -19,20 +19,20 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-"""
-Functionality for reading/writing molecular systems.
-"""
+"""Functionality for reading/writing molecular systems."""
 
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
 
-__all__ = ["fileFormats",
-           "formatInfo",
-           "readMolecules",
-           "readPDB",
-           "readPerturbableSystem",
-           "saveMolecules",
-           "savePerturbableSystem"]
+__all__ = [
+    "fileFormats",
+    "formatInfo",
+    "readMolecules",
+    "readPDB",
+    "readPerturbableSystem",
+    "saveMolecules",
+    "savePerturbableSystem",
+]
 
 import warnings as _warnings
 import tempfile as _tempfile
@@ -48,6 +48,7 @@ from collections import OrderedDict as _OrderedDict
 # we don't have a display running.
 try:
     import pypdb as _pypdb
+
     _has_pypdb = True
 except:
     _has_pypdb = False
@@ -98,8 +99,8 @@ _formats_dict = _OrderedDict()
 for index, line in enumerate(format_info):
     if "Parser" in line:
         format = line.split()[2]
-        extensions = format_info[index+1]
-        description = format_info[index+2]
+        extensions = format_info[index + 1]
+        description = format_info[index + 2]
 
         if format != "SUPPLEMENTARY":
             _formats.append(format)
@@ -111,46 +112,47 @@ del format_info, index, line, format, extensions, description
 
 
 def fileFormats():
-    """Return a list of the supported formats.
+    """
+    Return a list of the supported formats.
 
-       Returns
-       -------
+    Returns
+    -------
 
-       formats : [str]
-           A list of the support file formats.
+    formats : [str]
+        A list of the support file formats.
     """
     return _formats
 
 
 def formatInfo(format):
-    """Return information for the specified file format.
+    """
+    Return information for the specified file format.
 
-       Parameters
-       ----------
+    Parameters
+    ----------
 
-       format : str
-           The file format.
+    format : str
+        The file format.
 
-       Returns
-       -------
+    Returns
+    -------
 
-       info : str
-           A description of the named file format.
+    info : str
+        A description of the named file format.
 
-       Examples
-       --------
+    Examples
+    --------
 
-       Display information regarding the PDB format.
+    Display information regarding the PDB format.
 
-       >>> import BioSimSpace as BSS
-       >>> BSS.formatInfo("PDB")
+    >>> import BioSimSpace as BSS
+    >>> BSS.formatInfo("PDB")
 
-       Print information for each of the supported file formats.
+    Print information for each of the supported file formats.
 
-       >>> import BioSimSpace as BSS
-       >>> for format in BSS.IO.fileFormats:
-       ...     BSS.IO.formatInfo(format)
-
+    >>> import BioSimSpace as BSS
+    >>> for format in BSS.IO.fileFormats:
+    ...     BSS.IO.formatInfo(format)
     """
 
     try:
@@ -160,49 +162,53 @@ def formatInfo(format):
         return None
 
 
-def readPDB(id, pdb4amber=False, work_dir=None, property_map={}):
-    """Read a molecular system from a Protein Data Bank (PDBP) ID in the RSCB PDB
-       website.
+def readPDB(id, pdb4amber=False, work_dir=None, show_warnings=False, property_map={}):
+    """
+    Read a molecular system from a Protein Data Bank (PDBP) ID in the RSCB PDB
+    website.
 
-       Parameters
-       ----------
+    Parameters
+    ----------
 
-       id : str
-           The PDB ID string, or path to a PDB file.
+    id : str
+        The PDB ID string, or path to a PDB file.
 
-       pdb4amber : bool
-           Whether to process the PDB file using pdb4amber. This reformats the file
-           such that it can be handled by the AMBER suite of tools.
+    pdb4amber : bool
+        Whether to process the PDB file using pdb4amber. This reformats the file
+        such that it can be handled by the AMBER suite of tools.
 
-       work_dir : str
-           The working directory used to run pdb4amber.
+    show_warnings : bool
+        Whether to show any warnings raised during parsing of the input files.
 
-       property_map : dict
-           A dictionary that maps system "properties" to their user defined
-           values. This allows the user to refer to properties with their
-           own naming scheme, e.g. { "charge" : "my-charge" }
+    work_dir : str
+        The working directory used to run pdb4amber.
 
-       Returns
-       -------
+    property_map : dict
+        A dictionary that maps system "properties" to their user defined
+        values. This allows the user to refer to properties with their
+        own naming scheme, e.g. { "charge" : "my-charge" }
 
-       system : :class:`System <BioSimSpace._SireWrappers.System>`
-           A molecular system.
+    Returns
+    -------
 
-       Examples
-       --------
+    system : :class:`System <BioSimSpace._SireWrappers.System>`
+        A molecular system.
 
-       Create a molecular system from the deoxy human haemoglobin Protein
-       Data Bank (PDB) record.
+    Examples
+    --------
 
-       >>> import BioSimSpace as BSS
-       >>> system = BSS.IO.readPDB("1a3n")
+    Create a molecular system from the deoxy human haemoglobin Protein
+    Data Bank (PDB) record.
 
-       Create a molecular system from a PDB file on disk and re-format so that
-       it is compatible with the AmberTools suite.
-       Data Bank (PDB) record.
+    >>> import BioSimSpace as BSS
+    >>> system = BSS.IO.readPDB("1a3n")
 
-       >>> import BioSimSpace as BSS
-       >>> system = BSS.IO.readPDB("file.pdb", pdb4amber=True)
+    Create a molecular system from a PDB file on disk and re-format so that
+    it is compatible with the AmberTools suite.
+    Data Bank (PDB) record.
+
+    >>> import BioSimSpace as BSS
+    >>> system = BSS.IO.readPDB("file.pdb", pdb4amber=True)
     """
 
     if not _has_pypdb:
@@ -242,7 +248,8 @@ def readPDB(id, pdb4amber=False, work_dir=None, property_map={}):
     else:
         if not _has_pypdb:
             _warnings.warn(
-                "BioSimSpace.IO: PyPDB could not be imported on this system.")
+                "BioSimSpace.IO: PyPDB could not be imported on this system."
+            )
             return None
 
         # Strip any whitespace from the PDB ID and convert to upper case.
@@ -270,7 +277,8 @@ def readPDB(id, pdb4amber=False, work_dir=None, property_map={}):
         # Check that pdb4amber exists.
         if _amber_home is None:
             raise _MissingSoftwareError(
-                "Please install AmberTools for pdb4amber support: http://ambermd.org")
+                "Please install AmberTools for pdb4amber support: http://ambermd.org"
+            )
         else:
             _pdb4amber_exe = "%s/bin/pdb4amber" % _amber_home
             if not _os.path.isfile(_pdb4amber_exe):
@@ -289,8 +297,13 @@ def readPDB(id, pdb4amber=False, work_dir=None, property_map={}):
         stderr = open(prefix + "pdb4amber.err", "w")
 
         # Run pdb4amber as a subprocess.
-        proc = _subprocess.run(_Utils.command_split(command), cwd=work_dir,
-            shell=False, stdout=stdout, stderr=stderr)
+        proc = _subprocess.run(
+            _Utils.command_split(command),
+            cwd=work_dir,
+            shell=False,
+            stdout=stdout,
+            stderr=stderr,
+        )
         stdout.close()
         stderr.close()
 
@@ -329,61 +342,69 @@ def readPDB(id, pdb4amber=False, work_dir=None, property_map={}):
                 raise IOError("pdb4amber failed!")
 
     # Read the file and return a molecular system.
-    return readMolecules(pdb_file, property_map)
+    return readMolecules(
+        pdb_file, show_warnings=show_warnings, property_map=property_map
+    )
 
 
-def readMolecules(files, property_map={}):
-    """Read a molecular system from file.
+def readMolecules(files, show_warnings=False, property_map={}):
+    """
+    Read a molecular system from file.
 
-       Parameters
-       ----------
+    Parameters
+    ----------
 
-       files : str, [str]
-           A file name, or a list of file names.
+    files : str, [str]
+        A file name, or a list of file names.
 
-       property_map : dict
-           A dictionary that maps system "properties" to their user defined
-           values. This allows the user to refer to properties with their
-           own naming scheme, e.g. { "charge" : "my-charge" }
+    show_warnings : bool
+        Whether to show any warnings raised during parsing of the input files.
 
-       Returns
-       -------
+    property_map : dict
+        A dictionary that maps system "properties" to their user defined
+        values. This allows the user to refer to properties with their
+        own naming scheme, e.g. { "charge" : "my-charge" }
 
-       system : :class:`System <BioSimSpace._SireWrappers.System>`
-           A molecular system.
+    Returns
+    -------
 
-       Examples
-       --------
+    system : :class:`System <BioSimSpace._SireWrappers.System>`
+        A molecular system.
 
-       Load a molecular system from AMBER coordinate and topology files.
+    Examples
+    --------
 
-       >>> import BioSimSpace as BSS
-       >>> system = BSS.IO.readMolecules(["ala.rst7", "ala.prm7"])
+    Load a molecular system from AMBER coordinate and topology files.
 
-       Load the same system, but map the "charge" property to the key "my-charge".
+    >>> import BioSimSpace as BSS
+    >>> system = BSS.IO.readMolecules(["ala.rst7", "ala.prm7"])
 
-       >>> import BioSimSpace as BSS
-       >>> system = BSS.IO.readMolecules(["ala.rst7", "ala.prm7"], property_map={"charge" : "my-charge"})
+    Load the same system, but map the "charge" property to the key "my-charge".
 
-       >>> import BioSimSpace as BSS
-       >>> system = BSS.IO.readMolecules(["ala.rst7", "ala.prm7"])
+    >>> import BioSimSpace as BSS
+    >>> system = BSS.IO.readMolecules(["ala.rst7", "ala.prm7"], property_map={"charge" : "my-charge"})
 
-       Load a molecular system from all of the files contained within a directory.
+    >>> import BioSimSpace as BSS
+    >>> system = BSS.IO.readMolecules(["ala.rst7", "ala.prm7"])
 
-       >>> import BioSimSpace as BSS
-       >>> system = BSS.IO.readMolecules(BSS.IO.glob("dir/*"))
+    Load a molecular system from all of the files contained within a directory.
 
-       Load a molecular system from GROMACS coordinate and topology files using
-       a custom GROMACS topology directory.
+    >>> import BioSimSpace as BSS
+    >>> system = BSS.IO.readMolecules(BSS.IO.glob("dir/*"))
 
-       >>> import BioSimSpace as BSS
-       >>> system = BSS.IO.readMolecules(["mol.gro87", "mol.grotop"], property_map={"GROMACS_PATH" : "/path/to/gromacs/topology"})
+    Load a molecular system from GROMACS coordinate and topology files using
+    a custom GROMACS topology directory.
+
+    >>> import BioSimSpace as BSS
+    >>> system = BSS.IO.readMolecules(["mol.gro87", "mol.grotop"], property_map={"GROMACS_PATH" : "/path/to/gromacs/topology"})
     """
 
     global _has_gmx_warned
     if _gmx_path is None and not _has_gmx_warned:
-        _warnings.warn("BioSimSpace.IO: Please install GROMACS (http://www.gromacs.org) "
-                       "for GROMACS topology file support.")
+        _warnings.warn(
+            "BioSimSpace.IO: Please install GROMACS (http://www.gromacs.org) "
+            "for GROMACS topology file support."
+        )
         _has_gmx_warned = True
 
     # Glob string to catch wildcards and convert to list.
@@ -397,8 +418,11 @@ def readMolecules(files, property_map={}):
         if len(files) == 0:
             raise ValueError("The list of input files is empty!")
     else:
-        raise TypeError(
-            "'files' must be of type 'str', or a list of 'str' types.")
+        raise TypeError("'files' must be of type 'str', or a list of 'str' types.")
+
+    # Validate the warning message flag.
+    if not isinstance(show_warnings, bool):
+        raise TypeError("'show_warnings' must be of type 'bool'.")
 
     # Validate the map.
     if not isinstance(property_map, dict):
@@ -413,9 +437,13 @@ def readMolecules(files, property_map={}):
         if not _os.path.isfile(file):
             raise IOError("Missing input file: '%s'" % file)
 
+    # Copy the property map.
+    pmap = property_map.copy()
+    pmap["show_warnings"] = _SireBase.wrap(show_warnings)
+
     # Try to read the files and return a molecular system.
     try:
-        system = _SireIO.MoleculeParser.read(files, property_map)
+        system = _SireIO.MoleculeParser.read(files, pmap)
     except Exception as e0:
         if "There are no lead parsers!" in str(e0):
             # First check to see if the failure was due to the presence
@@ -425,30 +453,37 @@ def readMolecules(files, property_map={}):
                     amber_prm = _SireIO.AmberPrm(file)
                 except Exception as e1:
                     if "CMAP" in str(e1).upper():
-                        msg = ("Unable to parse AMBER topology file. CMAP "
-                              "records are currently unsupported.")
+                        msg = (
+                            "Unable to parse AMBER topology file. CMAP "
+                            "records are currently unsupported."
+                        )
                         if _isVerbose():
                             raise IOError(msg) from e1
                         else:
                             raise IOError(msg) from None
                     elif "CHAMBER" in str(e1).upper():
-                        msg = ("Unable to parse AMBER topology file. "
-                              "CHAMBER files are currently unsupported.")
+                        msg = (
+                            "Unable to parse AMBER topology file. "
+                            "CHAMBER files are currently unsupported."
+                        )
                         if _isVerbose():
                             raise IOError(msg) from e1
                         else:
                             raise IOError(msg) from None
 
-            msg = ("Failed to read molecules from %s. "
-                   "It looks like you failed to include a topology file."
-                   ) % files
+            msg = (
+                "Failed to read molecules from %s. "
+                "It looks like you failed to include a topology file."
+            ) % files
             if _isVerbose():
                 raise IOError(msg) from e0
             else:
                 raise IOError(msg) from None
         else:
             if "Incompatibility" in str(e0):
-                msg = "Incompatibility between molecular information in files: %s" % files
+                msg = (
+                    "Incompatibility between molecular information in files: %s" % files
+                )
                 if _isVerbose():
                     raise IOError(msg) from e0
                 else:
@@ -464,60 +499,63 @@ def readMolecules(files, property_map={}):
 
 
 def saveMolecules(filebase, system, fileformat, property_map={}):
-    """Save a molecular system to file.
+    """
+    Save a molecular system to file.
 
-       Parameters
-       ----------
+    Parameters
+    ----------
 
-       filebase : str
-           The base name of the output files.
+    filebase : str
+        The base name of the output files.
 
-       system : :class:`System <BioSimSpace._SireWrappers.System>`, \
-                :class:`Molecule< BioSimSpace._SireWrappers.Molecule>` \
-                :class:`Molecule< BioSimSpace._SireWrappers.Molecules>`
-           The molecular system.
+    system : :class:`System <BioSimSpace._SireWrappers.System>`, \
+             :class:`Molecule< BioSimSpace._SireWrappers.Molecule>` \
+             :class:`Molecule< BioSimSpace._SireWrappers.Molecules>`
+        The molecular system.
 
-       fileformat : str, [str]
-           The file format (or formats) to save to.
+    fileformat : str, [str]
+        The file format (or formats) to save to.
 
-       property_map : dict
-           A dictionary that maps system "properties" to their user
-           defined values. This allows the user to refer to properties
-           with their own naming scheme, e.g. { "charge" : "my-charge" }
+    property_map : dict
+        A dictionary that maps system "properties" to their user
+        defined values. This allows the user to refer to properties
+        with their own naming scheme, e.g. { "charge" : "my-charge" }
 
-       Returns
-       -------
+    Returns
+    -------
 
-       files : [str]
-           The list of files that were generated.
+    files : [str]
+        The list of files that were generated.
 
-       Examples
-       --------
+    Examples
+    --------
 
-       Load a molecular system from AMBER coordinate and topology files then
-       try to save it to all supported file formats.
+    Load a molecular system from AMBER coordinate and topology files then
+    try to save it to all supported file formats.
 
-       >>> import BioSimSpace as BSS
-       >>> system = BSS.IO.readMolecules(["ala.rst7", "ala.prm7"])
-       >>> for format in BSS.IO.fileFormats():
-       ...     try:
-       ...         BSS.IO.saveMolecules("test", system, format)
-       ...     except:
-       ...         print("Could not convert to format: '%s'" % format)
+    >>> import BioSimSpace as BSS
+    >>> system = BSS.IO.readMolecules(["ala.rst7", "ala.prm7"])
+    >>> for format in BSS.IO.fileFormats():
+    ...     try:
+    ...         BSS.IO.saveMolecules("test", system, format)
+    ...     except:
+    ...         print("Could not convert to format: '%s'" % format)
 
-       Load a molecular system from AMBER coordinate and topology files then
-       try to save it to GROMACS format, mapping and un-mapping the charge
-       property along the way.
+    Load a molecular system from AMBER coordinate and topology files then
+    try to save it to GROMACS format, mapping and un-mapping the charge
+    property along the way.
 
-       >>> import BioSimSpace as BSS
-       >>> system = BSS.IO.readMolecules(["ala.rst7", "ala.prm7"], property_map={"charge" : "my-charge"})
-       >>> BSS.IO.saveMolecules("test", system, ["gro87", "grotop"], property_map={"charge" : "my-charge"})
+    >>> import BioSimSpace as BSS
+    >>> system = BSS.IO.readMolecules(["ala.rst7", "ala.prm7"], property_map={"charge" : "my-charge"})
+    >>> BSS.IO.saveMolecules("test", system, ["gro87", "grotop"], property_map={"charge" : "my-charge"})
     """
 
     global _has_gmx_warned
     if _gmx_path is None and not _has_gmx_warned:
-        _warnings.warn("BioSimSpace.IO: Please install GROMACS (http://www.gromacs.org) "
-                       "for GROMACS topology file support.")
+        _warnings.warn(
+            "BioSimSpace.IO: Please install GROMACS (http://www.gromacs.org) "
+            "for GROMACS topology file support."
+        )
         _has_gmx_warned = True
 
     # Check that the filebase is a string.
@@ -539,9 +577,11 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
         system = _System(system)
     # Invalid type.
     else:
-        raise TypeError("'system' must be of type 'BioSimSpace.SireWrappers.System', "
-                        "'BioSimSpace._SireWrappers.Molecule, 'BioSimSpace._SireWrappers.Molecules' "
-                        "or a list of 'BiSimSpace._SireWrappers.Molecule' types.")
+        raise TypeError(
+            "'system' must be of type 'BioSimSpace.SireWrappers.System', "
+            "'BioSimSpace._SireWrappers.Molecule, 'BioSimSpace._SireWrappers.Molecules' "
+            "or a list of 'BiSimSpace._SireWrappers.Molecule' types."
+        )
 
     # Check that fileformat argument is of the correct type.
 
@@ -570,8 +610,10 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
             f = _formats_dict[format.replace(" ", "").upper()][0]
             formats.append(f)
         except KeyError:
-            raise ValueError("Unsupported file format '%s'. Supported formats "
-                             "are: %s." % (format, str(_formats)))
+            raise ValueError(
+                "Unsupported file format '%s'. Supported formats "
+                "are: %s." % (format, str(_formats))
+            )
 
     # Validate the map.
     if not isinstance(property_map, dict):
@@ -620,11 +662,16 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
             # Loop over all molecules in the system.
             for mol in system.getMolecules():
                 if mol._sire_object.hasProperty(forcefield):
-                    if mol._sire_object.property(forcefield).combiningRules() == "geometric":
-                        _warnings.warn("AMBER topology files do not support force fields that "
-                                       "use geometric combining rules, as this cannot be specified "
-                                       "in the file. When this file is re-read, then arithmetic "
-                                       "combining rules will be assumed.")
+                    if (
+                        mol._sire_object.property(forcefield).combiningRules()
+                        == "geometric"
+                    ):
+                        _warnings.warn(
+                            "AMBER topology files do not support force fields that "
+                            "use geometric combining rules, as this cannot be specified "
+                            "in the file. When this file is re-read, then arithmetic "
+                            "combining rules will be assumed."
+                        )
                         # Exit after the first non-arithmetic molecule we encounter.
                         break
 
@@ -636,11 +683,15 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
             if format == "PRM7" or format == "RST7":
                 system = system.copy()
                 system._set_water_topology("AMBER", _property_map)
-                file = _SireIO.MoleculeParser.save(system._sire_object, filebase, _property_map)
+                file = _SireIO.MoleculeParser.save(
+                    system._sire_object, filebase, _property_map
+                )
             elif format == "GroTop":
                 system = system.copy()
                 system._set_water_topology("GROMACS")
-                file = _SireIO.MoleculeParser.save(system._sire_object, filebase, _property_map)[0]
+                file = _SireIO.MoleculeParser.save(
+                    system._sire_object, filebase, _property_map
+                )[0]
                 new_file = file.replace("grotop", "top")
                 _os.rename(file, new_file)
                 file = [new_file]
@@ -649,12 +700,16 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
                 # requested by the user.
                 if "precision" not in _property_map:
                     _property_map["precision"] = _SireBase.wrap(3)
-                file = _SireIO.MoleculeParser.save(system._sire_object, filebase, _property_map)[0]
+                file = _SireIO.MoleculeParser.save(
+                    system._sire_object, filebase, _property_map
+                )[0]
                 new_file = file.replace("gro87", "gro")
                 _os.rename(file, new_file)
                 file = [new_file]
             else:
-                file = _SireIO.MoleculeParser.save(system._sire_object, filebase, _property_map)
+                file = _SireIO.MoleculeParser.save(
+                    system._sire_object, filebase, _property_map
+                )
 
             files += file
 
@@ -676,24 +731,25 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
 
 
 def savePerturbableSystem(filebase, system, property_map={}):
-    """Save a system containing a perturbable molecule. This will be written in
-       AMBER format, with a topology file for each end state of the perturbation,
-       i.e. 'filebase0.prm7' and 'filebase1.prm7'. Coordinates for the end
-       states are written to 'filebase0.rst7' and 'filebase1.rst7'.
+    """
+    Save a system containing a perturbable molecule. This will be written in
+    AMBER format, with a topology file for each end state of the perturbation,
+    i.e. 'filebase0.prm7' and 'filebase1.prm7'. Coordinates for the end
+    states are written to 'filebase0.rst7' and 'filebase1.rst7'.
 
-       Parameters
-       ----------
+    Parameters
+    ----------
 
-       filebase : str
-           The base name of the output files.
+    filebase : str
+        The base name of the output files.
 
-       system : :class:`System <BioSimSpace._SireWrappers.System>`
-           The molecular system.
+    system : :class:`System <BioSimSpace._SireWrappers.System>`
+        The molecular system.
 
-       property_map : dict
-           A dictionary that maps system "properties" to their user defined
-           values. This allows the user to refer to properties with their
-           own naming scheme, e.g. { "charge" : "my-charge" }
+    property_map : dict
+        A dictionary that maps system "properties" to their user defined
+        values. This allows the user to refer to properties with their
+        own naming scheme, e.g. { "charge" : "my-charge" }
     """
 
     # Check that the filebase is a string.
@@ -714,9 +770,11 @@ def savePerturbableSystem(filebase, system, property_map={}):
         system = _System(system)
     # Invalid type.
     else:
-        raise TypeError("'system' must be of type 'BioSimSpace.SireWrappers.System', "
-                        "'BioSimSpace._SireWrappers.Molecule, 'BioSimSpace._SireWrappers.Molecules' "
-                        "or a list of 'BiSimSpace._SireWrappers.Molecule' types.")
+        raise TypeError(
+            "'system' must be of type 'BioSimSpace.SireWrappers.System', "
+            "'BioSimSpace._SireWrappers.Molecule, 'BioSimSpace._SireWrappers.Molecules' "
+            "or a list of 'BiSimSpace._SireWrappers.Molecule' types."
+        )
 
     # Validate the map.
     if not isinstance(property_map, dict):
@@ -725,8 +783,10 @@ def savePerturbableSystem(filebase, system, property_map={}):
     # Validate that there is a single perturbable molecule in the system.
     pert_mols = system.getPerturbableMolecules()
     if len(pert_mols) != 1:
-        raise ValueError("The 'system' must contain a single perturbable molecule. "
-                         f"Found {len(pert_mols)}!")
+        raise ValueError(
+            "The 'system' must contain a single perturbable molecule. "
+            f"Found {len(pert_mols)}!"
+        )
 
     # Extract the molecule
     pert_mol = pert_mols[0]
@@ -736,10 +796,12 @@ def savePerturbableSystem(filebase, system, property_map={}):
     system1 = system.copy()
 
     # Update the perturbable molecule in each system.
-    system0.updateMolecules(pert_mol._toRegularMolecule(property_map=property_map,
-                                                        is_lambda1=False))
-    system1.updateMolecules(pert_mol._toRegularMolecule(property_map=property_map,
-                                                        is_lambda1=True))
+    system0.updateMolecules(
+        pert_mol._toRegularMolecule(property_map=property_map, is_lambda1=False)
+    )
+    system1.updateMolecules(
+        pert_mol._toRegularMolecule(property_map=property_map, is_lambda1=True)
+    )
 
     # Save the topology files.
     saveMolecules(filebase + "0", system0, "prm7")
@@ -751,33 +813,34 @@ def savePerturbableSystem(filebase, system, property_map={}):
 
 
 def readPerturbableSystem(top0, coords0, top1, coords1, property_map={}):
-    """Read a perturbable system from file.
+    """
+    Read a perturbable system from file.
 
-       Parameters
-       ----------
+    Parameters
+    ----------
 
-       top0 : str
-           The path to the topology file for the lambda=0 end state.
+    top0 : str
+        The path to the topology file for the lambda=0 end state.
 
-       coords0 : str
-           The path to the coordinate file for the lambda=0 end state.
+    coords0 : str
+        The path to the coordinate file for the lambda=0 end state.
 
-       top1 : str
-           The path to the topology file for the lambda=1 end state.
+    top1 : str
+        The path to the topology file for the lambda=1 end state.
 
-       coords1 : str
-           The path to the coordinate file for the lambda=1 end state.
+    coords1 : str
+        The path to the coordinate file for the lambda=1 end state.
 
-       property_map : dict
-           A dictionary that maps system "properties" to their user defined
-           values. This allows the user to refer to properties with their
-           own naming scheme, e.g. { "charge" : "my-charge" }
+    property_map : dict
+        A dictionary that maps system "properties" to their user defined
+        values. This allows the user to refer to properties with their
+        own naming scheme, e.g. { "charge" : "my-charge" }
 
-       Returns
-       -------
+    Returns
+    -------
 
-       system : :class:`System <BioSimSpace._SireWrappers.System>`
-           A molecular system.
+    system : :class:`System <BioSimSpace._SireWrappers.System>`
+        A molecular system.
     """
 
     if not isinstance(top0, str):
@@ -856,11 +919,17 @@ def readPerturbableSystem(top0, coords0, top1, coords1, property_map={}):
     LJ = property_map.get("LJ", "LJ")
     charge = property_map.get("charge", "charge")
     has_pert = False
-    for idx, (mol0, mol1) in enumerate(zip(system0.getMolecules(), system1.getMolecules())):
+    for idx, (mol0, mol1) in enumerate(
+        zip(system0.getMolecules(), system1.getMolecules())
+    ):
         for atom0, atom1 in zip(mol0.getAtoms(), mol1.getAtoms()):
-            if atom0._sire_object.property(ambertype) != atom1._sire_object.property(ambertype) or \
-               atom0._sire_object.property(LJ) != atom1._sire_object.property(LJ) or \
-               atom0._sire_object.property(charge) != atom1._sire_object.property(charge):
+            if (
+                atom0._sire_object.property(ambertype)
+                != atom1._sire_object.property(ambertype)
+                or atom0._sire_object.property(LJ) != atom1._sire_object.property(LJ)
+                or atom0._sire_object.property(charge)
+                != atom1._sire_object.property(charge)
+            ):
                 has_pert = True
                 break
         if has_pert:

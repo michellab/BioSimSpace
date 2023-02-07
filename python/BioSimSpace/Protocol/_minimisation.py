@@ -1,13 +1,13 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2022
+# Copyright: 2017-2023
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
 # BioSimSpace is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 2 of the License, or
+# the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
 # BioSimSpace is distributed in the hope that it will be useful,
@@ -19,9 +19,7 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-"""
-Functionality for minimisation protocols.
-"""
+"""Functionality for minimisation protocols."""
 
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
@@ -48,8 +46,8 @@ class Minimisation(_Equilibration, _Protocol):
                  ):
         """Constructor.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
            steps : int
                The maximum number of steps to perform.
@@ -110,31 +108,34 @@ class Minimisation(_Equilibration, _Protocol):
                    ) % (self._steps, self._restraint, self._force_constant.value())
 
     def getSteps(self):
-        """Return the maximum number of steps.
+        """
+        Return the maximum number of steps.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           steps : int
-               The maximum number of minimisation steps.
+        steps : int
+            The maximum number of minimisation steps.
         """
         return self._steps
 
     def setSteps(self, steps):
-        """Set the maximum number of steps.
+        """
+        Set the maximum number of steps.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           steps : int
-               The maximum number of minimisation steps.
+        steps : int
+            The maximum number of minimisation steps.
         """
         if not type(steps) is int:
             raise TypeError("'steps' must be of type 'int'")
 
         if steps <= 0:
             _warnings.warn(
-                "Number of steps must be greater than zero. Using default (10000).")
+                "Number of steps must be greater than zero. Using default (10000)."
+            )
             self._steps = 10000
 
         else:

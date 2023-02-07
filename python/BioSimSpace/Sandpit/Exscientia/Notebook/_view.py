@@ -1,13 +1,13 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2022
+# Copyright: 2017-2023
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
 # BioSimSpace is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 2 of the License, or
+# the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
 # BioSimSpace is distributed in the hope that it will be useful,
@@ -19,9 +19,7 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-"""
-Tools for visualising molecular systems.
-"""
+"""Tools for visualising molecular systems."""
 
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
@@ -43,37 +41,41 @@ from .. import IO as _IO
 from ..Process._process import Process as _Process
 from .._SireWrappers import System as _System
 
-class View():
+
+class View:
     """A class for handling interactive molecular visualisations."""
 
     def __init__(self, handle, property_map={}, is_lambda1=False):
-        """Constructor.
+        """
+        Constructor.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           handle : :class:`Process <BioSimSpace.Process>`, \
-                    :class:`System <BioSimSpace._SireWrappers.System>` \
-                    :class:`System <BioSimSpace._SireWrappers.Molecule>` \
-                    :class:`System <BioSimSpace._SireWrappers.Molecules>` \
-                    str, [str]
-               A handle to a process, system, molecule, or molecule container,
-               or the path to molecular input file(s).
+        handle : :class:`Process <BioSimSpace.Process>`, \
+                 :class:`System <BioSimSpace._SireWrappers.System>` \
+                 :class:`System <BioSimSpace._SireWrappers.Molecule>` \
+                 :class:`System <BioSimSpace._SireWrappers.Molecules>` \
+                 str, [str]
+            A handle to a process, system, molecule, or molecule container,
+            or the path to molecular input file(s).
 
-           property_map : dict
-               A dictionary that maps system "properties" to their user defined
-               values. This allows the user to refer to properties with their
-               own naming scheme, e.g. { "charge" : "my-charge" }
+        property_map : dict
+            A dictionary that maps system "properties" to their user defined
+            values. This allows the user to refer to properties with their
+            own naming scheme, e.g. { "charge" : "my-charge" }
 
-           is_lambda1 : bool
-               Whether to use the lambda = 1 end state when visualising
-               perturbable molecules. By default, the state at lambda = 0
-               is used.
+        is_lambda1 : bool
+            Whether to use the lambda = 1 end state when visualising
+            perturbable molecules. By default, the state at lambda = 0
+            is used.
         """
 
         # Make sure we're running inside a Jupyter notebook.
         if not _is_notebook:
-            _warnings.warn("You can only use BioSimSpace.Notebook.View from within a Jupyter notebook.")
+            _warnings.warn(
+                "You can only use BioSimSpace.Notebook.View from within a Jupyter notebook."
+            )
             return None
 
         # Validate the map.
@@ -118,11 +120,13 @@ class View():
                 self._handle = handle._getSireObject()
                 self._is_process = False
             except:
-                raise TypeError("The handle must be of type 'BioSimSpace.Process', "
-                                "'BioSimSpace._SireWrappers.System', "
-                                "'BioSimSpace._SireWrappers.Molecule', "
-                                "'BioSimSpace._SireWrappers.Molecules', "
-                                "'str', or a list of 'str' types.")
+                raise TypeError(
+                    "The handle must be of type 'BioSimSpace.Process', "
+                    "'BioSimSpace._SireWrappers.System', "
+                    "'BioSimSpace._SireWrappers.Molecule', "
+                    "'BioSimSpace._SireWrappers.Molecules', "
+                    "'str', or a list of 'str' types."
+                )
 
         # Create a temporary workspace for the view object.
         self._tmp_dir = _tempfile.TemporaryDirectory()
@@ -136,13 +140,14 @@ class View():
             self._handle = self._reconstruct_system(self._handle, self._is_lamba1)
 
     def system(self, gui=True):
-        """View the entire molecular system.
+        """
+        View the entire molecular system.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           gui : bool
-               Whether to display the gui.
+        gui : bool
+            Whether to display the gui.
         """
 
         # Make sure we're running inside a Jupyter notebook.
@@ -170,16 +175,17 @@ class View():
         return self._create_view(system, gui=gui)
 
     def molecules(self, indices=None, gui=True):
-        """View specific molecules.
+        """
+        View specific molecules.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           indices : [int], range
-               A list of molecule indices.
+        indices : [int], range
+            A list of molecule indices.
 
-           gui : bool
-               Whether to display the gui.
+        gui : bool
+            Whether to display the gui.
         """
 
         # Make sure we're running inside a Jupyter notebook.
@@ -240,16 +246,17 @@ class View():
         return self._create_view(s, gui=gui)
 
     def molecule(self, index=0, gui=True):
-        """View a specific molecule.
+        """
+        View a specific molecule.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           index : int
-               The molecule index.
+        index : int
+            The molecule index.
 
-           gui : bool
-               Whether to display the gui.
+        gui : bool
+            Whether to display the gui.
         """
 
         # Make sure we're running inside a Jupyter notebook.
@@ -294,16 +301,17 @@ class View():
         return self._create_view(s, gui=gui)
 
     def reload(self, index=None, gui=True):
-        """Reload a particular view.
+        """
+        Reload a particular view.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           index : int
-               The view index.
+        index : int
+            The view index.
 
-           gui : bool
-               Whether to display the gui.
+        gui : bool
+            Whether to display the gui.
         """
 
         # Make sure we're running inside a Jupyter notebook.
@@ -324,33 +332,37 @@ class View():
 
         # Make sure the view index is valid.
         if index < 0 or index >= self._num_views:
-            raise ValueError("View index (%d) is out of range: [0-%d]" % (index, self._num_views-1))
+            raise ValueError(
+                "View index (%d) is out of range: [0-%d]" % (index, self._num_views - 1)
+            )
 
         # Create and return the view.
         return self._create_view(view=index, gui=gui)
 
     def nViews(self):
-        """Return the number of views.
+        """
+        Return the number of views.
 
-           Return
-           ------
+        Return
+        ------
 
-           num_views : int
-               The number of views.
+        num_views : int
+            The number of views.
         """
         return self._num_views
 
     def savePDB(self, file, index=None):
-        """Save a specific view as a PDB file.
+        """
+        Save a specific view as a PDB file.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           file : str
-               The name of the file to write to.
+        file : str
+            The name of the file to write to.
 
-           index : int
-               The view index.
+        index : int
+            The view index.
         """
 
         # Make sure we're running inside a Jupyter notebook.
@@ -367,7 +379,9 @@ class View():
 
         # Make sure the view index is valid.
         if index < 0 or index >= self._num_views:
-            raise ValueError("View index (%d) is out of range: [0-%d]" % (index, self._num_views-1))
+            raise ValueError(
+                "View index (%d) is out of range: [0-%d]" % (index, self._num_views - 1)
+            )
 
         # Copy the file to the chosen location.
         _shutil.copyfile("%s/view_%04d.pdb" % (self._work_dir, index), file)
@@ -386,19 +400,20 @@ class View():
         self._num_views = 0
 
     def _create_view(self, system=None, view=None, gui=True):
-        """Helper function to create the NGLview object.
+        """
+        Helper function to create the NGLview object.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           system : Sire.System.System
-               A Sire molecular system.
+        system : Sire.System.System
+            A Sire molecular system.
 
-           view : int
-               The index of an existing view.
+        view : int
+            The index of an existing view.
 
-           gui : bool
-               Whether to display the gui.
+        gui : bool
+            Whether to display the gui.
         """
 
         if system is None and view is None:
@@ -447,18 +462,19 @@ class View():
         return view.display(gui=gui)
 
     def _reconstruct_system(self, system, is_lambda1=False):
-        """Helper function to reconstruct a lambda end state for a perturbable
-           system.
+        """
+        Helper function to reconstruct a lambda end state for a perturbable
+        system.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           system : Sire.System.System
-               A Sire molecular system.
+        system : Sire.System.System
+            A Sire molecular system.
 
-           is_lambda1 : bool
-               Whether to use the lambda = 1 end state for reconstructing
-               perturbable molecules. By default, the state at lambda = 0
+        is_lambda1 : bool
+            Whether to use the lambda = 1 end state for reconstructing
+            perturbable molecules. By default, the state at lambda = 0
         """
 
         # Convert to a BioSimSpace system.

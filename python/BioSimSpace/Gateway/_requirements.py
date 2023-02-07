@@ -1,13 +1,13 @@
 #####################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2022
+# Copyright: 2017-2023
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
 # BioSimSpace is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 2 of the License, or
+# the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
 # BioSimSpace is distributed in the hope that it will be useful,
@@ -21,21 +21,29 @@
 
 """
 Functionality for defining and validating BioSimSpace input and output requirements.
-Author: Lester Hedges <lester.hedges@gmail.com>
+Author: Lester Hedges <lester.hedges@gmail.com>.
 """
 
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
 
-__all__ = ["Boolean", "Integer", "Float", "String",     # Regular types.
-           "File", "FileSet",                           # File types.
-           "Length", "Area", "Volume",                  # Length types.
-           "Angle",
-           "Charge",
-           "Energy",
-           "Pressure",
-           "Temperature",
-           "Time"]
+__all__ = [
+    "Boolean",
+    "Integer",
+    "Float",
+    "String",  # Regular types.
+    "File",
+    "FileSet",  # File types.
+    "Length",
+    "Area",
+    "Volume",  # Length types.
+    "Angle",
+    "Charge",
+    "Energy",
+    "Pressure",
+    "Temperature",
+    "Time",
+]
 
 import bz2 as _bz2
 import copy as _copy
@@ -48,7 +56,8 @@ import zipfile as _zipfile
 
 from .. import Types as _Types
 
-class Requirement():
+
+class Requirement:
     """Base class for BioSimSpace Node requirements."""
 
     # Set the argparse argument type.
@@ -57,33 +66,42 @@ class Requirement():
     # Default to single arguments.
     _is_multi = False
 
-    def __init__(self, help=None, default=None, unit=None, minimum=None,
-            maximum=None, allowed=None, optional=False):
-        """Constructor.
+    def __init__(
+        self,
+        help=None,
+        default=None,
+        unit=None,
+        minimum=None,
+        maximum=None,
+        allowed=None,
+        optional=False,
+    ):
+        """
+        Constructor.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           help : str
-               The help string.
+        help : str
+            The help string.
 
-           default :
-               The default value.
+        default :
+            The default value.
 
-           unit : str
-               The unit.
+        unit : str
+            The unit.
 
-           minimum :
-               The minimum allowed value.
+        minimum :
+            The minimum allowed value.
 
-           maximum :
-               The maximum allowed value.
+        maximum :
+            The maximum allowed value.
 
-           allowed : list
-               A list of allowed values.
+        allowed : list
+            A list of allowed values.
 
-           optional : bool
-               Whether the requirement is optional.
+        optional : bool
+            Whether the requirement is optional.
         """
 
         # Don't allow user to create an instance of this base class.
@@ -124,8 +142,10 @@ class Requirement():
         # Min and max.
         if minimum is not None and maximum is not None:
             if self._max < self._min:
-                raise ValueError("The maximum value '%s' is less than the minimum '%s'"
-                    % (maximum, minimum))
+                raise ValueError(
+                    "The maximum value '%s' is less than the minimum '%s'"
+                    % (maximum, minimum)
+                )
 
         # Convert tuple to list.
         if isinstance(allowed, tuple):
@@ -139,7 +159,9 @@ class Requirement():
 
             # Conflicting requirements.
             if self._min is not None or self._max is not None:
-                raise ValueError("Conflicting requirement: cannot have allowed values and min/max.")
+                raise ValueError(
+                    "Conflicting requirement: cannot have allowed values and min/max."
+                )
 
         # Set the default value.
         if default is not None:
@@ -151,16 +173,17 @@ class Requirement():
             self._is_optional = True
 
     def setValue(self, value, name=None):
-        """Validate and set the value.
+        """
+        Validate and set the value.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           value :
-               The value of the input requirement.
+        value :
+            The value of the input requirement.
 
-           name : str
-               The name of the requirement.
+        name : str
+            The name of the requirement.
         """
 
         if value is None and not self._is_optional:
@@ -176,13 +199,17 @@ class Requirement():
 
         # Minimum.
         if self._min is not None and value < self._min:
-            raise ValueError("The value (%s) is less than the allowed "
-                "minimum (%s)" % (value, self._min))
+            raise ValueError(
+                "The value (%s) is less than the allowed "
+                "minimum (%s)" % (value, self._min)
+            )
 
         # Maximum.
         if self._max is not None and value > self._max:
-            raise ValueError("The value (%s) is greater than the allowed "
-                "maximum (%s)" % (value, self._max))
+            raise ValueError(
+                "The value (%s) is greater than the allowed "
+                "maximum (%s)" % (value, self._max)
+            )
 
         # Allowed values.
         if self._allowed is not None and value not in self._allowed:
@@ -196,11 +223,15 @@ class Requirement():
                 if new_value in allowed:
                     value = self._allowed[allowed.index(new_value)]
                 else:
-                    raise ValueError("The value (%s) is not in the list of allowed values: "
-                        "%s" % (value, str(self._allowed)))
+                    raise ValueError(
+                        "The value (%s) is not in the list of allowed values: "
+                        "%s" % (value, str(self._allowed))
+                    )
             else:
-                raise ValueError("The value (%s) is not in the list of allowed values: "
-                    "%s" % (value, str(self._allowed)))
+                raise ValueError(
+                    "The value (%s) is not in the list of allowed values: "
+                    "%s" % (value, str(self._allowed))
+                )
 
         # All is okay. Set the value.
         self._value = value
@@ -214,57 +245,62 @@ class Requirement():
         return self._default
 
     def getUnit(self):
-        """Return the unit.
+        """
+        Return the unit.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           unit : str
-               The unit associated with the requirement.
+        unit : str
+            The unit associated with the requirement.
         """
         return self._unit
 
     def getHelp(self):
-        """Return the documentation string.
+        """
+        Return the documentation string.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           help : str
-               The help string.
+        help : str
+            The help string.
         """
         return self._help
 
     def isMulti(self):
-        """Whether the requirement has multiple values.
+        """
+        Whether the requirement has multiple values.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           is_multi : bool
-               Whether the requirement has multiple values.
+        is_multi : bool
+            Whether the requirement has multiple values.
         """
         return self._is_multi
 
     def isOptional(self):
-        """Whether the requirement is optional.
+        """
+        Whether the requirement is optional.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           is_optional : bool
-               Whether the requirement is optional.
+        is_optional : bool
+            Whether the requirement is optional.
         """
         return self._is_optional
 
     def getArgType(self):
-        """The command-line argument type.
+        """
+        The command-line argument type.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           arg_type : bool, int, float, str
-              The command-line argument type.
+        arg_type : bool, int, float, str
+           The command-line argument type.
         """
         return self._arg_type
 
@@ -277,13 +313,14 @@ class Requirement():
         return self._max
 
     def getAllowedValues(self):
-        """Return the allowed values.
+        """
+        Return the allowed values.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           allowed : list
-               The list of allowed values that the requirement can take.
+        allowed : list
+            The list of allowed values that the requirement can take.
         """
         return self._allowed
 
@@ -291,43 +328,51 @@ class Requirement():
         """Validate the default value."""
 
         if self._min is not None and self._default < self._min:
-            raise ValueError("The default '%s' is less than the minimum "
-                "allowed value '%s'" % (self._default, self._min))
+            raise ValueError(
+                "The default '%s' is less than the minimum "
+                "allowed value '%s'" % (self._default, self._min)
+            )
 
         if self._max is not None and self._default > self._max:
-            raise ValueError("The default '%s' is greater than the maximum "
-                "allowed value '%s'" % (self._default, self._max))
+            raise ValueError(
+                "The default '%s' is greater than the maximum "
+                "allowed value '%s'" % (self._default, self._max)
+            )
 
         if self._allowed is not None and self._default not in self._allowed:
-            raise ValueError("The default '%s' is not one of the allowed values %s"
-                % (self._default, str(self._allowed)))
+            raise ValueError(
+                "The default '%s' is not one of the allowed values %s"
+                % (self._default, str(self._allowed))
+            )
+
 
 class Boolean(Requirement):
     """A boolean requirement.
 
-       Example
-       -------
+    Example
+    -------
 
-       Create a boolean flag with a default of False.
+    Create a boolean flag with a default of False.
 
-       >>> import BioSimSpace as BSS
-       >>> flag = BSS.Gateway.Boolean(help="A boolean flag", default=False)
+    >>> import BioSimSpace as BSS
+    >>> flag = BSS.Gateway.Boolean(help="A boolean flag", default=False)
     """
 
     # Set the argparse argument type.
     _arg_type = bool
 
     def __init__(self, help=None, default=None):
-        """Constructor.
+        """
+        Constructor.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           help : str
-               The help string.
+        help : str
+            The help string.
 
-           default : bool
-               The default value.
+        default : bool
+            The default value.
         """
 
         # Call the base class constructor.
@@ -341,57 +386,65 @@ class Boolean(Requirement):
         else:
             raise TypeError("The value should be of type 'bool'.")
 
+
 class Integer(Requirement):
     """An integer requirement.
 
-       Examples
-       --------
+    Examples
+    --------
 
-       Create an integer requirement with an allowed range and no default.
+    Create an integer requirement with an allowed range and no default.
 
-       >>> import BioSimSpace as BSS
-       >>> my_int = BSS.Gateway.Integer(help="An integer requirement.", minimum=0, maximum=10)
+    >>> import BioSimSpace as BSS
+    >>> my_int = BSS.Gateway.Integer(help="An integer requirement.", minimum=0, maximum=10)
 
-       Create an integer requirement with a given set of allowed values.
+    Create an integer requirement with a given set of allowed values.
 
-       >>> import BioSimSpace as BSS
-       >>> my_int = BSS.Gateway.Integer(help="An integer requirement.", allowed=[1,2,3,4,5])
+    >>> import BioSimSpace as BSS
+    >>> my_int = BSS.Gateway.Integer(help="An integer requirement.", allowed=[1,2,3,4,5])
 
-       Create an integer requirement with a maximum value of 10 and default of 3.
+    Create an integer requirement with a maximum value of 10 and default of 3.
 
-       >>> import BioSimSpace as BSS
-       >>> my_int = BSS.Gateway.Integer(help="An integer requirement.", default=3, maximum=10)
+    >>> import BioSimSpace as BSS
+    >>> my_int = BSS.Gateway.Integer(help="An integer requirement.", default=3, maximum=10)
     """
 
     # Set the argparse argument type.
     _arg_type = int
 
-    def __init__(self, help=None, default=None,
-            minimum=None, maximum=None, allowed=None):
-        """Constructor.
+    def __init__(
+        self, help=None, default=None, minimum=None, maximum=None, allowed=None
+    ):
+        """
+        Constructor.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           help : str
-               The help string.
+        help : str
+            The help string.
 
-           default : int
-               The default value.
+        default : int
+            The default value.
 
-           minimum : int
-               The minimum allowed value.
+        minimum : int
+            The minimum allowed value.
 
-           maximum : int
-               The maximum allowed value.
+        maximum : int
+            The maximum allowed value.
 
-           allowed : [int]
-               A list of allowed values.
+        allowed : [int]
+            A list of allowed values.
         """
 
         # Call the base class constructor.
-        super().__init__(help=help, default=default, minimum=minimum,
-            maximum=maximum, allowed=allowed)
+        super().__init__(
+            help=help,
+            default=default,
+            minimum=minimum,
+            maximum=maximum,
+            allowed=allowed,
+        )
 
     def _validate(self, value):
         """Validate that the value is of the correct type."""
@@ -401,57 +454,65 @@ class Integer(Requirement):
         else:
             raise TypeError("The value should be of type 'int'.")
 
+
 class Float(Requirement):
     """A floating point requirement.
 
-       Examples
-       --------
+    Examples
+    --------
 
-       Create a float requirement with an allowed range and no default.
+    Create a float requirement with an allowed range and no default.
 
-       >>> import BioSimSpace as BSS
-       >>> my_float = BSS.Gateway.Float(help="A float requirement.", minimum=-13.2, maximum=27.3)
+    >>> import BioSimSpace as BSS
+    >>> my_float = BSS.Gateway.Float(help="A float requirement.", minimum=-13.2, maximum=27.3)
 
-       Create a float requirement with a given set of allowed values.
+    Create a float requirement with a given set of allowed values.
 
-       >>> import BioSimSpace as BSS
-       >>> my_float = BSS.Gateway.Float(help="A float requirement.", allowed=[1.0,3.5,12.8])
+    >>> import BioSimSpace as BSS
+    >>> my_float = BSS.Gateway.Float(help="A float requirement.", allowed=[1.0,3.5,12.8])
 
-       Create a float requirement with a maximum value of 57.3 and default of 18.2.
+    Create a float requirement with a maximum value of 57.3 and default of 18.2.
 
-       >>> import BioSimSpace as BSS
-       >>> my_float = BSS.Gateway.Float(help="A float requirement.", default=18.2, maximum=57.3)
+    >>> import BioSimSpace as BSS
+    >>> my_float = BSS.Gateway.Float(help="A float requirement.", default=18.2, maximum=57.3)
     """
 
     # Set the argparse argument type.
     _arg_type = float
 
-    def __init__(self, help=None, default=None,
-            minimum=None, maximum=None, allowed=None):
-        """Constructor.
+    def __init__(
+        self, help=None, default=None, minimum=None, maximum=None, allowed=None
+    ):
+        """
+        Constructor.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           help : str
-               The help string.
+        help : str
+            The help string.
 
-           default : float
-               The default value.
+        default : float
+            The default value.
 
-           minimum : float
-               The minimum allowed value.
+        minimum : float
+            The minimum allowed value.
 
-           maximum : float
-               The maximum allowed value.
+        maximum : float
+            The maximum allowed value.
 
-           allowed : [float]
-               A list of allowed values.
+        allowed : [float]
+            A list of allowed values.
         """
 
         # Call the base class constructor.
-        super().__init__(help=help, default=default, minimum=minimum,
-            maximum=maximum, allowed=allowed)
+        super().__init__(
+            help=help,
+            default=default,
+            minimum=minimum,
+            maximum=maximum,
+            allowed=allowed,
+        )
 
     def _validate(self, value):
         """Validate that the value is of the correct type."""
@@ -463,40 +524,42 @@ class Float(Requirement):
         else:
             raise TypeError("The value should be of type 'float' or 'int'.")
 
+
 class String(Requirement):
     """A string requirement.
 
-       Examples
-       --------
+    Examples
+    --------
 
-       Create a string requirement with a default value.
+    Create a string requirement with a default value.
 
-       >>> import BioSimSpace as BSS
-       >>> my_string = BSS.Gateway.String(help="A string requirement.", default="dog")
+    >>> import BioSimSpace as BSS
+    >>> my_string = BSS.Gateway.String(help="A string requirement.", default="dog")
 
-       Create a string requirement with a list of allowed values and a default of "cat".
+    Create a string requirement with a list of allowed values and a default of "cat".
 
-       >>> import BioSimSpace as BSS
-       >>> my_string = BSS.Gateway.String(help="A string requirement.", allowed=["cat", "dog", "fish"], default="cat")
+    >>> import BioSimSpace as BSS
+    >>> my_string = BSS.Gateway.String(help="A string requirement.", allowed=["cat", "dog", "fish"], default="cat")
     """
 
     # Set the argparse argument type.
     _arg_type = str
 
     def __init__(self, help=None, default=None, allowed=None):
-        """Constructor.
+        """
+        Constructor.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           help : str
-               The help string.
+        help : str
+            The help string.
 
-           default : str
-               The default value.
+        default : str
+            The default value.
 
-           allowed : [str]
-               A list of allowed values.
+        allowed : [str]
+            A list of allowed values.
         """
 
         # Call the base class constructor.
@@ -510,32 +573,34 @@ class String(Requirement):
         else:
             raise TypeError("The value should be of type 'str'")
 
+
 class File(Requirement):
     """A file requirement.
 
-       Example
-       -------
+    Example
+    -------
 
-       Create an optional file requirement.
+    Create an optional file requirement.
 
-       >>> import BioSimSpace as BSS
-       >>> my_file = BSS.Gateway.File(help="A file requirement.", optional=True)
+    >>> import BioSimSpace as BSS
+    >>> my_file = BSS.Gateway.File(help="A file requirement.", optional=True)
     """
 
     # Set the argparse argument type.
     _arg_type = str
 
     def __init__(self, help=None, optional=False):
-        """Constructor.
+        """
+        Constructor.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           help : str
-               The help string.
+        help : str
+            The help string.
 
-           optional : bool
-               Whether the file is optional.
+        optional : bool
+            Whether the file is optional.
         """
 
         # Call the base class constructor.
@@ -554,7 +619,9 @@ class File(Requirement):
             if file is None:
                 file = value
             elif isinstance(file, (list, tuple)):
-                raise ValueError("The archive contains multiple files: use a FileSet instead!")
+                raise ValueError(
+                    "The archive contains multiple files: use a FileSet instead!"
+                )
         else:
             raise TypeError("The value should be of type 'str'")
 
@@ -564,16 +631,17 @@ class File(Requirement):
         else:
             return file
 
+
 class FileSet(Requirement):
     """A file requirement.
 
-       Example
-       -------
+    Example
+    -------
 
-       Create a file set requirement.
+    Create a file set requirement.
 
-       >>> import BioSimSpace as BSS
-       >>> my_files = BSS.Gateway.FileSet(help="A file set requirement.")
+    >>> import BioSimSpace as BSS
+    >>> my_files = BSS.Gateway.FileSet(help="A file set requirement.")
     """
 
     # Set the argparse argument type.
@@ -583,29 +651,31 @@ class FileSet(Requirement):
     _is_multi = True
 
     def __init__(self, help=None, optional=False):
-        """Constructor.
+        """
+        Constructor.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           help : str
-               The help string.
+        help : str
+            The help string.
 
-           optional : bool
-               Whether the file set is optional.
+        optional : bool
+            Whether the file set is optional.
         """
 
         # Call the base class constructor.
         super().__init__(help=help, optional=optional)
 
     def getValue(self):
-        """Return the value.
+        """
+        Return the value.
 
-           Returns
-           --------
+        Returns
+        -------
 
-           value : [str]
-               A list of the files associated with this requirement.
+        value : [str]
+            A list of the files associated with this requirement.
         """
         if self._value is None:
             return None
@@ -633,7 +703,7 @@ class FileSet(Requirement):
             # A single file was passed.
             if len(value) == 1:
                 # Remove whitespace and split on commas.
-                value = _re.sub(r"\s+", "", value[0]).split(',')
+                value = _re.sub(r"\s+", "", value[0]).split(",")
 
             # Loop over all strings.
             for file in value:
@@ -660,60 +730,69 @@ class FileSet(Requirement):
         else:
             return value
 
+
 class Length(Requirement):
     """A length requirement.
 
-       Examples
-       --------
+    Examples
+    --------
 
-       Create a length requirement with a default of 10 Angstrom.
+    Create a length requirement with a default of 10 Angstrom.
 
-       >>> import BioSimSpace as BSS
-       >>> my_length = BSS.Gateway.Length(help="A length requirement", default=10, unit="angstrom")
+    >>> import BioSimSpace as BSS
+    >>> my_length = BSS.Gateway.Length(help="A length requirement", default=10, unit="angstrom")
 
-       The same, but explicitly passing a :class:`Length <BioSimSpace.Types.Length>`
-       for the default.
+    The same, but explicitly passing a :class:`Length <BioSimSpace.Types.Length>`
+    for the default.
 
-       >>> import BioSimSpace as BSS
-       >>> my_length = BSS.Gateway.Length(help="A length requirement",
-       ...                                default=10*BSS.Units.Length.angstrom)
+    >>> import BioSimSpace as BSS
+    >>> my_length = BSS.Gateway.Length(help="A length requirement",
+    ...                                default=10*BSS.Units.Length.angstrom)
 
-       Create a length requirement with a default of 10 Angstrom and a maximum
-       of 50 nanometers. Note that the unit is taken from the default value.
+    Create a length requirement with a default of 10 Angstrom and a maximum
+    of 50 nanometers. Note that the unit is taken from the default value.
 
-       >>> import BioSimSpace as BSS
-       >>> my_length = BSS.Gateway.Length(help="A length requirement",
-       ...                                default=10*BSS.Units.Length.angstrom,
-       ...                                maximum=50*BSS.Units.Length.nanometer)
+    >>> import BioSimSpace as BSS
+    >>> my_length = BSS.Gateway.Length(help="A length requirement",
+    ...                                default=10*BSS.Units.Length.angstrom,
+    ...                                maximum=50*BSS.Units.Length.nanometer)
     """
 
     # Set the argparse argument type.
     _arg_type = str
 
-    def __init__(self, help=None, default=None, unit=None,
-            minimum=None, maximum=None, allowed=None):
-        """Constructor.
+    def __init__(
+        self,
+        help=None,
+        default=None,
+        unit=None,
+        minimum=None,
+        maximum=None,
+        allowed=None,
+    ):
+        """
+        Constructor.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           help : str
-               The help string.
+        help : str
+            The help string.
 
-           default : :class:`Length <BioSimSpace.Types.Length>`
-               The default value.
+        default : :class:`Length <BioSimSpace.Types.Length>`
+            The default value.
 
-           unit : str
-               The unit.
+        unit : str
+            The unit.
 
-           minimum : :class:`Length <BioSimSpace.Types.Length>`
-               The minimum allowed value.
+        minimum : :class:`Length <BioSimSpace.Types.Length>`
+            The minimum allowed value.
 
-           maximum : :class:`Length <BioSimSpace.Types.Length>`
-               The maximum allowed value.
+        maximum : :class:`Length <BioSimSpace.Types.Length>`
+            The maximum allowed value.
 
-           allowed : [:class:`Length <BioSimSpace.Types.Length>`]
-               A list of allowed values.
+        allowed : [:class:`Length <BioSimSpace.Types.Length>`]
+            A list of allowed values.
         """
 
         # Validate the unit.
@@ -728,17 +807,24 @@ class Length(Requirement):
                 raise ValueError("No unit or default value has been specified!")
 
         # Call the base class constructor.
-        super().__init__(help=help, default=default, unit=self._unit, minimum=minimum,
-            maximum=maximum, allowed=allowed)
+        super().__init__(
+            help=help,
+            default=default,
+            unit=self._unit,
+            minimum=minimum,
+            maximum=maximum,
+            allowed=allowed,
+        )
 
     def getValue(self):
-        """Return the value.
+        """
+        Return the value.
 
-           Returns
-           --------
+        Returns
+        -------
 
-           value : :class:`Length <BioSimSpace.Types.Length>`
-               The value of the requirement.
+        value : :class:`Length <BioSimSpace.Types.Length>`
+            The value of the requirement.
         """
         if self._value is None:
             return None
@@ -760,59 +846,68 @@ class Length(Requirement):
             else:
                 return _Types.Length(value, unit)._convert_to(self._unit)
 
+
 class Area(Requirement):
     """An area requirement.
 
-       Examples
-       --------
+    Examples
+    --------
 
-       Create an area requirement with a default of 10 square Angstrom.
+    Create an area requirement with a default of 10 square Angstrom.
 
-       >>> import BioSimSpace as BSS
-       >>> my_area = BSS.Gateway.Area(help="An area requirement", default=10, unit="angstrom2")
+    >>> import BioSimSpace as BSS
+    >>> my_area = BSS.Gateway.Area(help="An area requirement", default=10, unit="angstrom2")
 
-       The same, but explicitly passing a :class:`Area <BioSimSpace.Types.Area>`
-       for the default.
+    The same, but explicitly passing a :class:`Area <BioSimSpace.Types.Area>`
+    for the default.
 
-       >>> import BioSimSpace as BSS
-       >>> my_area = BSS.Gateway.Area(help="An area requirement", default=10*BSS.Units.Area.angstrom2)
+    >>> import BioSimSpace as BSS
+    >>> my_area = BSS.Gateway.Area(help="An area requirement", default=10*BSS.Units.Area.angstrom2)
 
-       Create an area requirement with a default of 10 square Angstrom and a maximum
-       of 50 square nanometers. Note that the unit is taken from the default value.
+    Create an area requirement with a default of 10 square Angstrom and a maximum
+    of 50 square nanometers. Note that the unit is taken from the default value.
 
-       >>> import BioSimSpace as BSS
-       >>> my_area = BSS.Gateway.Area(help="An area requirement",
-       ...                            default=100*BSS.Units.Area.angstrom2,
-       ...                            maximum=50*BSS.Units.Area.nanometer2)
+    >>> import BioSimSpace as BSS
+    >>> my_area = BSS.Gateway.Area(help="An area requirement",
+    ...                            default=100*BSS.Units.Area.angstrom2,
+    ...                            maximum=50*BSS.Units.Area.nanometer2)
     """
 
     # Set the argparse argument type.
     _arg_type = str
 
-    def __init__(self, help=None, default=None, unit=None,
-            minimum=None, maximum=None, allowed=None):
-        """Constructor.
+    def __init__(
+        self,
+        help=None,
+        default=None,
+        unit=None,
+        minimum=None,
+        maximum=None,
+        allowed=None,
+    ):
+        """
+        Constructor.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           help : str
-               The help string.
+        help : str
+            The help string.
 
-           default : :class:`Area <BioSimSpace.Types.Area>`
-               The default value.
+        default : :class:`Area <BioSimSpace.Types.Area>`
+            The default value.
 
-           unit : str
-               The unit.
+        unit : str
+            The unit.
 
-           minimum : :class:`Area <BioSimSpace.Types.Area>`
-               The minimum allowed value.
+        minimum : :class:`Area <BioSimSpace.Types.Area>`
+            The minimum allowed value.
 
-           maximum : :class:`Area <BioSimSpace.Types.Area>`
-               The maximum allowed value.
+        maximum : :class:`Area <BioSimSpace.Types.Area>`
+            The maximum allowed value.
 
-           allowed : [:class:`Area <BioSimSpace.Types.Area>`]
-               A list of allowed values.
+        allowed : [:class:`Area <BioSimSpace.Types.Area>`]
+            A list of allowed values.
         """
 
         # Validate the unit.
@@ -827,17 +922,24 @@ class Area(Requirement):
                 raise ValueError("No unit or default value has been specified!")
 
         # Call the base class constructor.
-        super().__init__(help=help, default=default, unit=self._unit,
-            minimum=minimum, maximum=maximum, allowed=allowed)
+        super().__init__(
+            help=help,
+            default=default,
+            unit=self._unit,
+            minimum=minimum,
+            maximum=maximum,
+            allowed=allowed,
+        )
 
     def getValue(self):
-        """Return the value.
+        """
+        Return the value.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           value : :class:`Area <BioSimSpace.Types.Area>`
-               The value of the requirement.
+        value : :class:`Area <BioSimSpace.Types.Area>`
+            The value of the requirement.
         """
         if self._value is None:
             return None
@@ -859,59 +961,68 @@ class Area(Requirement):
             else:
                 return _Types.Area(value, unit)._convert_to(self._unit)
 
+
 class Volume(Requirement):
     """A volume requirement.
 
-       Examples
-       --------
+    Examples
+    --------
 
-       Create a volume requirement with a default of 10 cubed Angstrom.
+    Create a volume requirement with a default of 10 cubed Angstrom.
 
-       >>> import BioSimSpace as BSS
-       >>> my_volume = BSS.Gateway.Volume(help="A volume requirement", default=10, unit="angstrom3")
+    >>> import BioSimSpace as BSS
+    >>> my_volume = BSS.Gateway.Volume(help="A volume requirement", default=10, unit="angstrom3")
 
-       The same, but explicitly passing a :class:`Volume <BioSimSpace.Types.Volume>`
-       for the default.
+    The same, but explicitly passing a :class:`Volume <BioSimSpace.Types.Volume>`
+    for the default.
 
-       >>> import BioSimSpace as BSS
-       >>> my_volume = BSS.Gateway.Volume(help="A volume requirement", default=10*BSS.Units.Volume.angstrom3)
+    >>> import BioSimSpace as BSS
+    >>> my_volume = BSS.Gateway.Volume(help="A volume requirement", default=10*BSS.Units.Volume.angstrom3)
 
-       Create a volume requirement with a default of 10 cubed Angstrom and a maximum
-       of 50 cubed nanometers. Note that the unit is taken from the default value.
+    Create a volume requirement with a default of 10 cubed Angstrom and a maximum
+    of 50 cubed nanometers. Note that the unit is taken from the default value.
 
-       >>> import BioSimSpace as BSS
-       >>> my_volume = BSS.Gateway.Volume(help="A volume requirement",
-       ...                                default=10*BSS.Units.Volume.angstrom3,
-       ...                                maximum=50*BSS.Units.Volume.nanometer3)
+    >>> import BioSimSpace as BSS
+    >>> my_volume = BSS.Gateway.Volume(help="A volume requirement",
+    ...                                default=10*BSS.Units.Volume.angstrom3,
+    ...                                maximum=50*BSS.Units.Volume.nanometer3)
     """
 
     # Set the argparse argument type.
     _arg_type = str
 
-    def __init__(self, help=None, default=None, unit=None,
-            minimum=None, maximum=None, allowed=None):
-        """Constructor.
+    def __init__(
+        self,
+        help=None,
+        default=None,
+        unit=None,
+        minimum=None,
+        maximum=None,
+        allowed=None,
+    ):
+        """
+        Constructor.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           help : str
-               The help string.
+        help : str
+            The help string.
 
-           default : :class:`Volume <BioSimSpace.Types.Volume>`
-               The default value.
+        default : :class:`Volume <BioSimSpace.Types.Volume>`
+            The default value.
 
-           unit : str
-               The unit.
+        unit : str
+            The unit.
 
-           minimum : :class:`Volume <BioSimSpace.Types.Volume>`
-               The minimum allowed value.
+        minimum : :class:`Volume <BioSimSpace.Types.Volume>`
+            The minimum allowed value.
 
-           maximum : :class:`Volume <BioSimSpace.Types.Volume>`
-               The maximum allowed value.
+        maximum : :class:`Volume <BioSimSpace.Types.Volume>`
+            The maximum allowed value.
 
-           allowed : [:class:`Volume <BioSimSpace.Types.Volume>`]
-               A list of allowed values.
+        allowed : [:class:`Volume <BioSimSpace.Types.Volume>`]
+            A list of allowed values.
         """
 
         # Validate the unit.
@@ -926,17 +1037,24 @@ class Volume(Requirement):
                 raise ValueError("No unit or default value has been specified!")
 
         # Call the base class constructor.
-        super().__init__(help=help, default=default, unit=self._unit,
-            minimum=minimum, maximum=maximum, allowed=allowed)
+        super().__init__(
+            help=help,
+            default=default,
+            unit=self._unit,
+            minimum=minimum,
+            maximum=maximum,
+            allowed=allowed,
+        )
 
     def getValue(self):
-        """Return the value.
+        """
+        Return the value.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           value : :class:`Volume <BioSimSpace.Types.Volume>`
-               The value of the requirement.
+        value : :class:`Volume <BioSimSpace.Types.Volume>`
+            The value of the requirement.
         """
         if self._value is None:
             return None
@@ -958,59 +1076,68 @@ class Volume(Requirement):
             else:
                 return _Types.Volume(value, unit)._convert_to(self._unit)
 
+
 class Angle(Requirement):
     """An angle requirement.
 
-       Examples
-       --------
+    Examples
+    --------
 
-       Create an angle requirement with a default of 3.14 radians.
+    Create an angle requirement with a default of 3.14 radians.
 
-       >>> import BioSimSpace as BSS
-       >>> my_angle = BSS.Gateway.Angle(help="An angle requirement", default=3.14, unit="radian")
+    >>> import BioSimSpace as BSS
+    >>> my_angle = BSS.Gateway.Angle(help="An angle requirement", default=3.14, unit="radian")
 
-       The same, but explicitly passing a :class:`Angle <BioSimSpace.Types.Angle>`
-       for the default.
+    The same, but explicitly passing a :class:`Angle <BioSimSpace.Types.Angle>`
+    for the default.
 
-       >>> import BioSimSpace as BSS
-       >>> my_angle = BSS.Gateway.Angle(help="An angle requirement", default=3.14*BSS.Units.Angle.radian)
+    >>> import BioSimSpace as BSS
+    >>> my_angle = BSS.Gateway.Angle(help="An angle requirement", default=3.14*BSS.Units.Angle.radian)
 
-       Create an angle requirement with a default of 3.14 radian and a maximum
-       of 360 degrees. Note that the unit is taken from the default value.
+    Create an angle requirement with a default of 3.14 radian and a maximum
+    of 360 degrees. Note that the unit is taken from the default value.
 
-       >>> import BioSimSpace as BSS
-       >>> my_angle = BSS.Gateway.Angle(help="An angle requirement",
-       ...                              default=3.14*BSS.Units.Angle.radian,
-       ...                              maximum=360*BSS.Units.Angle.degree)
+    >>> import BioSimSpace as BSS
+    >>> my_angle = BSS.Gateway.Angle(help="An angle requirement",
+    ...                              default=3.14*BSS.Units.Angle.radian,
+    ...                              maximum=360*BSS.Units.Angle.degree)
     """
 
     # Set the argparse argument type.
     _arg_type = str
 
-    def __init__(self, help=None, default=None, unit=None,
-            minimum=None, maximum=None, allowed=None):
-        """Constructor.
+    def __init__(
+        self,
+        help=None,
+        default=None,
+        unit=None,
+        minimum=None,
+        maximum=None,
+        allowed=None,
+    ):
+        """
+        Constructor.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           help : str
-               The help string.
+        help : str
+            The help string.
 
-           default : :class:`Angle <BioSimSpace.Types.Angle>`
-               The default value.
+        default : :class:`Angle <BioSimSpace.Types.Angle>`
+            The default value.
 
-           unit : str
-               The unit.
+        unit : str
+            The unit.
 
-           minimum : :class:`Angle <BioSimSpace.Types.Angle>`
-               The minimum allowed value.
+        minimum : :class:`Angle <BioSimSpace.Types.Angle>`
+            The minimum allowed value.
 
-           maximum : :class:`Angle <BioSimSpace.Types.Angle>`
-               The maximum allowed value.
+        maximum : :class:`Angle <BioSimSpace.Types.Angle>`
+            The maximum allowed value.
 
-           allowed : [:class:`Angle <BioSimSpace.Types.Angle>`]
-               A list of allowed values.
+        allowed : [:class:`Angle <BioSimSpace.Types.Angle>`]
+            A list of allowed values.
         """
 
         # Validate the unit.
@@ -1025,17 +1152,24 @@ class Angle(Requirement):
                 raise ValueError("No unit or default value has been specified!")
 
         # Call the base class constructor.
-        super().__init__(help=help, default=default, unit=self._unit,
-            minimum=minimum, maximum=maximum, allowed=allowed)
+        super().__init__(
+            help=help,
+            default=default,
+            unit=self._unit,
+            minimum=minimum,
+            maximum=maximum,
+            allowed=allowed,
+        )
 
     def getValue(self):
-        """Return the value.
+        """
+        Return the value.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           value : :class:`Angle <BioSimSpace.Types.Angle>`
-               The value of the requirement.
+        value : :class:`Angle <BioSimSpace.Types.Angle>`
+            The value of the requirement.
         """
         if self._value is None:
             return None
@@ -1057,59 +1191,68 @@ class Angle(Requirement):
             else:
                 return _Types.Angle(value, unit)._convert_to(self._unit)
 
+
 class Charge(Requirement):
     """A charge requirement.
 
-       Examples
-       --------
+    Examples
+    --------
 
-       Create a charge requirement with a default of 3 electron charge.
+    Create a charge requirement with a default of 3 electron charge.
 
-       >>> import BioSimSpace as BSS
-       >>> my_charge = BSS.Gateway.Charge(help="A charge requirement", default=3, unit="electron charge")
+    >>> import BioSimSpace as BSS
+    >>> my_charge = BSS.Gateway.Charge(help="A charge requirement", default=3, unit="electron charge")
 
-       The same, but explicitly passing a :class:`Charge <BioSimSpace.Types.Charge>`
-       for the default.
+    The same, but explicitly passing a :class:`Charge <BioSimSpace.Types.Charge>`
+    for the default.
 
-       >>> import BioSimSpace as BSS
-       >>> my_charge = BSS.Gateway.Charge(help="A charge requirement", default=3*BSS.Units.Charge.electron_charge)
+    >>> import BioSimSpace as BSS
+    >>> my_charge = BSS.Gateway.Charge(help="A charge requirement", default=3*BSS.Units.Charge.electron_charge)
 
-       Create a charge requirement with a default of 3 electron charge and a
-       maximum of -10 Coulomb. Note that the unit is taken from the default value.
+    Create a charge requirement with a default of 3 electron charge and a
+    maximum of -10 Coulomb. Note that the unit is taken from the default value.
 
-       >>> import BioSimSpace as BSS
-       >>> my_charge = BSS.Gateway.Charge(help="A charge requirement",
-       ...                                default=3*BSS.Units.Charge.electron_charge,
-       ...                                maximum=10*BSS.Units.Charge.coulomb)
+    >>> import BioSimSpace as BSS
+    >>> my_charge = BSS.Gateway.Charge(help="A charge requirement",
+    ...                                default=3*BSS.Units.Charge.electron_charge,
+    ...                                maximum=10*BSS.Units.Charge.coulomb)
     """
 
     # Set the argparse argument type.
     _arg_type = str
 
-    def __init__(self, help=None, default=None, unit=None,
-            minimum=None, maximum=None, allowed=None):
-        """Constructor.
+    def __init__(
+        self,
+        help=None,
+        default=None,
+        unit=None,
+        minimum=None,
+        maximum=None,
+        allowed=None,
+    ):
+        """
+        Constructor.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           help : str
-               The help string.
+        help : str
+            The help string.
 
-           default : :class:`Charge <BioSimSpace.Types.Charge>`
-               The default value.
+        default : :class:`Charge <BioSimSpace.Types.Charge>`
+            The default value.
 
-           unit : str
-               The unit.
+        unit : str
+            The unit.
 
-           minimum : :class:`Charge <BioSimSpace.Types.Charge>`
-               The minimum allowed value.
+        minimum : :class:`Charge <BioSimSpace.Types.Charge>`
+            The minimum allowed value.
 
-           maximum : :class:`Charge <BioSimSpace.Types.Charge>`
-               The maximum allowed value.
+        maximum : :class:`Charge <BioSimSpace.Types.Charge>`
+            The maximum allowed value.
 
-           allowed : [:class:`Charge <BioSimSpace.Types.Charge>`]
-               A list of allowed values.
+        allowed : [:class:`Charge <BioSimSpace.Types.Charge>`]
+            A list of allowed values.
         """
 
         # Validate the unit.
@@ -1124,17 +1267,24 @@ class Charge(Requirement):
                 raise ValueError("No unit or default value has been specified!")
 
         # Call the base class constructor.
-        super().__init__(help=help, default=default, unit=self._unit,
-            minimum=minimum, maximum=maximum, allowed=allowed)
+        super().__init__(
+            help=help,
+            default=default,
+            unit=self._unit,
+            minimum=minimum,
+            maximum=maximum,
+            allowed=allowed,
+        )
 
     def getValue(self):
-        """Return the value.
+        """
+        Return the value.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           value : :class:`Charge <BioSimSpace.Types.Charge>`
-               The value of the requirement.
+        value : :class:`Charge <BioSimSpace.Types.Charge>`
+            The value of the requirement.
         """
         if self._value is None:
             return None
@@ -1156,59 +1306,68 @@ class Charge(Requirement):
             else:
                 return _Types.Charge(value, unit)._convert_to(self._unit)
 
+
 class Energy(Requirement):
     """An energy requirement.
 
-       Examples
-       --------
+    Examples
+    --------
 
-       Create an energy requirement with a default of 3 kcal per mol.
+    Create an energy requirement with a default of 3 kcal per mol.
 
-       >>> import BioSimSpace as BSS
-       >>> my_energy = BSS.Gateway.Energy(help="An energy requirement", default=3, unit="kcal per mol")
+    >>> import BioSimSpace as BSS
+    >>> my_energy = BSS.Gateway.Energy(help="An energy requirement", default=3, unit="kcal per mol")
 
-       The same, but explicitly passing a :class:`Energy <BioSimSpace.Types.Energy>`
-       for the default.
+    The same, but explicitly passing a :class:`Energy <BioSimSpace.Types.Energy>`
+    for the default.
 
-       >>> import BioSimSpace as BSS
-       >>> my_energy = BSS.Gateway.Energy(help="An energy requirement", default=3*BSS.Units.Energy.kcal_per_mol)
+    >>> import BioSimSpace as BSS
+    >>> my_energy = BSS.Gateway.Energy(help="An energy requirement", default=3*BSS.Units.Energy.kcal_per_mol)
 
-       Create an energy requirement with a default of 3 kcal per mol and a
-       maximum of 50 kJ per mol. Note that the unit is taken from the default value.
+    Create an energy requirement with a default of 3 kcal per mol and a
+    maximum of 50 kJ per mol. Note that the unit is taken from the default value.
 
-       >>> import BioSimSpace as BSS
-       >>> my_energy = BSS.Gateway.Energy(help="An energy requirement",
-       ...                                default=3*BSS.Units.Energy.kcal_per_mol,
-       ...                                maximum=50*BSS.Units.Energy.kj_per_mol)
+    >>> import BioSimSpace as BSS
+    >>> my_energy = BSS.Gateway.Energy(help="An energy requirement",
+    ...                                default=3*BSS.Units.Energy.kcal_per_mol,
+    ...                                maximum=50*BSS.Units.Energy.kj_per_mol)
     """
 
     # Set the argparse argument type.
     _arg_type = str
 
-    def __init__(self, help=None, default=None, unit=None,
-            minimum=None, maximum=None, allowed=None):
-        """Constructor.
+    def __init__(
+        self,
+        help=None,
+        default=None,
+        unit=None,
+        minimum=None,
+        maximum=None,
+        allowed=None,
+    ):
+        """
+        Constructor.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           help : str
-               The help string.
+        help : str
+            The help string.
 
-           default : :class:`Energy <BioSimSpace.Types.Energy>`
-               The default value.
+        default : :class:`Energy <BioSimSpace.Types.Energy>`
+            The default value.
 
-           unit : str
-               The unit.
+        unit : str
+            The unit.
 
-           minimum : :class:`Energy <BioSimSpace.Types.Energy>`
-               The minimum allowed value.
+        minimum : :class:`Energy <BioSimSpace.Types.Energy>`
+            The minimum allowed value.
 
-           maximum : :class:`Energy <BioSimSpace.Types.Energy>`
-               The maximum allowed value.
+        maximum : :class:`Energy <BioSimSpace.Types.Energy>`
+            The maximum allowed value.
 
-           allowed : [:class:`Energy <BioSimSpace.Types.Energy>`]
-               A list of allowed values.
+        allowed : [:class:`Energy <BioSimSpace.Types.Energy>`]
+            A list of allowed values.
         """
 
         # Validate the unit.
@@ -1223,16 +1382,23 @@ class Energy(Requirement):
                 raise ValueError("No unit or default value has been specified!")
 
         # Call the base class constructor.
-        super().__init__(help=help, default=default, unit=self._unit,
-            minimum=minimum, maximum=maximum, allowed=allowed)
+        super().__init__(
+            help=help,
+            default=default,
+            unit=self._unit,
+            minimum=minimum,
+            maximum=maximum,
+            allowed=allowed,
+        )
 
     def getValue(self):
-        """Return the value.
+        """
+        Return the value.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           value : :class:`Energy <BioSimSpace.Types.Energy>`
+        value : :class:`Energy <BioSimSpace.Types.Energy>`
         """
         if self._value is None:
             return None
@@ -1254,59 +1420,68 @@ class Energy(Requirement):
             else:
                 return _Types.Energy(value, unit)._convert_to(self._unit)
 
+
 class Pressure(Requirement):
     """A pressure requirement.
 
-       Examples
-       --------
+    Examples
+    --------
 
-       Create a pressure requirement with a default of 1 atmosphere.
+    Create a pressure requirement with a default of 1 atmosphere.
 
-       >>> import BioSimSpace as BSS
-       >>> my_pressure = BSS.Gateway.Pressure(help="A pressure requirement", default=1, unit="atm")
+    >>> import BioSimSpace as BSS
+    >>> my_pressure = BSS.Gateway.Pressure(help="A pressure requirement", default=1, unit="atm")
 
-       The same, but explicitly passing a :class:`Pressure <BioSimSpace.Types.Pressure>`
-       for the default.
+    The same, but explicitly passing a :class:`Pressure <BioSimSpace.Types.Pressure>`
+    for the default.
 
-       >>> import BioSimSpace as BSS
-       >>> my_pressure = BSS.Gateway.Pressure(help="A pressure requirement", default=BSS.Units.Pressure.atm)
+    >>> import BioSimSpace as BSS
+    >>> my_pressure = BSS.Gateway.Pressure(help="A pressure requirement", default=BSS.Units.Pressure.atm)
 
-       Create a pressure requirement with a default of 1 atomosphere and a
-       maximum of 10 bar. Note that the unit is taken from the default value.
+    Create a pressure requirement with a default of 1 atomosphere and a
+    maximum of 10 bar. Note that the unit is taken from the default value.
 
-       >>> import BioSimSpace as BSS
-       >>> my_pressure = BSS.Gateway.Pressure(help="A pressure requirement",
-       ...                                    default=BSS.Units.Pressure.atm,
-       ...                                    maximum=10*BSS.Units.Pressure.bar)
+    >>> import BioSimSpace as BSS
+    >>> my_pressure = BSS.Gateway.Pressure(help="A pressure requirement",
+    ...                                    default=BSS.Units.Pressure.atm,
+    ...                                    maximum=10*BSS.Units.Pressure.bar)
     """
 
     # Set the argparse argument type.
     _arg_type = str
 
-    def __init__(self, help=None, default=None, unit=None,
-            minimum=None, maximum=None, allowed=None):
-        """Constructor.
+    def __init__(
+        self,
+        help=None,
+        default=None,
+        unit=None,
+        minimum=None,
+        maximum=None,
+        allowed=None,
+    ):
+        """
+        Constructor.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           help : str
-               The help string.
+        help : str
+            The help string.
 
-           default : :class:`Pressure <BioSimSpace.Types.Pressure>`
-               The default value.
+        default : :class:`Pressure <BioSimSpace.Types.Pressure>`
+            The default value.
 
-           unit : str
-               The unit.
+        unit : str
+            The unit.
 
-           minimum : :class:`Pressure <BioSimSpace.Types.Pressure>`
-               The minimum allowed value.
+        minimum : :class:`Pressure <BioSimSpace.Types.Pressure>`
+            The minimum allowed value.
 
-           maximum : :class:`Pressure <BioSimSpace.Types.Pressure>`
-               The maximum allowed value.
+        maximum : :class:`Pressure <BioSimSpace.Types.Pressure>`
+            The maximum allowed value.
 
-           allowed : [:class:`Pressure <BioSimSpace.Types.Pressure>`]
-               A list of allowed values.
+        allowed : [:class:`Pressure <BioSimSpace.Types.Pressure>`]
+            A list of allowed values.
         """
 
         # Validate the unit.
@@ -1321,17 +1496,24 @@ class Pressure(Requirement):
                 raise ValueError("No unit or default value has been specified!")
 
         # Call the base class constructor.
-        super().__init__(help=help, default=default, unit=self._unit,
-            minimum=minimum, maximum=maximum, allowed=allowed)
+        super().__init__(
+            help=help,
+            default=default,
+            unit=self._unit,
+            minimum=minimum,
+            maximum=maximum,
+            allowed=allowed,
+        )
 
     def getValue(self):
-        """Return the value.
+        """
+        Return the value.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           value : :class:`Pressure <BioSimSpace.Types.Pressure>`
-               The value of the requirement.
+        value : :class:`Pressure <BioSimSpace.Types.Pressure>`
+            The value of the requirement.
         """
         if self._value is None:
             return None
@@ -1353,59 +1535,68 @@ class Pressure(Requirement):
             else:
                 return _Types.Pressure(value, unit)._convert_to(self._unit)
 
+
 class Temperature(Requirement):
     """A temperature requirement.
 
-       Examples
-       --------
+    Examples
+    --------
 
-       Create a temperature requirement with a default of 300 kelvin.
+    Create a temperature requirement with a default of 300 kelvin.
 
-       >>> import BioSimSpace as BSS
-       >>> my_temperature = BSS.Gateway.Temperature(help="A temperature requirement", default=300, unit="kelvin")
+    >>> import BioSimSpace as BSS
+    >>> my_temperature = BSS.Gateway.Temperature(help="A temperature requirement", default=300, unit="kelvin")
 
-       The same, but explicitly passing a :class:`Temperature <BioSimSpace.Types.Temperature>`
-       for the default.
+    The same, but explicitly passing a :class:`Temperature <BioSimSpace.Types.Temperature>`
+    for the default.
 
-       >>> import BioSimSpace as BSS
-       >>> my_temperature = BSS.Gateway.Temperature(help="A temperature requirement", default=300*BSS.Units.Temperature.kelvin)
+    >>> import BioSimSpace as BSS
+    >>> my_temperature = BSS.Gateway.Temperature(help="A temperature requirement", default=300*BSS.Units.Temperature.kelvin)
 
-       Create a temperature requirement with a default of 300 Kelvin and a
-       maximum of 100 Celsius. Note that the unit is taken from the default value.
+    Create a temperature requirement with a default of 300 Kelvin and a
+    maximum of 100 Celsius. Note that the unit is taken from the default value.
 
-       >>> import BioSimSpace as BSS
-       >>> my_temperature = BSS.Gateway.Temperature(help="A temperature requirement",
-       ...                                          default=300*BSS.Units.Temperature.kelvin,
-       ...                                          maximum=100*BSS.Units.Temperature.celsius)
+    >>> import BioSimSpace as BSS
+    >>> my_temperature = BSS.Gateway.Temperature(help="A temperature requirement",
+    ...                                          default=300*BSS.Units.Temperature.kelvin,
+    ...                                          maximum=100*BSS.Units.Temperature.celsius)
     """
 
     # Set the argparse argument type.
     _arg_type = str
 
-    def __init__(self, help=None, default=None, unit=None,
-            minimum=None, maximum=None, allowed=None):
-        """Constructor.
+    def __init__(
+        self,
+        help=None,
+        default=None,
+        unit=None,
+        minimum=None,
+        maximum=None,
+        allowed=None,
+    ):
+        """
+        Constructor.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           help : str
-               The help string.
+        help : str
+            The help string.
 
-           default : :class:`Temperature <BioSimSpace.Types.Temperature>`
-               The default value.
+        default : :class:`Temperature <BioSimSpace.Types.Temperature>`
+            The default value.
 
-           unit : str
-               The unit.
+        unit : str
+            The unit.
 
-           minimum : :class:`Temperature <BioSimSpace.Types.Temperature>`
-               The minimum allowed value.
+        minimum : :class:`Temperature <BioSimSpace.Types.Temperature>`
+            The minimum allowed value.
 
-           maximum : :class:`Temperature <BioSimSpace.Types.Temperature>`
-               The maximum allowed value.
+        maximum : :class:`Temperature <BioSimSpace.Types.Temperature>`
+            The maximum allowed value.
 
-           allowed : [:class:`Temperature <BioSimSpace.Types.Temperature>`]
-               A list of allowed values.
+        allowed : [:class:`Temperature <BioSimSpace.Types.Temperature>`]
+            A list of allowed values.
         """
 
         # Validate the unit.
@@ -1420,17 +1611,24 @@ class Temperature(Requirement):
                 raise ValueError("No unit or default value has been specified!")
 
         # Call the base class constructor.
-        super().__init__(help=help, default=default, unit=self._unit,
-            minimum=minimum, maximum=maximum, allowed=allowed)
+        super().__init__(
+            help=help,
+            default=default,
+            unit=self._unit,
+            minimum=minimum,
+            maximum=maximum,
+            allowed=allowed,
+        )
 
     def getValue(self):
-        """Return the value.
+        """
+        Return the value.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           value : :class:`Temperature <BioSimSpace.Types.Temperature>`
-               The value of the requirement.
+        value : :class:`Temperature <BioSimSpace.Types.Temperature>`
+            The value of the requirement.
         """
         if self._value is None:
             return None
@@ -1452,59 +1650,68 @@ class Temperature(Requirement):
             else:
                 return _Types.Temperature(value, unit)._convert_to(self._unit)
 
+
 class Time(Requirement):
     """A time requirement.
 
-       Examples
-       --------
+    Examples
+    --------
 
-       Create a time requirement with a default of 35 minutes.
+    Create a time requirement with a default of 35 minutes.
 
-       >>> import BioSimSpace as BSS
-       >>> my_time = BSS.Gateway.Time(help="A time requirement", default=35, unit="minutes")
+    >>> import BioSimSpace as BSS
+    >>> my_time = BSS.Gateway.Time(help="A time requirement", default=35, unit="minutes")
 
-       The same, but explicitly passing a :class:`Time <BioSimSpace.Types.Time>`
-       for the default.
+    The same, but explicitly passing a :class:`Time <BioSimSpace.Types.Time>`
+    for the default.
 
-       >>> import BioSimSpace as BSS
-       >>> my_time = BSS.Gateway.Time(help="A time requirement", default=35*BSS.Units.Time.minute)
+    >>> import BioSimSpace as BSS
+    >>> my_time = BSS.Gateway.Time(help="A time requirement", default=35*BSS.Units.Time.minute)
 
-       Create a time requirement with a default of 35 minutes and a maximum
-       of 5 hours. Note that the unit is taken from the default value.
+    Create a time requirement with a default of 35 minutes and a maximum
+    of 5 hours. Note that the unit is taken from the default value.
 
-       >>> import BioSimSpace as BSS
-       >>> my_time = BSS.Gateway.Time(help="A time requirement",
-       ...                            default=35*BSS.Units.Time.minute,
-       ...                            maximum=5*BSS.Units.Time.hour)
+    >>> import BioSimSpace as BSS
+    >>> my_time = BSS.Gateway.Time(help="A time requirement",
+    ...                            default=35*BSS.Units.Time.minute,
+    ...                            maximum=5*BSS.Units.Time.hour)
     """
 
     # Set the argparse argument type.
     _arg_type = str
 
-    def __init__(self, help=None, default=None, unit=None,
-            minimum=None, maximum=None, allowed=None):
-        """Constructor.
+    def __init__(
+        self,
+        help=None,
+        default=None,
+        unit=None,
+        minimum=None,
+        maximum=None,
+        allowed=None,
+    ):
+        """
+        Constructor.
 
-           Parameters
-           ----------
+        Parameters
+        ----------
 
-           help : str
-               The help string.
+        help : str
+            The help string.
 
-           default : :class:`Time <BioSimSpace.Types.Time>`
-               The default value.
+        default : :class:`Time <BioSimSpace.Types.Time>`
+            The default value.
 
-           unit : str
-               The unit.
+        unit : str
+            The unit.
 
-           minimum : :class:`Time <BioSimSpace.Types.Time>`
-               The minimum allowed value.
+        minimum : :class:`Time <BioSimSpace.Types.Time>`
+            The minimum allowed value.
 
-           maximum : :class:`Time <BioSimSpace.Types.Time>`
-               The maximum allowed value.
+        maximum : :class:`Time <BioSimSpace.Types.Time>`
+            The maximum allowed value.
 
-           allowed : [:class:`Time <BioSimSpace.Types.Time>`]
-               The list of allowed values.
+        allowed : [:class:`Time <BioSimSpace.Types.Time>`]
+            The list of allowed values.
         """
 
         # Validate the unit.
@@ -1519,16 +1726,23 @@ class Time(Requirement):
                 raise ValueError("No unit or default value has been specified!")
 
         # Call the base class constructor.
-        super().__init__(help=help, default=default, unit=self._unit,
-            minimum=minimum, maximum=maximum, allowed=allowed)
+        super().__init__(
+            help=help,
+            default=default,
+            unit=self._unit,
+            minimum=minimum,
+            maximum=maximum,
+            allowed=allowed,
+        )
 
     def getValue(self):
-        """Return the value.
+        """
+        Return the value.
 
-           Returns
-           -------
+        Returns
+        -------
 
-           value : :class:`Time <BioSimSpace.Types.Time>`
+        value : :class:`Time <BioSimSpace.Types.Time>`
         """
         if self._value is None:
             return None
@@ -1550,23 +1764,25 @@ class Time(Requirement):
             else:
                 return _Types.Time(value, unit)._convert_to(self._unit)
 
+
 def _validate_unit_requirement(value, unit_type):
-    """Helper function to validate input requirements with units.
+    """
+    Helper function to validate input requirements with units.
 
-       Parameters
-       ----------
+    Parameters
+    ----------
 
-       value : str
-           The value of the input requirement.
+    value : str
+        The value of the input requirement.
 
-       unit_type: str
-           The unit type.
+    unit_type : str
+        The unit type.
 
-        Returns
-        -------
+     Returns
+     -------
 
-        (value, unit) : tuple
-            The value and unit of the requirement.
+     (value, unit) : tuple
+         The value and unit of the requirement.
     """
 
     # No unit by default.
@@ -1601,7 +1817,9 @@ def _validate_unit_requirement(value, unit_type):
 
                 # No matches, raise an error.
                 if match is None:
-                    raise ValueError("Could not interpret %s: '%s'" % (unit_type, value))
+                    raise ValueError(
+                        "Could not interpret %s: '%s'" % (unit_type, value)
+                    )
 
             # Extract the value and unit.
             value, unit = match.groups()
@@ -1611,24 +1829,29 @@ def _validate_unit_requirement(value, unit_type):
 
     # Unsupported.
     else:
-        raise TypeError("Unsupported value type '%s'. Options are 'float', 'int', or 'str'." % type(value))
+        raise TypeError(
+            "Unsupported value type '%s'. Options are 'float', 'int', or 'str'."
+            % type(value)
+        )
 
     return (value, unit)
 
+
 def _unarchive(name):
-    """Decompress an archive and return a list of files.
+    """
+    Decompress an archive and return a list of files.
 
-       Parameters
-       ----------
+    Parameters
+    ----------
 
-       name : str
-           The name of the archive (full path).
+    name : str
+        The name of the archive (full path).
 
-       Returns
-       -------
+    Returns
+    -------
 
-       files : [ str ]
-           A list of file names.
+    files : [ str ]
+        A list of file names.
     """
 
     # Get the directory name.
