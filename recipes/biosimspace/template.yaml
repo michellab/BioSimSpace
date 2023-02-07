@@ -12,6 +12,7 @@ build:
   number: {{ GIT_DESCRIBE_NUMBER if GIT_DESCRIBE_NUMBER is not none else 0 }}
 
 requirements:
+  build:
     BSS_BUILD_REQUIREMENTS
   host:
     - python
