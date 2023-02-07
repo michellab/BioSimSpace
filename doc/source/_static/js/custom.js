@@ -3,12 +3,12 @@ function choose_version(value) {
     console.log(value);
 
     console.log(window.location.href);
-    var parts = window.location.href.split("sire.openbiosim.org/");
+    var parts = window.location.href.split("biosimspace.openbiosim.org/");
     console.log(parts);
 
-    // should be two parts - before sire.openbiosim.org/ and after
+    // should be two parts - before biosimspace.openbiosim.org/ and after
     s = parts[0];
-    s += "sire.openbiosim.org";
+    s += "biosimspace.openbiosim.org";
     s += value;
 
     if (parts[1].startsWith("versions/")) {
@@ -72,7 +72,7 @@ function fill_versions() {
 
     try
     {
-        xmlhttp.open("GET", "https://sire.openbiosim.org/versions.json",
+        xmlhttp.open("GET", "https://biosimspace.openbiosim.org/versions.json",
                      true);
         xmlhttp.send();
     }
