@@ -471,7 +471,7 @@ def _parameterise_openff(
         version = float(string.split(":")[0])
 
         # The version is okay, enable Open Force Field support.
-        if version >= 20:
+        if version >= 22:
             is_compatible = True
         # Disable Open Force Field support.
         else:
