@@ -878,6 +878,16 @@ def _solvate(
         tmp_dir = _tempfile.TemporaryDirectory()
         work_dir = tmp_dir.name
 
+    # User specified working directory.
+    else:
+        # Use absolute path.
+        if not _os.path.isabs(work_dir):
+            work_dir = _os.path.abspath(work_dir)
+
+        # Create the directory if it doesn't already exist.
+        if not _os.path.isdir(work_dir):
+            _os.makedirs(work_dir, exist_ok=True)
+
     # Write to 6dp, unless precision is specified by use.
     _property_map = property_map.copy()
     if "precision" not in _property_map:

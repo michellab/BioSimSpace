@@ -164,6 +164,9 @@ class Process:
 
         # User specified working directory.
         else:
+            # Make sure the path is absolute.
+            if not _os.path.isabs(work_dir):
+                work_dir = _os.path.abspath(work_dir)
             self._work_dir = work_dir
 
             # Create the directory if it doesn't already exist.
