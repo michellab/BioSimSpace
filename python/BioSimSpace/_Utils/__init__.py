@@ -22,6 +22,14 @@
 """
 .. currentmodule:: BioSimSpace._Utils
 
+Classes
+=======
+
+.. autosummary::
+    :toctree: generated/
+
+    WorkDir
+
 Context managers
 ================
 

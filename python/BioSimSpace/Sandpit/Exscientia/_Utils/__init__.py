@@ -22,6 +22,14 @@
 """
 .. currentmodule:: BioSimSpace._Utils
 
+Classes
+=======
+
+.. autosummary::
+    :toctree: generated/
+
+    WorkDir
+
 Context managers
 ================
 
@@ -37,7 +45,6 @@ Functions
     :toctree: generated/
 
     command_split
-    create_workdir
     _module_stub
     _try_import
     _have_imported

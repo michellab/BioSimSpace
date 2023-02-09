@@ -55,7 +55,7 @@ from ..Units.Length import angstrom as _angstrom
 from ..Units.Angle import radian as _radian
 from ..Units.Angle import degree as _degree
 from ..Units.Energy import kcal_per_mol as _kcal_per_mol
-from .._Utils import create_workdir as _create_workdir
+from .._Utils import WorkDir as _WorkDir
 from .._Utils import _try_import, _have_imported
 from .... import _isVerbose
 
@@ -218,7 +218,7 @@ class RestraintSearch:
             self._extra_lines = extra_lines
 
         # Create the working directory.
-        self._work_dir, self._tmp_dir = _create_workdir(work_dir)
+        self._work_dir = _WorkDir(work_dir)
 
         # There must be a single molecule to be decoupled (or annihilated).
         if system.nDecoupledMolecules() != 1:

@@ -110,7 +110,7 @@ class Task:
         self._zipfile = None
 
         # Create the working directory.
-        self._work_dir, self._tmp_dir = _Utils.create_workdir(work_dir)
+        self._work_dir = _Utils.WorkDir(work_dir)
 
         # Start the task.
         if auto_start:
@@ -148,7 +148,7 @@ class Task:
         work_dir : str
             The path of the working directory.
         """
-        return self._work_dir
+        return str(self._work_dir)
 
     def getResult(self):
         """Get the result of the task. This will block until the task finishes."""

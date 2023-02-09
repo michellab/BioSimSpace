@@ -278,7 +278,7 @@ def readPDB(id, pdb4amber=False, work_dir=None, show_warnings=False, property_ma
         raise TypeError("'work_dir' must be of type 'str'")
 
     # Create the working directory.
-    work_dir, tmp_dir = _Utils.create_workdir(work_dir)
+    work_dir = _Utils.WorkDir(work_dir)
 
     # Path to a PDB file.
     if _os.path.isfile(id):
@@ -289,7 +289,7 @@ def readPDB(id, pdb4amber=False, work_dir=None, show_warnings=False, property_ma
         from sire._load import _resolve_path
 
         try:
-            pdb_file = _resolve_path(id, directory=work_dir)[0]
+            pdb_file = _resolve_path(id, directory=str(work_dir))[0]
         except:
             raise IOError(f"Unable to download PDB file: '{id}'")
 
@@ -345,7 +345,7 @@ def readPDB(id, pdb4amber=False, work_dir=None, show_warnings=False, property_ma
         # Run pdb4amber as a subprocess.
         proc = _subprocess.run(
             _Utils.command_split(command),
-            cwd=work_dir,
+            cwd=str(work_dir),
             shell=False,
             stdout=stdout,
             stderr=stderr,
@@ -458,7 +458,7 @@ def readMolecules(files, show_warnings=False, download_dir=None, property_map={}
             raise TypeError("'download_dir' must be of type 'str'")
 
     # Create the download directory.
-    download_dir, tmp_dir = _Utils.create_workdir(download_dir)
+    download_dir = _Utils.WorkDir(download_dir)
 
     # Validate the map.
     if not isinstance(property_map, dict):
@@ -477,7 +477,7 @@ def readMolecules(files, show_warnings=False, download_dir=None, property_map={}
     try:
         system = _patch_sire_load(
             files,
-            directory=download_dir,
+            directory=str(download_dir),
             property_map=property_map,
             show_warnings=show_warnings,
         )

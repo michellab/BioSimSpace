@@ -24,55 +24,63 @@
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
 
-__all__ = ["create_workdir"]
+__all__ = ["WorkDir"]
 
 
 import os as _os
 import tempfile as _tempfile
 
 
-def create_workdir(work_dir=None):
-    """
-    Execute the context in the directory "work_dir".
+class WorkDir:
+    """A utility class to create a working directory."""
 
-    Parameters
-    ----------
+    def __init__(self, work_dir=None):
+        """
+        Constructor.
 
-    work_dir : str
-        The working directory for the context. If None, then a temporary
-        working directory will be created.
+        Parameters
+        ----------
 
+        work_dir : str
+            The working directory for the context. If None, then a temporary
+            working directory will be created.
+        """
+        # Validate the input.
+        if work_dir and not isinstance(work_dir, str):
+            raise TypeError("'work_dir' must be of type 'str'")
 
-    Returns
-    -------
+        # Temporary directory.
+        if work_dir is None:
+            self._tmp_dir = _tempfile.TemporaryDirectory()
+            self._work_dir = self._tmp_dir.name
 
-    work_dir : str
-        The absolute path to the working directory.
+        # User specified directory.
+        else:
+            self._tmp_dir = None
 
-    tmp_dir : tempfile.TemporaryDirectory()
-        The temporary directory object, if created. This will be None
-        unless 'work_dir' passed to the function is None.
-    """
+            # Use absolute path.
+            if not _os.path.isabs(work_dir):
+                work_dir = _os.path.abspath(work_dir)
 
-    # Validate the input.
-    if work_dir and not isinstance(work_dir, str):
-        raise TypeError("'work_dir' must be of type 'str'")
+            # Create the directory if it doesn't already exist.
+            if not _os.path.isdir(work_dir):
+                _os.makedirs(work_dir, exist_ok=True)
 
-    # Temporary directory.
-    if work_dir is None:
-        tmp_dir = _tempfile.TemporaryDirectory()
-        work_dir = tmp_dir.name
+            self._work_dir = work_dir
 
-    # User specified directory.
-    else:
-        tmp_dir = None
+    def __str__(self):
+        return self._work_dir
 
-        # Use absolute path.
-        if not _os.path.isabs(work_dir):
-            work_dir = _os.path.abspath(work_dir)
+    def __repr__(self):
+        return self._work_dir
 
-        # Create the directory if it doesn't already exist.
-        if not _os.path.isdir(work_dir):
-            _os.makedirs(work_dir, exist_ok=True)
+    def __add__(self, other):
+        if not isinstance(other, str):
+            raise TypeError(
+                f"unsupported operand type(s) for +: 'WorkDir' and '{type(other)}'"
+            )
+        return str(self._work_dir) + other
 
-    return work_dir, tmp_dir
+    def is_temp_dir(self):
+        """Whether this is a temporary directory."""
+        return self._tmp_dir is not None

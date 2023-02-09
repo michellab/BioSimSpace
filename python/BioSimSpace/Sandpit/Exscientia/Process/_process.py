@@ -96,7 +96,7 @@ class Process:
         name : str
             The name of the process.
 
-        work_dir : str
+        work_dir : :class:`WorkDir <BioSimSpace._Utils.WorkDir>`, str
             The working directory for the process.
 
         seed : int
@@ -142,8 +142,10 @@ class Process:
             raise TypeError("'protocol' must be of type 'BioSimSpace.Protocol'")
 
         # Check that the working directory is valid.
-        if work_dir is not None and not isinstance(work_dir, str):
-            raise TypeError("'work_dir' must be of type 'str'")
+        if work_dir is not None and not isinstance(work_dir, (str, _Utils.WorkDir)):
+            raise TypeError(
+                "'work_dir' must be of type 'str' or 'BioSimSpace._Utils.WorkDir'"
+            )
 
         # Check that the seed is valid.
         if seed is not None and not type(seed) is int:
@@ -237,7 +239,10 @@ class Process:
         self._input_files = None
 
         # Create the working directory.
-        self._work_dir, self._tmp_dir = _Utils.create_workdir(work_dir)
+        if isinstance(work_dir, _Utils.WorkDir):
+            self._work_dir = work_dir
+        else:
+            self._work_dir = _Utils.WorkDir(work_dir)
 
         # Files for redirection of stdout and stderr.
         self._stdout_file = "%s/%s.out" % (self._work_dir, name)
@@ -1064,7 +1069,7 @@ class Process:
         work_dir : str
             The path of the working directory.
         """
-        return self._work_dir
+        return str(self._work_dir)
 
     def getStdout(self, block="AUTO"):
         """

@@ -294,7 +294,7 @@ def generateNetwork(
             )
 
     # Create the working directory.
-    work_dir, tmp_dir = _Utils.create_workdir(work_dir)
+    work_dir = _Utils.WorkDir(work_dir)
 
     # Make the LOMAP input and output directories.
     _os.makedirs(work_dir + "/inputs", exist_ok=True)
@@ -891,7 +891,7 @@ def matchAtoms(
     timeout = int(timeout.seconds().value())
 
     # Create the working directory.
-    work_dir, tmp_dir = _Utils.create_workdir()
+    work_dir = _Utils.WorkDir()
 
     # Use RDKkit to find the maximum common substructure.
 
@@ -1241,7 +1241,7 @@ def flexAlign(
     sire_mapping = _to_sire_mapping(mapping)
 
     # Create the working directory.
-    work_dir, tmp_dir = _Utils.create_workdir()
+    work_dir = _Utils.WorkDir()
 
     # Execute in the working directory.
     with _Utils.cd(work_dir):
@@ -1547,7 +1547,7 @@ def viewMapping(
         molecule0 = rmsdAlign(molecule0, molecule1, mapping)
 
     # Create the working directory.
-    work_dir, tmp_dir = _Utils.create_workdir()
+    work_dir = _Utils.WorkDir()
 
     # Write the molecules to PDB format.
     _IO.saveMolecules(

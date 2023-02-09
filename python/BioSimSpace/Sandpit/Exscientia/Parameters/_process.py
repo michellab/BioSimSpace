@@ -158,7 +158,7 @@ class Process:
         self._hash = hash((molecule, protocol)) % ((_sys.maxsize + 1) * 2)
 
         # Create the working directory.
-        self._work_dir, self._tmp_dir = _Utils.create_workdir(work_dir)
+        self._work_dir = _Utils.WorkDir(work_dir)
 
         # Flag that the process hasn't started/finished.
         self._is_started = False
@@ -319,4 +319,4 @@ class Process:
 
     def workDir(self):
         """Return the working directory."""
-        return self._work_dir
+        return str(self._work_dir)

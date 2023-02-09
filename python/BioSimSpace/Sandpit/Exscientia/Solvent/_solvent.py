@@ -873,7 +873,7 @@ def _solvate(
             molecule = molecule + waters
 
     # Create the working directory.
-    work_dir, tmp_dir = _Utils.create_workdir(work_dir)
+    work_dir = _Utils.WorkDir(work_dir)
 
     # Write to 6dp, unless precision is specified by use.
     _property_map = property_map.copy()

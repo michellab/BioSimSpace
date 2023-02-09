@@ -217,7 +217,7 @@ class Relative:
             )
 
         # Create the working directory.
-        self._work_dir, self._tmp_dir = _Utils.create_workdir(work_dir)
+        self._work_dir = _Utils.WorkDir(work_dir)
 
         # Validate the user specified molecular dynamics engine.
         self._exe = None
@@ -398,7 +398,7 @@ class Relative:
         work_dir : str
             The path of the working directory.
         """
-        return self._work_dir
+        return str(self._work_dir)
 
     def getData(self, name="data", file_link=False, work_dir=None):
         """

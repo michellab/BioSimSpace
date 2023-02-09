@@ -101,6 +101,7 @@ from ... import IO as _IO
 from ..._Exceptions import IncompatibleError as _IncompatibleError
 from ..._Exceptions import ThirdPartyError as _ThirdPartyError
 from ..._SireWrappers import Molecule as _Molecule
+from ... import _Utils
 
 from . import _protocol
 
@@ -142,7 +143,7 @@ class OpenForceField(_protocol.Protocol):
             The molecule to parameterise, either as a Molecule object or SMILES
             string.
 
-        work_dir : str
+        work_dir : :class:`WorkDir <BioSimSpace._Utils.WorkDir>`
             The working directory.
 
         queue : queue.Queue
@@ -160,8 +161,8 @@ class OpenForceField(_protocol.Protocol):
                 "'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule' or 'str'"
             )
 
-        if work_dir is not None and not isinstance(work_dir, str):
-            raise TypeError("'work_dir' must be of type 'str'")
+        if work_dir is not None and not isinstance(work_dir, _Utils.WorkDir):
+            raise TypeError("'work_dir' must be of type 'BioSimSpace._Utils.WorkDir'")
 
         if queue is not None and not isinstance(queue, _queue.Queue):
             raise TypeError("'queue' must be of type 'queue.Queue'")
