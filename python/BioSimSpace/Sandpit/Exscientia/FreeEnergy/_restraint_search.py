@@ -32,7 +32,6 @@ __all__ = ["RestraintSearch"]
 import numpy as _np
 import os as _os
 import sys as _sys
-import tempfile as _tempfile
 import warnings as _warnings
 
 from numpy.linalg import norm as _norm
@@ -56,6 +55,7 @@ from ..Units.Length import angstrom as _angstrom
 from ..Units.Angle import radian as _radian
 from ..Units.Angle import degree as _degree
 from ..Units.Energy import kcal_per_mol as _kcal_per_mol
+from .._Utils import create_workdir as _create_workdir
 from .._Utils import _try_import, _have_imported
 from .... import _isVerbose
 
@@ -217,18 +217,8 @@ class RestraintSearch:
         else:
             self._extra_lines = extra_lines
 
-        # Create a temporary working directory and store the directory name.
-        if work_dir is None:
-            self._tmp_dir = _tempfile.TemporaryDirectory()
-            self._work_dir = self._tmp_dir.name
-
-        # User specified working directory.
-        else:
-            self._work_dir = work_dir
-
-            # Create the directory if it doesn't already exist.
-            if not _os.path.isdir(work_dir):
-                _os.makedirs(work_dir, exist_ok=True)
+        # Create the working directory.
+        self._work_dir, self._tmp_dir = _create_workdir(work_dir)
 
         # There must be a single molecule to be decoupled (or annihilated).
         if system.nDecoupledMolecules() != 1:

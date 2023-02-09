@@ -30,6 +30,8 @@ from contextlib import contextmanager as _contextmanager
 
 import os as _os
 
+from ._workdir import create_workdir as _create_workdir
+
 
 # Adapted from: http://ralsina.me/weblog/posts/BB963.html
 @_contextmanager
@@ -53,7 +55,7 @@ def cd(work_dir):
 
     # Create the working directory if it doesn't exist.
     if not _os.path.isdir(work_dir):
-        _os.makedirs(work_dir)
+        work_dir, _ = _create_workdir(work_dir)
 
     # Change to the new directory.
     _os.chdir(work_dir)

@@ -38,7 +38,6 @@ import random as _random
 import timeit as _timeit
 import warnings as _warnings
 import sys as _sys
-import tempfile as _tempfile
 import zipfile as _zipfile
 
 from sire.legacy import Mol as _SireMol
@@ -50,6 +49,7 @@ from ..Protocol._protocol import Protocol as _Protocol
 from .._SireWrappers import System as _System
 from ..Types._type import Type as _Type
 from .. import Units as _Units
+from .. import _Utils as _Utils
 
 if _is_notebook:
     from IPython.display import FileLink as _FileLink
@@ -228,21 +228,8 @@ class Process:
         # Set the list of input files to None.
         self._input_files = None
 
-        # Create a temporary working directory and store the directory name.
-        if work_dir is None:
-            self._tmp_dir = _tempfile.TemporaryDirectory()
-            self._work_dir = self._tmp_dir.name
-
-        # User specified working directory.
-        else:
-            # Use absolute path.
-            if not _os.path.isabs(work_dir):
-                work_dir = _os.path.abspath(work_dir)
-            self._work_dir = work_dir
-
-            # Create the directory if it doesn't already exist.
-            if not _os.path.isdir(work_dir):
-                _os.makedirs(work_dir, exist_ok=True)
+        # Create the working directory.
+        self._work_dir, self._tmp_dir = _Utils.create_workdir(work_dir)
 
         # Files for redirection of stdout and stderr.
         self._stdout_file = "%s/%s.out" % (self._work_dir, name)

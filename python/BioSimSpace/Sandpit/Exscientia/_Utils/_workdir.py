@@ -24,18 +24,14 @@
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
 
-__all__ = ["cd"]
+__all__ = ["create_workdir"]
 
-from contextlib import contextmanager as _contextmanager
 
 import os as _os
+import tempfile as _tempfile
 
-from ._workdir import create_workdir as _create_workdir
 
-
-# Adapted from: http://ralsina.me/weblog/posts/BB963.html
-@_contextmanager
-def cd(work_dir):
+def create_workdir(work_dir=None):
     """
     Execute the context in the directory "work_dir".
 
@@ -43,27 +39,40 @@ def cd(work_dir):
     ----------
 
     work_dir : str
-        The working directory for the context.
+        The working directory for the context. If None, then a temporary
+        working directory will be created.
+
+
+    Returns
+    -------
+
+    work_dir : str
+        The absolute path to the working directory.
+
+    tmp_dir : tempfile.TemporaryDirectory()
+        The temporary directory object, if created. This will be None
+        unless 'work_dir' passed to the function is None.
     """
 
     # Validate the input.
-    if not isinstance(work_dir, str):
+    if work_dir and not isinstance(work_dir, str):
         raise TypeError("'work_dir' must be of type 'str'")
 
-    # Store the current directory.
-    old_dir = _os.getcwd()
+    # Temporary directory.
+    if work_dir is None:
+        tmp_dir = _tempfile.TemporaryDirectory()
+        work_dir = tmp_dir.name
 
-    # Create the working directory if it doesn't exist.
-    if not _os.path.isdir(work_dir):
-        work_dir, _ = _create_workdir(work_dir)
+    # User specified directory.
+    else:
+        tmp_dir = None
 
-    # Change to the new directory.
-    _os.chdir(work_dir)
+        # Use absolute path.
+        if not _os.path.isabs(work_dir):
+            work_dir = _os.path.abspath(work_dir)
 
-    # Execute the context.
-    try:
-        yield
+        # Create the directory if it doesn't already exist.
+        if not _os.path.isdir(work_dir):
+            _os.makedirs(work_dir, exist_ok=True)
 
-    # Return to original directory.
-    finally:
-        _os.chdir(old_dir)
+    return work_dir, tmp_dir

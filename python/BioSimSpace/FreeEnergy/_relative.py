@@ -36,7 +36,6 @@ import sys as _sys
 import os as _os
 import shutil as _shutil
 import subprocess as _subprocess
-import tempfile as _tempfile
 import warnings as _warnings
 import zipfile as _zipfile
 
@@ -170,22 +169,13 @@ class Relative:
         else:
             self._setup_only = setup_only
 
-        # Create a temporary working directory and store the directory name.
-        if work_dir is None:
-            if setup_only:
-                raise ValueError(
-                    "A 'work_dir' must be specified when 'setup_only' is True!"
-                )
-            self._tmp_dir = _tempfile.TemporaryDirectory()
-            self._work_dir = self._tmp_dir.name
+        if work_dir is None and setup_only:
+            raise ValueError(
+                "A 'work_dir' must be specified when 'setup_only' is True!"
+            )
 
-        # User specified working directory.
-        else:
-            self._work_dir = work_dir
-
-            # Create the directory if it doesn't already exist.
-            if not _os.path.isdir(work_dir):
-                _os.makedirs(work_dir, exist_ok=True)
+        # Create the working directory.
+        self._work_dir, self._tmp_dir = _Utils.create_workdir(work_dir)
 
         # Validate the user specified molecular dynamics engine.
         if engine is not None:

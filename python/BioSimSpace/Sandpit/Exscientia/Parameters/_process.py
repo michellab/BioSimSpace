@@ -47,7 +47,6 @@ import glob as _glob
 import os as _os
 import queue as _queue
 import sys as _sys
-import tempfile as _tempfile
 import threading as _threading
 import warnings as _warnings
 import zipfile as _zipfile
@@ -56,6 +55,7 @@ from .. import _is_notebook
 from .. import _isVerbose
 from .._Exceptions import ParameterisationError as _ParameterisationError
 from .._SireWrappers import Molecule as _Molecule
+from .. import _Utils
 
 from . import _Protocol
 
@@ -157,21 +157,8 @@ class Process:
         # Create a hash for the object.
         self._hash = hash((molecule, protocol)) % ((_sys.maxsize + 1) * 2)
 
-        # Create a temporary working directory and store the directory name.
-        if work_dir is None:
-            self._tmp_dir = _tempfile.TemporaryDirectory()
-            self._work_dir = self._tmp_dir.name
-
-        # User specified working directory.
-        else:
-            # Make sure the path is absolute.
-            if not _os.path.isabs(work_dir):
-                work_dir = _os.path.abspath(work_dir)
-            self._work_dir = work_dir
-
-            # Create the directory if it doesn't already exist.
-            if not _os.path.isdir(work_dir):
-                _os.makedirs(work_dir, exist_ok=True)
+        # Create the working directory.
+        self._work_dir, self._tmp_dir = _Utils.create_workdir(work_dir)
 
         # Flag that the process hasn't started/finished.
         self._is_started = False
