@@ -667,6 +667,13 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
     if _gmx_path is not None and ("GROMACS_PATH" not in _property_map):
         _property_map["GROMACS_PATH"] = _gmx_path
 
+    # Get the directory name.
+    dirname = _os.path.dirname(filebase)
+
+    # Create the directory if it doesn't already exist.
+    if not _os.path.isdir(dirname):
+        _os.makedirs(dirname, exist_ok=True)
+
     # A list of the files that have been written.
     files = []
 
