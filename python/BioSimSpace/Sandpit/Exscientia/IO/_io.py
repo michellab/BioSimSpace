@@ -1102,7 +1102,7 @@ def _check_cache(system, format, filebase, property_map={}, excluded_properties=
         raise TypeError("'property_map' must be of type 'dict'.")
 
     # Create the key.
-    key = (system._sire_object.uid().toString(), format, str(excluded_properties))
+    key = (system._sire_object.uid().toString(), format, str(set(excluded_properties)))
 
     # Get the existing file path and MD5 hash from the cache.
     try:
@@ -1202,7 +1202,7 @@ def _update_cache(system, format, path, excluded_properties=[]):
     hash = _get_md5_hash(path)
 
     # Create the key.
-    key = (system._sire_object.uid().toString(), format, str(excluded_properties))
+    key = (system._sire_object.uid().toString(), format, str(set(excluded_properties)))
 
     # Update the cache.
     _file_cache[key] = (system, path, hash)
