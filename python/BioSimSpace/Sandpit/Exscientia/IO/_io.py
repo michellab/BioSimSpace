@@ -535,7 +535,9 @@ def readMolecules(files, show_warnings=False, download_dir=None, property_map={}
     return _System(system)
 
 
-def saveMolecules(filebase, system, fileformat, property_map={}):
+def saveMolecules(
+    filebase, system, fileformat, property_map={}, excluded_properties=[]
+):
     """
     Save a molecular system to file.
 
@@ -557,6 +559,10 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
         A dictionary that maps system "properties" to their user
         defined values. This allows the user to refer to properties
         with their own naming scheme, e.g. { "charge" : "my-charge" }
+
+    excluded_properties : [str]
+        A list of properties to exclude when comparing systems when checking
+        the file cache.
 
     Returns
     -------
@@ -660,6 +666,12 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
     if not isinstance(property_map, dict):
         raise TypeError("'property_map' must be of type 'dict'")
 
+    # Validate the excluded property_map.
+    if not isinstance(excluded_properties, (list, tuple)):
+        raise TypeError("'excluded_properties' must be a list of 'str' types.")
+    if not all(isinstance(x, str) for x in excluded_properties):
+        raise TypeError("'excluded_properties' must be a list of 'str' types.")
+
     # Copy the map.
     _property_map = property_map.copy()
 
@@ -680,7 +692,13 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
     # Save the system using each file format.
     for format in formats:
         # Copy an existing file if it exists in the cache.
-        ext = _check_cache(system._sire_object, format, filebase)
+        ext = _check_cache(
+            system,
+            format,
+            filebase,
+            property_map=property_map,
+            excluded_properties=excluded_properties,
+        )
         if ext:
             files.append(_os.path.abspath(filebase + ext))
             continue
@@ -750,7 +768,9 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
             files += file
 
             # If this is a new file, then add it to the cache.
-            _update_cache(system._sire_object, format, file[0])
+            _update_cache(
+                system, format, file[0], excluded_properties=excluded_properties
+            )
 
         except Exception as e:
             msg = "Failed to save system to format: '%s'" % format
@@ -1028,7 +1048,7 @@ def readPerturbableSystem(top0, coords0, top1, coords1, property_map={}):
     return system0
 
 
-def _check_cache(system, format, filebase):
+def _check_cache(system, format, filebase, property_map={}, excluded_properties=[]):
     """
     Internal helper function to check whether a Sire system has previously
     been written to the specified format.
@@ -1036,14 +1056,23 @@ def _check_cache(system, format, filebase):
     Parameters
     ----------
 
-    system : sire.legacy.System.System
-        The Sire system.
+    system : :class:`System <BioSimSpace._SireWrappers.System>`
+        The system.
 
     format : str
         The molecular file format.
 
     filebase : str
         The file base to copy the file to.
+
+    property_map : dict
+        A dictionary that maps system "properties" to their user
+        defined values. This allows the user to refer to properties
+        with their own naming scheme, e.g. { "charge" : "my-charge" }
+
+    excluded_properties : [str]
+        A list of properties to exclude when comparing systems when checking
+        the file cache.
 
     Returns
     -------
@@ -1054,8 +1083,8 @@ def _check_cache(system, format, filebase):
 
     # Validate input.
 
-    if not isinstance(system, _SireSystem.System):
-        raise TypeError("'system' must be of type 'Sire.System.System'")
+    if not isinstance(system, _System):
+        raise TypeError("'system' must be of type 'BioSimSpace._SireWrappers.System'")
 
     if not isinstance(format, str):
         raise TypeError("'format' must be of type 'str'")
@@ -1063,17 +1092,35 @@ def _check_cache(system, format, filebase):
     if not isinstance(filebase, str):
         raise TypeError("'filebase' must be of type 'str'")
 
+    if not isinstance(excluded_properties, (list, tuple)):
+        raise TypeError("'excluded_properties' must be a list of 'str' types.")
+
+    if not all(isinstance(x, str) for x in excluded_properties):
+        raise TypeError("'excluded_properties' must be a list of 'str' types.")
+
+    if not isinstance(property_map, dict):
+        raise TypeError("'property_map' must be of type 'dict'.")
+
     # Create the key.
-    key = (system.uid().toString(), str(system.version()), format)
+    key = (system._sire_object.uid().toString(), format, str(excluded_properties))
 
     # Get the existing file path and MD5 hash from the cache.
     try:
-        (path, original_hash) = _file_cache[key]
+        (prev_system, path, original_hash) = _file_cache[key]
     except:
         return False
 
     # Whether the cache entry is still valid.
     cache_valid = True
+
+    # Is this system the same as the previous?
+    if not system.isSame(
+        prev_system,
+        excluded_properties=excluded_properties,
+        property_map0=property_map,
+        property_map1=property_map,
+    ):
+        cache_valid = False
 
     # Make sure the file still exists.
     if not _os.path.exists(path):
@@ -1107,7 +1154,7 @@ def _check_cache(system, format, filebase):
         return ext
 
 
-def _update_cache(system, format, path):
+def _update_cache(system, format, path, excluded_properties=[]):
     """
     Internal helper function to update the file cache when a new system
     is written to a specified format.
@@ -1115,29 +1162,38 @@ def _update_cache(system, format, path):
     Parameters
     ----------
 
-    system : sire.legacy.System.System
-        The Sire system.
+    system : :class:`System <BioSimSpace._SireWrappers.System>`
+        The system.
 
     format : str
         The molecular file format.
 
     path : str
         The path to the file.
+
+    excluded_properties : [str]
+        A list of properties to exclude when comparing systems when checking
     """
 
     # Validate input.
 
-    if not isinstance(system, _SireSystem.System):
-        raise TypeError("'system' must be of type 'Sire.System.System'")
+    if not isinstance(system, _System):
+        raise TypeError("'system' must be of type 'BioSimSpace._SireWrappers.System'")
 
     if not isinstance(format, str):
         raise TypeError("'format' must be of type 'str'")
+
+    if not isinstance(excluded_properties, (list, tuple)):
+        raise TypeError("'excluded_properties' must be a list of 'str' types.")
 
     if not isinstance(path, str):
         raise TypeError("'path' must be of type 'str'")
 
     if not _os.path.exists(path):
         raise IOError(f"File does not exist: '{path}'")
+
+    if not all(isinstance(x, str) for x in excluded_properties):
+        raise TypeError("'excluded_properties' must be a list of 'str' types.")
 
     # Convert to an absolute path.
     path = _os.path.abspath(path)
@@ -1146,10 +1202,10 @@ def _update_cache(system, format, path):
     hash = _get_md5_hash(path)
 
     # Create the key.
-    key = (system.uid().toString(), str(system.version()), format)
+    key = (system._sire_object.uid().toString(), format, str(excluded_properties))
 
     # Update the cache.
-    _file_cache[key] = (path, hash)
+    _file_cache[key] = (system, path, hash)
 
 
 def _get_md5_hash(path):
