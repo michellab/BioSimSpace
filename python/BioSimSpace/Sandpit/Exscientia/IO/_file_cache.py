@@ -65,8 +65,8 @@ class _FixedSizeOrderedDict(_collections.OrderedDict):
         self._num_atoms += value[0].nAtoms()
         if self._max_atoms > 0:
             if self._num_atoms > self._max_atoms:
-                item = self.popitem(False)
-                self._num_atoms -= item[0].nAtoms()
+                key, value = self.popitem(False)
+                self._num_atoms -= value[0].nAtoms()
 
 
 # Initialise a "cache" dictionary. This maps a key of the system UID, file format
