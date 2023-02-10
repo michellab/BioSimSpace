@@ -39,7 +39,6 @@ from collections import OrderedDict as _OrderedDict
 from glob import glob as _glob
 from io import StringIO as _StringIO
 
-import hashlib as _hashlib
 import json as _json
 import os as _os
 import shlex as _shlex
@@ -75,6 +74,9 @@ from .._SireWrappers import Molecule as _Molecule
 from .._SireWrappers import Molecules as _Molecules
 from .._SireWrappers import System as _System
 from .. import _Utils
+
+from ._file_cache import check_cache as _check_cache
+from ._file_cache import update_cache as _update_cache
 
 
 # Context manager for capturing stdout.
@@ -115,13 +117,6 @@ for index, line in enumerate(format_info):
 
 # Delete the redundant variables.
 del format_info, index, line, format, extensions, description
-
-
-# Initialise a "cache". This maps system UIDs and formats that have previously
-# been written to file. When saving, we can then check to see if a system has
-# previously been written to the specified format and, if the file still exists
-# and is unmodified, then we can simply copy to the new location.
-_file_cache = {}
 
 
 def expand(base, path, suffix=None):
@@ -1046,185 +1041,6 @@ def readPerturbableSystem(top0, coords0, top1, coords1, property_map={}):
     system0.updateMolecules(mol)
 
     return system0
-
-
-def _check_cache(system, format, filebase, property_map={}, excluded_properties=[]):
-    """
-    Internal helper function to check whether a Sire system has previously
-    been written to the specified format.
-
-    Parameters
-    ----------
-
-    system : :class:`System <BioSimSpace._SireWrappers.System>`
-        The system.
-
-    format : str
-        The molecular file format.
-
-    filebase : str
-        The file base to copy the file to.
-
-    property_map : dict
-        A dictionary that maps system "properties" to their user
-        defined values. This allows the user to refer to properties
-        with their own naming scheme, e.g. { "charge" : "my-charge" }
-
-    excluded_properties : [str]
-        A list of properties to exclude when comparing systems when checking
-        the file cache.
-
-    Returns
-    -------
-
-    extension : str
-        The extension for cached file. False if no file was found.
-    """
-
-    # Validate input.
-
-    if not isinstance(system, _System):
-        raise TypeError("'system' must be of type 'BioSimSpace._SireWrappers.System'")
-
-    if not isinstance(format, str):
-        raise TypeError("'format' must be of type 'str'")
-
-    if not isinstance(filebase, str):
-        raise TypeError("'filebase' must be of type 'str'")
-
-    if not isinstance(excluded_properties, (list, tuple)):
-        raise TypeError("'excluded_properties' must be a list of 'str' types.")
-
-    if not all(isinstance(x, str) for x in excluded_properties):
-        raise TypeError("'excluded_properties' must be a list of 'str' types.")
-
-    if not isinstance(property_map, dict):
-        raise TypeError("'property_map' must be of type 'dict'.")
-
-    # Create the key.
-    key = (system._sire_object.uid().toString(), format, str(set(excluded_properties)))
-
-    # Get the existing file path and MD5 hash from the cache.
-    try:
-        (prev_system, path, original_hash) = _file_cache[key]
-    except:
-        return False
-
-    # Whether the cache entry is still valid.
-    cache_valid = True
-
-    # Is this system the same as the previous?
-    if not system.isSame(
-        prev_system,
-        excluded_properties=excluded_properties,
-        property_map0=property_map,
-        property_map1=property_map,
-    ):
-        cache_valid = False
-
-    # Make sure the file still exists.
-    if not _os.path.exists(path):
-        cache_valid = False
-    # Make sure the MD5 sum is still the same.
-    else:
-        current_hash = _get_md5_hash(path)
-        if current_hash != original_hash:
-            cache_valid = False
-
-    # If the cache isn't valid, delete the entry and return False.
-    if not cache_valid:
-        if key in _file_cache:
-            del _file_cache[key]
-        return False
-
-    # Copy the old file to the new location.
-    else:
-        # Get the file extension.
-        ext = _os.path.splitext(path)[1]
-
-        # Add the extension to the file base.
-        new_path = filebase + ext
-
-        # Copy the file to the new location.
-        try:
-            _shutil.copyfile(path, new_path)
-        except _shutil.SameFileError:
-            pass
-
-        return ext
-
-
-def _update_cache(system, format, path, excluded_properties=[]):
-    """
-    Internal helper function to update the file cache when a new system
-    is written to a specified format.
-
-    Parameters
-    ----------
-
-    system : :class:`System <BioSimSpace._SireWrappers.System>`
-        The system.
-
-    format : str
-        The molecular file format.
-
-    path : str
-        The path to the file.
-
-    excluded_properties : [str]
-        A list of properties to exclude when comparing systems when checking
-    """
-
-    # Validate input.
-
-    if not isinstance(system, _System):
-        raise TypeError("'system' must be of type 'BioSimSpace._SireWrappers.System'")
-
-    if not isinstance(format, str):
-        raise TypeError("'format' must be of type 'str'")
-
-    if not isinstance(excluded_properties, (list, tuple)):
-        raise TypeError("'excluded_properties' must be a list of 'str' types.")
-
-    if not isinstance(path, str):
-        raise TypeError("'path' must be of type 'str'")
-
-    if not _os.path.exists(path):
-        raise IOError(f"File does not exist: '{path}'")
-
-    if not all(isinstance(x, str) for x in excluded_properties):
-        raise TypeError("'excluded_properties' must be a list of 'str' types.")
-
-    # Convert to an absolute path.
-    path = _os.path.abspath(path)
-
-    # Get the MD5 checksum for the file.
-    hash = _get_md5_hash(path)
-
-    # Create the key.
-    key = (system._sire_object.uid().toString(), format, str(set(excluded_properties)))
-
-    # Update the cache.
-    _file_cache[key] = (system, path, hash)
-
-
-def _get_md5_hash(path):
-    """
-    Internal helper function to return the MD5 checksum for a file.
-
-    Returns
-    -------
-
-    hash : hashlib.HASH
-    """
-    # Get the MD5 hash of the file. Process in chunks in case the file is too
-    # large to process.
-    hash = _hashlib.md5()
-    with open(path, "rb") as f:
-        for chunk in iter(lambda: f.read(4096), b""):
-            hash.update(chunk)
-
-    return hash.hexdigest()
 
 
 def _patch_sire_load(path, *args, show_warnings=True, property_map={}, **kwargs):
