@@ -39,7 +39,6 @@ import subprocess as _subprocess
 import shutil as _shutil
 import shlex as _shlex
 import sys as _sys
-import tempfile as _tempfile
 
 from .._Utils import _try_import, _have_imported, _assert_imported
 
@@ -294,20 +293,8 @@ def generateNetwork(
                 f"'n_edges_forced' must be 0 < value < {n_edges_fully_connected}."
             )
 
-    # Create a temporary working directory and store the directory name.
-    if work_dir is None:
-        tmp_dir = _tempfile.TemporaryDirectory()
-        work_dir = tmp_dir.name
-
-    # User specified working directory.
-    else:
-        # Use full path.
-        if work_dir[0] != "/":
-            work_dir = _os.getcwd() + "/" + work_dir
-
-        # Create the directory if it doesn't already exist.
-        if not _os.path.isdir(work_dir):
-            _os.makedirs(work_dir, exist_ok=True)
+    # Create the working directory.
+    work_dir = _Utils.WorkDir(work_dir)
 
     # Make the LOMAP input and output directories.
     _os.makedirs(work_dir + "/inputs", exist_ok=True)
@@ -927,9 +914,8 @@ def matchAtoms(
     # Convert the timeout to seconds and take the value as an integer.
     timeout = int(timeout.seconds().value())
 
-    # Create a temporary working directory.
-    tmp_dir = _tempfile.TemporaryDirectory()
-    work_dir = tmp_dir.name
+    # Create the working directory.
+    work_dir = _Utils.WorkDir()
 
     # Use RDKkit to find the maximum common substructure.
 
@@ -1288,9 +1274,8 @@ def flexAlign(
     # Convert the mapping to AtomIdx key:value pairs.
     sire_mapping = _to_sire_mapping(mapping)
 
-    # Create a temporary working directory.
-    tmp_dir = _tempfile.TemporaryDirectory()
-    work_dir = tmp_dir.name
+    # Create the working directory.
+    work_dir = _Utils.WorkDir()
 
     # Execute in the working directory.
     with _Utils.cd(work_dir):
@@ -1606,9 +1591,8 @@ def viewMapping(
         )
         molecule0 = rmsdAlign(molecule0, molecule1, mapping)
 
-    # Create a temporary working directory and store the directory name.
-    tmp_dir = _tempfile.TemporaryDirectory()
-    work_dir = tmp_dir.name
+    # Create the working directory.
+    work_dir = _Utils.WorkDir()
 
     # Write the molecules to PDB format.
     _IO.saveMolecules(

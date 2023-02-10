@@ -33,7 +33,6 @@ _mdtraj = _try_import("mdtraj")
 import copy as _copy
 import os as _os
 import shutil as _shutil
-import tempfile as _tempfile
 import uuid as _uuid
 import warnings as _warnings
 
@@ -48,6 +47,7 @@ from ..Types import Time as _Time
 
 from .. import IO as _IO
 from .. import Units as _Units
+from .. import _Utils
 
 
 def getFrame(trajectory, topology, index, system=None, property_map={}):
@@ -117,8 +117,7 @@ def getFrame(trajectory, topology, index, system=None, property_map={}):
         system = _update_water_topology(system, topology, trajectory)
 
     # Create a temporary working directory.
-    tmp_dir = _tempfile.TemporaryDirectory()
-    work_dir = tmp_dir.name
+    work_dir = _Utils.WorkDir()
 
     # Try to load the frame with MDTraj.
     errors = []
@@ -181,7 +180,7 @@ def getFrame(trajectory, topology, index, system=None, property_map={}):
         # The new_system object will contain a single molecule with the
         # coordinates of all of the atoms in the reference. As such, we
         # will need to split the system into molecules.
-        new_system = _split_molecules(frame, pdb, system, work_dir, property_map)
+        new_system = _split_molecules(frame, pdb, system, str(work_dir), property_map)
         return _System(new_system)
         try:
             sire_system, _ = _SireIO.updateCoordinatesAndVelocities(
@@ -342,8 +341,7 @@ class Trajectory:
         self._property_map = property_map
 
         # Create a temporary working directory.
-        self._tmp_dir = _tempfile.TemporaryDirectory()
-        self._work_dir = self._tmp_dir.name
+        self._work_dir = _Utils.WorkDir()
 
         # Get the current trajectory.
         self._trajectory = self.getTrajectory(format="AUTO")
@@ -629,7 +627,7 @@ class Trajectory:
                 # coordinates of all of the atoms in the reference. As such, we
                 # will need to split the system into molecules.
                 new_system = _split_molecules(
-                    frame, pdb, self._system, self._work_dir, self._property_map
+                    frame, pdb, self._system, str(self._work_dir), self._property_map
                 )
                 try:
                     sire_system, _ = _SireIO.updateCoordinatesAndVelocities(

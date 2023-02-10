@@ -64,13 +64,13 @@ class Test_gmx_ABFE:
 
     def test_file_exist(self, freenrg):
         """Test if all the files are there."""
-        path = pathlib.Path(freenrg._work_dir)
+        path = pathlib.Path(freenrg.workDir())
         for i in range(5):
             assert (path / f"lambda_{i}" / "gromacs.xvg").is_file()
 
     def test_lambda(self, freenrg):
         """Test if the xvg files contain the correct lambda."""
-        path = pathlib.Path(freenrg._work_dir)
+        path = pathlib.Path(freenrg.workDir())
         for i, (coul, vdw) in enumerate(
             zip([0.0, 0.5, 1.0, 1.0, 1.0], [0.0, 0.0, 0.0, 0.5, 1.0])
         ):

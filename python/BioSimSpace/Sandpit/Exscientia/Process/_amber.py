@@ -93,7 +93,7 @@ class _Watcher:
 
         # Setup the event handler and observer.
         event_handler = _Handler(self._process)
-        self._observer.schedule(event_handler, self._process._work_dir)
+        self._observer.schedule(event_handler, self._process.workDir())
         self._observer.daemon = True
         self._observer.start()
 
@@ -437,7 +437,7 @@ class Amber(_process.Process):
             config_options["plumedfile"] = "plumed.dat"
 
             # Create the PLUMED input file and copy auxiliary files to the working directory.
-            self._plumed = _Plumed(self._work_dir)
+            self._plumed = _Plumed(str(self._work_dir))
             plumed_config, auxiliary_files = self._plumed.createConfig(
                 self._system, self._protocol, self._property_map
             )

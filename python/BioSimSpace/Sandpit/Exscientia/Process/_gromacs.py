@@ -379,7 +379,7 @@ class Gromacs(_process.Process):
         # Add configuration variables for a metadynamics simulation.
         if isinstance(self._protocol, _Protocol.Metadynamics):
             # Create the PLUMED input file and copy auxiliary files to the working directory.
-            self._plumed = _Plumed(self._work_dir)
+            self._plumed = _Plumed(str(self._work_dir))
             plumed_config, auxiliary_files = self._plumed.createConfig(
                 self._system, self._protocol, self._property_map
             )
@@ -402,7 +402,7 @@ class Gromacs(_process.Process):
         # Add configuration variables for a steered molecular dynamics protocol.
         elif isinstance(self._protocol, _Protocol.Steering):
             # Create the PLUMED input file and copy auxiliary files to the working directory.
-            self._plumed = _Plumed(self._work_dir)
+            self._plumed = _Plumed(str(self._work_dir))
             plumed_config, auxiliary_files = self._plumed.createConfig(
                 self._system, self._protocol, self._property_map
             )

@@ -38,7 +38,6 @@ import random as _random
 import timeit as _timeit
 import warnings as _warnings
 import sys as _sys
-import tempfile as _tempfile
 import zipfile as _zipfile
 
 from sire.legacy import Mol as _SireMol
@@ -52,6 +51,7 @@ from ..Protocol._protocol import Protocol as _Protocol
 from .._SireWrappers import System as _System
 from ..Types._type import Type as _Type
 from .. import Units as _Units
+from .. import _Utils
 from ..FreeEnergy._restraint import Restraint as _Restraint
 
 if _is_notebook:
@@ -96,7 +96,7 @@ class Process:
         name : str
             The name of the process.
 
-        work_dir : str
+        work_dir : :class:`WorkDir <BioSimSpace._Utils.WorkDir>`, str
             The working directory for the process.
 
         seed : int
@@ -142,8 +142,10 @@ class Process:
             raise TypeError("'protocol' must be of type 'BioSimSpace.Protocol'")
 
         # Check that the working directory is valid.
-        if work_dir is not None and not isinstance(work_dir, str):
-            raise TypeError("'work_dir' must be of type 'str'")
+        if work_dir is not None and not isinstance(work_dir, (str, _Utils.WorkDir)):
+            raise TypeError(
+                "'work_dir' must be of type 'str' or 'BioSimSpace._Utils.WorkDir'"
+            )
 
         # Check that the seed is valid.
         if seed is not None and not type(seed) is int:
@@ -236,21 +238,11 @@ class Process:
         # Set the list of input files to None.
         self._input_files = None
 
-        # Create a temporary working directory and store the directory name.
-        if work_dir is None:
-            self._tmp_dir = _tempfile.TemporaryDirectory()
-            self._work_dir = self._tmp_dir.name
-
-        # User specified working directory.
-        else:
-            # Use absolute path.
-            if not _os.path.isabs(work_dir):
-                work_dir = _os.path.abspath(work_dir)
+        # Create the working directory.
+        if isinstance(work_dir, _Utils.WorkDir):
             self._work_dir = work_dir
-
-            # Create the directory if it doesn't already exist.
-            if not _os.path.isdir(work_dir):
-                _os.makedirs(work_dir, exist_ok=True)
+        else:
+            self._work_dir = _Utils.WorkDir(work_dir)
 
         # Files for redirection of stdout and stderr.
         self._stdout_file = "%s/%s.out" % (self._work_dir, name)
@@ -1077,7 +1069,7 @@ class Process:
         work_dir : str
             The path of the working directory.
         """
-        return self._work_dir
+        return str(self._work_dir)
 
     def getStdout(self, block="AUTO"):
         """

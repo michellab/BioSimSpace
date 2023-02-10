@@ -46,7 +46,6 @@ import shlex as _shlex
 import shutil as _shutil
 import sys as _sys
 import subprocess as _subprocess
-import tempfile as _tempfile
 import warnings as _warnings
 
 # Wrap the import of PyPDB since it imports Matplotlib, which will fail if
@@ -278,20 +277,8 @@ def readPDB(id, pdb4amber=False, work_dir=None, show_warnings=False, property_ma
     if work_dir and not isinstance(work_dir, str):
         raise TypeError("'work_dir' must be of type 'str'")
 
-    # Create a temporary working directory and store the directory name.
-    if work_dir is None:
-        tmp_dir = _tempfile.TemporaryDirectory()
-        work_dir = tmp_dir.name
-
-    # User specified working directory.
-    else:
-        # Use full path.
-        if work_dir[0] != "/":
-            work_dir = _os.getcwd() + "/" + work_dir
-
-        # Create the directory if it doesn't already exist.
-        if not _os.path.isdir(work_dir):
-            _os.makedirs(work_dir, exist_ok=True)
+    # Create the working directory.
+    work_dir = _Utils.WorkDir(work_dir)
 
     # Path to a PDB file.
     if _os.path.isfile(id):
@@ -302,7 +289,7 @@ def readPDB(id, pdb4amber=False, work_dir=None, show_warnings=False, property_ma
         from sire._load import _resolve_path
 
         try:
-            pdb_file = _resolve_path(id, directory=work_dir)[0]
+            pdb_file = _resolve_path(id, directory=str(work_dir))[0]
         except:
             raise IOError(f"Unable to download PDB file: '{id}'")
 
@@ -358,7 +345,7 @@ def readPDB(id, pdb4amber=False, work_dir=None, show_warnings=False, property_ma
         # Run pdb4amber as a subprocess.
         proc = _subprocess.run(
             _Utils.command_split(command),
-            cwd=work_dir,
+            cwd=str(work_dir),
             shell=False,
             stdout=stdout,
             stderr=stderr,
@@ -470,19 +457,8 @@ def readMolecules(files, show_warnings=False, download_dir=None, property_map={}
         if not isinstance(download_dir, str):
             raise TypeError("'download_dir' must be of type 'str'")
 
-        # Use full path.
-        if download_dir[0] != "/":
-            download_dir = _os.getcwd() + "/" + download_dir
-
-        # Create the directory if it doesn't already exist.
-        if not _os.path.isdir(download_dir):
-            _os.makedirs(download_dir, exist_ok=True)
-
-    # Create a temporary working directory and store the directory name.
-    else:
-        if download_dir is None:
-            tmp_dir = _tempfile.TemporaryDirectory()
-            download_dir = tmp_dir.name
+    # Create the download directory.
+    download_dir = _Utils.WorkDir(download_dir)
 
     # Validate the map.
     if not isinstance(property_map, dict):
@@ -501,7 +477,7 @@ def readMolecules(files, show_warnings=False, download_dir=None, property_map={}
     try:
         system = _patch_sire_load(
             files,
-            directory=download_dir,
+            directory=str(download_dir),
             property_map=property_map,
             show_warnings=show_warnings,
         )
@@ -625,6 +601,10 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
     if not isinstance(filebase, str):
         raise TypeError("'filebase' must be of type 'str'")
 
+    # Convert to absolute path.
+    if not _os.path.isabs(filebase):
+        filebase = _os.path.abspath(filebase)
+
     # Check that that the system is of the correct type.
 
     # A System object.
@@ -690,19 +670,9 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
     # Get the directory name.
     dirname = _os.path.dirname(filebase)
 
-    # If the user has passed a directory, make sure that is exists.
-    if _os.path.basename(filebase) != filebase:
-        # Create the directory if it doesn't already exist.
-        if not _os.path.isdir(dirname):
-            _os.makedirs(dirname, exist_ok=True)
-
-    # Store the current working directory.
-    dir = _os.getcwd()
-
-    # Change to the working directory for the process.
-    # This avoid problems with relative paths.
-    if dirname != "":
-        _os.chdir(dirname)
+    # Create the directory if it doesn't already exist.
+    if not _os.path.isdir(dirname):
+        _os.makedirs(dirname, exist_ok=True)
 
     # A list of the files that have been written.
     files = []
@@ -783,17 +753,11 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
             _update_cache(system._sire_object, format, file[0])
 
         except Exception as e:
-            if dirname != "":
-                _os.chdir(dir)
             msg = "Failed to save system to format: '%s'" % format
             if _isVerbose():
                 raise IOError(msg) from e
             else:
                 raise IOError(msg) from None
-
-    # Change back to the original directory.
-    if dirname != "":
-        _os.chdir(dir)
 
     # Return the list of files.
     return files
