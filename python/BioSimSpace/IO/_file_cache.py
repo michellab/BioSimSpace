@@ -26,17 +26,54 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["check_cache", "update_cache"]
 
+import collections as _collections
 import hashlib as _hashlib
 import os as _os
 import shutil as _shutil
+import sys as _sys
 
 from .._SireWrappers import System as _System
+
+
+class _FixedSizeOrderedDict(_collections.OrderedDict):
+    """A utility class to implement a fixed-sized cache."""
+
+    def __init__(self, *args, max=2, **kwargs):
+        """
+        Constructor.
+
+        Parameters
+        ----------
+
+        max : float
+            The maximum size in GB.
+        """
+
+        # Work out the approximate maximum number of atoms.
+        if max > 0:
+            self._max_atoms = int((max * 1e9) / (9 * _sys.getsizeof(float())))
+        else:
+            self._max_atoms = 0
+
+        # Store the total number of atoms.
+        self._num_atoms = 0
+
+        super().__init__(*args, **kwargs)
+
+    def __setitem__(self, key, value):
+        _collections.OrderedDict.__setitem__(self, key, value)
+        self._num_atoms += value[0].nAtoms()
+        if self._max_atoms > 0:
+            if self._num_atoms > self._max_atoms:
+                item = self.popitem(False)
+                self._num_atoms -= item[0].nAtoms()
+
 
 # Initialise a "cache" dictionary. This maps a key of the system UID, file format
 # and excluded properties a value of the system and file path. When saving to a
 # given format, we can then to see if a matching system has previously been written
 # to the same format, allowing us to re-use the existing file.
-_cache = {}
+_cache = _FixedSizeOrderedDict()
 
 
 def check_cache(system, format, filebase, property_map={}, excluded_properties=[]):
