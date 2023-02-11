@@ -77,7 +77,13 @@ _cache = _FixedSizeOrderedDict()
 
 
 def check_cache(
-    system, format, filebase, property_map={}, excluded_properties=[], skip_water=True
+    system,
+    format,
+    filebase,
+    property_map={},
+    excluded_properties=[],
+    skip_water=True,
+    **kwargs,
 ):
     """
     Check whether a Sire system has previously been written to the specified format.
@@ -137,7 +143,12 @@ def check_cache(
         raise TypeError("'skip_water' must be of type 'bool'.")
 
     # Create the key.
-    key = (system._sire_object.uid().toString(), format, str(set(excluded_properties)))
+    key = (
+        system._sire_object.uid().toString(),
+        format,
+        str(set(excluded_properties)),
+        str(skip_water),
+    )
 
     # Get the existing file path and MD5 hash from the cache.
     try:
@@ -190,7 +201,9 @@ def check_cache(
         return ext
 
 
-def update_cache(system, format, path, excluded_properties=[]):
+def update_cache(
+    system, format, path, excluded_properties=[], skip_water=True, **kwargs
+):
     """
     Update the file cache when a new system is written to a specified format.
 
@@ -208,6 +221,9 @@ def update_cache(system, format, path, excluded_properties=[]):
 
     excluded_properties : [str]
         A list of properties to exclude when comparing systems when checking
+
+    skip_water : bool
+        Whether to skip water molecules when comparing systems.
     """
 
     # Validate input.
@@ -230,6 +246,9 @@ def update_cache(system, format, path, excluded_properties=[]):
     if not all(isinstance(x, str) for x in excluded_properties):
         raise TypeError("'excluded_properties' must be a list of 'str' types.")
 
+    if not isinstance(skip_water, bool):
+        raise TypeError("'skip_water' must be of type 'bool'.")
+
     # Convert to an absolute path.
     path = _os.path.abspath(path)
 
@@ -237,7 +256,12 @@ def update_cache(system, format, path, excluded_properties=[]):
     hash = _get_md5_hash(path)
 
     # Create the key.
-    key = (system._sire_object.uid().toString(), format, str(set(excluded_properties)))
+    key = (
+        system._sire_object.uid().toString(),
+        format,
+        str(set(excluded_properties)),
+        str(skip_water),
+    )
 
     # Update the cache.
     _cache[key] = (system, path, hash)
