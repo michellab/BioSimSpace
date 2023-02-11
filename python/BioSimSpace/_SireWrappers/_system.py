@@ -392,7 +392,14 @@ class System(_SireWrapper):
         except:
             return None
 
-    def isSame(self, other, excluded_properties=[], property_map0={}, property_map1={}):
+    def isSame(
+        self,
+        other,
+        excluded_properties=[],
+        property_map0={},
+        property_map1={},
+        skip_water=True,
+    ):
         """
         Check whether "other" is the same as this system.
 
@@ -416,6 +423,9 @@ class System(_SireWrapper):
         property_map1 : dict
             A dictionary that maps "properties" in "other" to their user
             defined values.
+
+        skip_water : bool
+            Whether to skip water molecules when comparing systems.
 
         Returns
         -------
@@ -442,6 +452,9 @@ class System(_SireWrapper):
 
         if not isinstance(property_map1, dict):
             raise TypeError("'property_map1' must be of type 'dict'.")
+
+        if not isinstance(skip_water, bool):
+            raise TypeError("'skip_water' must be of type 'bool'.")
 
         # If the system UIDs differ, then they are definitely different.
         if self._sire_object.uid() != other._sire_object.uid():
@@ -512,9 +525,16 @@ class System(_SireWrapper):
         if not is_same:
             return False
 
+        if skip_water:
+            molecules0 = self.search("not water", property_map0).molecules()
+            molecules1 = other.search("not water", property_map1).molecules()
+        else:
+            molecules0 = self.getMolecules()
+            molecules1 = other.getMolecules()
+
         # Now compare molecules.
-        for x in range(0, self.nMolecules()):
-            if not _object_compare(self[0]._sire_object, other[x]._sire_object):
+        for molecule0, molecule1 in zip(molecules0, molecules1):
+            if not _object_compare(molecule0._sire_object, molecule1._sire_object):
                 return False
 
         # If we made it this far, then the systems are the same.
