@@ -76,7 +76,9 @@ class _FixedSizeOrderedDict(_collections.OrderedDict):
 _cache = _FixedSizeOrderedDict()
 
 
-def check_cache(system, format, filebase, property_map={}, excluded_properties=[]):
+def check_cache(
+    system, format, filebase, property_map={}, excluded_properties=[], skip_water=True
+):
     """
     Check whether a Sire system has previously been written to the specified format.
 
@@ -100,6 +102,9 @@ def check_cache(system, format, filebase, property_map={}, excluded_properties=[
     excluded_properties : [str]
         A list of properties to exclude when comparing systems when checking
         the file cache.
+
+    skip_water : bool
+        Whether to skip water molecules when comparing systems.
 
     Returns
     -------
@@ -128,6 +133,9 @@ def check_cache(system, format, filebase, property_map={}, excluded_properties=[
     if not isinstance(property_map, dict):
         raise TypeError("'property_map' must be of type 'dict'.")
 
+    if not isinstance(skip_water, bool):
+        raise TypeError("'skip_water' must be of type 'bool'.")
+
     # Create the key.
     key = (system._sire_object.uid().toString(), format, str(set(excluded_properties)))
 
@@ -146,6 +154,7 @@ def check_cache(system, format, filebase, property_map={}, excluded_properties=[
         excluded_properties=excluded_properties,
         property_map0=property_map,
         property_map1=property_map,
+        skip_water=skip_water,
     ):
         cache_valid = False
 
