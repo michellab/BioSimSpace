@@ -530,9 +530,7 @@ def readMolecules(files, show_warnings=False, download_dir=None, property_map={}
     return _System(system)
 
 
-def saveMolecules(
-    filebase, system, fileformat, property_map={}, excluded_properties=[]
-):
+def saveMolecules(filebase, system, fileformat, property_map={}, **kwargs):
     """
     Save a molecular system to file.
 
@@ -554,10 +552,6 @@ def saveMolecules(
         A dictionary that maps system "properties" to their user
         defined values. This allows the user to refer to properties
         with their own naming scheme, e.g. { "charge" : "my-charge" }
-
-    excluded_properties : [str]
-        A list of properties to exclude when comparing systems when checking
-        the file cache.
 
     Returns
     -------
@@ -661,12 +655,6 @@ def saveMolecules(
     if not isinstance(property_map, dict):
         raise TypeError("'property_map' must be of type 'dict'")
 
-    # Validate the excluded property_map.
-    if not isinstance(excluded_properties, (list, tuple)):
-        raise TypeError("'excluded_properties' must be a list of 'str' types.")
-    if not all(isinstance(x, str) for x in excluded_properties):
-        raise TypeError("'excluded_properties' must be a list of 'str' types.")
-
     # Copy the map.
     _property_map = property_map.copy()
 
@@ -692,7 +680,7 @@ def saveMolecules(
             format,
             filebase,
             property_map=property_map,
-            excluded_properties=excluded_properties,
+            **kwargs,
         )
         if ext:
             files.append(_os.path.abspath(filebase + ext))
@@ -763,9 +751,7 @@ def saveMolecules(
             files += file
 
             # If this is a new file, then add it to the cache.
-            _update_cache(
-                system, format, file[0], excluded_properties=excluded_properties
-            )
+            _update_cache(system, format, file[0], **kwargs)
 
         except Exception as e:
             msg = "Failed to save system to format: '%s'" % format
