@@ -58,9 +58,9 @@ class System(_SireWrapper):
         ----------
 
         system : Sire.System.System, :class:`System <BioSimSpace._SireWrappers.System>`, \
-                Sire.Mol._Mol.Molecule, :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, \
-                :class:`Molecules <BioSimSpace._SireWrappers.Molecules>` \
-                [:class:`Molecule <BioSimSpace._SireWrappers.Molecule>`]
+                 Sire.Mol._Mol.Molecule, :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, \
+                 :class:`Molecules <BioSimSpace._SireWrappers.Molecules>` \
+                 [:class:`Molecule <BioSimSpace._SireWrappers.Molecule>`]
             A Sire or BioSimSpace System object, a Sire or BioSimSpace Molecule object,
             a BioSimSpace Molecules object, or a list of BioSimSpace molecule objects.
         """
@@ -693,7 +693,8 @@ class System(_SireWrapper):
         self._mol_nums = self._sire_object.molNums()
 
     def updateMolecule(self, index, molecule):
-        """Updated the molecule at the given index.
+        """
+        Update the molecule at the given index.
 
         Parameters
         ----------
