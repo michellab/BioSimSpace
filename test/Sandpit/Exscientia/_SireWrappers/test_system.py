@@ -345,3 +345,14 @@ def test_isSame(system):
     # Assert that they are the same, apart from their coordinates.
     assert system.isSame(other, excluded_properties=["coordinates"])
     assert other.isSame(system, excluded_properties=["coordinates"])
+
+    # Now delete a property.
+    other._sire_object.removeProperty("space")
+
+    # Assert that they are different.
+    assert not system.isSame(other, excluded_properties=["coordinates"])
+    assert not other.isSame(system, excluded_properties=["coordinates"])
+
+    # Assert that they are the same, apart from their coordinates and space.
+    assert system.isSame(other, excluded_properties=["coordinates", "space"])
+    assert other.isSame(system, excluded_properties=["coordinates", "space"])

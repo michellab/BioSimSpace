@@ -469,8 +469,9 @@ class System(_SireWrapper):
         ):
             return False
 
-        # Invert the first property map.
+        # Invert the property maps.
         inv_prop_map0 = {v: k for k, v in property_map0.items()}
+        inv_prop_map1 = {v: k for k, v in property_map1.items()}
 
         # Add some additional properties to the excluded list. These are
         # used for internal metadata to aid object recovery.
@@ -480,8 +481,12 @@ class System(_SireWrapper):
         def _object_compare(object0, object1):
             """Helper function to check whether two Sire objects are the same."""
 
+            # Store the two sets of properties.
+            props0 = object0.propertyKeys()
+            props1 = object1.propertyKeys()
+
             # Loop over all properties of object0.
-            for p0 in object0.propertyKeys():
+            for p0 in props0:
                 # Get the actual property name.
                 name0 = inv_prop_map0.get(p0, p0)
 
@@ -515,6 +520,14 @@ class System(_SireWrapper):
                     # Property is missing, so the objects differ.
                     else:
                         return False
+
+            # Now check that there aren't any additional properties in object1
+            # that aren't excluded.
+            for p1 in props1:
+                name1 = inv_prop_map1.get(p1, p1)
+                # This is a property unique to object1, so they differ.
+                if not name1 in _excluded_properties and name1 not in props0:
+                    return False
 
             # If we get this far, then the objects are the same.
             return True
