@@ -197,6 +197,9 @@ def check_cache(
             _shutil.copyfile(path, new_path)
         except _shutil.SameFileError:
             pass
+        except:
+            del _cache[key]
+            return False
 
         return ext
 
