@@ -11,11 +11,20 @@ try:
 except:
     has_namd = False
 
+# Store the tutorial URL.
+url = BSS.tutorialUrl()
 
-@pytest.fixture
-def system(scope="session"):
+
+@pytest.fixture(scope="session")
+def system():
     """Re-use the same molecuar system for each test."""
-    return BSS.IO.readMolecules("test/Sandpit/Exscientia/input/namd/alanin/*")
+    return BSS.IO.readMolecules(
+        [
+            "test/input/alanin.psf",
+            "test/input/alanin.pdb",
+            "test/input/alanin.params",
+        ]
+    )
 
 
 @pytest.mark.skipif(has_namd is False, reason="Requires NAMD to be installed.")

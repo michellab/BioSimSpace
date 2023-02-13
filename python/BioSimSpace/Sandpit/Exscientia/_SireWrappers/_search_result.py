@@ -107,7 +107,6 @@ class SearchResult:
 
         # Slice.
         if type(key) is slice:
-
             # Create a list to hold the results.
             results = []
 

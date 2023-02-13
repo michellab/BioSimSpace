@@ -6,9 +6,9 @@ The following instructions describe how to create a new BioSimSpace release:
 Step 1
 ======
 
-Update the `CHANGELOG <https://github.com/michellab/BioSimSpace/blob/devel/doc/source/changelog.rst>`_
+Update the `CHANGELOG <https://github.com/openbiosim/biosimspace/blob/devel/doc/source/changelog.rst>`_
 file with a summary of the changes for this relase. Feel free to link to
-`GitHub issues <https://github.com/michellab/BioSimSpace/issues>`_ where relevant
+`GitHub issues <https://github.com/openbiosim/biosimspace/issues>`_ where relevant
 and give credit for specific contributions.
 
 Step 2
@@ -19,7 +19,7 @@ release. The following will tag the latest commit:
 
 .. code-block:: bash
 
-    git tag -a 2019.1.0 -m "Tagging the 2019.1.0 release of BioSimSpace."
+    git tag -a 2023.1.0 -m "Tagging the 2023.1.0 release of BioSimSpace."
 
 Step 3
 ======
@@ -36,14 +36,14 @@ the tag to a later commit, simply delete the tag from the remote:
 
 .. code-block:: bash
 
-    git push origin :refs/tags/2019.1.0
+    git push origin :refs/tags/2023.1.0
 
-Next, delete the Conda release package from the `Anaconda Cloud <https://anaconda.org/michellab/biosimspace/files>`_.
+Next, delete the Conda release package from the `Anaconda Cloud <https://anaconda.org/openbiosim/biosimspace/files>`_.
 You can then move the tag to the latest commit:
 
 .. code-block:: bash
 
-    git tag -fa 2019.1.0
+    git tag -fa 2023.1.0
 
 Finally, push the new commit and updated tag:
 
@@ -54,13 +54,13 @@ Finally, push the new commit and updated tag:
 Step 4
 ======
 
-Create a `GitHub release <https://github.com/michellab/BioSimSpace/releases>`_.
+Create a `GitHub release <https://github.com/openbiosim/biosimspace/releases>`_.
 When drafting the release, simply choose the tag that you have created.
 
 Step 5
 ======
 
-Create a `pull request <https://github.com/michellab/BioSimSpace/pulls>`_ to
+Create a `pull request <https://github.com/openbiosim/biosimspace/pulls>`_ to
 merge ``devel`` into the ``master`` branch.
 
 That's it!

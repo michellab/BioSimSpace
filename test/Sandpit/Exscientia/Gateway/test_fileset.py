@@ -15,11 +15,11 @@ def test_no_arguments():
 @pytest.mark.parametrize(
     "value",
     [
-        ["test/input/amber/ala/ala.crd", "test/input/amber/ala/ala.top"],
+        ["test/input/ala.crd", "test/input/ala.top"],
         [
-            "test/input/namd/alanin/alanin.pdb",
-            "test/input/namd/alanin/alanin.psf",
-            "test/input/namd/alanin/alanin.params",
+            "test/input/alanin.pdb",
+            "test/input/alanin.psf",
+            "test/input/alanin.params",
         ],
     ],
 )

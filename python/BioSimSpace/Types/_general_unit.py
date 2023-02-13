@@ -96,7 +96,6 @@ class GeneralUnit(_Type):
 
             # The user has passed a string representation of the temperature.
             elif isinstance(_args[0], str):
-
                 # Extract the string.
                 string = _args[0]
 
@@ -195,7 +194,6 @@ class GeneralUnit(_Type):
 
             # The user has passed a string representation of the temperature.
             elif isinstance(_args[0], str):
-
                 # Extract the string.
                 string = _args[0]
 

@@ -2,11 +2,14 @@ import BioSimSpace.Sandpit.Exscientia as BSS
 
 import pytest
 
+# Store the tutorial URL.
+url = BSS.tutorialUrl()
 
-@pytest.fixture
-def system(scope="session"):
+
+@pytest.fixture(scope="session")
+def system():
     """Re-use the same molecuar system for each test."""
-    return BSS.IO.readMolecules("test/Sandpit/Exscientia/input/amber/ala/*")
+    return BSS.IO.readMolecules(["test/input/ala.top", "test/input/ala.crd"])
 
 
 def test_minimise(system):

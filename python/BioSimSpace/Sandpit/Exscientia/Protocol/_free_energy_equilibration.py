@@ -23,6 +23,7 @@ class FreeEnergyEquilibration(_Equilibration, _FreeEnergyMixin):
         temperature_end=_Types.Temperature(300, "kelvin"),
         temperature=None,
         pressure=None,
+        tau_t=_Types.Time(1, "picosecond"),
         report_interval=200,
         restart_interval=1000,
         restraint=None,
@@ -30,8 +31,7 @@ class FreeEnergyEquilibration(_Equilibration, _FreeEnergyMixin):
         restart=False,
         perturbation_type="full",
     ):
-        """
-        Constructor.
+        """Constructor.
 
         Parameters
         ----------
@@ -70,6 +70,9 @@ class FreeEnergyEquilibration(_Equilibration, _FreeEnergyMixin):
         pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
             The pressure. If this argument is omitted then the simulation
             is run using the NVT ensemble.
+
+        tau_t : :class:`Time <BioSimSpace.Types.Time>`
+            Time constant for thermostat coupling.
 
         report_interval : int
             The frequency at which statistics are recorded. (In integration steps.)
@@ -124,6 +127,7 @@ class FreeEnergyEquilibration(_Equilibration, _FreeEnergyMixin):
             temperature_end=temperature_end,
             temperature=temperature,
             pressure=pressure,
+            tau_t=tau_t,
             report_interval=report_interval,
             restart_interval=restart_interval,
             restraint=restraint,
@@ -141,50 +145,23 @@ class FreeEnergyEquilibration(_Equilibration, _FreeEnergyMixin):
             perturbation_type=perturbation_type,
         )
 
+    def _get_parm(self):
+        """Return a string representation of the parameters."""
+
+        return ", ".join(
+            [_Equilibration._get_parm(self), _FreeEnergyMixin._get_parm(self)]
+        )
+
     def __str__(self):
         """Return a human readable string representation of the object."""
         if self._is_customised:
             return "<BioSimSpace.Protocol.Custom>"
         else:
-            return (
-                "<BioSimSpace.Protocol.FreeEnergyEquilibration: lam=%5.4f, lam_vals=%r, timestep=%s, "
-                "runtime=%s, temperature_start=%s, temperature_end=%s, pressure=%s, report_interval=%d, "
-                "restart_interval=%d, restart_interval=%d,restraint=%r, restart=%r, force_constant=%3.2f>"
-            ) % (
-                self._lambda,
-                self._lambda_vals,
-                self._timestep,
-                self._runtime,
-                self._temperature_start,
-                self._temperature_end,
-                self._pressure,
-                self._report_interval,
-                self._restart_interval,
-                self._restraint,
-                self._restart,
-                self._force_constant.value(),
-            )
+            return f"<BioSimSpace.Protocol.FreeEnergyEquilibration: {self._get_parm()}>"
 
     def __repr__(self):
         """Return a string showing how to instantiate the object."""
         if self._is_customised:
             return "<BioSimSpace.Protocol.Custom>"
         else:
-            return (
-                "<BioSimSpace.Protocol.FreeEnergyEquilibration(lam=%5.4f, lam_vals=%r, timestep=%s, "
-                "runtime=%s, temperature_start=%s, temperature_end=%s, pressure=%s, report_interval=%d, "
-                "restart_interval=%d, restart_interval=%d,restraint=%r, restart=%r, force_constant=%3.2f)>"
-            ) % (
-                self._lambda,
-                self._lambda_vals,
-                self._timestep,
-                self._runtime,
-                self._temperature_start,
-                self._temperature_end,
-                self._pressure,
-                self._report_interval,
-                self._restart_interval,
-                self._restraint,
-                self._restart,
-                self._force_constant.value(),
-            )
+            return f"BioSimSpace.Protocol.FreeEnergyEquilibration({self._get_parm()})"

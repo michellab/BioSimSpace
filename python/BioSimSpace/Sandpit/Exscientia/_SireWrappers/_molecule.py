@@ -1711,14 +1711,15 @@ class Molecule(_SireWrapper):
 
                 # Replace the ambertype.
                 for dummy in search:
+                    index = dummy.atom().index()
                     mol = (
-                        mol.atom(dummy.index())
-                        .setProperty(amber_type, amber_types[dummy.index().value()])
+                        mol.atom(index)
+                        .setProperty(amber_type, amber_types[index.value()])
                         .molecule()
                     )
                     mol = (
-                        mol.atom(dummy.index())
-                        .setProperty(element, elements[dummy.index().value()])
+                        mol.atom(index)
+                        .setProperty(element, elements[index.value()])
                         .molecule()
                     )
 

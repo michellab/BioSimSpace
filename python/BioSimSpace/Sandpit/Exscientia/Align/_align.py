@@ -234,7 +234,6 @@ def generateNetwork(
 
     # Validate the scores file.
     if links_file is not None:
-
         if not isinstance(links_file, str):
             raise TypeError("'links_file' must be of type 'str'")
 
@@ -490,7 +489,6 @@ def generateNetwork(
     # If the user has specified a forced number of edges, adjust the network
     # to match the query. We have three situations to deal with.
     if n_edges_forced:
-
         # sort the list of excluded edges by LOMAP score.
         edges_excluded.sort(key=lambda x: x[2], reverse=True)
 
@@ -987,7 +985,6 @@ def matchAtoms(
     # Sometimes RDKit fails to generate a mapping that includes the prematch.
     # If so, then try generating a mapping using the MCS routine from Sire.
     if len(mappings) == 1 and mappings[0] == prematch:
-
         # Warn that we've fallen back on using Sire.
         if prematch != {}:
             _warnings.warn("RDKit mapping didn't include prematch. Using Sire MCS.")
@@ -1297,7 +1294,6 @@ def flexAlign(
 
     # Execute in the working directory.
     with _Utils.cd(work_dir):
-
         # Write the two molecules to PDB files.
         _IO.saveMolecules("molecule0", molecule0, "PDB", property_map=property_map0)
         _IO.saveMolecules("molecule1", molecule1, "PDB", property_map=property_map1)
@@ -1351,6 +1347,7 @@ def merge(
     allow_ring_breaking=False,
     allow_ring_size_change=False,
     force=False,
+    roi=None,
     property_map0={},
     property_map1={},
 ):
@@ -1386,6 +1383,9 @@ def merge(
         This will likely lead to an unstable perturbation. This option
         takes precedence over 'allow_ring_breaking' and
         'allow_ring_size_change'.
+
+       roi : list
+           The region of interest to merge. Consist of two lists of atom indices.
 
     property_map0 : dict
         A dictionary that maps "properties" in molecule0 to their user
@@ -1444,6 +1444,12 @@ def merge(
     if not isinstance(force, bool):
         raise TypeError("'force' must be of type 'bool'")
 
+    if roi is not None:
+        if not isinstance(roi, list):
+            raise TypeError("'roi' must be of type 'list'.")
+        else:
+            _validate_roi(molecule0, molecule1, roi)
+
     # The user has passed an atom mapping.
     if mapping is not None:
         if not isinstance(mapping, dict):
@@ -1473,6 +1479,7 @@ def merge(
         allow_ring_breaking=allow_ring_breaking,
         allow_ring_size_change=allow_ring_size_change,
         force=force,
+        roi=roi,
         property_map0=property_map0,
         property_map1=property_map1,
     )
@@ -1627,11 +1634,11 @@ def viewMapping(
         viewergrid = (1, 2)
         viewer1 = (0, 1)
         width = pixels
-        height = pixels / 2
+        height = int(pixels / 2)
     else:
         viewergrid = (2, 1)
         viewer1 = (1, 0)
-        width = pixels / 2
+        width = int(pixels / 2)
         height = pixels
 
     # Create the view.
@@ -2009,7 +2016,6 @@ def _score_sire_mappings(
 
     # Loop over all of the mappings.
     for mapping in sire_mappings:
-
         # Check that the mapping contains the pre-match.
         is_valid = True
         for idx0, idx1 in prematch.items():
@@ -2131,6 +2137,36 @@ def _validate_mapping(molecule0, molecule1, mapping, name):
                 "The molecules contain %d and %d atoms."
                 % (name, idx0, idx1, molecule0.nAtoms(), molecule1.nAtoms())
             )
+
+
+def _validate_roi(molecule0, molecule1, roi):
+    """Internal function to validate that a mapping contains key:value pairs
+    of the correct type.
+
+    Parameters
+    ----------
+
+    molecule0 : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+        The molecule of interest.
+
+    molecule1 : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+        The reference molecule.
+
+    roi : list
+        The region of interest to merge.
+    """
+    if len(roi) != 2:
+        raise ValueError("The length of roi list must be 2.")
+    if not isinstance(roi[0], list) or not isinstance(roi[1], list):
+        raise ValueError("The element of roi must be of type list")
+    for mol_idx, ele in enumerate(roi):
+        for atom_idx in ele:
+            if type(atom_idx) is not int:
+                raise ValueError(f"The element of roi[{mol_idx}] should be of type int")
+            if atom_idx >= [molecule0, molecule1][mol_idx].nAtoms():
+                raise IndexError(
+                    f"The element of roi[{mol_idx}] should within range of number of atoms"
+                )
 
 
 def _to_sire_mapping(mapping):

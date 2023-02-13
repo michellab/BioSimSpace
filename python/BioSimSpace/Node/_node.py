@@ -62,7 +62,7 @@ def help(name):
         The name of the node.
     """
 
-    if not isinstance(name) is not str:
+    if not isinstance(name, str):
         raise TypeError("'name' must be of type 'str'.")
 
     # Apped the node directory name.

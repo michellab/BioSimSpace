@@ -1,4 +1,4 @@
-######################################################################
+#####################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
 # Copyright: 2017-2023
@@ -28,10 +28,10 @@ __all__ = ["Somd"]
 
 from .._Utils import _try_import
 
-import math as _math
 import os as _os
 
 _pygtail = _try_import("pygtail")
+import glob as _glob
 import random as _random
 import string as _string
 import sys as _sys
@@ -45,6 +45,7 @@ from sire.legacy import MM as _SireMM
 from sire.legacy import Mol as _SireMol
 
 from .. import _isVerbose
+from .._Config import Somd as _SomdConfig
 from .._Exceptions import IncompatibleError as _IncompatibleError
 from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from .._SireWrappers import Molecule as _Molecule
@@ -73,6 +74,8 @@ class Somd(_process.Process):
         platform="CPU",
         work_dir=None,
         seed=None,
+        extra_options={},
+        extra_lines=[],
         property_map={},
     ):
         """
@@ -105,6 +108,13 @@ class Somd(_process.Process):
             purposes since SOMD uses the same seed for each Monte Carlo
             cycle.
 
+        extra_options : dict
+            A dictionary containing extra options. Overrides the defaults generated
+            by the protocol.
+
+        extra_lines : [str]
+            A list of extra lines to put at the end of the configuration file.
+
         property_map : dict
             A dictionary that maps system "properties" to their user defined
             values. This allows the user to refer to properties with their
@@ -112,7 +122,22 @@ class Somd(_process.Process):
         """
 
         # Call the base class constructor.
-        super().__init__(system, protocol, name, work_dir, seed, property_map)
+        super().__init__(
+            system,
+            protocol,
+            name=name,
+            work_dir=work_dir,
+            seed=seed,
+            extra_options=extra_options,
+            extra_lines=extra_lines,
+            property_map=property_map,
+        )
+
+        # Catch unsupported protocols.
+        if isinstance(protocol, _Protocol.Steering):
+            raise _IncompatibleError(
+                "Unsupported protocol: '%s'" % self._protocol.__class__.__name__
+            )
 
         # Set the package name.
         self._package_name = "SOMD"
@@ -292,8 +317,8 @@ class Somd(_process.Process):
 
         # RST file (coordinates).
         try:
-            rst = _SireIO.AmberRst7(system._sire_object, self._property_map)
-            rst.writeToFile(self._rst_file)
+            file = _os.path.splitext(self._rst_file)[0]
+            _IO.saveMolecules(file, system, "rst7", property_map=self._property_map)
         except Exception as e:
             msg = "Failed to write system to 'RST7' format."
             if _isVerbose():
@@ -303,8 +328,7 @@ class Somd(_process.Process):
 
         # PRM file (topology).
         try:
-            prm = _SireIO.AmberPrm(system._sire_object, self._property_map)
-            prm.writeToFile(self._top_file)
+            _IO.saveMolecules(file, system, "prm7", property_map=self._property_map)
         except Exception as e:
             msg = "Failed to write system to 'PRM7' format."
             if _isVerbose():
@@ -345,9 +369,6 @@ class Somd(_process.Process):
     def _generate_config(self):
         """Generate SOMD configuration file strings."""
 
-        # Clear the existing configuration list.
-        self._config = []
-
         # Check whether the system contains periodic box information.
         # For now, well not attempt to generate a box if the system property
         # is missing. If no box is present, we'll assume a non-periodic simulation.
@@ -357,369 +378,31 @@ class Somd(_process.Process):
             _warnings.warn("No simulation box found. Assuming gas phase simulation.")
             has_box = False
 
-        # Work out the GPU device ID. (Default to 0.)
-        gpu_id = 0
-        if self._platform == "CUDA":
-            if "CUDA_VISIBLE_DEVICES" in _os.environ:
+        config_options = {}
+        if isinstance(self._protocol, _Protocol.FreeEnergy):
+            # Set the debugging seed.
+            if self._is_seeded:
+                config_options["debug seed"] = seed
+
+        if self._platform == "CUDA" or self._platform == "OPENCL":
+            # Work out the GPU device ID. (Default to 0.)
+            gpu_id = 0
+            if self._platform == "CUDA" and "CUDA_VISIBLE_DEVICES" in _os.environ:
                 try:
                     # Get the ID of the first available device.
-                    # gpu_id = int(_os.environ.get("CUDA_VISIBLE_DEVICES").split(",")[0])
-                    gpu_id = 0
+                    gpu_id = int(_os.environ.get("CUDA_VISIBLE_DEVICES").split(",")[0])
                 except:
-                    raise EnvironmentError(
-                        "'CUDA' platform is selected but cannot parse "
-                        "'CUDA_VISIBLE_DEVICES' environment variable!"
-                    )
-            else:
-                raise EnvironmentError(
-                    "'CUDA' platform selected but 'CUDA_VISIBLE_DEVICES' "
-                    "environment variable is unset."
-                )
+                    pass
+            config_options["gpu"] = gpu_id  # GPU device ID.
 
-        # While the configuration parameters below share a lot of overlap,
-        # we choose the keep them separate so that the user can modify options
-        # for a given protocol in a single place.
-
-        # Add configuration variables for a minimisation simulation.
-        if isinstance(self._protocol, _Protocol.Minimisation):
-            if self._platform == "CUDA" or self._platform == "OPENCL":
-                self.addToConfig("gpu = %d" % gpu_id)  # GPU device ID.
-            self.addToConfig("minimise = True")  # Minimisation simulation.
-            self.addToConfig(
-                "minimise maximum iterations = %d"  # Maximum number of steps.
-                % self._protocol.getSteps()
+        # Create and set the configuration.
+        somd_config = _SomdConfig(_System(self._renumbered_system), self._protocol)
+        self.setConfig(
+            somd_config.createConfig(
+                extra_options={**config_options, **self._extra_options},
+                extra_lines=self._extra_lines,
             )
-            self.addToConfig("minimise tolerance = 1")  # Convergence tolerance.
-            self.addToConfig("ncycles = 1")  # Perform a single SOMD cycle.
-            self.addToConfig("nmoves = 1")  # Perform a single MD move.
-            self.addToConfig("save coordinates = True")  # Save molecular coordinates.
-            if not has_box or not self._has_water:
-                self.addToConfig("cutoff type = cutoffnonperiodic")  # No periodic box.
-            else:
-                self.addToConfig("cutoff type = cutoffperiodic")  # Periodic box.
-            self.addToConfig("cutoff distance = 10 angstrom")  # Non-bonded cut-off.
-            if not has_box:
-                self.addToConfig(
-                    "barostat = False"
-                )  # Disable barostat if no simulation box.
-
-        # In the following protocols we save coordinates every cycle, which is
-        # 10000 MD steps (moves) in length (this is for consistency with other
-        # MD drivers).
-
-        # Add configuration variables for an equilibration simulation.
-        elif isinstance(self._protocol, _Protocol.Equilibration):
-            # Only constant temperature equilibration simulations are supported.
-            if not self._protocol.isConstantTemp():
-                raise _IncompatibleError(
-                    "SOMD only supports constant temperature equilibration."
-                )
-
-            # Restraints aren't supported.
-            if self._protocol.getRestraint() is not None:
-                raise _IncompatibleError(
-                    "We currently don't support restraints with SOMD."
-                )
-
-            # Get the report and restart intervals.
-            report_interval = self._protocol.getReportInterval()
-            restart_interval = self._protocol.getRestartInterval()
-
-            # Work out the number of cycles.
-            ncycles = (
-                self._protocol.getRunTime() / self._protocol.getTimeStep()
-            ) / report_interval
-
-            # If the number of cycles isn't integer valued, adjust the report
-            # interval so that we match specified the run time.
-            if ncycles - _math.floor(ncycles) != 0:
-                ncycles = _math.floor(ncycles)
-                report_interval = _math.ceil(
-                    (self._protocol.getRunTime() / self._protocol.getTimeStep())
-                    / ncycles
-                )
-
-            # Work out the number of cycles per frame.
-            cycles_per_frame = restart_interval / report_interval
-
-            # Work out whether we need to adjust the buffer frequency.
-            buffer_freq = 0
-            if cycles_per_frame < 1:
-                buffer_freq = cycles_per_frame * restart_interval
-                cycles_per_frame = 1
-                self._buffer_freq = buffer_freq
-            else:
-                cycles_per_frame = _math.floor(cycles_per_frame)
-
-            # Convert the timestep to femtoseconds.
-            timestep = self._protocol.getTimeStep().femtoseconds().value()
-
-            # Convert the temperature to Kelvin.
-            temperature = self._protocol.getStartTemperature().kelvin().value()
-
-            if self._platform == "CUDA" or self._platform == "OPENCL":
-                self.addToConfig("gpu = %d" % gpu_id)  # GPU device ID.
-            self.addToConfig("ncycles = %d" % ncycles)  # The number of SOMD cycles.
-            self.addToConfig(
-                "nmoves = %d" % report_interval
-            )  # The number of moves per cycle.
-            self.addToConfig("save coordinates = True")  # Save molecular coordinates.
-            self.addToConfig(
-                "ncycles_per_snap = %d" % cycles_per_frame
-            )  # Cycles per trajectory write.
-            self.addToConfig(
-                "buffered coordinates frequency = %d" % buffer_freq
-            )  # Buffering frequency.
-            self.addToConfig(
-                "timestep = %.2f femtosecond" % timestep
-            )  # Integration time step.
-            self.addToConfig("thermostat = True")  # Turn on the thermostat.
-            self.addToConfig(
-                "temperature = %.2f kelvin" % temperature
-            )  # System temperature.
-            if self._protocol.getPressure() is None:
-                self.addToConfig(
-                    "barostat = False"
-                )  # Disable barostat (constant volume).
-            else:
-                if self._has_water and has_box:
-                    self.addToConfig("barostat = True")  # Enable barostat.
-                    self.addToConfig(
-                        "pressure = %.5f atm"  # Pressure in atmosphere.
-                        % self._protocol.getPressure().atm().value()
-                    )
-                else:
-                    self.addToConfig(
-                        "barostat = False"
-                    )  # Disable barostat (constant volume).
-            if self._has_water:
-                self.addToConfig("reaction field dielectric = 78.3")  # Solvated box.
-            if not has_box or not self._has_water:
-                self.addToConfig("cutoff type = cutoffnonperiodic")  # No periodic box.
-            else:
-                self.addToConfig("cutoff type = cutoffperiodic")  # Periodic box.
-            self.addToConfig("cutoff distance = 10 angstrom")  # Non-bonded cut-off.
-            if self._is_seeded:
-                self.addToConfig(
-                    "debug seed = %d" % self._seed
-                )  # Random number seed for debugging.
-
-        # Add configuration variables for a production simulation.
-        elif isinstance(self._protocol, _Protocol.Production):
-
-            # Get the report and restart intervals.
-            report_interval = self._protocol.getReportInterval()
-            restart_interval = self._protocol.getRestartInterval()
-
-            # Work out the number of cycles.
-            ncycles = (
-                self._protocol.getRunTime() / self._protocol.getTimeStep()
-            ) / report_interval
-
-            # If the number of cycles isn't integer valued, adjust the report
-            # interval so that we match specified the run time.
-            if ncycles - _math.floor(ncycles) != 0:
-                ncycles = _math.floor(ncycles)
-                report_interval = _math.ceil(
-                    (self._protocol.getRunTime() / self._protocol.getTimeStep())
-                    / ncycles
-                )
-
-            # Work out the number of cycles per frame.
-            cycles_per_frame = restart_interval / report_interval
-
-            # Work out whether we need to adjust the buffer frequency.
-            buffer_freq = 0
-            if cycles_per_frame < 1:
-                buffer_freq = cycles_per_frame * restart_interval
-                cycles_per_frame = 1
-                self._buffer_freq = buffer_freq
-            else:
-                cycles_per_frame = _math.floor(cycles_per_frame)
-
-            # Convert the timestep to femtoseconds.
-            timestep = self._protocol.getTimeStep().femtoseconds().value()
-
-            # Convert the temperature to Kelvin.
-            temperature = self._protocol.getTemperature().kelvin().value()
-
-            if self._platform == "CUDA" or self._platform == "OPENCL":
-                self.addToConfig("gpu = %d" % gpu_id)  # GPU device ID.
-            self.addToConfig("ncycles = %d" % ncycles)  # The number of SOMD cycles.
-            self.addToConfig(
-                "nmoves = %d" % report_interval
-            )  # The number of moves per cycle.
-            self.addToConfig("save coordinates = True")  # Save molecular coordinates.
-            self.addToConfig(
-                "ncycles_per_snap = %d" % cycles_per_frame
-            )  # Cycles per trajectory write.
-            self.addToConfig(
-                "buffered coordinates frequency = %d" % buffer_freq
-            )  # Buffering frequency.
-            self.addToConfig(
-                "timestep = %.2f femtosecond" % timestep
-            )  # Integration time step.
-            self.addToConfig("thermostat = True")  # Turn on the thermostat.
-            self.addToConfig(
-                "temperature = %.2f kelvin" % temperature
-            )  # System temperature.
-            if self._protocol.getPressure() is None:
-                self.addToConfig(
-                    "barostat = False"
-                )  # Disable barostat (constant volume).
-            else:
-                if self._has_water and has_box:
-                    self.addToConfig("barostat = True")  # Enable barostat.
-                    self.addToConfig(
-                        "pressure = %.5f atm"  # Presure in atmosphere.
-                        % self._protocol.getPressure().atm().value()
-                    )
-                else:
-                    self.addToConfig(
-                        "barostat = False"
-                    )  # Disable barostat (constant volume).
-            if self._has_water:
-                self.addToConfig("reaction field dielectric = 78.3")  # Solvated box.
-            if not has_box or not self._has_water:
-                self.addToConfig("cutoff type = cutoffnonperiodic")  # No periodic box.
-            else:
-                self.addToConfig("cutoff type = cutoffperiodic")  # Periodic box.
-            self.addToConfig("cutoff distance = 10 angstrom")  # Non-bonded cut-off.
-            if self._is_seeded:
-                self.addToConfig(
-                    "debug seed = %d" % self._seed
-                )  # Random number seed for debugging.
-
-        # Add configuration variables for a free energy simulation.
-        elif isinstance(self._protocol, _Protocol.FreeEnergy):
-
-            # Get the report and restart intervals.
-            report_interval = self._protocol.getReportInterval()
-            restart_interval = self._protocol.getRestartInterval()
-
-            # Work out the number of cycles.
-            ncycles = (
-                self._protocol.getRunTime() / self._protocol.getTimeStep()
-            ) / report_interval
-
-            # If the number of cycles isn't integer valued, adjust the report
-            # interval so that we match specified the run time.
-            if ncycles - _math.floor(ncycles) != 0:
-                ncycles = _math.floor(ncycles)
-                if ncycles == 0:
-                    ncycles = 1
-                report_interval = _math.ceil(
-                    (self._protocol.getRunTime() / self._protocol.getTimeStep())
-                    / ncycles
-                )
-
-            # The report interval must be a multiple of the energy frequency,
-            # which is 250 steps.
-            if report_interval % 250 != 0:
-                report_interval = 250 * _math.ceil(report_interval / 250)
-
-            # Work out the number of cycles per frame.
-            cycles_per_frame = restart_interval / report_interval
-
-            # Work out whether we need to adjust the buffer frequency.
-            buffer_freq = 0
-            if cycles_per_frame < 1:
-                buffer_freq = cycles_per_frame * restart_interval
-                cycles_per_frame = 1
-                self._buffer_freq = buffer_freq
-            else:
-                cycles_per_frame = _math.floor(cycles_per_frame)
-
-            # The buffer frequency must be an integer multiple of the frequency
-            # at which free energies are written, which is 250 steps. Round down
-            # to the closest multiple.
-            if buffer_freq > 0:
-                buffer_freq = 250 * _math.floor(buffer_freq / 250)
-
-            # Convert the timestep to femtoseconds.
-            timestep = self._protocol.getTimeStep().femtoseconds().value()
-
-            # Convert the temperature to Kelvin.
-            temperature = self._protocol.getTemperature().kelvin().value()
-
-            if self._platform == "CUDA" or self._platform == "OPENCL":
-                self.addToConfig("gpu = %d" % gpu_id)  # GPU device ID.
-            self.addToConfig("ncycles = %d" % ncycles)  # The number of SOMD cycles.
-            self.addToConfig(
-                "nmoves = %d" % report_interval
-            )  # The number of moves per cycle.
-            self.addToConfig(
-                "energy frequency = 250"
-            )  # Frequency of free energy gradient evaluation.
-            self.addToConfig("save coordinates = True")  # Save molecular coordinates.
-            self.addToConfig(
-                "ncycles_per_snap = %d" % cycles_per_frame
-            )  # Cycles per trajectory write.
-            self.addToConfig(
-                "buffered coordinates frequency = %d" % buffer_freq
-            )  # Buffering frequency.
-            self.addToConfig(
-                "timestep = %.2f femtosecond" % timestep
-            )  # Integration time step.
-            self.addToConfig("thermostat = True")  # Turn on the thermostat.
-            self.addToConfig(
-                "temperature = %.2f kelvin" % temperature
-            )  # System temperature.
-            if self._protocol.getPressure() is None:
-                self.addToConfig(
-                    "barostat = False"
-                )  # Disable barostat (constant volume).
-            else:
-                if self._has_water and has_box:
-                    self.addToConfig("barostat = True")  # Enable barostat.
-                    self.addToConfig(
-                        "pressure = %.5f atm"  # Presure in atmosphere.
-                        % self._protocol.getPressure().atm().value()
-                    )
-                else:
-                    self.addToConfig(
-                        "barostat = False"
-                    )  # Disable barostat (constant volume).
-            if self._has_water:
-                self.addToConfig("reaction field dielectric = 78.3")  # Solvated box.
-            if not has_box or not self._has_water:
-                self.addToConfig("cutoff type = cutoffnonperiodic")  # No periodic box.
-            else:
-                self.addToConfig("cutoff type = cutoffperiodic")  # Periodic box.
-            self.addToConfig("cutoff distance = 10 angstrom")  # Non-bonded cut-off.
-            if self._is_seeded:
-                self.addToConfig(
-                    "debug seed = %d" % self._seed
-                )  # Random number seed for debugging.
-            self.addToConfig(
-                "constraint = hbonds-notperturbed"
-            )  # Handle hydrogen perturbations.
-            self.addToConfig("minimise = True")  # Perform a minimisation.
-            self.addToConfig("equilibrate = False")  # Don't equilibrate.
-            # The lambda value array.
-            self.addToConfig(
-                "lambda array = %s"
-                % ", ".join([str(x) for x in self._protocol.getLambdaValues()])
-            )
-            self.addToConfig(
-                "lambda_val = %s" % self._protocol.getLambda()
-            )  # The value of lambda.
-
-            res_num = (
-                _System(self._renumbered_system)
-                .search("perturbable")
-                .residues()[0]
-                ._sire_object.number()
-                .value()
-            )
-            self.addToConfig(
-                "perturbed residue number = %s" % res_num
-            )  # Perturbed residue number.
-
-        else:
-            raise _IncompatibleError(
-                "Unsupported protocol: '%s'" % self._protocol.__class__.__name__
-            )
+        )
 
         # Flag that this isn't a custom protocol.
         self._protocol._setCustomised(False)
@@ -763,13 +446,11 @@ class Somd(_process.Process):
 
         # Run the process in the working directory.
         with _Utils.cd(self._work_dir):
-
             # Create the arguments string list.
             args = self.getArgStringList()
 
             # Write the command-line process to a README.txt file.
             with open("README.txt", "w") as f:
-
                 # Set the command-line string.
                 self._command = "%s " % self._exe + self.getArgString()
 
@@ -1134,14 +815,13 @@ class Somd(_process.Process):
         if _os.path.isfile(file):
             _os.remove(file)
 
-        files = _IO.glob("%s/traj*.dcd" % self._work_dir)
+        files = _glob.glob("%s/traj*.dcd" % self._work_dir)
         for file in files:
             if _os.path.isfile(file):
                 _os.remove(file)
 
         # Additional files for free energy simulations.
         if isinstance(self._protocol, _Protocol.FreeEnergy):
-
             file = "%s/gradients.dat" % self._work_dir
             if _os.path.isfile(file):
                 _os.remove(file)
@@ -1286,7 +966,6 @@ def _to_pert_file(
 
     # If there are duplicate names, then we need to rename the atoms.
     if sum(atom_names.values()) > len(names):
-
         # Make the molecule editable.
         edit_mol = mol.edit()
 
@@ -1512,10 +1191,8 @@ def _to_pert_file(
                     if atom.property("element0") == _SireMol.Element(
                         "X"
                     ) or atom.property("element1") == _SireMol.Element("X"):
-
                         # If perturbing TO dummy:
                         if atom.property("element1") == _SireMol.Element("X"):
-
                             atom_type1 = atom_type0
 
                             # In this step, only remove charges from soft-core perturbations.
@@ -1552,7 +1229,6 @@ def _to_pert_file(
                     if atom.property("element0") == _SireMol.Element(
                         "X"
                     ) or atom.property("element1") == _SireMol.Element("X"):
-
                         # If perturbing TO dummy:
                         if atom.property("element1") == _SireMol.Element("X"):
                             # allow atom types to change.
@@ -1568,7 +1244,6 @@ def _to_pert_file(
 
                         # If perturbing FROM dummy:
                         else:
-
                             # All terms have already been perturbed in "5_grow_soft".
                             atom_type1 = atom_type0
                             LJ0_value = LJ1_value = (
@@ -1592,7 +1267,6 @@ def _to_pert_file(
                     if atom.property("element0") == _SireMol.Element(
                         "X"
                     ) or atom.property("element1") == _SireMol.Element("X"):
-
                         # If perturbing TO dummy:
                         if atom.property("element1") == _SireMol.Element("X"):
                             # atom types have already been changed.
@@ -1627,7 +1301,6 @@ def _to_pert_file(
                     if atom.property("element0") == _SireMol.Element(
                         "X"
                     ) or atom.property("element1") == _SireMol.Element("X"):
-
                         # If perturbing TO dummy:
                         if atom.property("element1") == _SireMol.Element("X"):
                             # atom types have already been changed.
@@ -1664,7 +1337,6 @@ def _to_pert_file(
                     if atom.property("element0") == _SireMol.Element(
                         "X"
                     ) or atom.property("element1") == _SireMol.Element("X"):
-
                         # If perturbing TO dummy:
                         if atom.property("element1") == _SireMol.Element("X"):
                             # atom types have already been changed.
@@ -1879,7 +1551,6 @@ def _to_pert_file(
 
             # Check that an atom in the bond is perturbed.
             if _has_pert_atom([idx0, idx1], pert_idxs):
-
                 # Cast the bonds as AmberBonds.
                 amber_bond0 = _SireMM.AmberBond(bond0.function(), _SireCAS.Symbol("r"))
                 amber_bond1 = _SireMM.AmberBond(bond1.function(), _SireCAS.Symbol("r"))
@@ -1907,7 +1578,6 @@ def _to_pert_file(
 
                 # Only write record if the bond parameters change.
                 if has_dummy or amber_bond0 != amber_bond1:
-
                     # Start bond record.
                     file.write("    bond\n")
 
@@ -2189,7 +1859,6 @@ def _to_pert_file(
 
             # Check that an atom in the angle is perturbed.
             if _has_pert_atom([idx0, idx1, idx2], pert_idxs):
-
                 # Cast the functions as AmberAngles.
                 amber_angle0 = _SireMM.AmberAngle(
                     angle0.function(), _SireCAS.Symbol("theta")
@@ -2219,7 +1888,6 @@ def _to_pert_file(
 
                 # Only write record if the angle parameters change.
                 if has_dummy or amber_angle0 != amber_angle1:
-
                     # Start angle record.
                     file.write("    angle\n")
 
@@ -2510,7 +2178,6 @@ def _to_pert_file(
             dihedrals_shared_idx.values(),
             key=lambda idx_pair: sort_dihedrals(dihedrals0, idx_pair[0]),
         ):
-
             # Get the dihedral potentials.
             dihedral0 = dihedrals0[idx0]
             dihedral1 = dihedrals1[idx1]
@@ -2523,7 +2190,6 @@ def _to_pert_file(
 
             # Check that an atom in the dihedral is perturbed.
             if _has_pert_atom([idx0, idx1, idx2, idx3], pert_idxs):
-
                 # Cast the functions as AmberDihedrals.
                 amber_dihedral0 = _SireMM.AmberDihedral(
                     dihedral0.function(), _SireCAS.Symbol("phi")
@@ -2571,7 +2237,6 @@ def _to_pert_file(
 
                 # Only write record if the dihedral parameters change.
                 if zero_k or force_write or amber_dihedral0 != amber_dihedral1:
-
                     # Initialise a null dihedral.
                     null_dihedral = _SireMM.AmberDihedral()
 
@@ -2580,7 +2245,6 @@ def _to_pert_file(
                         amber_dihedral0 == null_dihedral
                         and amber_dihedral1 == null_dihedral
                     ):
-
                         # Start dihedral record.
                         file.write("    dihedral\n")
 
@@ -2924,7 +2588,6 @@ def _to_pert_file(
 
             # Check that an atom in the improper is perturbed.
             if _has_pert_atom([idx0, idx1, idx2, idx3], pert_idxs):
-
                 # Cast the functions as AmberDihedrals.
                 amber_dihedral0 = _SireMM.AmberDihedral(
                     improper0.function(), _SireCAS.Symbol("phi")
@@ -2972,7 +2635,6 @@ def _to_pert_file(
 
                 # Only write record if the improper parameters change.
                 if zero_k or force_write or amber_dihedral0 != amber_dihedral1:
-
                     # Initialise a null dihedral.
                     null_dihedral = _SireMM.AmberDihedral()
 
@@ -2981,7 +2643,6 @@ def _to_pert_file(
                         amber_dihedral0 == null_dihedral
                         and amber_dihedral1 == null_dihedral
                     ):
-
                         # Start improper record.
                         file.write("    improper\n")
 

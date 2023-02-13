@@ -1,4 +1,5 @@
 import BioSimSpace as BSS
+from BioSimSpace._Utils import _try_import, _have_imported
 
 import os
 import pytest
@@ -16,10 +17,14 @@ else:
 # Check whether GROMACS is installed.
 has_gromacs = BSS._gmx_exe is not None
 
+# Make sure openff is installed.
+_openff = _try_import("openff")
+has_openff = _have_imported(_openff)
+
 
 @pytest.mark.skipif(
-    has_amber is False or has_gromacs is False,
-    reason="Requires that both AMBER and GROMACS are installed.",
+    has_amber is False or has_gromacs is False or has_openff is False,
+    reason="Requires that AMBER, GROMACS, and OpenFF are installed.",
 )
 def test_molecule_combine():
     """Single point energy comparison to make sure that GROMACS
@@ -44,16 +49,11 @@ def test_molecule_combine():
     protocol = BSS.Protocol.Minimisation(steps=1)
 
     # Create processes to single point calculations with GROMACS.
-    p0 = BSS.Process.Gromacs(m0.toSystem(), protocol)
-    p1 = BSS.Process.Gromacs(m1.toSystem(), protocol)
-    p01 = BSS.Process.Gromacs((m0 + m1).toSystem(), protocol)
-
-    # Modify the GROMACS configuration to run zero steps.
-    config = p0.getConfig()
-    config[1] = "nsteps = 0"
-    p0.setConfig(config)
-    p1.setConfig(config)
-    p01.setConfig(config)
+    p0 = BSS.Process.Gromacs(m0.toSystem(), protocol, extra_options={"nsteps": 0})
+    p1 = BSS.Process.Gromacs(m1.toSystem(), protocol, extra_options={"nsteps": 0})
+    p01 = BSS.Process.Gromacs(
+        (m0 + m1).toSystem(), protocol, extra_options={"nsteps": 0}
+    )
 
     # Run the processes and wait for them to finish.
     p0.start()

@@ -35,9 +35,6 @@ import sys as _sys
 import tempfile as _tempfile
 import warnings as _warnings
 
-import MDAnalysis as _mda
-from MDAnalysis.analysis.distances import dist as _dist
-from MDAnalysis.lib.distances import calc_dihedrals as _calc_dihedrals
 from numpy.linalg import norm as _norm
 import matplotlib.pyplot as _plt
 
@@ -67,8 +64,17 @@ from ..MD._md import _find_md_engines
 if _is_notebook:
     from IPython.display import FileLink as _FileLink
 
+
+_mda = _try_import("MDAnalysis")
+
+if _have_imported(_mda):
+    from MDAnalysis.analysis.distances import dist as _dist
+    from MDAnalysis.lib.distances import calc_dihedrals as _calc_dihedrals
+
+
 _MDRestraintsGenerator = _try_import(
-    "MDRestraintsGenerator", install_command="pip install MDRestraintsGenerator"
+    "MDRestraintsGenerator",
+    install_command="pip install MDRestraintsGenerator",
 )
 if _have_imported(_MDRestraintsGenerator):
     from MDRestraintsGenerator import search as _search
@@ -173,6 +179,11 @@ class RestraintSearch:
         """
 
         # Validate the input.
+        if not _have_imported(_mda):
+            raise _MissingSoftwareError(
+                "Cannot perform a RestraintSearch because MDAnalysis is "
+                "not installed!"
+            )
 
         if not isinstance(system, _System):
             raise TypeError(
@@ -713,7 +724,12 @@ class RestraintSearch:
 
     @staticmethod
     def _boresch_restraint_MDRestraintsGenerator(
-        u, system, temperature, ligand_selection_str, receptor_selection_str, work_dir
+        u,
+        system,
+        temperature,
+        ligand_selection_str,
+        receptor_selection_str,
+        work_dir,
     ):
         """
         Generate the Boresch Restraint using MDRestraintsGenerator.
@@ -1005,7 +1021,11 @@ class RestraintSearch:
             """Dihedral in radian."""
             positions = [u.atoms[idx].position for idx in [idx1, idx2, idx3, idx4]]
             dihedral = _calc_dihedrals(
-                positions[0], positions[1], positions[2], positions[3], box=u.dimensions
+                positions[0],
+                positions[1],
+                positions[2],
+                positions[3],
+                box=u.dimensions,
             )
             return dihedral
 
@@ -1074,9 +1094,16 @@ class RestraintSearch:
             for i, frame in enumerate(
                 u.trajectory
             ):  # TODO: Use MDA.analysis.base instead?
-                r, thetaA, thetaB, phiA, phiB, phiC, thetaR, thetaL = getBoreschDof(
-                    l1_idx, l2_idx, l3_idx, r1_idx, r2_idx, r3_idx, u
-                )
+                (
+                    r,
+                    thetaA,
+                    thetaB,
+                    phiA,
+                    phiB,
+                    phiC,
+                    thetaR,
+                    thetaL,
+                ) = getBoreschDof(l1_idx, l2_idx, l3_idx, r1_idx, r2_idx, r3_idx, u)
                 boresch_dof_dict[pair]["r"]["values"].append(r)
                 boresch_dof_dict[pair]["thetaA"]["values"].append(thetaA)
                 boresch_dof_dict[pair]["thetaB"]["values"].append(thetaB)

@@ -60,7 +60,6 @@ if len(build_reqs) > 0:
 else:
     build_reqs = ""
 
-
 with open(recipe, "w") as FILE:
     for line in lines:
         if line.find("BSS_BUILD_REQUIREMENTS") != -1:

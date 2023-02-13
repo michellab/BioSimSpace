@@ -30,6 +30,7 @@ from contextlib import contextmanager as _contextmanager
 
 import os as _os
 
+
 # Adapted from: http://ralsina.me/weblog/posts/BB963.html
 @_contextmanager
 def cd(work_dir):

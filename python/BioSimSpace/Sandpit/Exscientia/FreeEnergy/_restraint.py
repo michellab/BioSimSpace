@@ -207,6 +207,7 @@ class Restraint:
 
     def _gromacs_boresch(self):
         """Format the Gromacs string for boresch restraint."""
+
         # Format the atoms into index list
         def format_index(key_list):
             formated_index = []
@@ -342,8 +343,8 @@ class Restraint:
     def correction(self):
         """Give the free energy of removing the restraint."""
         if self._restraint_type == "boresch":
-            K = (
-                _k_boltz * (_kcal_per_mol / _kelvin) / (_kj_per_mol / _kelvin)
+            K = _k_boltz.value() * (
+                _kcal_per_mol / _kj_per_mol
             )  # Gas constant in kJ/mol/K
             V = (
                 (_meter3 / 1000 / _mole) / _nanometer3

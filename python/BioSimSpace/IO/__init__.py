@@ -37,6 +37,4 @@ Functions
     savePerturbableSystem
 """
 
-from glob import glob
-
 from ._io import *

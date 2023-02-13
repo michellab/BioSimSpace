@@ -1,11 +1,13 @@
 .. _ref_api:
 
-=============
-Documentation
-=============
+=================
+API Documentation
+=================
 
 The API (Application Programming Interface) is divided into a collection
-of packages.
+of packages. Note that the input files used in some of the examples are
+provided in the `demo <https://github.com/OpenBioSim/biosimspace/tree/devel/demo>`__
+directory of the GitHub repository.
 
 .. toctree::
    :maxdepth: 1
@@ -27,6 +29,7 @@ of packages.
    index_Trajectory
    index_Types
    index_Units
+   index_Config
    index_Exceptions
    index_SireWrappers
    index_Utils

@@ -38,7 +38,7 @@ from .. import Process as _Process
 from .. import Protocol as _Protocol
 
 # A dictionary mapping MD engines to their executable names and GPU support.
-#                engine        EXE               GPU
+# engine, exe, gpu
 _md_engines = {
     "AMBER": {
         "pmemd.cuda.MPI": True,
@@ -56,7 +56,7 @@ _md_engines = {
 # Use SOMD as a fall-back where possible. Since we can't guarantee interconversion
 # of potentials for CHARMM-PSF format input files, we restrict such simulations to
 # only run using NAMD.
-#                    EXTENSION        ENGINES
+#  extension, engines
 _file_extensions = {
     "PRM7,RST7": ["AMBER", "GROMACS", "OPENMM", "SOMD"],
     "PRM7,RST": ["AMBER", "GROMACS", "OPENMM", "SOMD"],

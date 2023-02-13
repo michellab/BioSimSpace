@@ -37,7 +37,6 @@ def test_supported_units(Type):
 
     # Loop over all units.
     for unit in units:
-
         # Attempt to instantiate an object.
         my_type = Type(1.0, unit)
 
@@ -62,7 +61,6 @@ def test_abbreviations(Type):
 
     # Loop over all abbreviations.
     for abbrev in abbreviations:
-
         # Attempt to instantiate an object.
         my_type = Type(1.0, abbrev)
 
@@ -87,7 +85,6 @@ def test_round_trip(Type):
 
     # Loop over all units.
     for index, unit in enumerate(units):
-
         # Create the initial object.
         my_type = Type(1.0, unit)
 

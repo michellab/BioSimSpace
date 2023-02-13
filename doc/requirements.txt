@@ -1,0 +1,5 @@
+furo
+pygit2
+sphinx
+sphinxcontrib-programoutput
+sphinx-issues

@@ -487,9 +487,10 @@ class Relative:
             raise ValueError("'work_dir' doesn't exist!")
 
         # Create the command.
-        command = "%s bar -f %s/lambda_*/*.xvg -o %s/bar.xvg" % (
+        xvg_files = _glob(f"{work_dir}/lambda_*/*.xvg")
+        command = "%s bar -f %s -o %s/bar.xvg" % (
             _gmx_exe,
-            work_dir,
+            " ".join(xvg_files),
             work_dir,
         )
 
@@ -510,7 +511,6 @@ class Relative:
 
         # First leg.
         with open("%s/bar.xvg" % work_dir) as file:
-
             # Read all of the lines into a list.
             lines = []
             for line in file:
@@ -639,12 +639,10 @@ class Relative:
 
         # First leg.
         with open("%s/mbar.txt" % work_dir) as file:
-
             # Process the MBAR data.
             for line in file:
                 # Process the overlap matrix.
                 if "#Overlap matrix" in line:
-
                     # Get the next row.
                     row = next(file)
 

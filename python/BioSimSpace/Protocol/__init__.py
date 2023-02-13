@@ -85,9 +85,11 @@ while restraining the positions of any backbone atoms.
 
    import BioSimSpace as BSS
 
-   protocol = BSS.Protocol.Equilibration(temperature_start=0*BSS.Units.Temperature.kelvin,
-                                         temperature_end=300*BSS.Units.Temperature.kelvin,
-                                         restraint="backbone")
+   protocol = BSS.Protocol.Equilibration(
+       temperature_start=0*BSS.Units.Temperature.kelvin,
+       temperature_end=300*BSS.Units.Temperature.kelvin,
+       restraint="backbone"
+   )
 """
 
 from ._custom import *

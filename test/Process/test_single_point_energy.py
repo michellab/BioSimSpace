@@ -16,11 +16,16 @@ else:
 # Check whether GROMACS is installed.
 has_gromacs = BSS._gmx_exe is not None
 
+# Store the tutorial URL.
+url = BSS.tutorialUrl()
 
-@pytest.fixture
-def system(scope="session"):
+
+@pytest.fixture(scope="session")
+def system():
     """Re-use the same molecuar system for each test."""
-    return BSS.IO.readMolecules("test/input/amber/ubiquitin/*")
+    return BSS.IO.readMolecules(
+        [f"{url}/ubiquitin.prm7.bz2", f"{url}/ubiquitin.rst7.bz2"]
+    )
 
 
 @pytest.mark.skipif(
@@ -37,12 +42,7 @@ def test_amber_gromacs(system):
     process_amb = BSS.Process.Amber(system, protocol)
 
     # Create a process to run with GROMACS.
-    process_gmx = BSS.Process.Gromacs(system, protocol)
-
-    # Modify the GROMACS configuration to run zero steps.
-    config = process_gmx.getConfig()
-    config[1] = "nsteps = 0"
-    process_gmx.setConfig(config)
+    process_gmx = BSS.Process.Gromacs(system, protocol, extra_options={"nsteps": 0})
 
     # Run the AMBER process and wait for it to finish.
     process_amb.start()
@@ -88,12 +88,7 @@ def test_amber_gromacs_triclinic(system):
     process_amb = BSS.Process.Amber(system, protocol)
 
     # Create a process to run with GROMACS.
-    process_gmx = BSS.Process.Gromacs(system, protocol)
-
-    # Modify the GROMACS configuration to run zero steps.
-    config = process_gmx.getConfig()
-    config[1] = "nsteps = 0"
-    process_gmx.setConfig(config)
+    process_gmx = BSS.Process.Gromacs(system, protocol, extra_options={"nsteps": 0})
 
     # Run the AMBER process and wait for it to finish.
     process_amb.start()

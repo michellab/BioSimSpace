@@ -885,7 +885,6 @@ def _solvate(
 
     # Run the solvation in the working directory.
     with _Utils.cd(work_dir):
-
         # First, generate a box file corresponding to the requested geometry.
         if molecule is not None:
             # Write the molecule/system to a GRO files.
@@ -1043,7 +1042,6 @@ def _solvate(
 
         # Now we add ions to the system and neutralise the charge.
         if ion_conc > 0 or is_neutral:
-
             try:
                 # Write the molecule + water system to file.
                 _IO.saveMolecules(

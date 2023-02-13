@@ -5,11 +5,25 @@ import pytest
 import os
 import warnings as _warnings
 
+# Store the tutorial URL.
+url = BSS.tutorialUrl()
 
-@pytest.fixture
-def system(scope="session"):
+
+@pytest.fixture(scope="session")
+def system():
     """Re-use the same molecuar system for each test."""
-    return BSS.IO.readMolecules("test/Sandpit/Exscientia/input/amber/ala/*")
+    return BSS.IO.readMolecules(["test/input/ala.top", "test/input/ala.crd"])
+
+
+@pytest.fixture(scope="session")
+def perturbable_system():
+    """Re-use the same perturbable system for each test."""
+    return BSS.IO.readPerturbableSystem(
+        f"{url}/perturbable_system0.prm7",
+        f"{url}/perturbable_system0.rst7",
+        f"{url}/perturbable_system1.prm7",
+        f"{url}/perturbable_system1.rst7",
+    )
 
 
 def test_minimise(system):
@@ -42,16 +56,8 @@ def test_production(system):
     assert run_process(system, protocol)
 
 
-def test_free_energy():
+def test_free_energy(perturbable_system):
     """Test a free energy perturbation protocol."""
-
-    # Load the perturbable system.
-    system = BSS.IO.readPerturbableSystem(
-        "test/Sandpit/Exscientia/input/morphs/perturbable_system0.prm7",
-        "test/Sandpit/Exscientia/input/morphs/perturbable_system0.rst7",
-        "test/Sandpit/Exscientia/input/morphs/perturbable_system1.prm7",
-        "test/Sandpit/Exscientia/input/morphs/perturbable_system1.rst7",
-    )
 
     # Create a short FEP protocol.
     protocol = BSS.Protocol.FreeEnergy(
@@ -59,7 +65,7 @@ def test_free_energy():
     )
 
     # Run the process and check that it finishes without error.
-    assert run_process(system[0].toSystem(), protocol)
+    assert run_process(perturbable_system[0].toSystem(), protocol)
 
 
 def test_pert_file():
@@ -67,46 +73,38 @@ def test_pert_file():
 
     # Load the perturbable molecule.
     mol = BSS.IO.readPerturbableSystem(
-        "test/Sandpit/Exscientia/input/morphs/morph0.prm7",
-        "test/Sandpit/Exscientia/input/morphs/morph0.rst7",
-        "test/Sandpit/Exscientia/input/morphs/morph1.prm7",
-        "test/Sandpit/Exscientia/input/morphs/morph1.rst7",
+        f"{url}/morph0.prm7",
+        f"{url}/morph0.rst7",
+        f"{url}/morph1.prm7",
+        f"{url}/morph1.rst7",
     )[0]
 
     # Create the perturbation file.
     BSS.Process._somd._to_pert_file(mol)
 
     # Check that the files are the same.
-    assert filecmp.cmp("MORPH.pert", "test/input/morphs/morph.pert")
+    assert filecmp.cmp("MORPH.pert", "test/input/morph.pert")
 
     # Remove the temporary perturbation file.
     os.remove("MORPH.pert")
 
 
-def test_pert_res_num():
+def test_pert_res_num(perturbable_system):
     """Test that the perturbable residue number is correct when
     the molecules in the system are re-ordered.
     """
-
-    # Load the perturbable system.
-    system = BSS.IO.readPerturbableSystem(
-        "test/Sandpit/Exscientia/input/morphs/perturbable_system0.prm7",
-        "test/Sandpit/Exscientia/input/morphs/perturbable_system0.rst7",
-        "test/Sandpit/Exscientia/input/morphs/perturbable_system1.prm7",
-        "test/Sandpit/Exscientia/input/morphs/perturbable_system1.rst7",
-    )
 
     # Create a default free energy protocol.
     protocol = BSS.Protocol.FreeEnergy()
 
     # Set up the intial process object.
-    process0 = BSS.Process.Somd(system, protocol)
+    process0 = BSS.Process.Somd(perturbable_system, protocol)
 
     # Now put the perturbable molecule last.
-    new_system = (system[1:] + system[0]).toSystem()
+    new_system = (perturbable_system[1:] + perturbable_system[0]).toSystem()
 
     # Re-add the box info.
-    new_system.setBox(*system.getBox())
+    new_system.setBox(*perturbable_system.getBox())
 
     # Set up the new process object.
     process1 = BSS.Process.Somd(new_system, protocol)

@@ -263,7 +263,7 @@ class Node:
 
     >>> import BioSimSpace as BSS
     >>> node = BSS.Gateway.Node("Perform energy minimisation")
-    >>> node.addAuthor(name="Lester Hedges", email="lester.hedges@bristol.ac.uk", affiliation="University of Bristol")
+    >>> node.addAuthor(name="Lester Hedges", email="lester@openbiosim.org", affiliation="OpenBioSim")
     >>> node.setLicence("GPLv3")
     >>> node.addInput("files", BSS.Gateway.FileSet(help="A set of molecular input files."))
     >>> node.addInput("steps", BSS.Gateway.Integer(help="The number of minimisation steps.", minimum=0, maximum=100000, default=10000))
@@ -901,7 +901,6 @@ class Node:
 
         # File / File set.
         elif isinstance(input, (_File, _FileSet)):
-
             # Create a fileupload widget.
             if isinstance(input, _FileSet):
                 widget = _widgets.FileUpload(multiple=True)
@@ -1188,7 +1187,6 @@ class Node:
 
         # Loop over all of the widgets.
         for name, widget in self._widgets.items():
-
             # Create the label string.
             string = "%s: %s" % (name, self._inputs[name].getHelp())
 
@@ -1256,7 +1254,6 @@ class Node:
         elif self._is_notebook:
             # Loop over the widgets and set the input values.
             for key, widget in self._widgets.items():
-
                 # Use the widget value if it has been set, otherwise, set the value to None.
                 # This ensures that the user actually sets a value.
 
@@ -1509,7 +1506,6 @@ def _on_file_upload(change):
 
     # Loop over all uploaded files.
     for filename in change["owner"].value:
-
         # Store the number of bytes.
         num_bytes = len(change["owner"].value[filename]["content"])
 
@@ -1533,7 +1529,6 @@ def _on_file_upload(change):
 
         # Has this file already been uploaded?
         if _os.path.isfile(new_filename):
-
             # We'll append a number to the file name.
             index = 1
             new_filename_append = new_filename + ".%d" % index

@@ -3,11 +3,14 @@ import BioSimSpace as BSS
 import math
 import pytest
 
+# Store the tutorial URL.
+url = BSS.tutorialUrl()
 
-@pytest.fixture
-def system(scope="session"):
+
+@pytest.fixture(scope="session")
+def system():
     """Re-use the same molecuar system for each test."""
-    return BSS.IO.readMolecules("test/input/amber/ala/*")
+    return BSS.IO.readMolecules(["test/input/ala.top", "test/input/ala.crd"])
 
 
 # Parameterise the function with a set of molecule indices.
@@ -164,13 +167,14 @@ def test_get_atom(system):
     assert system.getAtom(1883) == system[-10].getAtoms()[1]
 
     # Remove some molecules from the system.
-    system.removeMolecules([system[0], system[2], system[-2]])
+    system2 = system.copy()
+    system2.removeMolecules([system[0], system[2], system[-2]])
 
     # Check that the assertions still hold on the modified system,
     # making sure we map to the molecules in their new positions.
-    assert system.getAtom(0) == system[0].getAtoms()[0]
-    assert system.getAtom(22) == system[7].getAtoms()[1]
-    assert system.getAtom(1883) == system[-1].getAtoms()[-1]
+    assert system2.getAtom(0) == system2[0].getAtoms()[0]
+    assert system2.getAtom(22) == system2[7].getAtoms()[1]
+    assert system2.getAtom(1883) == system2[-1].getAtoms()[-1]
 
 
 def test_get_residue(system):

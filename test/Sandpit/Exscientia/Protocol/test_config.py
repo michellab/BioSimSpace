@@ -1,30 +1,104 @@
+import BioSimSpace.Sandpit.Exscientia as BSS
 import pandas as pd
 import pytest
-
-import BioSimSpace.Sandpit.Exscientia as BSS
-from BioSimSpace.Sandpit.Exscientia.Protocol import FreeEnergyMinimisation
 from BioSimSpace.Sandpit.Exscientia.Align._decouple import decouple
+from BioSimSpace.Sandpit.Exscientia.Protocol import (
+    ConfigFactory,
+    Equilibration,
+    Production,
+    FreeEnergyMinimisation,
+    FreeEnergyEquilibration,
+    FreeEnergy,
+)
+from BioSimSpace.Sandpit.Exscientia.Align._decouple import decouple
+from BioSimSpace.Sandpit.Exscientia._Utils import _try_import, _have_imported
 
-# Make sure GROMSCS is installed.
+# Make sure GROMACS is installed.
 has_gromacs = BSS._gmx_exe is not None
+
+# Make sure antechamber is installed.
+has_antechamber = BSS.Parameters._Protocol._amber._antechamber_exe is not None
+
+# Make sure openff is installed.
+_openff = _try_import("openff")
+has_openff = _have_imported(_openff)
+
+# Store the tutorial URL.
+url = BSS.tutorialUrl()
+
+
+class TestAmberRBFE:
+    @pytest.fixture(scope="class")
+    def system(self):
+        m0 = BSS.IO.readMolecules(
+            [f"{url}/CAT-13c.prm7.bz2", f"{url}/CAT-13c.rst7.bz2"]
+        ).getMolecule(0)
+        m1 = BSS.IO.readMolecules(
+            [f"{url}/CAT-13a.prm7.bz2", f"{url}/CAT-13a.rst7.bz2"]
+        ).getMolecule(0)
+        atom_mapping = BSS.Align.matchAtoms(m0, m1)
+        m0 = BSS.Align.rmsdAlign(m0, m1, atom_mapping)
+        merged = BSS.Align.merge(m0, m1)
+        return merged.toSystem()
+
+    def test_generate_fep_masks(self, system):
+        config = ConfigFactory(system, FreeEnergyMinimisation())
+        res = config._generate_amber_fep_masks(0.004)
+        expected_res = {
+            "noshakemask": '""',
+            "scmask1": '"@25-27,29-31"',
+            "scmask2": '""',
+            "timask1": '"@1-45"',
+            "timask2": '"@46-84"',
+        }
+        assert res == expected_res
+
+    def test_generate_restraint_masks(self, system):
+        protocol = FreeEnergyEquilibration(restraint=[0, 24], force_constant=4.3)
+        config = ConfigFactory(system, protocol)
+        res = [x.strip().strip(",") for x in config.generateAmberConfig()]
+        expected_res = {"ntr=1", 'restraintmask="@1,25,46"', "restraint_wt=4.3"}
+        assert expected_res.issubset(res)
+
+    @pytest.mark.parametrize(
+        "protocol", [Equilibration, Production, FreeEnergyEquilibration, FreeEnergy]
+    )
+    def test_tau_t(self, system, protocol):
+        config = ConfigFactory(system, protocol(tau_t=BSS.Types.Time(2, "picosecond")))
+        res = [x.strip().strip(",") for x in config.generateAmberConfig()]
+        expected_res = {"gamma_ln=0.50000"}
+        assert expected_res.issubset(res)
 
 
 class TestGromacsRBFE:
     @staticmethod
     @pytest.fixture(scope="class")
     def system():
-        m0 = BSS.IO.readMolecules("test/input/ligands/CAT-13a*").getMolecule(0)
-        m1 = BSS.IO.readMolecules("test/input/ligands/CAT-13c*").getMolecule(0)
+        m0 = BSS.IO.readMolecules(
+            [f"{url}/CAT-13a.prm7.bz2", f"{url}/CAT-13a.rst7.bz2"]
+        ).getMolecule(0)
+        m1 = BSS.IO.readMolecules(
+            [f"{url}/CAT-13c.prm7.bz2", f"{url}/CAT-13c.rst7.bz2"]
+        ).getMolecule(0)
         atom_mapping = BSS.Align.matchAtoms(m0, m1)
         m0 = BSS.Align.rmsdAlign(m0, m1, atom_mapping)
         merged = BSS.Align.merge(m0, m1)
         return merged.toSystem()
 
+    @pytest.mark.parametrize(
+        "protocol", [Equilibration, Production, FreeEnergyEquilibration, FreeEnergy]
+    )
+    def test_tau_t(self, system, protocol):
+        config = ConfigFactory(system, protocol(tau_t=BSS.Types.Time(2, "picosecond")))
+        res = config.generateGromacsConfig()
+        expected_res = {"tau-t = 2.00000"}
+        assert expected_res.issubset(res)
+
     @pytest.mark.skipif(
         has_gromacs is False, reason="Requires GROMACS to be installed."
     )
     def test_fep(self, system):
-        """Test if the default config writer will write the expected thing"""
+        """Test if the default config writer will write the expected thing."""
         protocol = FreeEnergyMinimisation(
             lam=0.0,
             lam_vals=None,
@@ -52,7 +126,8 @@ class TestGromacsRBFE:
     )
     def test_fep_df(self, system):
         """Test if the default config writer configured with the pd.DataFrame
-        will write the expected thing."""
+        will write the expected thing.
+        """
         protocol = FreeEnergyMinimisation(
             lam=pd.Series(data={"fep": 0.0}),
             lam_vals=None,
@@ -79,7 +154,7 @@ class TestGromacsRBFE:
         has_gromacs is False, reason="Requires GROMACS to be installed."
     )
     def test_staged_fep_df(self, system):
-        """Test if the multi-stage lambda will be written correctly"""
+        """Test if the multi-stage lambda will be written correctly."""
         protocol = FreeEnergyMinimisation(
             lam=pd.Series(data={"bonded": 0.0, "coul": 0.0, "vdw": 0.0}),
             lam_vals=pd.DataFrame(
@@ -114,6 +189,10 @@ class TestGromacsRBFE:
             assert "init-lambda-state = 6" in mdp_text
 
 
+@pytest.mark.skipif(
+    has_antechamber is False or has_openff is False,
+    reason="Requires ambertools/antechamber and openff to be installed",
+)
 class TestGromacsABFE:
     @staticmethod
     @pytest.fixture(scope="class")
@@ -137,7 +216,7 @@ class TestGromacsABFE:
     )
     def test_decouple_vdw_q(self, system):
         m, protocol = system
-        """Test the decoupling where lambda0 = vdw-q and lambda1=none"""
+        """Test the decoupling where lambda0 = vdw-q and lambda1=none."""
         mol = decouple(m)
         freenrg = BSS.FreeEnergy.Relative(
             mol.toSystem(),
@@ -155,7 +234,7 @@ class TestGromacsABFE:
         has_gromacs is False, reason="Requires GROMACS to be installed."
     )
     def test_annihilate_vdw2q(self, system):
-        """Test the annihilation where lambda0 = vdw-q and lambda1=none"""
+        """Test the annihilation where lambda0 = vdw-q and lambda1=none."""
         m, protocol = system
         mol = decouple(m, charge=(False, True), LJ=(True, False), intramol=False)
         freenrg = BSS.FreeEnergy.Relative(
@@ -177,7 +256,8 @@ class TestGromacsABFE:
         """Test if the soft core parameters have been written.
         The default sc-alpha is 0, which means the soft-core of the vdw is not
         turned on by default. This checks if the this value has been changed to
-        0.5."""
+        0.5.
+        """
         m, protocol = system
         mol = decouple(m)
         freenrg = BSS.FreeEnergy.Relative(

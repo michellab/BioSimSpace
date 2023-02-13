@@ -117,7 +117,12 @@ class OpenMM(_process.Process):
 
         # Call the base class constructor.
         super().__init__(
-            system, protocol, name, work_dir, seed, property_map=property_map
+            system,
+            protocol,
+            name=name,
+            work_dir=work_dir,
+            seed=seed,
+            property_map=property_map,
         )
 
         # Set the package name.
@@ -224,7 +229,7 @@ class OpenMM(_process.Process):
         # Create a copy of the system.
         system = self._system.copy()
 
-        # Convert the water model topology so that it matches the GROMACS naming convention.
+        # Convert the water model topology so that it matches the AMBER naming convention.
         system._set_water_topology("AMBER", self._property_map)
 
         # Check for perturbable molecules and convert to the chosen end state.
@@ -234,8 +239,8 @@ class OpenMM(_process.Process):
 
         # RST file (coordinates).
         try:
-            rst = _SireIO.AmberRst7(system._sire_object, self._property_map)
-            rst.writeToFile(self._rst_file)
+            file = _os.path.splitext(self._rst_file)[0]
+            _IO.saveMolecules(file, system, "rst7", property_map=self._property_map)
         except Exception as e:
             msg = "Failed to write system to 'RST7' format."
             if _isVerbose():
@@ -245,9 +250,8 @@ class OpenMM(_process.Process):
 
         # PRM file (topology).
         try:
-            prm = _SireIO.AmberPrm(system._sire_object, self._property_map)
-            prm.writeToFile(self._top_file)
-
+            file = _os.path.splitext(self._top_file)[0]
+            _IO.saveMolecules(file, system, "prm7", property_map=self._property_map)
         except Exception as e:
             msg = "Failed to write system to 'PRM7' format."
             if _isVerbose():
@@ -1212,7 +1216,6 @@ class OpenMM(_process.Process):
 
         # Run the process in the working directory.
         with _Utils.cd(self._work_dir):
-
             # Create the arguments string list.
             # The name of the Python script (config file) is the first argument.
             args = ["%s" % self._config_file]
@@ -1220,7 +1223,6 @@ class OpenMM(_process.Process):
 
             # Write the command-line process to a README.txt file.
             with open("README.txt", "w") as f:
-
                 # Set the command-line string.
                 self._command = (
                     "%s %s " % (self._exe, self._config_file) + self.getArgString()
@@ -1267,7 +1269,6 @@ class OpenMM(_process.Process):
         try:
             # Handle minimisation protocols separately.
             if isinstance(self._protocol, _Protocol.Minimisation):
-
                 # Do we need to get coordinates for the lambda=1 state.
                 if "is_lambda1" in self._property_map:
                     is_lambda1 = True
@@ -2111,7 +2112,6 @@ class OpenMM(_process.Process):
 
         # Append any new records to the stdout dictionary.
         for line in lines:
-
             # Strip leading/trailing whitespace.
             line = line.strip()
 
