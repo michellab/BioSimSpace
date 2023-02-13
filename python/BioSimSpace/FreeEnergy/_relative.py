@@ -836,13 +836,13 @@ class Relative():
         # consider passed kwarg arguments
 
         for key,value in kwargs.items():
-            if key == "auto_equilibration":
+            if key == "auto_equilibration" or key == "auto equilibration":
                 auto_eq = value
-            if key == "statistical_inefficiency":
+            if key == "statistical_inefficiency" or key == "statistical inefficiency":
                 stat_ineff = value
-            if key == "truncate_percentage":
+            if key == "truncate_percentage" or key == "truncate percentage":
                 truncate = value
-            if key == "truncate_keep":
+            if key == "truncate_keep" or key == "truncate keep":
                 truncate_keep = value
 
 
@@ -1010,7 +1010,7 @@ class Relative():
 
         # check kwargs incase there is an mbar_method and then use this
         for key,value in kwargs.items():
-            if key == "mbar_method":
+            if key == "mbar_method" or key == "mbar method":
                 mbar_method = value
 
         if mbar_method:
