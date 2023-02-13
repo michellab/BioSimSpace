@@ -231,7 +231,7 @@ class Relative:
             # Check that the engine is supported.
             if engine not in self._engines:
                 raise ValueError(
-                    "Unsupported molecular dynamics engine '%s'. "
+                    f"Unsupported molecular dynamics engine {engine}. "
                     "Supported engines are: %r." % ", ".join(self._engines)
                 )
 
