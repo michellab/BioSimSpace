@@ -109,6 +109,7 @@ finally:
         # Create a list of the conda dependencies.
         conda_deps = [
             "configargparse",
+            "kcombu_bss",
             "pygtail",
             "pyyaml",
             "watchdog",
