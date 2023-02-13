@@ -82,8 +82,8 @@ try:
         cmdclass=versioneer.get_cmdclass(),
         description="BioSimSpace: Making biomolecular simulation a breeze.",
         author=authors,
-        url="https://github.com/michellab/BioSimSpace",
-        license="GPLv2",
+        url="https://github.com/openbiosim/biosimspace",
+        license="GPLv3",
         packages=find_packages(),
         include_package_data=True,
         zip_safe=False,
@@ -109,7 +109,6 @@ finally:
         # Create a list of the conda dependencies.
         conda_deps = [
             "configargparse",
-            "kcombu_bss",
             "pygtail",
             "pyyaml",
             "watchdog",
