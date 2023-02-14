@@ -1,5 +1,5 @@
-`BioSimSpace <http:/biosimspace.openbiosim.org>`__
-==================================================
+`BioSimSpace <https://biosimspace.openbiosim.org>`__
+====================================================
 
 .. image:: https://github.com/openbiosim/biosimspace/workflows/Build/badge.svg
    :target: https://github.com/openbiosim/biosimspace/actions?query=workflow%3ABuild)
@@ -20,7 +20,7 @@
 About
 -----
 
-`BioSimSpace <https:/biosimspace.openbiosim.org>`__ is an interoperable Python framework
+`BioSimSpace <https://biosimspace.openbiosim.org>`__ is an interoperable Python framework
 for biomolecular simulation. With it you can:
 
 * Write robust and portable biomolecular workflow components that work on
@@ -52,7 +52,7 @@ If you use BioSimSpace in any scientific software, please cite the following pap
 Documentation
 -------------
 
-Full documentation can be found `here <https:/biosimspace.openbiosim.org>`__.
+Full documentation can be found `here <https://biosimspace.openbiosim.org>`__.
 
 Installation
 ------------
