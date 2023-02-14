@@ -108,12 +108,17 @@ finally:
 
         # Create a list of the conda dependencies.
         conda_deps = [
+            "alchemlyb<2",  # known not available on aarch64
             "configargparse",
             "ipywidgets<8",
             "kcombu_bss",
-            "networkx",
             "lomap2",
+            "mdtraj",  # known not available on aarch64
+            "mdanalysis",  # known not available on aarch64
+            "networkx",
             "nglview",
+            "openff-interchange-base",
+            "openff-toolkit-base",
             "parmed",
             "py3dmol",
             "pydot",
@@ -123,9 +128,6 @@ finally:
             "rdkit",
             "sire",
             "watchdog",
-            "mdtraj",  # known not available on aarch64
-            "mdanalysis",  # known not available on aarch64
-            "openff-toolkit",  # known not available on aarch64
         ]
 
         # Don't try to install things that are already installed...
@@ -169,7 +171,10 @@ finally:
         posix = sys.platform != "win32"
 
         print("Adding openbiosim channel")
-        command = "%s config --system --prepend channels openbiosim/label/dev" % real_conda_exe
+        command = (
+            "%s config --system --prepend channels openbiosim/label/dev"
+            % real_conda_exe
+        )
         print(command)
 
         print("Adding conda-forge channel")
