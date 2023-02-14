@@ -3,8 +3,8 @@
 sire ~=2023.1.0
 
 configargparse
-kcombu_bss
 ipywidgets<8
+kcombu_bss
 lomap2
 networkx
 nglview
