@@ -1810,7 +1810,6 @@ def _score_rdkit_mappings(
 
             # Initialise the mapping for this match.
             mapping = {}
-            sire_mapping = {}
 
             # Loop over all atoms in the match.
             for i, idx0 in enumerate(match0):
@@ -1819,10 +1818,14 @@ def _score_rdkit_mappings(
                 # Add to the mapping.
                 if is_swapped:
                     mapping[idx1] = idx0
-                    sire_mapping[_SireMol.AtomIdx(idx1)] = _SireMol.AtomIdx(idx0)
                 else:
                     mapping[idx0] = idx1
-                    sire_mapping[_SireMol.AtomIdx(idx0)] = _SireMol.AtomIdx(idx1)
+
+            mapping = dict(sorted(mapping.items()))
+            sire_mapping = {
+                _SireMol.AtomIdx(idx0): _SireMol.AtomIdx(idx1)
+                for idx0, idx1 in mapping.items()
+            }
 
             # This is a new mapping:
             if not mapping in mappings:
@@ -2039,7 +2042,9 @@ def _score_sire_mappings(
                 )._sire_object
 
             # Append the mapping to the list.
-            mappings.append(_from_sire_mapping(mapping))
+            mapping = _from_sire_mapping(mapping)
+            mapping = dict(sorted(mapping.items()))
+            mappings.append(mapping)
 
             # We now compute the RMSD between the coordinates of the matched atoms
             # in molecule0 and molecule1.
