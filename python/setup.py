@@ -109,18 +109,20 @@ finally:
         # Create a list of the conda dependencies.
         conda_deps = [
             "configargparse",
-            "pygtail",
-            "pyyaml",
-            "watchdog",
-            "pydot",
-            "networkx",
-            "nglview",
             "ipywidgets<8",
-            "py3dmol",
-            "pypdb",
-            "rdkit",
-            "parmed",
+            "kcombu_bss",
+            "networkx",
             "lomap2",
+            "nglview",
+            "parmed",
+            "py3dmol",
+            "pydot",
+            "pygtail",
+            "pypdb",
+            "pyyaml",
+            "rdkit",
+            "sire",
+            "watchdog",
             "mdtraj",  # known not available on aarch64
             "mdanalysis",  # known not available on aarch64
             "openff-toolkit",  # known not available on aarch64
@@ -165,6 +167,10 @@ finally:
 
         # Need to not use posix rules on windows with shlex.split, or path separator is escaped
         posix = sys.platform != "win32"
+
+        print("Adding openbiosim channel")
+        command = "%s config --system --prepend channels openbiosim/label/dev" % real_conda_exe
+        print(command)
 
         print("Adding conda-forge channel")
         command = "%s config --system --prepend channels conda-forge" % real_conda_exe
@@ -278,13 +284,6 @@ finally:
             stderr=stderr,
         )
 
-        # We can't install BioSimSpace here because it confuses the Sire old/new/mixed API
-        # try:
-        #    import BioSimSpace
-        # except:
-        #    print("\nPossible installation issues.")
-        #    sys.exit()
-
         print("\nDone!")
 
         print(
@@ -295,4 +294,3 @@ finally:
         print("AMBER:   http://ambermd.org")
         print("GROMACS: http://www.gromacs.org")
         print("NAMD:    http://www.ks.uiuc.edu/Research/namd")
-        print("FKCOMBU: https://pdbj.org/kcombu")
