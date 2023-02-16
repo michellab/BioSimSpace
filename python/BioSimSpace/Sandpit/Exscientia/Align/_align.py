@@ -1592,8 +1592,12 @@ def viewMapping(
     import py3Dmol as _py3Dmol
 
     # Convert the molecules to RDKit format.
-    rdmol0 = (_to_rdkit(molecule0, str(work_dir), property_map=property_map0),)
-    rdmol1 = (_to_rdkit(molecule1, str(work_dir), property_map=property_map1),)
+    rdmol0 = _to_rdkit(
+        molecule0, str(work_dir), direct=False, property_map=property_map0
+    )
+    rdmol1 = _to_rdkit(
+        molecule1, str(work_dir), direct=False, property_map=property_map1
+    )
 
     # Set grid view properties.
     viewer0 = (0, 0)
