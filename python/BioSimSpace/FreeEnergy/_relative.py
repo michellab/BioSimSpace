@@ -449,7 +449,7 @@ class Relative:
 
         # Return the result of calling the staticmethod, passing in the working
         # directory of this object.
-        return Relative.analyse(self._work_dir)
+        return Relative.analyse(str(self._work_dir))
 
     @staticmethod
     def _analyse_gromacs(work_dir=None):

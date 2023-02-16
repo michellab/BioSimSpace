@@ -87,7 +87,9 @@ class TestMDRestraintsGenerator_analysis:
             work_dir=str(outdir),
         )
         traj, top = BSS.IO.expand(url, ["traj.xtc", "complex.tpr"], ".bz2")
-        restraint_search._process.getTrajectory = lambda: Trajectory(traj, top)
+        restraint_search._process.getTrajectory = lambda: Trajectory(
+            trajectory=traj, topology=top
+        )
         restraint = restraint_search.analyse(
             method="MDRestraintsGenerator",
             restraint_type="Boresch",

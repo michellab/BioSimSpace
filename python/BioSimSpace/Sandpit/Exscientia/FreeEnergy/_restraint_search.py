@@ -381,7 +381,7 @@ class RestraintSearch:
         # Return the result of calling the staticmethod, passing in the working
         # directory of this object.
         return RestraintSearch.analyse(
-            self._work_dir,
+            str(self._work_dir),
             self._system,
             self._process.getTrajectory(),
             self._protocol.getTemperature(),
