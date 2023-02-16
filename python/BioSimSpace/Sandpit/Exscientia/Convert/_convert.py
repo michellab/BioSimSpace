@@ -24,7 +24,7 @@
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
 
-__all__ = ["supportedFormats", "to"]
+__all__ = ["supportedFormats", "to", "toBioSimSpace", "toRDKit", "toSire"]
 
 from rdkit.Chem.rdchem import Mol as _RDMol
 
@@ -269,3 +269,102 @@ def to(obj, format="biosimspace", property_map={}):
 
     else:
         raise TypeError(f"Cannot convert object of type '{type(obj)}'")
+
+
+def toBioSimSpace(obj, property_map={}):
+    """
+    Convert an object to BioSimSpace format.
+
+    Parameters
+    ----------
+
+    obj :
+        The input object to convert.
+
+    property_map : dict
+        A dictionary that maps system "properties" to their user defined
+        values. This allows the user to refer to properties with their
+        own naming scheme, e.g. { "charge" : "my-charge" }
+
+    Returns
+    -------
+
+    converted_obj :
+       The object in BioSimSpace format.
+    """
+    return to(obj, format="biosimspace", property_map=property_map)
+
+
+def toRDKit(obj, property_map={}):
+    """
+    Convert an object to RDKit format.
+
+    Parameters
+    ----------
+
+    obj :
+        The input object to convert.
+
+    property_map : dict
+        A dictionary that maps system "properties" to their user defined
+        values. This allows the user to refer to properties with their
+        own naming scheme, e.g. { "charge" : "my-charge" }
+
+    Returns
+    -------
+
+    converted_obj :
+       The object in RDKit format.
+    """
+    return to(obj, format="rdkit", property_map=property_map)
+
+
+def toRDKit(obj, property_map={}):
+    """
+    Convert an object to RDKit format.
+
+    Parameters
+    ----------
+
+    obj :
+        The input object to convert.
+
+    property_map : dict
+        A dictionary that maps system "properties" to their user defined
+        values. This allows the user to refer to properties with their
+        own naming scheme, e.g. { "charge" : "my-charge" }
+
+    Returns
+    -------
+
+    converted_obj :
+       The object in RDKit format.
+    """
+    return to(obj, format="rdkit", property_map=property_map)
+
+
+def toSire(obj, property_map={}):
+    """
+    Convert an object to Sire format.
+
+    Parameters
+    ----------
+
+    obj :
+        The input object to convert.
+
+    format : str
+        The format to convert to.
+
+    property_map : dict
+        A dictionary that maps system "properties" to their user defined
+        values. This allows the user to refer to properties with their
+        own naming scheme, e.g. { "charge" : "my-charge" }
+
+    Returns
+    -------
+
+    converted_obj :
+       The object in Sire format.
+    """
+    return to(obj, format="sire", property_map=property_map)
