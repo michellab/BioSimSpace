@@ -227,7 +227,25 @@ def to(obj, format="biosimspace", property_map={}):
     # RDKit objects.
     elif isinstance(obj, _RDMol):
         try:
-            return _sire_convert.to(obj, format, map=property_map)
+            # Convert the object, then return as a single residue, atom,
+            # or entire molecule.
+            new_obj = _sire_convert.to(obj, format, map=property_map)
+
+            if format == "biosimspace":
+                if new_obj.nAtoms() == 1:
+                    return new_obj.getAtoms()[0]
+                elif new_obj.nResidues() == 1:
+                    return new_obj.getResidues()[0]
+                else:
+                    return new_obj
+
+            elif format == "sire":
+                if new_obj.nAtoms() == 1:
+                    return new_obj.atoms()[0]
+                if new_obj.nResidues() == 1:
+                    return new_obj.residues()[0]
+                else:
+                    return new_obj
         except:
             raise _ConversionError(f"Unable to convert object to {format} format!")
 
