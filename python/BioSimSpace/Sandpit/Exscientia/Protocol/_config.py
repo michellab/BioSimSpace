@@ -100,22 +100,37 @@ class ConfigFactory:
             A dictionary of AMBER-compatible options.
         """
         # Get the merged to squashed atom mapping of the whole system for both endpoints.
-        atom_mapping0 = _squashed_atom_mapping(self.system, is_lambda1=False)
-        atom_mapping1 = _squashed_atom_mapping(self.system, is_lambda1=True)
+        mcs_mapping0 = _squashed_atom_mapping(
+            self.system, is_lambda1=False, environment=False, common=True, dummies=False
+        )
+        mcs_mapping1 = _squashed_atom_mapping(
+            self.system, is_lambda1=True, environment=False, common=True, dummies=False
+        )
+        dummy_mapping0 = _squashed_atom_mapping(
+            self.system, is_lambda1=False, environment=False, common=False, dummies=True
+        )
+        dummy_mapping1 = _squashed_atom_mapping(
+            self.system, is_lambda1=True, environment=False, common=False, dummies=True
+        )
 
-        # Generate the ti and dummy masks.
+        # Generate the TI and dummy masks.
         mcs0_indices, mcs1_indices, dummy0_indices, dummy1_indices = [], [], [], []
         for i in range(self.system.nAtoms()):
-            if i not in atom_mapping0:
-                dummy1_indices.append(atom_mapping1[i])
-            elif i not in atom_mapping1:
-                dummy0_indices.append(atom_mapping0[i])
-            # The TI region is defined by all different squashed atoms that are mapped to the same merged atom.
-            elif atom_mapping0[i] != atom_mapping1[i]:
-                mcs0_indices.append(atom_mapping0[i])
-                mcs1_indices.append(atom_mapping1[i])
+            if i in dummy_mapping0:
+                dummy0_indices.append(dummy_mapping0[i])
+            if i in dummy_mapping1:
+                dummy1_indices.append(dummy_mapping1[i])
+            if i in mcs_mapping0:
+                mcs0_indices.append(mcs_mapping0[i])
+            if i in mcs_mapping1:
+                mcs1_indices.append(mcs_mapping1[i])
         ti0_indices = mcs0_indices + dummy0_indices
         ti1_indices = mcs1_indices + dummy1_indices
+
+        # AMBER doesn't seem to work well with the same atom being defined as a scmask in both endstates
+        common_dummies = set(dummy0_indices) & set(dummy1_indices)
+        dummy0_indices = sorted(set(dummy0_indices) - common_dummies)
+        dummy1_indices = sorted(set(dummy1_indices) - common_dummies)
 
         # Define whether HMR is used based on the timestep.
         # When HMR is used, there can be no SHAKE.

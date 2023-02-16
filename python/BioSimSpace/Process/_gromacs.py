@@ -30,6 +30,7 @@ from .._Utils import _try_import
 
 import glob as _glob
 import os as _os
+
 _pygtail = _try_import("pygtail")
 import shutil as _shutil
 import shlex as _shlex
