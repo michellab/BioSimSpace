@@ -26,6 +26,8 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["smiles", "supportedFormats", "to", "toBioSimSpace", "toRDKit", "toSire"]
 
+import os as _os
+
 from rdkit.Chem.rdchem import Mol as _RDMol
 
 from sire import convert as _sire_convert
@@ -35,6 +37,7 @@ import sire.legacy.Mol as _SireMol
 import sire.legacy.System as _SireSystem
 
 from .._Exceptions import ConversionError as _ConversionError
+from .. import IO as _IO
 from .. import _SireWrappers
 
 
@@ -428,3 +431,75 @@ def toSire(obj, property_map={}):
        The object in Sire format.
     """
     return to(obj, format="sire", property_map=property_map)
+
+
+def _to_rdkit(molecule, work_dir=_os.getcwd(), property_map={}):
+    """
+    Internal function to convert two BioSimSpace molecules to RDKit format.
+    This will go via an intermediate file format if direct conversion fails.
+
+    Parameters
+    ----------
+
+    molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+        The BioSimSpace molecule.
+
+    work_dir : str
+        The path to the working directory.
+
+    property_map : dict
+        A dictionary that maps "properties" in 'molecule' to their user
+        defined values. This allows the user to refer to properties
+        with their own naming scheme, e.g. { "charge" : "my-charge" }
+
+    Returns
+    -------
+
+    rdmol : rdkit.Chem.rdchem.Mol
+        The molecule in RDKit format.
+    """
+
+    if not isinstance(molecule, _SireWrappers.Molecule):
+        raise TypeError(
+            "'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule'."
+        )
+
+    if not isinstance(work_dir, str):
+        raise TypeError("'work_dir' must be of type 'str'.")
+
+    if not _os.path.exists(work_dir):
+        raise ValueError(f"'work_dir' doesn't exist: {work_dir}")
+
+    if not isinstance(property_map, dict):
+        raise TypeError("'property_map' must be of type 'dict'.")
+
+    # First try to convert to RDKit format directly.
+    try:
+        rdmol = toRDKit(molecule, property_map=property_map)
+
+    # If this fails, then go via an intermediate file format.
+    except:
+        try:
+            is_sdf = False
+            filebase = work_dir + "/tmp"
+
+            # Try to go via SDF format to preserve bond orders.
+            if molecule._sire_object.hasProperty("fileformat"):
+                if "SDF" in molecule._sire_object.property("fileformat").value():
+                    _IO.saveMolecules(
+                        filebase, molecule, "SDF", property_map=property_map
+                    )
+                    rdmol = _Chem.MolFromMolFile(filebase + ".sdf", True, False, 0)
+
+                    # Flag that we went via SDF format.
+                    is_sdf = True
+
+            # Convert via PDB format..
+            if not is_sdf:
+                _IO.saveMolecules(filebase, molecule, "PDB", property_map=property_map)
+                rdmol = _Chem.MolFromPDBFile(filebase + ".pdb", True, False, 0)
+
+        except:
+            raise _ConversionError("Unable to convert molecule to RDKit format!")
+
+    return rdmol
