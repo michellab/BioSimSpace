@@ -28,86 +28,62 @@ Functions
 .. autosummary::
     :toctree: generated/
 
-    solvate
-    spc
-    spce
-    tip3p
-    tip4p
-    tip5p
-    waterModels
+    supportedFormats
+    to
+    toBioSimSpace
+    toRDKit
+    toSire
 
 Examples
 ========
 
-Print the list of supported water models.
+Load a system and convert to various formats.
 
 .. code-block:: python
 
    import BioSimSpace as BSS
 
-   print(BSS.Solvent.waterModels())
-
-Solvate a molecule in a 5 :class:`nanometer <BioSimSpace.Units.Length.nanometer>`
-periodic box of TIP3P water with an ion concentration of 0.1 mol per litre.
-
-.. code-block:: python
-
-   import BioSimSpace as BSS
-
-   # Load a system and extract the first molecule.
-   molecule = BSS.IO.readMolecules("amber/ala/*")[0]
-
-   # Solvate the molecule.
-   solvated = BSS.Solvent.tip3p(
-       molecule=molecule,
-       box=3*[5*BSS.Units.Length.nanometer],
-       ion_conc=0.1
+   files = BSS.IO.expand(
+       BSS.tutorialUrl(),
+       ["ala.crd", "ala.top"],
+       ".bz2"
    )
+   system = BSS.IO.readMolecules(files)
 
-The same as above, but instead passing "TIP3P" as an argument to the
-:class:`solvate <BioSimSpace.Solvent.solvate>` function. This function should
-be used in any interoperable workflow :class:`Node <BioSimSpace.Gateway.Node>`
-where the water model is specified as an input requirement by the user.
+   # Convert to Sire format.
+   sire_system = BSS.Convert.to(system, "sire")
 
-.. code-block:: python
+   # Convert to RDKit format.
+   rdkit_mols = BSS.Convert.to(system, "rdkit")
 
-   import BioSimSpace as BSS
+   # Convert a molecule to Sire format.
+   sire_mol = BSS.Convert.to(system[0], "sire")
 
-   # Load a system and extract the first molecule.
-   files = BSS.IO.expand(BSS.tutorialUrl(), ["ala.top", "ala.crd"], ".bz2")
-   molecule = BSS.IO.readMolecules(files)[0]
+   # Convert a molecule to RDKit format.
+   rdkit_mol = BSS.Convert.to(system[0], "rdkit")
 
-   # Solvate the molecule.
-   solvated = BSS.Solvent.solvate(
-       "tip3p", molecule=molecule,
-       box=3*[5*BSS.Units.Length.nanometer],
-       ion_conc=0.1
+   # Convert a residue to Sire format.
+   sire_res = BSS.Convert.to(system[0].getResidues()[0], "sire")
+
+   # Convert a residue to RDKit format. (This will return a single
+   # residue RDMol.)
+   rdkit_res = BSS.Convert.to(system[0].getResidues()[0], "rdkit")
+
+   # Convert an atom to Sire format.
+   sire_atom = BSS.Convert.to(system[0].getAtoms()[0], "sire")
+
+   # Convert an atom to RDKit format. (This will return a single
+   # atom RDMol.)
+   sire_atom = BSS.Convert.to(system[0].getAtoms()[0], "rdkit")
+
+   # Conversions can be chained, for example.
+   bss_mols = BSS.Convert.to(
+       BSS.Convert.to(
+           BSS.Convert.to(system, "sire"),
+           "rdkit"
+       ),
+       "biosimspace"
    )
-
-Solvate the molecule with a shell of at least 2 nanometers of SPC water.
-
-.. code-block:: python
-
-   import BioSimSpace as BSS
-
-   # Load a system and extract the first molecule.
-   files = BSS.IO.expand(BSS.tutorialUrl(), ["ala.top", "ala.crd"], ".bz2")
-   molecule = BSS.IO.readMolecules(files)[0]
-
-   # Solvate the molecule.
-   solvated = BSS.Solvent.spc(
-      "tip3p", molecule=molecule,
-      shell=2*BSS.Units.Length.nanometer
-   )
-
-Create a 50 :class:`angstrom <BioSimSpace.Units.Length.angstrom>` periodic
-box of pure SPC/E water.
-
-.. code-block:: python
-
-   import BioSimSpace as BSS
-
-   water = BSS.Solvent.spce(box=3*[50*BSS.Units.Length.angstrom])
 """
 
 from ._convert import *
