@@ -30,6 +30,8 @@ import os as _os
 
 from rdkit.Chem.rdchem import Mol as _RDMol
 
+import rdkit.Chem as _Chem
+
 from sire import convert as _sire_convert
 from sire import smiles as _sire_smiles
 
@@ -433,7 +435,7 @@ def toSire(obj, property_map={}):
     return to(obj, format="sire", property_map=property_map)
 
 
-def _to_rdkit(molecule, work_dir=_os.getcwd(), property_map={}):
+def _to_rdkit(molecule, work_dir=_os.getcwd(), direct=True, property_map={}):
     """
     Internal function to convert two BioSimSpace molecules to RDKit format.
     This will go via an intermediate file format if direct conversion fails.
@@ -446,6 +448,10 @@ def _to_rdkit(molecule, work_dir=_os.getcwd(), property_map={}):
 
     work_dir : str
         The path to the working directory.
+
+    dire : bool
+        Whether to use a direct conversion (True) or go via an intermediate
+        file format (False).
 
     property_map : dict
         A dictionary that maps "properties" in 'molecule' to their user
@@ -470,12 +476,18 @@ def _to_rdkit(molecule, work_dir=_os.getcwd(), property_map={}):
     if not _os.path.exists(work_dir):
         raise ValueError(f"'work_dir' doesn't exist: {work_dir}")
 
+    if not isinstance(direct, bool):
+        raise TypeError("'direct' must be of type 'bool'.")
+
     if not isinstance(property_map, dict):
         raise TypeError("'property_map' must be of type 'dict'.")
 
     # First try to convert to RDKit format directly.
     try:
-        rdmol = toRDKit(molecule, property_map=property_map)
+        if not direct:
+            raise Exception
+        else:
+            rdmol = toRDKit(molecule, property_map=property_map)
 
     # If this fails, then go via an intermediate file format.
     except:
