@@ -28,6 +28,7 @@ Functions
 .. autosummary::
     :toctree: generated/
 
+    smiles
     supportedFormats
     to
     toBioSimSpace

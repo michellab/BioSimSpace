@@ -24,17 +24,77 @@
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
 
-__all__ = ["supportedFormats", "to", "toBioSimSpace", "toRDKit", "toSire"]
+__all__ = ["smiles", "supportedFormats", "to", "toBioSimSpace", "toRDKit", "toSire"]
 
 from rdkit.Chem.rdchem import Mol as _RDMol
 
 from sire import convert as _sire_convert
+from sire import smiles as _sire_smiles
 
 import sire.legacy.Mol as _SireMol
 import sire.legacy.System as _SireSystem
 
 from .._Exceptions import ConversionError as _ConversionError
 from .. import _SireWrappers
+
+
+def smiles(
+    smiles_string, add_hydrogens=True, generate_coordinates=True, property_map={}
+):
+    """
+    Generate a BioSimSpace Molecule froma SMILES string.
+
+    Parameters
+    ----------
+
+    smiles_string : str
+        The molecule in SMILES string format.
+
+    add_hydrogens : bool
+        Whether or not to automatically add hydrogens.
+
+    generate_coordinates : bool
+       Whether or not to automatically generate coordinates. Note that
+       generating the coordinates will automatically switch on addition
+       of hydrogens.
+
+    property_map : dict
+        A dictionary that maps system "properties" to their user defined
+        values. This allows the user to refer to properties with their
+        own naming scheme, e.g. { "charge" : "my-charge" }
+
+    Returns
+    -------
+
+    molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
+        A BioSimSpace molecule.
+    """
+
+    if not isinstance(smiles_string, str):
+        raise TypeError("'smiles_string' must be of type 'str'.")
+
+    if not isinstance(add_hydrogens, bool):
+        raise TypeError("'add_hydrogens' must be of type 'bool'.")
+
+    if not isinstance(generate_coordinates, bool):
+        raise TypeError("'generate_coordinates' must be of type 'bool'.")
+
+    if not isinstance(property_map, dict):
+        raise TypeError("'property_map' must be of type 'dict'.")
+
+    try:
+        return _SireWrappers.Molecule(
+            _sire_smiles(
+                smiles_string,
+                add_hydrogens=add_hydrogens,
+                generate_coordinates=generate_coordinates,
+                map=property_map,
+            )
+        )
+    except:
+        raise _ConversionError(
+            f"Unable to create a BioSimSpace Molecule from SMILES string: {smiles_string}"
+        )
 
 
 def supportedFormats():
