@@ -214,18 +214,6 @@ class Molecule(_SireWrapper):
         """
         return self._sire_object.number().value()
 
-    def smiles(self):
-        """
-        Return the SMILES string for the molecule.
-
-        Returns
-        -------
-
-        smiles : str
-            The SMILES string representation of the molecule.
-        """
-        return self._sire_object.smiles()
-
     def coordinates(self, property_map={}):
         """
         Return the coordinates of the atoms in the molecule.

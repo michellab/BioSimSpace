@@ -98,18 +98,6 @@ class Atom(_SireWrapper):
         """
         return self._sire_object.name().value()
 
-    def smiles(self):
-        """
-        Return the SMILES string for the atom.
-
-        Returns
-        -------
-
-        smiles : str
-            The SMILES string representation of the atom.
-        """
-        return self._sire_object.smiles()
-
     def index(self):
         """
         Return the index of the atom.
