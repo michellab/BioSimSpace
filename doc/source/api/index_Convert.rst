@@ -1,7 +1,7 @@
 .. _ref-Box:
 
-BioSimSpace.Box
-===============
+BioSimSpace.Convert
+===================
 
 The *Convert* package contains tools for converting between different molecular
 representations. Due to the different way that molecules are represented, full
