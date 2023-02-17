@@ -732,6 +732,8 @@ def matchAtoms(
     prematch={},
     timeout=5 * _Units.Time.second,
     complete_rings_only=True,
+    prune_perturbed_constraints=None,
+    prune_crossing_constraints=None,
     max_scoring_matches=1000,
     property_map0={},
     property_map1={},
@@ -784,6 +786,15 @@ def matchAtoms(
         option is only relevant to MCS performed using RDKit and will be
         ignored when falling back on Sire.
 
+       prune_perturbed_constraints : bool
+           Whether to remove hydrogen atoms that are perturbed to heavy atoms
+           from the mapping. This is True for AMBER by default and False for
+           all other engines.
+       prune_crossing_constraints : bool
+           Whether to remove atoms from the mapping such that there are no
+           constraints between dummy and non-dummy atoms. This is True for
+           AMBER by default and False for all other engines.
+                   
     max_scoring_matches : int
         The maximum number of matching MCS substructures to consider when
         computing mapping scores. Consider reducing this if you find the
@@ -902,13 +913,6 @@ def matchAtoms(
 
     if not isinstance(property_map1, dict):
         raise TypeError("'property_map1' must be of type 'dict'")
-
-    # Set some defaults.
-    is_amber = engine.upper() == "AMBER"
-    if prune_perturbed_constraints is None:
-        prune_perturbed_constraints = is_amber
-    if prune_crossing_constraints is None:
-        prune_crossing_constraints = is_amber
 
     # Extract the Sire molecule from each BioSimSpace molecule.
     mol0 = molecule0._getSireObject()
@@ -1037,6 +1041,12 @@ def matchAtoms(
             property_map0,
             property_map1,
         )
+
+    # Optionally post-process the MCS.
+    if prune_perturbed_constraints:
+        mappings = [_prune_perturbed_constraints(molecule0, molecule1, x) for x in mappings]
+    if prune_crossing_constraints:
+        mappings = [_prune_crossing_constraints(molecule0, molecule1, x) for x in mappings]
 
     if matches == 1:
         if return_scores:
