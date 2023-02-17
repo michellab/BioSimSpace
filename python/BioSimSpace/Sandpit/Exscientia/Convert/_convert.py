@@ -298,11 +298,11 @@ def to(obj, format="biosimspace", property_map={}):
 
             if format == "biosimspace":
                 if new_obj.nAtoms() == 1:
-                    return _SireWrappers.Atom(new_obj.getAtoms()[0]._sire_object)
+                    return new_obj.getAtoms()[0]
                 elif new_obj.nResidues() == 1:
-                    return _SireWrappers.Residue(new_obj.getResidues()[0]._sire_object)
+                    return new_obj.getResidues()[0]
                 else:
-                    return _SireWrappers.Molecule(obj._sire_object)
+                    return new_obj
 
             elif format == "sire":
                 if new_obj.nAtoms() == 1:
@@ -324,7 +324,6 @@ def to(obj, format="biosimspace", property_map={}):
             try:
                 new_obj = _sire_convert.to(obj, format, map=property_map)
                 if format == "biosimspace":
-                    new_obj = [_SireWrappers.Molecule(x._sire_object) for x in new_obj]
                     new_obj = _SireWrappers.Molecules(new_obj)
                 return new_obj
             except:
