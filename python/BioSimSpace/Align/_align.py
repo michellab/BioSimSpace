@@ -691,10 +691,6 @@ def matchAtoms(
        molecule1 : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
            The reference molecule.
 
-       engine : str
-           The engine with which the simulations will be run. This is used for
-           setting some reasonable defaults for the other settings.
-
        scoring_function : str
            The scoring function used to match atoms. Available options are:
              - "rmsd"
@@ -734,12 +730,12 @@ def matchAtoms(
            Whether to remove atoms from the mapping such that there are no
            constraints between dummy and non-dummy atoms.
                    
-    max_scoring_matches : int
-        The maximum number of matching MCS substructures to consider when
-        computing mapping scores. Consider reducing this if you find the
-        matchAtoms function to be taking an excessive amount of time. This
-        option is only relevant to MCS performed using RDKit and will be
-        ignored when falling back on Sire.
+        max_scoring_matches : int
+            The maximum number of matching MCS substructures to consider when
+            computing mapping scores. Consider reducing this if you find the
+            matchAtoms function to be taking an excessive amount of time. This
+            option is only relevant to MCS performed using RDKit and will be
+            ignored when falling back on Sire.
 
        property_map0 : dict
            A dictionary that maps "properties" in molecule0 to their user

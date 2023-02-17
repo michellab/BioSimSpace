@@ -361,7 +361,7 @@ class Relative():
                 elif mass != approx(hmr_factor * hydrogen_amu, rel=1e-2):
                     raise _IncompatibleError("""
                     The system is repartitioned at a factor different from that specified in 'hmr_factor'
-                    or at the auto default for this engine (3 for AMBER and 4 for GROMACS).
+                    or at the auto default for this engine (3 for AMBER and 4 for GROMACS, None for SOMD (as this is specified in the cfg file)).
                     Please pass a correctly partitioned or entirely unpartitioned system.""")
 
             # Repartition if necessary.
