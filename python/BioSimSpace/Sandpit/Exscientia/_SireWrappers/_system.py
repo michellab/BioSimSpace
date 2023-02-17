@@ -938,7 +938,7 @@ class System(_SireWrapper):
         Returns
         -------
 
-        atoms : [:class:`Atom <BioSimSpace._SireWrappers.Residue>`]
+        residues : [:class:`Residue <BioSimSpace._SireWrappers.Residue>`]
             The list of residues in the system.
         """
         residues = []
@@ -959,7 +959,7 @@ class System(_SireWrapper):
         Returns
         -------
 
-        atom : :class:`Atom <BioSimSpace._SireWrappers.Residue>`
+        residue : :class:`Residue <BioSimSpace._SireWrappers.Residue>`
             The residue at the specified index.
         """
         if not type(index) is int:
