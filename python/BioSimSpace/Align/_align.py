@@ -658,26 +658,29 @@ def generateNetwork(molecules, names=None, work_dir=None, plot_network=False,
 
     return edges, scores
 
-def matchAtoms(molecule0,
-               molecule1,
-               engine="SOMD",
-               scoring_function="rmsd_align",
-               matches=1,
-               return_scores=False,
-               prematch={},
-               timeout=5*_Units.Time.second,
-               complete_rings_only=True,
-               prune_perturbed_constraints=None,
-               prune_crossing_constraints=None,
-               max_scoring_matches=1000,
-               property_map0={},
-               property_map1={}):
-    """Find mappings between atom indices in molecule0 to those in molecule1.
-       Molecules are aligned using a Maximum Common Substructure (MCS) search.
-       When requesting more than one match, the mappings will be sorted using
-       a scoring function and returned in order of best to worst score. (Note
-       that, depending on the scoring function the "best" score may have the
-       lowest value.)
+
+def matchAtoms(
+    molecule0,
+    molecule1,
+    scoring_function="rmsd_align",
+    matches=1,
+    return_scores=False,
+    prematch={},
+    timeout=5 * _Units.Time.second,
+    complete_rings_only=True,
+    prune_perturbed_constraints=None,
+    prune_crossing_constraints=None,
+    max_scoring_matches=1000,
+    property_map0={},
+    property_map1={},
+):
+    """
+    Find mappings between atom indices in molecule0 to those in molecule1.
+    Molecules are aligned using a Maximum Common Substructure (MCS) search.
+    When requesting more than one match, the mappings will be sorted using
+    a scoring function and returned in order of best to worst score. (Note
+    that, depending on the scoring function the "best" score may have the
+    lowest value.).
 
        Parameters
        ----------
@@ -725,20 +728,18 @@ def matchAtoms(molecule0,
 
        prune_perturbed_constraints : bool
            Whether to remove hydrogen atoms that are perturbed to heavy atoms
-           from the mapping. This is True for AMBER by default and False for
-           all other engines.
+           from the mapping.
 
        prune_crossing_constraints : bool
            Whether to remove atoms from the mapping such that there are no
-           constraints between dummy and non-dummy atoms. This is True for
-           AMBER by default and False for all other engines.
-
-       max_scoring_matches : int
-           The maximum number of matching MCS substructures to consider when
-           computing mapping scores. Consider reducing this if you find the
-           matchAtoms function to be taking an excessive amount of time. This
-           option is only relevant to MCS performed using RDKit and will be
-           ignored when falling back on Sire.
+           constraints between dummy and non-dummy atoms.
+                   
+    max_scoring_matches : int
+        The maximum number of matching MCS substructures to consider when
+        computing mapping scores. Consider reducing this if you find the
+        matchAtoms function to be taking an excessive amount of time. This
+        option is only relevant to MCS performed using RDKit and will be
+        ignored when falling back on Sire.
 
        property_map0 : dict
            A dictionary that maps "properties" in molecule0 to their user
@@ -844,13 +845,6 @@ def matchAtoms(molecule0,
     if not isinstance(property_map1, dict):
         raise TypeError("'property_map1' must be of type 'dict'")
 
-    # Set some defaults.
-    is_amber = engine.upper() == "AMBER"
-    if prune_perturbed_constraints is None:
-        prune_perturbed_constraints = is_amber
-    if prune_crossing_constraints is None:
-        prune_crossing_constraints = is_amber
-
     # Extract the Sire molecule from each BioSimSpace molecule.
     mol0 = molecule0._getSireObject()
     mol1 = molecule1._getSireObject()
@@ -938,8 +932,15 @@ def matchAtoms(molecule0,
             mappings = m0
 
         # Score the mappings and return them in sorted order (best to worst).
-        mappings, scores = _score_sire_mappings(mol0, mol1, mappings, prematch,
-            _scoring_function, property_map0, property_map1)
+        mappings, scores = _score_sire_mappings(
+            mol0,
+            mol1,
+            mappings,
+            prematch,
+            _scoring_function,
+            property_map0,
+            property_map1,
+        )
 
     # Optionally post-process the MCS.
     if prune_perturbed_constraints:
