@@ -1,5 +1,6 @@
 import math as _math
 import warnings as _warnings
+
 from sire.legacy import Units as _SireUnits
 
 from .. import Protocol as _Protocol
@@ -137,7 +138,7 @@ class ConfigFactory:
         if timestep >= 0.004:
             no_shake_mask = ""
         else:
-            no_shake_mask = _amber_mask_from_indices(mcs0_indices + mcs1_indices)
+            no_shake_mask = _amber_mask_from_indices(ti0_indices + ti1_indices)
 
         # Create an option dict with amber masks generated from the above indices.
         option_dict = {
@@ -223,12 +224,12 @@ class ConfigFactory:
             protocol_dict["ntf"] = 2  # Don't calculate forces for constrained bonds.
 
         # PBC.
-        if not self._has_box or not self._has_water:
-            protocol_dict["ntb"] = 0  # No periodic box.
-            protocol_dict["cut"] = "999."  # Non-bonded cut-off.
-        else:
+        if self._has_box:
             protocol_dict["cut"] = "8.0"  # Non-bonded cut-off.
             protocol_dict["iwrap"] = 1  # Wrap the coordinates.
+        else:
+            protocol_dict["ntb"] = 0  # No periodic box.
+            protocol_dict["cut"] = "999."  # Non-bonded cut-off.
 
         # Restraints.
         if isinstance(self.protocol, _Protocol._PositionRestraintMixin):
@@ -304,6 +305,8 @@ class ConfigFactory:
                     _warnings.warn(
                         "Cannot use a barostat for a vacuum or non-periodic simulation"
                     )
+            else:
+                protocol_dict["ntb"] = 1  # constant volume.
 
         # Temperature control.
         if not isinstance(self.protocol, _Protocol.Minimisation):
@@ -336,12 +339,15 @@ class ConfigFactory:
             protocol_dict["icfe"] = 1  # Free energy mode.
             protocol_dict["ifsc"] = 1  # Use softcore potentials.
             protocol_dict["ntf"] = 1  # Remove SHAKE constraints.
-            protocol = [str(x) for x in self.protocol.getLambdaValues()]
+            lambda_values = self.protocol.getLambdaValues(type="dataframe")
+            protocol = [f"{lam:.5f}" for lam in lambda_values["fep"]]
             protocol_dict["mbar_states"] = len(protocol)  # Number of lambda values.
             protocol_dict["mbar_lambda"] = ", ".join(protocol)  # Lambda values.
-            protocol_dict[
-                "clambda"
-            ] = self.protocol.getLambda()  # Current lambda value.
+            Lambda = self.protocol.getLambda(type="series")
+            protocol_dict["clambda"] = "{:.5f}".format(
+                Lambda["fep"]
+            )  # Current lambda value.
+
             if isinstance(self.protocol, _Protocol.Production):
                 protocol_dict["ifmbar"] = 1  # Calculate MBAR energies.
                 protocol_dict["logdvdl"] = 1  # Output dVdl

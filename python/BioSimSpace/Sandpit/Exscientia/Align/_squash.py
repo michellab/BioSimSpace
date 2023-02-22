@@ -366,16 +366,7 @@ def _squashed_atom_mapping(system, is_lambda1=False, environment=True, **kwargs)
     atom_idx, squashed_atom_idx, squashed_atom_idx_perturbed = 0, 0, 0
     squashed_offset = sum(x.nAtoms() for x in system if not x.isPerturbable())
     for molecule in system:
-        if not molecule.isPerturbable() and not molecule.isDecoupled():
-            atom_indices = _np.arange(atom_idx, atom_idx + molecule.nAtoms())
-            squashed_atom_indices = _np.arange(
-                squashed_atom_idx, squashed_atom_idx + molecule.nAtoms()
-            )
-            if environment:
-                atom_mapping.update(dict(zip(atom_indices, squashed_atom_indices)))
-            atom_idx += molecule.nAtoms()
-            squashed_atom_idx += molecule.nAtoms()
-        else:
+        if molecule.isPerturbable():
             residue_atom_mapping, n_squashed_atoms = _squashed_atom_mapping_molecule(
                 molecule,
                 offset_merged=atom_idx,
@@ -387,6 +378,27 @@ def _squashed_atom_mapping(system, is_lambda1=False, environment=True, **kwargs)
             atom_mapping.update(residue_atom_mapping)
             atom_idx += molecule.nAtoms()
             squashed_atom_idx_perturbed += n_squashed_atoms
+        elif molecule.isDecoupled():
+            residue_atom_mapping, n_squashed_atoms = _squashed_atom_mapping_molecule(
+                molecule,
+                offset_merged=atom_idx,
+                offset_squashed=squashed_atom_idx,
+                is_lambda1=is_lambda1,
+                environment=environment,
+                **kwargs,
+            )
+            atom_mapping.update(residue_atom_mapping)
+            atom_idx += molecule.nAtoms()
+            squashed_atom_idx += n_squashed_atoms
+        else:
+            atom_indices = _np.arange(atom_idx, atom_idx + molecule.nAtoms())
+            squashed_atom_indices = _np.arange(
+                squashed_atom_idx, squashed_atom_idx + molecule.nAtoms()
+            )
+            if environment:
+                atom_mapping.update(dict(zip(atom_indices, squashed_atom_indices)))
+            atom_idx += molecule.nAtoms()
+            squashed_atom_idx += molecule.nAtoms()
 
     # Convert from NumPy integers to Python integers.
     return {int(k): int(v) for k, v in atom_mapping.items()}
@@ -442,7 +454,11 @@ def _squashed_atom_mapping_molecule(
         The number of squashed atoms that correspond to the squashed molecule.
     """
     if molecule.isDecoupled():
-        if dummies and not is_lambda1:
+        # Check if the state 0 is coupled
+        coupled_at_lambda0 = _check_decouple(molecule)
+        if dummies is False:
+            return {}, molecule.nAtoms()
+        if coupled_at_lambda0 is (not is_lambda1):
             return {
                 offset_merged + i: offset_squashed + i for i in range(molecule.nAtoms())
             }, molecule.nAtoms()
@@ -568,6 +584,38 @@ def _is_perturbed(residue):
     elem0 = [atom._sire_object.property("element0") for atom in residue.getAtoms()]
     elem1 = [atom._sire_object.property("element1") for atom in residue.getAtoms()]
     return elem0 != elem1
+
+
+def _check_decouple(mol):
+    """Check the decouple molecule and return whether the ligand is coupled in the state
+    A.
+
+    Parameters
+    ----------
+
+    mol : BioSimSpace._SireWrappers.Molecule
+        The decoupled molecule.
+
+    Returns
+    -------
+
+    bool
+        Whether the molecule is coupled in state A (0).
+    """
+    charge_0 = mol._sire_object.property("decouple")["charge"][0].value()
+    charge_1 = mol._sire_object.property("decouple")["charge"][1].value()
+    LJ_0 = mol._sire_object.property("decouple")["LJ"][0].value()
+    LJ_1 = mol._sire_object.property("decouple")["LJ"][1].value()
+    if charge_0 != LJ_0 or charge_1 != LJ_1:
+        raise ValueError(
+            f"The LJ and charge needs to be changed at the same time: "
+            f"charge_0:{charge_0};charge_1:{charge_1};LJ_0:{LJ_0};LJ_1:{LJ_1}."
+        )
+    if charge_0 == charge_1:
+        raise ValueError(
+            "The state A ({charge_0}) has to be different from state B ({charge_1})."
+        )
+    return bool(charge_0)
 
 
 def _amber_mask_from_indices(atom_idxs):
