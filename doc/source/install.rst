@@ -224,7 +224,7 @@ starting, you'll need a working `Git <https://git-scm.com>`__ installation.
 
 BioSimSpace is built on top of the `Sire <https://github.com/openbiosim/sire>`__
 molecular simulation framework. To download and install Sire, follow the
-instructions `here <https://github.com/openbiosim/sire#installation>`__, making
+instructions `here <https://sire.openbiosim.org/install.html>`__, making
 sure that BioSimSpace's dependencies are installed into the Sire conda
 environment at the point at which Sire is installed.
 
