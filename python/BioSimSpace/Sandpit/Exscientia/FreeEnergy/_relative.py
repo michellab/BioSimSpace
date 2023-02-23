@@ -577,7 +577,7 @@ class Relative:
                 "'protocol' must be of type 'BioSimSpace.Protocol.Production'"
             )
         return Relative.analyse(
-            self._work_dir, self._estimator, temperature=temperature
+            str(self._work_dir), self._estimator, temperature=temperature
         )
 
     @staticmethod

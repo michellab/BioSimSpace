@@ -26,11 +26,12 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["getFrame", "Trajectory"]
 
-from .._Utils import _try_import
+from .._Utils import _try_import, _have_imported
 
 _mdanalysis = _try_import("MDAnalysis")
 _mdtraj = _try_import("mdtraj")
 import copy as _copy
+import logging as _logging
 import os as _os
 import shutil as _shutil
 import uuid as _uuid
@@ -38,6 +39,8 @@ import warnings as _warnings
 
 from sire.legacy import IO as _SireIO
 from sire.legacy import Mol as _SireMol
+
+from sire._load import _resolve_path
 
 from .. import _isVerbose
 from .._Exceptions import IncompatibleError as _IncompatibleError
@@ -99,6 +102,23 @@ def getFrame(trajectory, topology, index, system=None, property_map={}):
     if not isinstance(property_map, dict):
         raise TypeError("'property_map' must be of type 'dict'")
 
+    # Create a temporary working directory.
+    work_dir = _Utils.WorkDir()
+
+    # Download files if they are URLs.
+    if trajectory.startswith(("http", "www")):
+        try:
+            trajectory = _resolve_path(trajectory.lower(), str(work_dir), silent=True)[
+                0
+            ]
+        except:
+            raise ValueError(f"Unable to download trajectory file: {trajectory}")
+    if topology.startswith(("http", "www")):
+        try:
+            topology = _resolve_path(topology.lower(), str(work_dir), silent=True)[0]
+        except:
+            raise ValueError(f"Unable to download trajectory file: {trajectory}")
+
     if system is not None:
         if not isinstance(system, _System):
             raise TypeError(
@@ -115,9 +135,6 @@ def getFrame(trajectory, topology, index, system=None, property_map={}):
 
         # Update the water topology to match topology/trajectory.
         system = _update_water_topology(system, topology, trajectory)
-
-    # Create a temporary working directory.
-    work_dir = _Utils.WorkDir()
 
     # Try to load the frame with MDTraj.
     errors = []
@@ -262,6 +279,9 @@ class Trajectory:
         self._system = None
         self._property_map = {}
 
+        # Create a temporary working directory.
+        self._work_dir = _Utils.WorkDir()
+
         # Nothing to create a trajectory from.
         if process is None and trajectory is None:
             raise ValueError(
@@ -291,6 +311,26 @@ class Trajectory:
 
         # Trajectory and topology files.
         elif isinstance(trajectory, str) and isinstance(topology, str):
+            # Download files if they are URLs.
+            if trajectory.startswith(("http", "www")):
+                try:
+                    trajectory = _resolve_path(
+                        trajectory.lower(), str(self._work_dir), silent=True
+                    )[0]
+                except:
+                    raise ValueError(
+                        f"Unable to download trajectory file: {trajectory}"
+                    )
+            if topology.startswith(("http", "www")):
+                try:
+                    topology = _resolve_path(
+                        topology.lower(), str(self._work_dir), silent=True
+                    )[0]
+                except:
+                    raise ValueError(
+                        f"Unable to download trajectory file: {trajectory}"
+                    )
+
             # Make sure the trajectory file exists.
             if not _os.path.isfile(trajectory):
                 raise IOError("Trajectory file doesn't exist: '%s'" % trajectory)
@@ -339,9 +379,6 @@ class Trajectory:
         if not isinstance(property_map, dict):
             raise TypeError("'property_map' must be of type 'dict'")
         self._property_map = property_map
-
-        # Create a temporary working directory.
-        self._work_dir = _Utils.WorkDir()
 
         # Get the current trajectory.
         self._trajectory = self.getTrajectory(format="AUTO")

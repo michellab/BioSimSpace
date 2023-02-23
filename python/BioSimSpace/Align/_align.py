@@ -81,6 +81,8 @@ from .. import IO as _IO
 from .. import Units as _Units
 from .. import _Utils
 
+from ..Convert._convert import _to_rdkit
+
 # lomap depends on RDKit and networkx
 _networkx = _try_import("networkx")
 
@@ -898,17 +900,10 @@ def matchAtoms(
     try:
         # Run inside a temporary directory.
         with _Utils.cd(work_dir):
-            # Write both molecules to PDB files.
-            _IO.saveMolecules("tmp0", molecule0, "PDB", property_map=property_map0)
-            _IO.saveMolecules("tmp1", molecule1, "PDB", property_map=property_map1)
-
-            # Load the molecules with RDKit.
-            # Note that the C++ function overloading seems to be broken, so we
-            # need to pass all arguments by position, rather than keyword.
-            # The arguments are: "filename", "sanitize", "removeHs", "flavor"
+            # Convert the molecules to RDKit format.
             mols = [
-                _Chem.MolFromPDBFile("tmp0.pdb", True, False, 0),
-                _Chem.MolFromPDBFile("tmp1.pdb", True, False, 0),
+                _to_rdkit(molecule0, str(work_dir), property_map=property_map0),
+                _to_rdkit(molecule1, str(work_dir), property_map=property_map1),
             ]
 
             # Generate the MCS match.
@@ -1549,23 +1544,11 @@ def viewMapping(
     # Create the working directory.
     work_dir = _Utils.WorkDir()
 
-    # Write the molecules to PDB format.
-    _IO.saveMolecules(
-        work_dir + "/molecule0", molecule0, "pdb", property_map=property_map0
-    )
-    _IO.saveMolecules(
-        work_dir + "/molecule1", molecule1, "pdb", property_map=property_map0
-    )
+    # Convert the molecules to RDKit format.
+    rdmol0 = _to_rdkit(molecule0, str(work_dir), property_map=property_map0)
+    rdmol1 = _to_rdkit(molecule1, str(work_dir), property_map=property_map1)
 
     import py3Dmol as _py3Dmol
-
-    # Load the molecules into RDKit.
-    rdmol0 = _Chem.MolFromPDBFile(
-        work_dir + "/molecule0.pdb", sanitize=False, removeHs=False
-    )
-    rdmol1 = _Chem.MolFromPDBFile(
-        work_dir + "/molecule1.pdb", sanitize=False, removeHs=False
-    )
 
     # Set grid view properties.
     viewer0 = (0, 0)

@@ -117,7 +117,12 @@ class OpenMM(_process.Process):
 
         # Call the base class constructor.
         super().__init__(
-            system, protocol, name, work_dir, seed, property_map=property_map
+            system,
+            protocol,
+            name=name,
+            work_dir=work_dir,
+            seed=seed,
+            property_map=property_map,
         )
 
         # Set the package name.
@@ -1923,25 +1928,23 @@ class OpenMM(_process.Process):
         elif self._platform == "CUDA":
             cuda_devices = _os.environ.get("CUDA_VISIBLE_DEVICES")
             if cuda_devices is None:
-                raise EnvironmentError(
+                cuda_devices = "0"
+                _warnings.warn(
                     "'CUDA' platform selected but 'CUDA_VISIBLE_DEVICES' "
-                    "environment variable is unset."
+                    "environment variable is unset. Defaulting to '0'."
                 )
-            else:
-                self.addToConfig(
-                    "properties = {'CudaDeviceIndex': '%s'}" % cuda_devices
-                )
+            self.addToConfig("properties = {'CudaDeviceIndex': '%s'}" % cuda_devices)
         elif self._platform == "OPENCL":
             opencl_devices = _os.environ.get("OPENCL_VISIBLE_DEVICES")
             if opencl_devices is None:
-                raise EnvironmentError(
+                opencl_devices = "0"
+                _warnings.warn(
                     "'OpenCL' platform selected but 'OPENCL_VISIBLE_DEVICES' "
-                    "environment variable is unset."
+                    "environment variable is unset. Defaulting to '0'."
                 )
-            else:
-                self.addToConfig(
-                    "properties = {'OpenCLDeviceIndex': '%s'}" % opencl_devices
-                )
+            self.addToConfig(
+                "properties = {'OpenCLDeviceIndex': '%s'}" % opencl_devices
+            )
 
     def _add_config_restart(self):
         """Helper function to check for a restart file and load state information."""

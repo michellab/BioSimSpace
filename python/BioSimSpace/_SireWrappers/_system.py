@@ -875,6 +875,21 @@ class System(_SireWrapper):
         # Return a molecules container.
         return _Molecules(molgrp)
 
+    def getAtoms(self):
+        """
+        Return a list containing the atoms in the system.
+
+        Returns
+        -------
+
+        atoms : [:class:`Atom <BioSimSpace._SireWrappers.Atom>`]
+            The list of atoms in the system.
+        """
+        atoms = []
+        for mol in self:
+            atoms.extend(mol.getAtoms())
+        return atoms
+
     def getAtom(self, index):
         """
         Return the atom specified by the absolute index.
@@ -916,6 +931,21 @@ class System(_SireWrapper):
         # Return the atom.
         return self[mol_idx].getAtoms()[rel_idx]
 
+    def getResidues(self):
+        """
+        Return a list containing the residues in the system.
+
+        Returns
+        -------
+
+        residues : [:class:`Residue <BioSimSpace._SireWrappers.Residue>`]
+            The list of residues in the system.
+        """
+        residues = []
+        for mol in self:
+            residues.extend(mol.getResidues())
+        return residues
+
     def getResidue(self, index):
         """
         Return the residue specified by the absolute index.
@@ -929,7 +959,7 @@ class System(_SireWrapper):
         Returns
         -------
 
-        atom : :class:`Atom <BioSimSpace._SireWrappers.Residue>`
+        residue : :class:`Residue <BioSimSpace._SireWrappers.Residue>`
             The residue at the specified index.
         """
         if not type(index) is int:

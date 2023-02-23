@@ -20,7 +20,7 @@ molecules parameterised with the Generalised AMBER Force-Field (GAFF).
 
 >>> import BioSimSpace as BSS
 >>> ethane = BSS.Parameters.gaff("CC").getMolecule()
->>> methanol = BSS.Parameters.gaff(CO").getMolecule()
+>>> methanol = BSS.Parameters.gaff("CO").getMolecule()
 
 In order to create a perturbation between the two molecules we need to define
 a mapping. This mapping defines the maximum common substructure (MCS) between
