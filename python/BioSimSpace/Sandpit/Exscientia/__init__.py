@@ -34,6 +34,7 @@ __email__ = "lester.hedges@gmail.com"
 __all__ = [
     "Align",
     "Box",
+    "Convert",
     "FreeEnergy",
     "Gateway",
     "IO",
@@ -222,6 +223,7 @@ if _gmx_exe is not None:
 
 from . import Align
 from . import Box
+from . import Convert
 from . import FreeEnergy
 from . import Gateway
 from . import IO
@@ -241,3 +243,11 @@ from ._version import get_versions
 
 __version__ = get_versions()["version"]
 del get_versions
+
+import logging as _logging
+
+for _name, _logger in _logging.root.manager.loggerDict.items():
+    _logger.disabled = True
+del _logger
+del _logging
+del _name

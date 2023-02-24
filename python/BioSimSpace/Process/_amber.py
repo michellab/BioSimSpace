@@ -93,7 +93,7 @@ class _Watcher:
 
         # Setup the event handler and observer.
         event_handler = _Handler(self._process)
-        self._observer.schedule(event_handler, self._process._work_dir)
+        self._observer.schedule(event_handler, self._process.workDir())
         self._observer.daemon = True
         self._observer.start()
 
@@ -306,9 +306,7 @@ class Amber(_process.Process):
         # RST file (coordinates).
         try:
             file = _os.path.splitext(self._rst_file)[0]
-            _IO.saveMolecules(
-                self._rst_file, system, "rst7", property_map=self._property_map
-            )
+            _IO.saveMolecules(file, system, "rst7", property_map=self._property_map)
         except Exception as e:
             msg = "Failed to write system to 'RST7' format."
             if _isVerbose():
@@ -319,9 +317,7 @@ class Amber(_process.Process):
         # PRM file (topology).
         try:
             file = _os.path.splitext(self._top_file)[0]
-            _IO.saveMolecules(
-                self._top_file, system, "prm7", property_map=self._property_map
-            )
+            _IO.saveMolecules(file, system, "prm7", property_map=self._property_map)
         except Exception as e:
             msg = "Failed to write system to 'PRM7' format."
             if _isVerbose():
@@ -367,7 +363,7 @@ class Amber(_process.Process):
             extra_options["plumedfile"] = "plumed.dat"
 
             # Create the PLUMED input file and copy auxiliary files to the working directory.
-            self._plumed = _Plumed(self._work_dir)
+            self._plumed = _Plumed(str(self._work_dir))
             plumed_config, auxiliary_files = self._plumed.createConfig(
                 self._system, self._protocol, self._property_map
             )

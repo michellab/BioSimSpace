@@ -31,7 +31,6 @@ import re as _re
 import subprocess as _subprocess
 import shlex as _shlex
 import sys as _sys
-import tempfile as _tempfile
 import warnings as _warnings
 
 from sire.legacy import Base as _SireBase
@@ -69,7 +68,7 @@ def solvate(
     property_map={},
 ):
     """
-    Solvate with the specified water model..
+    Solvate with the specified water model.
 
     Parameters
     ----------
@@ -583,8 +582,8 @@ def _validate_input(
         The name of the water model.
 
     molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, \
-               :class:`Molecule <BioSimSpace._SireWrappers.Molecules>`, \
-               :class:`System <BioSimSpace._SireWrappers.System>`
+                :class:`Molecule <BioSimSpace._SireWrappers.Molecules>`, \
+                :class:`System <BioSimSpace._SireWrappers.System>`
         A molecule, or container/system of molecules.
 
     box : [:class:`Length <BioSimSpace.Types.Length>`]
@@ -873,10 +872,8 @@ def _solvate(
             molecule.removeWaterMolecules()
             molecule = molecule + waters
 
-    # Create a temporary working directory and store the directory name.
-    if work_dir is None:
-        tmp_dir = _tempfile.TemporaryDirectory()
-        work_dir = tmp_dir.name
+    # Create the working directory.
+    work_dir = _Utils.WorkDir(work_dir)
 
     # Write to 6dp, unless precision is specified by use.
     _property_map = property_map.copy()

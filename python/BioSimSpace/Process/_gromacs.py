@@ -30,6 +30,7 @@ from .._Utils import _try_import
 
 import glob as _glob
 import os as _os
+
 _pygtail = _try_import("pygtail")
 import shutil as _shutil
 import shlex as _shlex
@@ -324,7 +325,7 @@ class Gromacs(_process.Process):
         # Add configuration variables for metadynamics or steered molecular dynamics.
         if isinstance(self._protocol, (_Protocol.Metadynamics, _Protocol.Steering)):
             # Create the PLUMED input file and copy auxiliary files to the working directory.
-            self._plumed = _Plumed(self._work_dir)
+            self._plumed = _Plumed(str(self._work_dir))
             plumed_config, auxiliary_files = self._plumed.createConfig(
                 self._system, self._protocol, self._property_map
             )
@@ -350,7 +351,7 @@ class Gromacs(_process.Process):
         # Add configuration variables for a steered molecular dynamics protocol.
         elif isinstance(self._protocol, _Protocol.Steering):
             # Create the PLUMED input file and copy auxiliary files to the working directory.
-            self._plumed = _Plumed(self._work_dir)
+            self._plumed = _Plumed(str(self._work_dir))
             plumed_config, auxiliary_files = self._plumed.createConfig(
                 self._system, self._protocol, self._property_map
             )

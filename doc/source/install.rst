@@ -224,7 +224,7 @@ starting, you'll need a working `Git <https://git-scm.com>`__ installation.
 
 BioSimSpace is built on top of the `Sire <https://github.com/openbiosim/sire>`__
 molecular simulation framework. To download and install Sire, follow the
-instructions `here <https://github.com/openbiosim/sire#installation>`__, making
+instructions `here <https://sire.openbiosim.org/install.html>`__, making
 sure that BioSimSpace's dependencies are installed into the Sire conda
 environment at the point at which Sire is installed.
 
@@ -236,6 +236,19 @@ Conda environment.
    git clone https://github.com/openbiosim/biosimspace
    cd biosimspace/python
    python setup.py install
+
+If you plan to develop and want an editable install, use:
+
+.. code-block:: bash
+
+   python setup.py develop
+
+If you want to skip the installation of BioSimSpace dependencies, e.g. if they
+are already installed, then you can use:
+
+.. code-block:: bash
+
+   BSS_SKIP_DEPENDENCIES=1 python setup.py develop
 
 Once finished, you can test the installation by running:
 
@@ -249,26 +262,20 @@ Then try importing the BioSimSpace package:
 
    import BioSimSpace as BSS
 
-When developing you may not wish to continually re-install BioSimSpace and its
-associated dependencies. To avoid this, you can either make use of ``PYTHONPATH``,
-e.g.
+If you don't want to install Sire from source, an alternative is to create a conda
+environment containing only the dependencies of BioSimSpace, then install the
+latest development code into that.
 
 .. code-block:: bash
 
-   PYTHONPATH=$HOME/Code/BioSimSpace/python python script.py
+   mamba create -n openbiosim-dev -c conda-forge -c openbiosim/label/dev biosimspace --only-deps
+   mamba activate openbiosim-dev
+   git clone https://github.com/openbiosim/biosimspace
+   cd biosimspace/python
+   BSS_SKIP_DEPENDENCIES=1 python setup.py develop
 
-or use the ``develop`` argument when running the ``setup.py`` script, i.e.
-
-.. code-block:: bash
-
-   python setup.py develop
-
-You can also skip installation of external dependencies by setting the
-environment variable ``BSS_SKIP_DEPENDENCIES``, e.g.
-
-.. code-block:: bash
-
-   BSS_SKIP_DEPENDENCIES=True python setup.py install
+(You may also want to install optional dependencies, such as ``ambertools`` and
+``gromacs`` into your environment.)
 
 5. Common issues
 ================

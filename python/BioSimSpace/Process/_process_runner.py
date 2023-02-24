@@ -101,6 +101,10 @@ class ProcessRunner:
         if work_dir is not None and not isinstance(work_dir, str):
             raise TypeError("'work_dir' must be of type 'str'")
 
+        # Convert to absolute path.
+        if work_dir and not _os.path.isabs(work_dir):
+            work_dir = _os.path.abspath(work_dir)
+
         # Set the list of processes.
         self._processes = processes
 
@@ -178,7 +182,7 @@ class ProcessRunner:
         work_dir : str
             The working directory.
         """
-        return self._work_dir
+        return str(self._work_dir)
 
     def getName(self):
         """

@@ -78,10 +78,12 @@ else:
 _openff = _try_import("openff")
 
 if _have_imported(_openff):
+    from openff.interchange import Interchange as _Interchange
     from openff.toolkit.topology import Molecule as _OpenFFMolecule
     from openff.toolkit.topology import Topology as _OpenFFTopology
     from openff.toolkit.typing.engines.smirnoff import ForceField as _Forcefield
 else:
+    _Interchange = _openff
     _OpenFFMolecule = _openff
     _OpenFFTopology = _openff
     _Forcefield = _openff
@@ -99,6 +101,7 @@ from ... import IO as _IO
 from ..._Exceptions import IncompatibleError as _IncompatibleError
 from ..._Exceptions import ThirdPartyError as _ThirdPartyError
 from ..._SireWrappers import Molecule as _Molecule
+from ... import _Utils
 
 from . import _protocol
 
@@ -140,7 +143,7 @@ class OpenForceField(_protocol.Protocol):
             The molecule to parameterise, either as a Molecule object or SMILES
             string.
 
-        work_dir : str
+        work_dir : :class:`WorkDir <BioSimSpace._Utils.WorkDir>`
             The working directory.
 
         queue : queue.Queue
@@ -158,8 +161,8 @@ class OpenForceField(_protocol.Protocol):
                 "'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule' or 'str'"
             )
 
-        if work_dir is not None and not isinstance(work_dir, str):
-            raise TypeError("'work_dir' must be of type 'str'")
+        if work_dir is not None and not isinstance(work_dir, _Utils.WorkDir):
+            raise TypeError("'work_dir' must be of type 'BioSimSpace._Utils.WorkDir'")
 
         if queue is not None and not isinstance(queue, _queue.Queue):
             raise TypeError("'queue' must be of type 'queue.Queue'")
@@ -301,35 +304,13 @@ class OpenForceField(_protocol.Protocol):
             else:
                 raise _ThirdPartyError(msg) from None
 
-        # Obtain the OpenMM Topology object from the OpenFF topology.
+        # Create an Interchange object.
         try:
-            omm_topology = off_topology.to_openmm()
-        except Exception as e:
-            msg = "Unable to convert Open Force Field topology to OpenMM topology!"
-            if _isVerbose():
-                msg += ": " + getattr(e, "message", repr(e))
-                raise _ThirdPartyError(msg) from e
-            else:
-                raise _ThirdPartyError(msg) from None
-
-        # Create an OpenMM system.
-        try:
-            omm_system = forcefield.create_openmm_system(off_topology)
-        except Exception as e:
-            msg = "Unable to create OpenMM System!"
-            if _isVerbose():
-                msg += ": " + getattr(e, "message", repr(e))
-                raise _ThirdPartyError(msg) from e
-            else:
-                raise _ThirdPartyError(msg) from None
-
-        # Convert the OpenMM System to a ParmEd structure.
-        try:
-            parmed_structure = _parmed.openmm.load_topology(
-                omm_topology, omm_system, off_molecule.conformers[0]
+            interchange = _Interchange.from_smirnoff(
+                force_field=forcefield, topology=off_topology
             )
         except Exception as e:
-            msg = "Unable to convert OpenMM System to ParmEd structure!"
+            msg = "Unable to create OpenFF Interchange object!"
             if _isVerbose():
                 msg += ": " + getattr(e, "message", repr(e))
                 raise _ThirdPartyError(msg) from e
@@ -338,10 +319,10 @@ class OpenForceField(_protocol.Protocol):
 
         # Export AMBER format files.
         try:
-            parmed_structure.save(prefix + "parmed.prmtop", overwrite=True)
-            parmed_structure.save(prefix + "parmed.inpcrd", overwrite=True)
+            interchange.to_prmtop(prefix + "interchange.prmtop")
+            interchange.to_inpcrd(prefix + "interchange.inpcrd")
         except Exception as e:
-            msg = "Unable to write ParmEd structure to AMBER format!"
+            msg = "Unable to write Interchange object to AMBER format!"
             if _isVerbose():
                 msg += ": " + getattr(e, "message", repr(e))
                 raise _ThirdPartyError(msg) from e
@@ -351,7 +332,7 @@ class OpenForceField(_protocol.Protocol):
         # Load the parameterised molecule. (This could be a system of molecules.)
         try:
             par_mol = _IO.readMolecules(
-                [prefix + "parmed.prmtop", prefix + "parmed.inpcrd"]
+                [prefix + "interchange.prmtop", prefix + "interchange.inpcrd"]
             )
             # Extract single molecules.
             if par_mol.nMolecules() == 1:

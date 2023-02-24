@@ -13,7 +13,7 @@ def test_file_cache():
     """
 
     # Clear the file cache.
-    BSS.IO._io._file_cache = {}
+    BSS.IO._file_cache._cache = {}
 
     # Load the molecular system.
     s = BSS.IO.readMolecules(["test/input/ala.crd", "test/input/ala.top"])
@@ -26,13 +26,13 @@ def test_file_cache():
     BSS.IO.saveMolecules(f"{tmp_path}/tmp", s, ["pdb", "prm7"])
 
     # Check that the file cache has two entries.
-    assert len(BSS.IO._io._file_cache) == 2
+    assert len(BSS.IO._file_cache._cache) == 2
 
     # Write to PDB and GroTop format. The PDB from the cache should be reused.
     BSS.IO.saveMolecules(f"{tmp_path}/tmp2", s, ["pdb", "grotop"])
 
     # Check that the file cache has three entries, i.e. only the GroTop was added.
-    assert len(BSS.IO._io._file_cache) == 3
+    assert len(BSS.IO._file_cache._cache) == 3
 
     # The directory should now contain 4 files.
     assert len(glob.glob(f"{tmp_path}/*")) == 4
@@ -43,7 +43,7 @@ def test_file_cache():
     BSS.IO.saveMolecules(f"{tmp_path}/tmp3", s, ["pdb", "grotop"])
 
     # Check that the file cache still has three entries.
-    assert len(BSS.IO._io._file_cache) == 3
+    assert len(BSS.IO._file_cache._cache) == 3
 
     # The directory should now contain 5 files.
     assert len(glob.glob(f"{tmp_path}/*")) == 5
@@ -58,7 +58,7 @@ def test_file_cache():
     BSS.IO.saveMolecules(f"{tmp_path}/tmp4", s, ["pdb", "gro87"])
 
     # Check that the file cache still has three entries.
-    assert len(BSS.IO._io._file_cache) == 4
+    assert len(BSS.IO._file_cache._cache) == 4
 
     # The directory should now contain 7 files.
     assert len(glob.glob(f"{tmp_path}/*")) == 7

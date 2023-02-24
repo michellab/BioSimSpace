@@ -55,17 +55,6 @@ def test_run_Gromacs():
     assert not restraint_search._process.isError()
 
 
-class Trajectory(Trajectory):
-    def __init__(self):
-        pass
-
-    def getTrajectory(self, format="mdanalysis"):
-        return mda.Universe(
-            "test/Sandpit/Exscientia/input/protein_ligand/complex.tpr",
-            "test/Sandpit/Exscientia/input/protein_ligand/traj.xtc",
-        )
-
-
 @pytest.mark.skipif(
     (
         is_MDRestraintsGenerator is False
@@ -97,7 +86,10 @@ class TestMDRestraintsGenerator_analysis:
             engine="GROMACS",
             work_dir=str(outdir),
         )
-        restraint_search._process.getTrajectory = lambda: Trajectory()
+        traj, top = BSS.IO.expand(url, ["traj.xtc", "complex.tpr"], ".bz2")
+        restraint_search._process.getTrajectory = lambda: Trajectory(
+            trajectory=traj, topology=top
+        )
         restraint = restraint_search.analyse(
             method="MDRestraintsGenerator",
             restraint_type="Boresch",

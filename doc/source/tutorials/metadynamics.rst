@@ -160,7 +160,7 @@ collective variables as follows:
 
    The :data:`getCollectiveVariable` function takes the indices of the collective
    variables that we passed to the :data:`Protocol` construtor, i.e.
-   0=:math:`{\phi}` and 1=:math:`{\psi}`.
+   0 = :math:`{\phi}` and 1 = :math:`{\psi}`.
 
 .. image:: images/cv_time_series.png
    :alt: Time evolution of the :math:`{\phi}` and :math:`{\psi}` dihedral angles of alaline dipeptide during a metadynamics simulation.
@@ -179,7 +179,7 @@ It is also possible to compute the free energy estimate as a function of
 .. note ::
 
    The returned :data:`free_nrg` object is a tuple, containing lists for the values of
-   :math:`{\phi}` and 1=:math:`{\psi}`, and the corresponding free energy estimate.
+   :math:`{\phi}` and :math:`{\psi}`, and the corresponding free energy estimate.
 
 .. image:: images/free_nrg_contour.png
    :alt: Free energy as a function of the :math:`{\phi}` and :math:`{\psi}` dihedral angles for alaline dipeptide.

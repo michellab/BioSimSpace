@@ -14,6 +14,7 @@ directory of the GitHub repository.
 
    index_Align
    index_Box
+   index_Convert
    index_FreeEnergy
    index_Gateway
    index_IO
