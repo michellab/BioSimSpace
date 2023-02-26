@@ -1705,13 +1705,13 @@ class Molecule(_SireWrapper):
             if mol.hasProperty(amber_type) and mol.hasProperty(element):
                 # Search for any dummy atoms.
                 try:
-                    search = mol.search("element Xx")
+                    search = mol.atoms("element Xx")
                 except:
                     search = []
 
                 # Replace the ambertype.
                 for dummy in search:
-                    index = dummy.atom().index()
+                    index = dummy.index()
                     mol = (
                         mol.atom(index)
                         .setProperty(amber_type, amber_types[index.value()])

@@ -39,7 +39,6 @@ import subprocess as _subprocess
 import shutil as _shutil
 import shlex as _shlex
 import sys as _sys
-import tempfile as _tempfile
 
 from .._Utils import _try_import, _have_imported, _assert_imported
 
@@ -81,6 +80,8 @@ from .._SireWrappers import Molecule as _Molecule
 from .. import IO as _IO
 from .. import Units as _Units
 from .. import _Utils
+
+from ..Convert._convert import _to_rdkit
 
 # lomap depends on RDKit and networkx
 _networkx = _try_import("networkx")
@@ -294,20 +295,8 @@ def generateNetwork(
                 f"'n_edges_forced' must be 0 < value < {n_edges_fully_connected}."
             )
 
-    # Create a temporary working directory and store the directory name.
-    if work_dir is None:
-        tmp_dir = _tempfile.TemporaryDirectory()
-        work_dir = tmp_dir.name
-
-    # User specified working directory.
-    else:
-        # Use full path.
-        if work_dir[0] != "/":
-            work_dir = _os.getcwd() + "/" + work_dir
-
-        # Create the directory if it doesn't already exist.
-        if not _os.path.isdir(work_dir):
-            _os.makedirs(work_dir, exist_ok=True)
+    # Create the working directory.
+    work_dir = _Utils.WorkDir(work_dir)
 
     # Make the LOMAP input and output directories.
     _os.makedirs(work_dir + "/inputs", exist_ok=True)
@@ -903,26 +892,18 @@ def matchAtoms(
     # Convert the timeout to seconds and take the value as an integer.
     timeout = int(timeout.seconds().value())
 
-    # Create a temporary working directory.
-    tmp_dir = _tempfile.TemporaryDirectory()
-    work_dir = tmp_dir.name
+    # Create the working directory.
+    work_dir = _Utils.WorkDir()
 
     # Use RDKkit to find the maximum common substructure.
 
     try:
         # Run inside a temporary directory.
         with _Utils.cd(work_dir):
-            # Write both molecules to PDB files.
-            _IO.saveMolecules("tmp0", molecule0, "PDB", property_map=property_map0)
-            _IO.saveMolecules("tmp1", molecule1, "PDB", property_map=property_map1)
-
-            # Load the molecules with RDKit.
-            # Note that the C++ function overloading seems to be broken, so we
-            # need to pass all arguments by position, rather than keyword.
-            # The arguments are: "filename", "sanitize", "removeHs", "flavor"
+            # Convert the molecules to RDKit format.
             mols = [
-                _Chem.MolFromPDBFile("tmp0.pdb", True, False, 0),
-                _Chem.MolFromPDBFile("tmp1.pdb", True, False, 0),
+                _to_rdkit(molecule0, str(work_dir), property_map=property_map0),
+                _to_rdkit(molecule1, str(work_dir), property_map=property_map1),
             ]
 
             # Generate the MCS match.
@@ -1254,9 +1235,8 @@ def flexAlign(
     # Convert the mapping to AtomIdx key:value pairs.
     sire_mapping = _to_sire_mapping(mapping)
 
-    # Create a temporary working directory.
-    tmp_dir = _tempfile.TemporaryDirectory()
-    work_dir = tmp_dir.name
+    # Create the working directory.
+    work_dir = _Utils.WorkDir()
 
     # Execute in the working directory.
     with _Utils.cd(work_dir):
@@ -1561,27 +1541,14 @@ def viewMapping(
         )
         molecule0 = rmsdAlign(molecule0, molecule1, mapping)
 
-    # Create a temporary working directory and store the directory name.
-    tmp_dir = _tempfile.TemporaryDirectory()
-    work_dir = tmp_dir.name
+    # Create the working directory.
+    work_dir = _Utils.WorkDir()
 
-    # Write the molecules to PDB format.
-    _IO.saveMolecules(
-        work_dir + "/molecule0", molecule0, "pdb", property_map=property_map0
-    )
-    _IO.saveMolecules(
-        work_dir + "/molecule1", molecule1, "pdb", property_map=property_map0
-    )
+    # Convert the molecules to RDKit format.
+    rdmol0 = _to_rdkit(molecule0, str(work_dir), property_map=property_map0)
+    rdmol1 = _to_rdkit(molecule1, str(work_dir), property_map=property_map1)
 
     import py3Dmol as _py3Dmol
-
-    # Load the molecules into RDKit.
-    rdmol0 = _Chem.MolFromPDBFile(
-        work_dir + "/molecule0.pdb", sanitize=False, removeHs=False
-    )
-    rdmol1 = _Chem.MolFromPDBFile(
-        work_dir + "/molecule1.pdb", sanitize=False, removeHs=False
-    )
 
     # Set grid view properties.
     viewer0 = (0, 0)
@@ -1781,7 +1748,6 @@ def _score_rdkit_mappings(
 
             # Initialise the mapping for this match.
             mapping = {}
-            sire_mapping = {}
 
             # Loop over all atoms in the match.
             for i, idx0 in enumerate(match0):
@@ -1790,10 +1756,14 @@ def _score_rdkit_mappings(
                 # Add to the mapping.
                 if is_swapped:
                     mapping[idx1] = idx0
-                    sire_mapping[_SireMol.AtomIdx(idx1)] = _SireMol.AtomIdx(idx0)
                 else:
                     mapping[idx0] = idx1
-                    sire_mapping[_SireMol.AtomIdx(idx0)] = _SireMol.AtomIdx(idx1)
+
+            mapping = dict(sorted(mapping.items()))
+            sire_mapping = {
+                _SireMol.AtomIdx(idx0): _SireMol.AtomIdx(idx1)
+                for idx0, idx1 in mapping.items()
+            }
 
             # This is a new mapping:
             if not mapping in mappings:
@@ -2010,7 +1980,9 @@ def _score_sire_mappings(
                 )._sire_object
 
             # Append the mapping to the list.
-            mappings.append(_from_sire_mapping(mapping))
+            mapping = _from_sire_mapping(mapping)
+            mapping = dict(sorted(mapping.items()))
+            mappings.append(mapping)
 
             # We now compute the RMSD between the coordinates of the matched atoms
             # in molecule0 and molecule1.

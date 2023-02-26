@@ -1,10 +1,10 @@
 # BioSimSpace runtime requirements.
 
-sire ~=2023.1.0
+sire ~=2023.1.3
 
 configargparse
-kcombu_bss
 ipywidgets<8
+kcombu_bss
 lomap2
 networkx
 nglview

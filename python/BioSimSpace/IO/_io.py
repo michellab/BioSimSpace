@@ -39,14 +39,12 @@ from collections import OrderedDict as _OrderedDict
 from glob import glob as _glob
 from io import StringIO as _StringIO
 
-import hashlib as _hashlib
 import json as _json
 import os as _os
 import shlex as _shlex
 import shutil as _shutil
 import sys as _sys
 import subprocess as _subprocess
-import tempfile as _tempfile
 import warnings as _warnings
 
 # Wrap the import of PyPDB since it imports Matplotlib, which will fail if
@@ -76,6 +74,9 @@ from .._SireWrappers import Molecule as _Molecule
 from .._SireWrappers import Molecules as _Molecules
 from .._SireWrappers import System as _System
 from .. import _Utils
+
+from ._file_cache import check_cache as _check_cache
+from ._file_cache import update_cache as _update_cache
 
 
 # Context manager for capturing stdout.
@@ -116,13 +117,6 @@ for index, line in enumerate(format_info):
 
 # Delete the redundant variables.
 del format_info, index, line, format, extensions, description
-
-
-# Initialise a "cache". This maps system UIDs and formats that have previously
-# been written to file. When saving, we can then check to see if a system has
-# previously been written to the specified format and, if the file still exists
-# and is unmodified, then we can simply copy to the new location.
-_file_cache = {}
 
 
 def expand(base, path, suffix=None):
@@ -278,20 +272,8 @@ def readPDB(id, pdb4amber=False, work_dir=None, show_warnings=False, property_ma
     if work_dir and not isinstance(work_dir, str):
         raise TypeError("'work_dir' must be of type 'str'")
 
-    # Create a temporary working directory and store the directory name.
-    if work_dir is None:
-        tmp_dir = _tempfile.TemporaryDirectory()
-        work_dir = tmp_dir.name
-
-    # User specified working directory.
-    else:
-        # Use full path.
-        if work_dir[0] != "/":
-            work_dir = _os.getcwd() + "/" + work_dir
-
-        # Create the directory if it doesn't already exist.
-        if not _os.path.isdir(work_dir):
-            _os.makedirs(work_dir, exist_ok=True)
+    # Create the working directory.
+    work_dir = _Utils.WorkDir(work_dir)
 
     # Path to a PDB file.
     if _os.path.isfile(id):
@@ -302,7 +284,7 @@ def readPDB(id, pdb4amber=False, work_dir=None, show_warnings=False, property_ma
         from sire._load import _resolve_path
 
         try:
-            pdb_file = _resolve_path(id, directory=work_dir)[0]
+            pdb_file = _resolve_path(id, directory=str(work_dir))[0]
         except:
             raise IOError(f"Unable to download PDB file: '{id}'")
 
@@ -358,7 +340,7 @@ def readPDB(id, pdb4amber=False, work_dir=None, show_warnings=False, property_ma
         # Run pdb4amber as a subprocess.
         proc = _subprocess.run(
             _Utils.command_split(command),
-            cwd=work_dir,
+            cwd=str(work_dir),
             shell=False,
             stdout=stdout,
             stderr=stderr,
@@ -470,19 +452,8 @@ def readMolecules(files, show_warnings=False, download_dir=None, property_map={}
         if not isinstance(download_dir, str):
             raise TypeError("'download_dir' must be of type 'str'")
 
-        # Use full path.
-        if download_dir[0] != "/":
-            download_dir = _os.getcwd() + "/" + download_dir
-
-        # Create the directory if it doesn't already exist.
-        if not _os.path.isdir(download_dir):
-            _os.makedirs(download_dir, exist_ok=True)
-
-    # Create a temporary working directory and store the directory name.
-    else:
-        if download_dir is None:
-            tmp_dir = _tempfile.TemporaryDirectory()
-            download_dir = tmp_dir.name
+    # Create the download directory.
+    download_dir = _Utils.WorkDir(download_dir)
 
     # Validate the map.
     if not isinstance(property_map, dict):
@@ -501,7 +472,7 @@ def readMolecules(files, show_warnings=False, download_dir=None, property_map={}
     try:
         system = _patch_sire_load(
             files,
-            directory=download_dir,
+            directory=str(download_dir),
             property_map=property_map,
             show_warnings=show_warnings,
         )
@@ -559,7 +530,7 @@ def readMolecules(files, show_warnings=False, download_dir=None, property_map={}
     return _System(system)
 
 
-def saveMolecules(filebase, system, fileformat, property_map={}):
+def saveMolecules(filebase, system, fileformat, property_map={}, **kwargs):
     """
     Save a molecular system to file.
 
@@ -624,6 +595,10 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
     # Check that the filebase is a string.
     if not isinstance(filebase, str):
         raise TypeError("'filebase' must be of type 'str'")
+
+    # Convert to absolute path.
+    if not _os.path.isabs(filebase):
+        filebase = _os.path.abspath(filebase)
 
     # Check that that the system is of the correct type.
 
@@ -690,19 +665,9 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
     # Get the directory name.
     dirname = _os.path.dirname(filebase)
 
-    # If the user has passed a directory, make sure that is exists.
-    if _os.path.basename(filebase) != filebase:
-        # Create the directory if it doesn't already exist.
-        if not _os.path.isdir(dirname):
-            _os.makedirs(dirname, exist_ok=True)
-
-    # Store the current working directory.
-    dir = _os.getcwd()
-
-    # Change to the working directory for the process.
-    # This avoid problems with relative paths.
-    if dirname != "":
-        _os.chdir(dirname)
+    # Create the directory if it doesn't already exist.
+    if not _os.path.isdir(dirname):
+        _os.makedirs(dirname, exist_ok=True)
 
     # A list of the files that have been written.
     files = []
@@ -710,7 +675,13 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
     # Save the system using each file format.
     for format in formats:
         # Copy an existing file if it exists in the cache.
-        ext = _check_cache(system._sire_object, format, filebase)
+        ext = _check_cache(
+            system,
+            format,
+            filebase,
+            property_map=property_map,
+            **kwargs,
+        )
         if ext:
             files.append(_os.path.abspath(filebase + ext))
             continue
@@ -780,20 +751,14 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
             files += file
 
             # If this is a new file, then add it to the cache.
-            _update_cache(system._sire_object, format, file[0])
+            _update_cache(system, format, file[0], **kwargs)
 
         except Exception as e:
-            if dirname != "":
-                _os.chdir(dir)
             msg = "Failed to save system to format: '%s'" % format
             if _isVerbose():
                 raise IOError(msg) from e
             else:
                 raise IOError(msg) from None
-
-    # Change back to the original directory.
-    if dirname != "":
-        _os.chdir(dir)
 
     # Return the list of files.
     return files
@@ -1062,149 +1027,6 @@ def readPerturbableSystem(top0, coords0, top1, coords1, property_map={}):
     system0.updateMolecules(mol)
 
     return system0
-
-
-def _check_cache(system, format, filebase):
-    """
-    Internal helper function to check whether a Sire system has previously
-    been written to the specified format.
-
-    Parameters
-    ----------
-
-    system : sire.legacy.System.System
-        The Sire system.
-
-    format : str
-        The molecular file format.
-
-    filebase : str
-        The file base to copy the file to.
-
-    Returns
-    -------
-
-    extension : str
-        The extension for cached file. False if no file was found.
-    """
-
-    # Validate input.
-
-    if not isinstance(system, _SireSystem.System):
-        raise TypeError("'system' must be of type 'Sire.System.System'")
-
-    if not isinstance(format, str):
-        raise TypeError("'format' must be of type 'str'")
-
-    if not isinstance(filebase, str):
-        raise TypeError("'filebase' must be of type 'str'")
-
-    # Create the key.
-    key = (system.uid().toString(), str(system.version()), format)
-
-    # Get the existing file path and MD5 hash from the cache.
-    try:
-        (path, original_hash) = _file_cache[key]
-    except:
-        return False
-
-    # Whether the cache entry is still valid.
-    cache_valid = True
-
-    # Make sure the file still exists.
-    if not _os.path.exists(path):
-        cache_valid = False
-    # Make sure the MD5 sum is still the same.
-    else:
-        current_hash = _get_md5_hash(path)
-        if current_hash != original_hash:
-            cache_valid = False
-
-    # If the cache isn't valid, delete the entry and return False.
-    if not cache_valid:
-        if key in _file_cache:
-            del _file_cache[key]
-        return False
-
-    # Copy the old file to the new location.
-    else:
-        # Get the file extension.
-        ext = _os.path.splitext(path)[1]
-
-        # Add the extension to the file base.
-        new_path = filebase + ext
-
-        # Copy the file to the new location.
-        try:
-            _shutil.copyfile(path, new_path)
-        except _shutil.SameFileError:
-            pass
-
-        return ext
-
-
-def _update_cache(system, format, path):
-    """
-    Internal helper function to update the file cache when a new system
-    is written to a specified format.
-
-    Parameters
-    ----------
-
-    system : sire.legacy.System.System
-        The Sire system.
-
-    format : str
-        The molecular file format.
-
-    path : str
-        The path to the file.
-    """
-
-    # Validate input.
-
-    if not isinstance(system, _SireSystem.System):
-        raise TypeError("'system' must be of type 'Sire.System.System'")
-
-    if not isinstance(format, str):
-        raise TypeError("'format' must be of type 'str'")
-
-    if not isinstance(path, str):
-        raise TypeError("'path' must be of type 'str'")
-
-    if not _os.path.exists(path):
-        raise IOError(f"File does not exist: '{path}'")
-
-    # Convert to an absolute path.
-    path = _os.path.abspath(path)
-
-    # Get the MD5 checksum for the file.
-    hash = _get_md5_hash(path)
-
-    # Create the key.
-    key = (system.uid().toString(), str(system.version()), format)
-
-    # Update the cache.
-    _file_cache[key] = (path, hash)
-
-
-def _get_md5_hash(path):
-    """
-    Internal helper function to return the MD5 checksum for a file.
-
-    Returns
-    -------
-
-    hash : hashlib.HASH
-    """
-    # Get the MD5 hash of the file. Process in chunks in case the file is too
-    # large to process.
-    hash = _hashlib.md5()
-    with open(path, "rb") as f:
-        for chunk in iter(lambda: f.read(4096), b""):
-            hash.update(chunk)
-
-    return hash.hexdigest()
 
 
 def _patch_sire_load(path, *args, show_warnings=True, property_map={}, **kwargs):

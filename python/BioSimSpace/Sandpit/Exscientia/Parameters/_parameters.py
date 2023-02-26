@@ -437,7 +437,7 @@ def _parameterise_openff(
             "must be in your PATH."
         ) from None
 
-    # Check the Antechamber version. Open Force Field requires Antechamber >= 20.0.
+    # Check the Antechamber version. Open Force Field requires Antechamber >= 22.0.
     try:
         # Antechamber returns an exit code of 1 when requesting version information.
         # As such, we wrap the call within a try-except block in case it fails.
@@ -471,7 +471,7 @@ def _parameterise_openff(
         version = float(string.split(":")[0])
 
         # The version is okay, enable Open Force Field support.
-        if version >= 20:
+        if version >= 22:
             is_compatible = True
         # Disable Open Force Field support.
         else:
@@ -486,7 +486,7 @@ def _parameterise_openff(
         raise
 
     if not is_compatible:
-        raise _IncompatibleError(f"'{forcefield}' requires Antechamber >= 20.0")
+        raise _IncompatibleError(f"'{forcefield}' requires Antechamber >= 22.0")
 
     # Validate arguments.
 

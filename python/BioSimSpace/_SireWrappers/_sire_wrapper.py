@@ -148,6 +148,22 @@ class SireWrapper:
         # Return the charge.
         return charge * _Units.Charge.electron_charge
 
+    def smiles(self):
+        """
+        Return the SMILES string representation of this object.
+
+        Returns
+        -------
+
+        smiles : str, [str]
+            The SMILES string representation of the object(s).
+        """
+
+        try:
+            return self._sire_object.smiles()
+        except:
+            return [obj.smiles() for obj in self]
+
     def translate(self, vector, property_map={}):
         """
         Translate the object.

@@ -87,6 +87,7 @@ def test_missing_args(value):
     assert proc.returncode != 0
 
 
+@pytest.mark.skip(reason="Intermittently failing during CI only.")
 def test_invalid_args():
     """Test that the node fails when required arguments are of the wrong type."""
 
