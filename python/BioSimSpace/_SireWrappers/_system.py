@@ -2080,8 +2080,7 @@ class System(_SireWrapper):
         # Return the renumbered molecules.
         return new_molecules
 
-    @staticmethod
-    def _createSireSystem():
+    def _createSireSystem(self):
         """
         Create an empty Sire system with a single molecule group called "all".
 
@@ -2100,6 +2099,10 @@ class System(_SireWrapper):
 
         # Add the molecule group to the system.
         system.add(molgrp)
+
+        # Copy any existing system properties.
+        for prop in self._sire_object.propertyKeys():
+            system.setProperty(prop, self._sire_object.property(prop))
 
         return system
 
