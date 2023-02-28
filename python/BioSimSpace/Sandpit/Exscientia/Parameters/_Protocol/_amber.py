@@ -57,6 +57,7 @@ else:
 _sys.stderr = _sys.__stderr__
 del _sys
 
+from sire.legacy import IO as _SireIO
 from sire.legacy import Mol as _SireMol
 
 from ... import _amber_home, _gmx_exe, _isVerbose
@@ -399,8 +400,19 @@ class AmberProtein(_protocol.Protocol):
 
         # Write the system to a PDB file.
         try:
-            _IO.saveMolecules(prefix + "leap", _molecule, "pdb", self._property_map)
+            # LEaP expects residue numbering to be ascending and continuous.
+            renumbered_molecule = _SireIO.renumberConstituents(
+                _molecule.toSystem()._sire_object
+            )[0]
+            renumbered_molecule = _Molecule(renumbered_molecule)
+            _IO.saveMolecules(
+                prefix + "leap",
+                renumbered_molecule,
+                "pdb",
+                self._property_map,
+            )
         except Exception as e:
+            raise
             msg = "Failed to write system to 'PDB' format."
             if _isVerbose():
                 msg += ": " + getattr(e, "message", repr(e))
@@ -413,14 +425,14 @@ class AmberProtein(_protocol.Protocol):
 
         # Check to see if any disulphide bonds are present.
         disulphide_bonds = self._get_disulphide_bonds(
-            molecule._sire_object,
+            renumbered_molecule._sire_object,
             self._tolerance,
             self._max_distance,
             self._property_map,
         )
 
         # Get any additional bond records.
-        bond_records = self._generate_bond_records(molecule, self._bonds)
+        bond_records = self._generate_bond_records(renumbered_molecule, self._bonds)
 
         # Remove any duplicate bonds, e.g. if disulphides are specified twice.
         pruned_bond_records = []
@@ -690,7 +702,7 @@ class AmberProtein(_protocol.Protocol):
         Parameters
         ----------
 
-        molecule : Sire.Mol.Molecule
+        molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, str
             The molecule of interest.
 
         bonds : ((class:`Atom <BioSimSpace._SireWrappers.Atom>`, class:`Atom <BioSimSpace._SireWrappers.Atom>`))
