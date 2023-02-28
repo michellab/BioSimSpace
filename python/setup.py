@@ -123,7 +123,6 @@ finally:
             "py3dmol",
             "pydot",
             "pygtail",
-            "pypdb",
             "pyyaml",
             "rdkit",
             "sire",
