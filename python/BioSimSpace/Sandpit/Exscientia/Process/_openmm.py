@@ -334,7 +334,9 @@ class OpenMM(_process.Process):
             self.addToConfig(
                 "    simulation.context.setPeriodicBoxVectors(*inpcrd.boxVectors)"
             )
-            self.addToConfig(f"simulation.minimizeEnergy({self._protocol.getSteps()})")
+            self.addToConfig(
+                f"simulation.minimizeEnergy(maxIterations={self._protocol.getSteps()})"
+            )
 
             # Add the reporters.
             self.addToConfig("\n# Add reporters.")
