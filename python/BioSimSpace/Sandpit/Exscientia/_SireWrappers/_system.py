@@ -392,6 +392,167 @@ class System(_SireWrapper):
         except:
             return None
 
+    def isSame(
+        self,
+        other,
+        excluded_properties=[],
+        property_map0={},
+        property_map1={},
+        skip_water=True,
+    ):
+        """
+        Check whether "other" is the same as this system.
+
+        Parameters
+        ----------
+
+        other : :class:`System <BioSimSpace._SireWrappers.System>`
+            Another BioSimSpace system.
+
+        excluded_properties : [str]
+            A list of properties to exclude when comparing systems. This allows
+            you to check whether a subset of the system is the same, e.g.
+            checking whether the topology is the same, but allowing different
+            coordinates.
+
+        property_map0 : dict
+            A dictionary that maps "properties" in this system to their user
+            defined values. This allows the user to refer to properties with
+            their own naming scheme, e.g. { "charge" : "my-charge" }
+
+        property_map1 : dict
+            A dictionary that maps "properties" in "other" to their user
+            defined values.
+
+        skip_water : bool
+            Whether to skip water molecules when comparing systems.
+
+        Returns
+        -------
+
+        is_same : bool
+            Whether the systems are the same.
+        """
+
+        # Validate input.
+
+        if not isinstance(other, System):
+            raise TypeError(
+                "'other' must be of type 'BioSimSpace._SireWrappers.System'."
+            )
+
+        if not isinstance(excluded_properties, (list, tuple)):
+            raise TypeError("'excluded_properties' must be a list of 'str' types.")
+
+        if not all(isinstance(x, str) for x in excluded_properties):
+            raise TypeError("'excluded_properties' must be a list of 'str' types.")
+
+        if not isinstance(property_map0, dict):
+            raise TypeError("'property_map0' must be of type 'dict'.")
+
+        if not isinstance(property_map1, dict):
+            raise TypeError("'property_map1' must be of type 'dict'.")
+
+        if not isinstance(skip_water, bool):
+            raise TypeError("'skip_water' must be of type 'bool'.")
+
+        # If the system UIDs differ, then they are definitely different.
+        if self._sire_object.uid() != other._sire_object.uid():
+            return False
+
+        # Return False if the systems have a different number of molecules,
+        # atoms, or residues.
+        if (
+            self.nMolecules() != other.nMolecules()
+            or self.nResidues() != other.nResidues()
+            or self.nAtoms() != other.nAtoms()
+        ):
+            return False
+
+        # Invert the property maps.
+        inv_prop_map0 = {v: k for k, v in property_map0.items()}
+        inv_prop_map1 = {v: k for k, v in property_map1.items()}
+
+        # Add some additional properties to the excluded list. These are
+        # used for internal metadata to aid object recovery.
+        _excluded_properties = excluded_properties.copy()
+        _excluded_properties.extend(["fileformat", "is_perturbable", "was_perturbable"])
+
+        def _object_compare(object0, object1):
+            """Helper function to check whether two Sire objects are the same."""
+
+            # Store the two sets of properties.
+            props0 = object0.propertyKeys()
+            props1 = object1.propertyKeys()
+
+            # Loop over all properties of object0.
+            for p0 in props0:
+                # Get the actual property name.
+                name0 = inv_prop_map0.get(p0, p0)
+
+                # Skip if excluded.
+                if not name0 in _excluded_properties:
+                    # Get the property name in other.
+                    name1 = property_map1.get(name0, name0)
+
+                    # Does object1 have this property?
+                    if name1 in object1.propertyKeys():
+                        # Do the property versions match?
+                        try:
+                            if object0.version(name0) != object1.version(name1):
+                                return False
+                        except:
+                            # Get the properties in objects.
+                            prop0 = object0.property(name0)
+                            prop1 = object1.property(name1)
+                            # Are the values the same?
+                            try:
+                                if prop0.value() != prop1.value():
+                                    return False
+                            except:
+                                # Are they equal?
+                                try:
+                                    if prop0 != prop1:
+                                        return False
+                                except:
+                                    return False
+
+                    # Property is missing, so the objects differ.
+                    else:
+                        return False
+
+            # Now check that there aren't any additional properties in object1
+            # that aren't excluded.
+            for p1 in props1:
+                name1 = inv_prop_map1.get(p1, p1)
+                # This is a property unique to object1, so they differ.
+                if not name1 in _excluded_properties and name1 not in props0:
+                    return False
+
+            # If we get this far, then the objects are the same.
+            return True
+
+        # First compare system properties.
+        is_same = _object_compare(self._sire_object, other._sire_object)
+
+        if not is_same:
+            return False
+
+        if skip_water:
+            molecules0 = self.search("not water", property_map0).molecules()
+            molecules1 = other.search("not water", property_map1).molecules()
+        else:
+            molecules0 = self.getMolecules()
+            molecules1 = other.getMolecules()
+
+        # Now compare molecules.
+        for molecule0, molecule1 in zip(molecules0, molecules1):
+            if not _object_compare(molecule0._sire_object, molecule1._sire_object):
+                return False
+
+        # If we made it this far, then the systems are the same.
+        return True
+
     def addMolecules(self, molecules):
         """
         Add a molecule, or list of molecules to the system.
@@ -714,6 +875,21 @@ class System(_SireWrapper):
         # Return a molecules container.
         return _Molecules(molgrp)
 
+    def getAtoms(self):
+        """
+        Return a list containing the atoms in the system.
+
+        Returns
+        -------
+
+        atoms : [:class:`Atom <BioSimSpace._SireWrappers.Atom>`]
+            The list of atoms in the system.
+        """
+        atoms = []
+        for mol in self:
+            atoms.extend(mol.getAtoms())
+        return atoms
+
     def getAtom(self, index):
         """
         Return the atom specified by the absolute index.
@@ -755,6 +931,21 @@ class System(_SireWrapper):
         # Return the atom.
         return self[mol_idx].getAtoms()[rel_idx]
 
+    def getResidues(self):
+        """
+        Return a list containing the residues in the system.
+
+        Returns
+        -------
+
+        residues : [:class:`Residue <BioSimSpace._SireWrappers.Residue>`]
+            The list of residues in the system.
+        """
+        residues = []
+        for mol in self:
+            residues.extend(mol.getResidues())
+        return residues
+
     def getResidue(self, index):
         """
         Return the residue specified by the absolute index.
@@ -768,7 +959,7 @@ class System(_SireWrapper):
         Returns
         -------
 
-        atom : :class:`Atom <BioSimSpace._SireWrappers.Residue>`
+        residue : :class:`Residue <BioSimSpace._SireWrappers.Residue>`
             The residue at the specified index.
         """
         if not type(index) is int:
@@ -1915,8 +2106,7 @@ class System(_SireWrapper):
         # Return the renumbered molecules.
         return new_molecules
 
-    @staticmethod
-    def _createSireSystem():
+    def _createSireSystem(self):
         """
         Create an empty Sire system with a single molecule group called "all".
 
@@ -1935,6 +2125,10 @@ class System(_SireWrapper):
 
         # Add the molecule group to the system.
         system.add(molgrp)
+
+        # Copy any existing system properties.
+        for prop in self._sire_object.propertyKeys():
+            system.setProperty(prop, self._sire_object.property(prop))
 
         return system
 

@@ -7,7 +7,15 @@ OpenBioSim
 :mod:`BioSimSpace` is supported by `OpenBioSim <https://openbiosim.org>`__, a community interest
 company supporting open-source development of fostering academic/industrial collaboration
 within the biomolecular simulation community. Our software is hosted via the `OpenBioSim`
-`<GitHub <https://github.com/OpenBioSim/biosimspace>`__ organisation.
+`GitHub <https://github.com/OpenBioSim/biosimspace>`__ organisation.
+
+`2023.1.2 <https://github.com/openbiosim/biosimspace/compare/2023.1.1...2023.1.2>`_ - Feb 24 2023
+-------------------------------------------------------------------------------------------------
+
+* Refactor code to use a unified :class:`WorkDir <BioSimSpace._Utils.WorkDir>` class to simplify the creation of working directories.
+* Added :meth:`isSame <BioSimSpace._SireWrappers.System.isSame>` method to compare systems using a sub-set of system and molecular properties. This improves our file caching support, allowing a user to exclude properties when comparing cached systems prior to write, e.g. ignoring coordinates and velocities, if those are the only things that differ between the systems.
+* Added the initial version of :mod:`BioSimSpace.Convert <BioSimSpace.Convert>`, which provides support for converting between native `BioSimSpace`, `Sire <http://sire.openbiosim.org>`__, and `RDKit <https://www.rdkit.org>`__ objects.
+* Fixed several formatting issues with the website documentation.
 
 `2023.1.1 <https://github.com/openbiosim/biosimspace/compare/2023.1.0...2023.1.1>`_ - Feb 07 2023
 -------------------------------------------------------------------------------------------------

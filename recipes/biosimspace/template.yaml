@@ -34,7 +34,7 @@ test:
   imports:
     - BioSimSpace
   source_files:
-    - python/BioSimSpace # [linux and x86_64]
+    - python/BioSimSpace # [linux and x86_64 and py39]
     - test
   commands:
     - pytest -vvv --color=yes --black python/BioSimSpace # [linux and x86_64 and py39]

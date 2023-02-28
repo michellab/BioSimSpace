@@ -323,3 +323,36 @@ def test_molecule_replace(system):
         assert num0 == num1
     for num0, num1 in zip(mol_nums0[4:], mol_nums1[4:]):
         assert num0 == num1
+
+
+def test_isSame(system):
+    # Make sure that the isSame method works correctly.
+
+    # Make a copy of the system.
+    other = system.copy()
+
+    # Assert they are the same, making sure it is invariant to the order.
+    assert system.isSame(other)
+    assert other.isSame(system)
+
+    # Translate the other system.
+    other.translate(3 * [BSS.Units.Length.angstrom])
+
+    # Assert that they are different.
+    assert not system.isSame(other)
+    assert not other.isSame(system)
+
+    # Assert that they are the same, apart from their coordinates.
+    assert system.isSame(other, excluded_properties=["coordinates"])
+    assert other.isSame(system, excluded_properties=["coordinates"])
+
+    # Now delete a property.
+    other._sire_object.removeProperty("space")
+
+    # Assert that they are different.
+    assert not system.isSame(other, excluded_properties=["coordinates"])
+    assert not other.isSame(system, excluded_properties=["coordinates"])
+
+    # Assert that they are the same, apart from their coordinates and space.
+    assert system.isSame(other, excluded_properties=["coordinates", "space"])
+    assert other.isSame(system, excluded_properties=["coordinates", "space"])

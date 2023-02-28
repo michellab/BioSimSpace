@@ -1,5 +1,5 @@
-`BioSimSpace <http:/biosimspace.openbiosim.org>`__
-==================================================
+`BioSimSpace <https://biosimspace.openbiosim.org>`__
+====================================================
 
 .. image:: https://github.com/openbiosim/biosimspace/workflows/Build/badge.svg
    :target: https://github.com/openbiosim/biosimspace/actions?query=workflow%3ABuild)
@@ -30,13 +30,13 @@ location.
 About
 -----
 
-`BioSimSpace <https:/biosimspace.openbiosim.org>`__ is an interoperable Python framework
+`BioSimSpace <https://biosimspace.openbiosim.org>`__ is an interoperable Python framework
 for biomolecular simulation. With it you can:
 
 * Write robust and portable biomolecular workflow components that work on
   different hardware, with different software packages, and that can be
   run in different ways, e.g. command-line, `Jupyter <https://jupyter.org>`__.
-* Interact with molecular-simulation processes in real time.
+* Start, stop, and monitor molecular simulation processes within interactive Python environments.
 
 Citation |DOI for Citing BioSimSpace|
 =====================================
@@ -62,7 +62,7 @@ If you use BioSimSpace in any scientific software, please cite the following pap
 Documentation
 -------------
 
-Full documentation can be found `here <https:/biosimspace.openbiosim.org>`__.
+Full documentation can be found `here <https://biosimspace.openbiosim.org>`__.
 
 Installation
 ------------
@@ -125,6 +125,19 @@ Conda environment.
    cd biosimspace/python
    python setup.py install
 
+If you plan to develop and want an editable install, use:
+
+.. code-block:: bash
+
+   python setup.py develop
+
+If you want to skip the installation of BioSimSpace dependencies, e.g. if they
+are already installed, then you can use:
+
+.. code-block:: bash
+
+   BSS_SKIP_DEPENDENCIES=1 python setup.py develop
+
 Once finished, you can test the installation by running:
 
 .. code-block:: bash
@@ -136,6 +149,21 @@ Then try importing the BioSimSpace package:
 .. code-block:: python
 
    import BioSimSpace as BSS
+
+If you don't want to install Sire from source, an alternative is to create a conda
+environment containing only the dependencies of BioSimSpace, then install the
+latest development code into that.
+
+.. code-block:: bash
+
+   mamba create -n openbiosim-dev -c conda-forge -c openbiosim/label/dev biosimspace --only-deps
+   mamba activate openbiosim-dev
+   git clone https://github.com/openbiosim/biosimspace
+   cd biosimspace/python
+   BSS_SKIP_DEPENDENCIES=1 python setup.py develop
+
+(You may also want to install optional dependencies, such as ``ambertools`` and
+``gromacs`` into your environment.)
 
 Developers
 ----------

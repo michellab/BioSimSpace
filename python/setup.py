@@ -82,8 +82,8 @@ try:
         cmdclass=versioneer.get_cmdclass(),
         description="BioSimSpace: Making biomolecular simulation a breeze.",
         author=authors,
-        url="https://github.com/michellab/BioSimSpace",
-        license="GPLv2",
+        url="https://github.com/openbiosim/biosimspace",
+        license="GPLv3",
         packages=find_packages(),
         include_package_data=True,
         zip_safe=False,
@@ -108,22 +108,26 @@ finally:
 
         # Create a list of the conda dependencies.
         conda_deps = [
+            "alchemlyb<2",  # known not available on aarch64
             "configargparse",
-            "pygtail",
-            "pyyaml",
-            "watchdog",
-            "pydot",
-            "networkx",
-            "nglview",
             "ipywidgets<8",
-            "py3dmol",
-            "pypdb",
-            "rdkit",
-            "parmed",
+            "kcombu_bss",
             "lomap2",
             "mdtraj",  # known not available on aarch64
             "mdanalysis",  # known not available on aarch64
-            "openff-toolkit",  # known not available on aarch64
+            "networkx",
+            "nglview",
+            "openff-interchange-base",
+            "openff-toolkit-base",
+            "parmed",
+            "py3dmol",
+            "pydot",
+            "pygtail",
+            "pypdb",
+            "pyyaml",
+            "rdkit",
+            "sire",
+            "watchdog",
         ]
 
         # Don't try to install things that are already installed...
@@ -165,6 +169,13 @@ finally:
 
         # Need to not use posix rules on windows with shlex.split, or path separator is escaped
         posix = sys.platform != "win32"
+
+        print("Adding openbiosim channel")
+        command = (
+            "%s config --system --prepend channels openbiosim/label/dev"
+            % real_conda_exe
+        )
+        print(command)
 
         print("Adding conda-forge channel")
         command = "%s config --system --prepend channels conda-forge" % real_conda_exe
@@ -278,13 +289,6 @@ finally:
             stderr=stderr,
         )
 
-        # We can't install BioSimSpace here because it confuses the Sire old/new/mixed API
-        # try:
-        #    import BioSimSpace
-        # except:
-        #    print("\nPossible installation issues.")
-        #    sys.exit()
-
         print("\nDone!")
 
         print(
@@ -295,4 +299,3 @@ finally:
         print("AMBER:   http://ambermd.org")
         print("GROMACS: http://www.gromacs.org")
         print("NAMD:    http://www.ks.uiuc.edu/Research/namd")
-        print("FKCOMBU: https://pdbj.org/kcombu")
