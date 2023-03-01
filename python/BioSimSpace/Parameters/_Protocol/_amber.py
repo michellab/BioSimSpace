@@ -672,6 +672,9 @@ class AmberProtein(_protocol.Protocol):
         # Create a list to store the LEaP bond record strings.
         bond_records = []
 
+        # Whether a warning has already been raised.
+        have_warned = False
+
         # Loop over the disulphide bonds and generate the records.
         for bond in disulphides:
             # Get the atoms in the bond.
@@ -679,15 +682,30 @@ class AmberProtein(_protocol.Protocol):
             atom1 = bond.atom1()
 
             # Extract the residue numbers associated with the atoms.
-            res0 = atom0.residue().number().value()
-            res1 = atom1.residue().number().value()
+            num0 = atom0.residue().number().value()
+            num1 = atom1.residue().number().value()
+
+            # Extract the residue indices associated with the atoms.
+            # (Make sure these are one-indexed.)
+            idx0 = atom0.residue().index().value() + 1
+            idx1 = atom1.residue().index().value() + 1
+
+            # If the residue numbers don't match the indices, then warn the user
+            # since the molecule will require renumbering before passing to LEaP.
+            if not have_warned:
+                if idx0 != num0 or idx1 != num1:
+                    _warnings.warn(
+                        "Residue numbers are out of order. Use "
+                        "'sire.legacy.IO.renumberConstituents' correct numbering."
+                    )
+                    have_warned = True
 
             # Extract the atom names.
             name0 = atom0.name().value()
             name1 = atom1.name().value()
 
             # Create the record.
-            record = f"bond mol.{res0}.{name0} mol.{res1}.{name1}"
+            record = f"bond mol.{idx0}.{name0} mol.{idx1}.{name1}"
 
             # Append to the list.
             bond_records.append(record)
@@ -757,6 +775,9 @@ class AmberProtein(_protocol.Protocol):
         # Create a list to store the LEaP bond record strings.
         bond_records = []
 
+        # Whether a warning has already been raised.
+        have_warned = False
+
         # Loop over the bonds and generate the records.
         for atom0, atom1 in bonds:
             # Extract the Sire objects.
@@ -764,15 +785,30 @@ class AmberProtein(_protocol.Protocol):
             atom1 = atom1._sire_object
 
             # Extract the residue numbers associated with the atoms.
-            res0 = atom0.residue().number().value()
-            res1 = atom1.residue().number().value()
+            num0 = atom0.residue().number().value()
+            num1 = atom1.residue().number().value()
+
+            # Extract the residue indices associated with the atoms.
+            # (Make sure these are one-indexed.)
+            idx0 = atom0.residue().index().value() + 1
+            idx1 = atom1.residue().index().value() + 1
+
+            # If the residue numbers don't match the indices, then warn the user
+            # since the molecule will require renumbering before passing to LEaP.
+            if not have_warned:
+                if idx0 != num0 or idx1 != num1:
+                    _warnings.warn(
+                        "Residue numbers are out of order. Use "
+                        "'sire.legacy.IO.renumberConstituents' correct numbering."
+                    )
+                    have_warned = True
 
             # Extract the atom names.
             name0 = atom0.name().value()
             name1 = atom1.name().value()
 
             # Create the record.
-            record = f"bond mol.{res0}.{name0} mol.{res1}.{name1}"
+            record = f"bond mol.{idx0}.{name0} mol.{idx1}.{name1}"
 
             # Append to the list.
             bond_records.append(record)

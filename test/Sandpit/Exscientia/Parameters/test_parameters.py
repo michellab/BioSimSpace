@@ -1,7 +1,5 @@
 import BioSimSpace.Sandpit.Exscientia as BSS
 
-from sire.legacy.IO import renumberConstituents
-
 import os
 import pytest
 
@@ -62,12 +60,9 @@ def test_disulphide_renumber(molecule1, ff="ff14SB"):
     # tLEaP input script.
     molecule = getattr(BSS.Parameters, ff)(molecule1).getMolecule()
 
-    renumbered_molecule = renumberConstituents(molecule1.toSystem()._sire_object)[0]
-    renumbered_molecule = BSS._SireWrappers.Molecule(renumbered_molecule)
-
-    # Check that we actually generate records for four disulphide bonds.
+    # Check that we actually generate records for eight disulphide bonds.
     bonds = BSS.Parameters._Protocol.AmberProtein._get_disulphide_bonds(
-        renumbered_molecule._sire_object
+        molecule1._sire_object
     )
     assert len(bonds) == 8
 
