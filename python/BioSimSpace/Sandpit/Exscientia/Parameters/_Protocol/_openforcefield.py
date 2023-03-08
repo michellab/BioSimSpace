@@ -358,7 +358,7 @@ class OpenForceField(_protocol.Protocol):
             # which would break GROMACS.
             name = molecule
             if name.startswith("["):
-                name = f"name:{name}"
+                name = f"smiles:{name}"
 
             edit_mol = new_mol._sire_object.edit()
             edit_mol = edit_mol.rename(name).molecule()

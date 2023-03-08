@@ -58,7 +58,7 @@ def test_disulphide(molecule, ff):
 def test_molecule_rename():
     """
     Test that a parameterised molecule generated from a SMILES string
-    starting with the "[" character is renamed with a "name:" prefix
+    starting with the "[" character is renamed with a "smiles:" prefix
     so that it can be parsed by gmx when used in a GROMACS topology file.
     """
 
@@ -68,4 +68,4 @@ def test_molecule_rename():
     ).getMolecule()
 
     # Make sure the name is correct.
-    assert mol._sire_object.name().value() == "name:[C@@H](C(F)(F)F)(OC(F)F)Cl"
+    assert mol._sire_object.name().value() == "smiles:[C@@H](C(F)(F)F)(OC(F)F)Cl"

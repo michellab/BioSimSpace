@@ -105,7 +105,7 @@ def smiles(
         # need to ensure that it doesn't start with an [ character,
         # which would break GROMACS.
         if smiles_string.startswith("["):
-            name = f"name:{smiles_string}"
+            name = f"smiles:{smiles_string}"
             edit_mol = molecule._sire_object.edit()
             edit_mol = edit_mol.rename(name).molecule()
             molecule._sire_object = edit_mol.commit()
