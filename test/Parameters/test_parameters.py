@@ -21,6 +21,9 @@ if BSS._amber_home is not None:
 else:
     has_tleap = False
 
+# Make sure antechamber is installed.
+has_antechamber = BSS.Parameters._Protocol._amber._antechamber_exe is not None
+
 
 @pytest.fixture(scope="session")
 def molecule():
@@ -48,7 +51,10 @@ def test_disulphide(molecule, ff):
     assert len(bonds) == 4
 
 
-@pytest.mark.skipif(has_openff is False, reason="Requires OpenFF to be installed.")
+@pytest.mark.skipif(
+    has_antechamber is False or has_openff is False,
+    reason="Requires AmberTools/antechamber and OpenFF to be installed.",
+)
 def test_molecule_rename():
     """
     Test that a parameterised molecule generated from a SMILES string
