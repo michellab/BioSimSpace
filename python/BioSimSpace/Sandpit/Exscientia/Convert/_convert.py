@@ -87,8 +87,11 @@ def smiles(
     if not isinstance(property_map, dict):
         raise TypeError("'property_map' must be of type 'dict'.")
 
+    # Strip whitespace.
+    smiles_string = smiles_string.replace(" ", "")
+
     try:
-        return _SireWrappers.Molecule(
+        molecule = _SireWrappers.Molecule(
             _sire_smiles(
                 smiles_string,
                 add_hydrogens=add_hydrogens,
@@ -96,6 +99,19 @@ def smiles(
                 map=property_map,
             )
         )
+
+        # Rename the molecule with the original SMILES string.
+        # Since the name is written to topology file formats, we
+        # need to ensure that it doesn't start with an [ character,
+        # which would break GROMACS.
+        if smiles_string.startswith("["):
+            name = f"name:{smiles_string}"
+            edit_mol = molecule._sire_object.edit()
+            edit_mol = edit_mol.rename(name).molecule()
+            molecule._sire_object = edit_mol.commit()
+
+        return molecule
+
     except:
         raise _ConversionError(
             f"Unable to create a BioSimSpace Molecule from SMILES string: {smiles_string}"
