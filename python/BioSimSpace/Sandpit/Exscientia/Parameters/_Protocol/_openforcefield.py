@@ -353,8 +353,15 @@ class OpenForceField(_protocol.Protocol):
             # this will be missing.
 
             # Rename the molecule with the original SMILES string.
+            # Since the name is written to topology file formats, we
+            # need to ensure that it doesn't start with an [ character,
+            # which would break GROMACS.
+            name = molecule
+            if name.startswith("["):
+                name = f"name:{name}"
+
             edit_mol = new_mol._sire_object.edit()
-            edit_mol = edit_mol.rename(molecule).molecule()
+            edit_mol = edit_mol.rename(name).molecule()
 
             # Rename the residue LIG.
             resname = _SireMol.ResName("LIG")

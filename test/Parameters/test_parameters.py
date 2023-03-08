@@ -1,7 +1,12 @@
 import BioSimSpace as BSS
+from BioSimSpace._Utils import _try_import, _have_imported
 
 import os
 import pytest
+
+# Make sure openff is installed.
+_openff = _try_import("openff")
+has_openff = _have_imported(_openff)
 
 # Store the tutorial URL.
 url = BSS.tutorialUrl()
@@ -41,3 +46,20 @@ def test_disulphide(molecule, ff):
     # Check that the bond parameters are present in the molecule.
     bonds = molecule.search("bonds from element S to element S")
     assert len(bonds) == 4
+
+
+@pytest.mark.skipif(has_openff is False, reason="Requires OpenFF to be installed.")
+def test_molecule_rename():
+    """
+    Test that a parameterised molecule generated from a SMILES string
+    starting with the "[" character is renamed with a "name:" prefix
+    so that it can be parsed by gmx when used in a GROMACS topology file.
+    """
+
+    # Create the parameterised molecule.
+    mol = BSS.Parameters.openff_unconstrained_2_0_0(
+        "[C@@H](C(F)(F)F)(OC(F)F)Cl"
+    ).getMolecule()
+
+    # Make sure the name is correct.
+    assert mol._sire_object.name().value() == "name:[C@@H](C(F)(F)F)(OC(F)F)Cl"
