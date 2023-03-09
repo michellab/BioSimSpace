@@ -62,6 +62,7 @@ from sire.legacy import Mol as _SireMol
 from ... import _amber_home, _gmx_exe, _isVerbose
 from ... import IO as _IO
 from ... import _Utils
+from ...Convert import smiles as _smiles
 from ..._Exceptions import IncompatibleError as _IncompatibleError
 from ..._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from ..._Exceptions import ParameterisationError as _ParameterisationError
@@ -383,9 +384,9 @@ class AmberProtein(_protocol.Protocol):
         # Convert SMILES to a molecule.
         if isinstance(molecule, str):
             try:
-                _molecule = _smiles_to_molecule(molecule, work_dir)
+                _molecule = _smiles(molecule)
             except Exception as e:
-                msg = "Unable to convert SMILES to Molecule using Open Force Field."
+                msg = "Unable to convert SMILES to Molecule using RDKit."
                 if _isVerbose():
                     msg += ": " + getattr(e, "message", repr(e))
                     raise _ThirdPartyError(msg) from e
@@ -528,9 +529,9 @@ class AmberProtein(_protocol.Protocol):
         # Convert SMILES to a molecule.
         if isinstance(molecule, str):
             try:
-                _molecule = _smiles_to_molecule(molecule, work_dir)
+                _molecule = _smiles(molecule)
             except Exception as e:
-                msg = "Unable to convert SMILES to Molecule using Open Force Field."
+                msg = "Unable to convert SMILES to Molecule using RDKit."
                 if _isVerbose():
                     msg += ": " + getattr(e, "message", repr(e))
                     raise _ThirdPartyError(msg) from e
@@ -892,9 +893,9 @@ class GAFF(_protocol.Protocol):
         if isinstance(molecule, str):
             is_smiles = True
             try:
-                new_mol = _smiles_to_molecule(molecule, str(work_dir))
+                new_mol = _smiles(molecule)
             except Exception as e:
-                msg = "Unable to convert SMILES to Molecule using Open Force Field."
+                msg = "Unable to convert SMILES to Molecule using RDKit."
                 if _isVerbose():
                     msg += ": " + getattr(e, "message", repr(e))
                     raise _ThirdPartyError(msg) from e
@@ -1229,40 +1230,3 @@ def _has_missing_atoms(tleap_file):
                 return True
 
     return False
-
-
-def _smiles_to_molecule(smiles, work_dir):
-    """
-    Convert a SMILES string to a Molecule.
-
-    Parameters
-    ----------
-
-    smiles : str
-        A SMILES representation of a molecule.
-
-    work_dir : str
-        The working directory.
-
-    Returns
-    -------
-
-    molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
-        The BioSimSpace representation of the molecule.
-    """
-
-    # Create an OpenFF molecule from the smiles string.
-    off_molecule = _OpenFFMolecule.from_smiles(smiles)
-
-    # Generate a single conformer for the molecule.
-    off_molecule.generate_conformers(n_conformers=1)
-
-    # Write to file.
-    file = work_dir + "/off.pdb"
-    off_molecule.to_file(file, "pdb")
-
-    # Read PDB back into internal molecular representation.
-    molecule = _IO.readMolecules(file)
-
-    # Assume this is a single molecule.
-    return molecule[0]
