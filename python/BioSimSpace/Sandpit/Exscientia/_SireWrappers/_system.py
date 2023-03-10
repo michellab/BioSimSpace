@@ -29,6 +29,8 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["System"]
 
+import warnings as _warnings
+
 from sire.legacy import IO as _SireIO
 from sire.legacy import Maths as _SireMaths
 from sire.legacy import Mol as _SireMol
@@ -635,6 +637,17 @@ class System(_SireWrapper):
 
             # Update the molecule numbers.
             self._mol_nums = self._sire_object.molNums()
+
+        # Remove any velocities.
+        if self.nMolecules() > 1:
+            try:
+                self._sire_object = _SireIO.removeProperty(
+                    self._sire_object, "velocity"
+                )
+            except:
+                _warnings.warn(
+                    "Failed to remove 'velocity' property from all molecules!"
+                )
 
     def removeMolecules(self, molecules):
         """

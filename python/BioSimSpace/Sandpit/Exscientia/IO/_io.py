@@ -672,27 +672,6 @@ def saveMolecules(filebase, system, fileformat, property_map={}, **kwargs):
     # A list of the files that have been written.
     files = []
 
-    # If not all molecules have a velocity property, then we will exclude it
-    # by re-mapping the property keyword. This avoids random data being written
-    # for missing velocities by our parsers.
-
-    # First get the user-defined name of the property.
-    vel_prop = _property_map.get("velocity", "velocity")
-    try:
-        mols_with_velocities = system.search(
-            f"mols with property {vel_prop}"
-        ).molecules()
-        num_vels = len(mols_with_velocities)
-    except:
-        num_vels = 0
-
-    # Not all atoms have velocities, remap the name so it isn't written.
-    if num_vels > 0 and num_vels != system.nMolecules():
-        _warnings.warn(
-            "Not all molecules have velocities so no velocities will be written."
-        )
-        _property_map[vel_prop] = "foo"
-
     # Save the system using each file format.
     for format in formats:
         # Copy an existing file if it exists in the cache.
