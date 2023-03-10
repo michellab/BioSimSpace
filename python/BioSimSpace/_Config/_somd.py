@@ -182,7 +182,7 @@ class Somd(_Config):
             # Periodic box.
             protocol_dict["cutoff type"] = "cutoffperiodic"
         # Non-bonded cut-off.
-        protocol_dict["cutoff distance"] = "8 angstrom"
+        protocol_dict["cutoff distance"] = "10 angstrom"
 
         # Restraints.
         if (
