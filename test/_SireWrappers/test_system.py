@@ -71,7 +71,7 @@ def test_atom_reindexing(system):
 
 def test_residue_reindexing(system):
     # Search for all waters by residue name.
-    results = system.search("resname WAT")
+    results = system.search("resname WAT").residues()
 
     # There are 3 residues in the alanine-dipeptide, then one in each water
     # molecule. This means that residue indexing should start at 3 and
@@ -89,7 +89,7 @@ def test_residue_reindexing(system):
 
 def test_molecule_reindexing(system):
     # Search for all waters by residue name.
-    results = system.search("resname WAT")
+    results = system.search("resname WAT").molecules()
 
     # There are 631 molecules in the system: an alanine-dipeptide, followed by
     # 630 water molecules. This means that molecule indexing should start at 1
@@ -103,7 +103,7 @@ def test_molecule_reindexing(system):
     # As such, we convert each result to a molecule.
     for residue in results:
         # Ensure the absolute index matches.
-        assert system.getIndex(residue.toMolecule()) == index
+        assert system.getIndex(residue) == index
 
         index += 1
 
