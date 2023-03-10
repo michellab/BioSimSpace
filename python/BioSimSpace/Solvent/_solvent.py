@@ -890,7 +890,7 @@ def _solvate(
         # We need to create a dummy input file with no molecule in it.
         else:
             with open("input.gro", "w") as file:
-                file.write("BioSimSpace System\n")
+                file.write("BioSimSpace_System\n")
                 file.write("    0\n")
                 file.write("   0.00000  0.00000  0.00000\n")
 
