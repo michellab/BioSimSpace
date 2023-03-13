@@ -359,7 +359,8 @@ def test_isSame(system):
 
 
 def test_velocity_removal():
-    # Make sure that velocities are removed when molecules are combined.
+    # Make sure that velocities are removed when molecules are combined
+    # and not all molecules have a "velocity" property.
 
     # Load a molecule with and without velocities.
     mol = BSS.IO.readMolecules(BSS.IO.expand(url, "methane.gro", ".bz2"))
