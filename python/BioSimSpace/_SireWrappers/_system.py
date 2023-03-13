@@ -638,16 +638,30 @@ class System(_SireWrapper):
             # Update the molecule numbers.
             self._mol_nums = self._sire_object.molNums()
 
-        # Remove any velocities.
+        # Remove velocities if any molecules are missing them.
         if self.nMolecules() > 1:
+            # Search for water molecules in the system.
             try:
-                self._sire_object = _SireIO.removeProperty(
-                    self._sire_object, "velocity"
-                )
+                mols_with_velocities = self.search(
+                    f"mols with property velocity"
+                ).molecules()
+                num_vels = len(mols_with_velocities)
             except:
+                num_vels = 0
+
+            # Not all molecules have velocities.
+            if num_vels > 0 and num_vels != self.nMolecules():
                 _warnings.warn(
-                    "Failed to remove 'velocity' property from all molecules!"
+                    "Not all molecules have velocities. The 'velocity' property will be removed."
                 )
+                try:
+                    self._sire_object = _SireIO.removeProperty(
+                        self._sire_object, "velocity"
+                    )
+                except:
+                    _warnings.warn(
+                        "Failed to remove 'velocity' property from all molecules!"
+                    )
 
     def removeMolecules(self, molecules):
         """
