@@ -363,7 +363,7 @@ def test_velocity_removal():
 
     # Load a molecule with and without velocities.
     mol = BSS.IO.readMolecules(BSS.IO.expand(url, "methane.gro", ".bz2"))
-    mol_vel = BSS.IO.readMolecules(BSS.IO.expand(url, "methane.gro", ".bz2"))
+    mol_vel = BSS.IO.readMolecules(BSS.IO.expand(url, "methane_vel.gro", ".bz2"))
 
     # Add together to create a new system.
     new_system = mol + mol_vel
