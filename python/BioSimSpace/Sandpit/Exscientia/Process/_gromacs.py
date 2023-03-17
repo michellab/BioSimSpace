@@ -872,6 +872,7 @@ class Gromacs(_process.Process):
         if self.isError():
             _warnings.warn("The process exited with an error!")
 
+        self._update_energy_dict()
         return self._energy_dict.copy()
 
     def getCurrentRecords(self):

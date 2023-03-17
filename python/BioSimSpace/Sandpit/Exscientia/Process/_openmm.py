@@ -1560,6 +1560,7 @@ class OpenMM(_process.Process):
         if self.isError():
             _warnings.warn("The process exited with an error!")
 
+        self._update_stdout_dict()
         return self._stdout_dict.copy()
 
     def getCurrentRecords(self):
