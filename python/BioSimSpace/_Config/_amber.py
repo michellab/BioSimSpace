@@ -114,7 +114,7 @@ class Amber(_Config):
         # Define some miscellaneous defaults.
         protocol_dict = {
             # Interval between reporting energies.
-            "ntpr": 200,
+            "ntpr": self.reportInterval(),
             # Interval between saving restart files.
             "ntwr": self.restartInterval(),
             # Trajectory sampling frequency.
@@ -152,6 +152,8 @@ class Amber(_Config):
             protocol_dict["maxcyc"] = self.steps()
             # Set the number of steepest descent steps.
             protocol_dict["ncyc"] = num_steep
+            # Report energies every 100 steps.
+            protocol_dict["ntpr"] = 100
         else:
             # Define the timestep
             timestep = self._protocol.getTimeStep().picoseconds().value()
