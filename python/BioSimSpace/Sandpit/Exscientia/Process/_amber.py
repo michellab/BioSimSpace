@@ -1720,6 +1720,13 @@ class Amber(_process.Process):
                             # Split the line using whitespace.
                             data = line.upper().split()
 
+                            # The file hasn't been updated.
+                            if (
+                                "NSTEP" in self._stdout_dict
+                                and data[0] == self._stdout_dict["NSTEP"][-1]
+                            ):
+                                return
+
                             # Add the timestep and energy records to the dictionary.
                             self._stdout_dict["NSTEP"] = data[0]
                             self._stdout_dict["ENERGY"] = data[1]
