@@ -17,7 +17,6 @@ pygtail
 pypdb
 pyyaml
 rdkit
-watchdog
 
 # The below are packages that aren't available on all
 # platforms/OSs and so need to be conditionally included
