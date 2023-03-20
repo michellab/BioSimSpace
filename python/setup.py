@@ -127,7 +127,6 @@ finally:
             "pyyaml",
             "rdkit",
             "sire",
-            "watchdog",
         ]
 
         # Don't try to install things that are already installed...
