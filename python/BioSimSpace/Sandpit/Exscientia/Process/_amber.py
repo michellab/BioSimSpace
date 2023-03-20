@@ -1685,6 +1685,9 @@ class Amber(_process.Process):
         if n < 0:
             raise ValueError("The number of lines must be positive!")
 
+        # Flag that this isn't a header line.
+        is_header = False
+
         # Append any new lines to the stdout list.
         for line in _pygtail.Pygtail(self._stdout_file):
             self._stdout.append(line.rstrip())
