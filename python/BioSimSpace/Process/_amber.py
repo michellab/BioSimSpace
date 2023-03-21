@@ -161,9 +161,10 @@ class Amber(_process.Process):
         # Initialise the energy dictionary and header.
         self._stdout_dict = _process._MultiDict()
 
-        # Flag that there are currently no "results" generated.
+        # Initialise log file parsing flags.
         self._has_results = False
         self._finished_results = False
+        self._is_header = False
 
         # The names of the input files.
         self._rst_file = "%s/%s.rst7" % (self._work_dir, name)
@@ -1487,7 +1488,7 @@ class Amber(_process.Process):
             raise ValueError("The number of lines must be positive!")
 
         # Flag that this isn't a header line.
-        is_header = False
+        self._is_header = False
 
         # Append any new lines to the stdout list.
         for line in _pygtail.Pygtail(self._stdout_file):
@@ -1516,11 +1517,11 @@ class Amber(_process.Process):
                             # If we find a header, jump to the top of the loop.
                             if len(data) > 0:
                                 if data[0] == "NSTEP":
-                                    is_header = True
+                                    self._is_header = True
                                     continue
 
                         # Process the header record.
-                        if is_header:
+                        if self._is_header:
                             # Split the line using whitespace.
                             data = line.upper().split()
 
@@ -1529,14 +1530,15 @@ class Amber(_process.Process):
                                 "NSTEP" in self._stdout_dict
                                 and data[0] == self._stdout_dict["NSTEP"][-1]
                             ):
-                                return
+                                self._finished_results = True
+                                continue
 
                             # Add the timestep and energy records to the dictionary.
                             self._stdout_dict["NSTEP"] = data[0]
                             self._stdout_dict["ENERGY"] = data[1]
 
                             # Turn off the header flag now that the data has been recorded.
-                            is_header = False
+                            self._is_header = False
 
                     # All other protocols have output that is formatted as RECORD = VALUE.
 
