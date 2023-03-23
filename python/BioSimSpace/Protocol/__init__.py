@@ -37,13 +37,16 @@ Classes
 .. autosummary::
     :toctree: generated/
 
-    Custom
+    Minimisation
     Equilibration
+    Production
+    FreeEnergyMinimisation
+    FreeEnergyEquilibration
+    FreeEnergyProduction
     FreeEnergy
     Metadynamics
-    Minimisation
-    Production
     Steering
+    Custom
 
 Examples
 ========
@@ -94,7 +97,9 @@ while restraining the positions of any backbone atoms.
 
 from ._custom import *
 from ._equilibration import *
-from ._free_energy import *
+from ._free_energy_equilibration import *
+from ._free_energy_minimisation import *
+from ._free_energy_production import *
 from ._metadynamics import *
 from ._minimisation import *
 from ._production import *

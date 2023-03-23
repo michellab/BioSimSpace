@@ -108,7 +108,9 @@ class Relative:
             a single perturbable molecule and is assumed to have already
             been equilibrated.
 
-        protocol : :class:`Protocol.FreeEnergy <BioSimSpace.Protocol.FreeEnergy>`, \
+        protocol : :class:`Protocol.FreeEnergyMinimisation <BioSimSpace.Protocol.FreeEnergyMinimisation>`, \
+                   :class:`Protocol.FreeEnergyEquilibration <BioSimSpace.Protocol.FreeEnergyEquilibration>`, \
+                   :class:`Protocol.FreeEnergyProduction <BioSimSpace.Protocol.FreeEnergyProduction>`
             The simulation protocol.
 
         work_dir : str
@@ -152,30 +154,6 @@ class Relative:
         else:
             # Store a copy of solvated system.
             self._system = system.copy()
-
-        if protocol is not None:
-            if isinstance(protocol, _Protocol.FreeEnergy):
-                self._protocol = protocol
-            else:
-                raise TypeError(
-                    "'protocol' must be of type 'BioSimSpace.Protocol.FreeEnergy'"
-                )
-        else:
-            # Use a default protocol.
-            self._protocol = _Protocol.FreeEnergy()
-
-        if not isinstance(setup_only, bool):
-            raise TypeError("'setup_only' must be of type 'bool'.")
-        else:
-            self._setup_only = setup_only
-
-        if work_dir is None and setup_only:
-            raise ValueError(
-                "A 'work_dir' must be specified when 'setup_only' is True!"
-            )
-
-        # Create the working directory.
-        self._work_dir = _Utils.WorkDir(work_dir)
 
         # Validate the user specified molecular dynamics engine.
         if engine is not None:
@@ -225,6 +203,40 @@ class Relative:
 
         # Set the engine.
         self._engine = engine
+
+        # Validate the protocol.
+        if protocol is not None:
+            from ..Protocol._free_energy_mixin import _FreeEnergyMixin
+
+            if isinstance(protocol, _FreeEnergyMixin):
+                if engine == "SOMD" and not isinstance(
+                    protocol, _Protocol.FreeEnergyProduction
+                ):
+                    raise ValueError(
+                        "Currently SOMD only supports protocols of type 'BioSimSpace.Protocol.FreeEnergyProduction'"
+                    )
+
+                self._protocol = protocol
+            else:
+                raise TypeError(
+                    "'protocol' must be of type 'BioSimSpace.Protocol.FreeEnergy'"
+                )
+        else:
+            # Use a default protocol.
+            self._protocol = _Protocol.FreeEnergy()
+
+        if not isinstance(setup_only, bool):
+            raise TypeError("'setup_only' must be of type 'bool'.")
+        else:
+            self._setup_only = setup_only
+
+        if work_dir is None and setup_only:
+            raise ValueError(
+                "A 'work_dir' must be specified when 'setup_only' is True!"
+            )
+
+        # Create the working directory.
+        self._work_dir = _Utils.WorkDir(work_dir)
 
         if not isinstance(ignore_warnings, bool):
             raise ValueError("'ignore_warnings' must be of type 'bool.")

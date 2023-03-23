@@ -30,6 +30,7 @@ import math as _math
 import warnings as _warnings
 
 from .. import Protocol as _Protocol
+from ..Protocol._free_energy_mixin import _FreeEnergyMixin
 from ..Protocol._position_restraint_mixin import _PositionRestraintMixin
 
 from ._config import Config as _Config
@@ -244,7 +245,7 @@ class Gromacs(_Config):
                 )
 
         # Free energies.
-        if isinstance(self._protocol, _Protocol.FreeEnergy):
+        if isinstance(self._protocol, _FreeEnergyMixin):
             # Extract the lambda array.
             lam_vals = self._protocol.getLambdaValues()
 
