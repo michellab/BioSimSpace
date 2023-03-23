@@ -33,7 +33,7 @@ from ._protocol import Protocol as _Protocol
 
 
 class _PositionRestraintMixin(_Protocol):
-    """A class for storing position restrain."""
+    """A mixin for applying position restraints to other protocols."""
 
     # Supported restraint keywords.
     _restraints = ["backbone", "heavy", "all", "none"]
