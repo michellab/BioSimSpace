@@ -1496,7 +1496,12 @@ class Amber(_process.Process):
             line = line.strip()
 
             # Skip empty lines and summary reports.
-            if len(line) > 0 and line[0] != "|" and line[0] != "-":
+            if (
+                len(line) > 0
+                and line[0] != "|"
+                and line[0] != "-"
+                and not line.startswith("EAMBER")
+            ):
                 # Flag that we've started recording results.
                 if not self._has_results and line.startswith("NSTEP"):
                     self._has_results = True
