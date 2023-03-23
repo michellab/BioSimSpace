@@ -48,6 +48,7 @@ from .. import _gmx_exe, _gmx_version
 from .. import _isVerbose
 from .._Config import Gromacs as _GromacsConfig
 from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
+from ..Protocol._position_restraint_mixin import _PositionRestraintMixin
 from .._SireWrappers import System as _System
 from ..Types._type import Type as _Type
 
@@ -319,7 +320,8 @@ class Gromacs(_process.Process):
             if self._checkpoint_file is not None:
                 config_options["continuation"] = "yes"
 
-            # Add any position restraints.
+        # Add any position restraints.
+        if isinstance(self._protocol, _PositionRestraintMixin):
             self._add_position_restraints()
 
         # Add configuration variables for metadynamics or steered molecular dynamics.

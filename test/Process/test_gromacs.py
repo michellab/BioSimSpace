@@ -8,6 +8,9 @@ has_gromacs = BSS._gmx_exe is not None
 # Store the tutorial URL.
 url = BSS.tutorialUrl()
 
+# Store the allowed restraints.
+restraints = BSS.Protocol._position_restraint_mixin._PositionRestraintMixin.restraints()
+
 
 @pytest.fixture(scope="session")
 def system():
@@ -27,18 +30,19 @@ def perturbable_system():
 
 
 @pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
-def test_minimise(system):
+@pytest.mark.parametrize("restraint", restraints)
+def test_minimise(system, restraint):
     """Test a minimisation protocol."""
 
     # Create a short minimisation protocol.
-    protocol = BSS.Protocol.Minimisation(steps=100)
+    protocol = BSS.Protocol.Minimisation(steps=100, restraint=restraint)
 
     # Run the process, check that it finished without error, and returns a system.
     run_process(system, protocol)
 
 
 @pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
-@pytest.mark.parametrize("restraint", ["backbone", "heavy", "all", "none"])
+@pytest.mark.parametrize("restraint", restraints)
 def test_equilibrate(system, restraint):
     """Test an equilibration protocol."""
 
@@ -82,11 +86,14 @@ def test_cool(system):
 
 
 @pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
-def test_production(system):
+@pytest.mark.parametrize("restraint", restraints)
+def test_production(system, restraint):
     """Test a production protocol."""
 
     # Create a short production protocol.
-    protocol = BSS.Protocol.Production(runtime=BSS.Types.Time(0.001, "nanoseconds"))
+    protocol = BSS.Protocol.Production(
+        runtime=BSS.Types.Time(0.001, "nanoseconds"), restraint=restraint
+    )
 
     # Run the process, check that it finished without error, and returns a system.
     run_process(system, protocol)

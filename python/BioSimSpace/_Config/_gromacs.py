@@ -30,6 +30,7 @@ import math as _math
 import warnings as _warnings
 
 from .. import Protocol as _Protocol
+from ..Protocol._position_restraint_mixin import _PositionRestraintMixin
 
 from ._config import Config as _Config
 
@@ -164,8 +165,8 @@ class Gromacs(_Config):
         # Twin-range van der Waals cut-off.
         protocol_dict["vdwtype"] = "Cut-off"
 
-        # Restraints.
-        if isinstance(self._protocol, _Protocol.Equilibration):
+        # Position restraints.
+        if isinstance(self._protocol, _PositionRestraintMixin):
             # Note that constraints will be defined by the GROMACS process.
             protocol_dict["refcoord-scaling"] = "com"
 
@@ -193,15 +194,20 @@ class Gromacs(_Config):
                     )
 
         # Temperature control.
-        if not isinstance(self._protocol, _Protocol.Minimisation):
+        if not isinstance(
+            self._protocol,
+            (_Protocol.Metadynamics, _Protocol.Steering, _Protocol.Minimisation),
+        ):
             # Leap-frog molecular dynamics.
             protocol_dict["integrator"] = "md"
             # Temperature coupling using velocity rescaling with a stochastic term.
             protocol_dict["tcoupl"] = "v-rescale"
             # A single temperature group for the entire system.
             protocol_dict["tc-grps"] = "system"
-            # Collision frequency (ps).
-            protocol_dict["tau-t"] = 2
+            # Thermostat coupling frequency (ps).
+            protocol_dict["tau-t"] = "{:.5f}".format(
+                self._protocol.getThermostatTimeConstant().picoseconds().value()
+            )
 
             if isinstance(self._protocol, _Protocol.Equilibration):
                 if self._protocol.isConstantTemp():

@@ -30,6 +30,7 @@ import math as _math
 import warnings as _warnings
 
 from .. import Protocol as _Protocol
+from ..Protocol._position_restraint_mixin import _PositionRestraintMixin
 
 from ._config import Config as _Config
 
@@ -186,10 +187,12 @@ class Somd(_Config):
 
         # Restraints.
         if (
-            isinstance(self._protocol, _Protocol.Equilibration)
+            isinstance(self._protocol, _PositionRestraintMixin)
             and self._protocol.getRestraint() is not None
         ):
-            raise _IncompatibleError("We currently don't support restraints with SOMD.")
+            raise _IncompatibleError(
+                "We currently don't support position restraints with SOMD."
+            )
 
         # Pressure control.
         protocol_dict["barostat"] = False
@@ -227,6 +230,12 @@ class Somd(_Config):
                 protocol_dict["temperature"] = (
                     "%.2f kelvin"
                     % self._protocol.getStartTemperature().kelvin().value()
+                )
+
+            if not isinstance(self._protocol, _Protocol.FreeEnergy):
+                # Friction coefficient (1 / ps).
+                protocol_dict["inverse friction"] = "{:.5f}".format(
+                    1 / self._protocol.getThermostatTimeConstant().picoseconds().value()
                 )
 
         # Free energies.
