@@ -152,10 +152,10 @@ class Somd(_process.Process):
                 # Check the end states.
 
                 # Lambda = 0 (default)
-                if math.isclose(lam, 0, abs_tol=1e-4):
+                if _math.isclose(lam, 0, abs_tol=1e-4):
                     pass
                 # Lambda = 1 (specify via property map)
-                elif math.isclose(lam, 1, abs_tol=1e-4):
+                elif _math.isclose(lam, 1, abs_tol=1e-4):
                     property_map["is_lambda1"] = True
                 # Not supported.
                 else:
