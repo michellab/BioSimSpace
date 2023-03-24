@@ -720,7 +720,7 @@ class Process:
                     "in the 'property_map' argument."
                 )
             else:
-                is_lambda1 = self._property_map["is_lambda1"]
+                is_lambda1 = self._property_map["is_lambda1"].value()
                 self._property_map.pop("is_lambda1")
 
             # Loop over all perturbable molecules in the system and replace them

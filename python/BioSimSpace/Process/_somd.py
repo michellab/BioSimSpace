@@ -156,7 +156,7 @@ class Somd(_process.Process):
                     pass
                 # Lambda = 1 (specify via property map)
                 elif _math.isclose(lam, 1, abs_tol=1e-4):
-                    property_map["is_lambda1"] = True
+                    self._property_map["is_lambda1"] = _SireBase.wrap(True)
                 # Not supported.
                 else:
                     raise ValueError(
