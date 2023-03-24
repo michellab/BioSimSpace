@@ -160,7 +160,9 @@ class Somd(_process.Process):
                 # Not supported.
                 else:
                     raise ValueError(
-                        f"SOMD cannot execute the '{type(protocol)}' at the intermediate lambda value of {lam:.5f}!"
+                        f"SOMD cannot execute the 'BioSimSpace.Protocol.{protocol.__class__.__name__}' "
+                        f"protocol at the intermediate lambda value of {lam:.4f}. Simulations are only "
+                        "possible at the lambda end states, i.e. lambda = 0 or lambda = 1."
                     )
 
                 # If we get this far, convert to a regular protocol.
