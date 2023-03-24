@@ -71,7 +71,7 @@ def test_atom_reindexing(system):
 
 def test_residue_reindexing(system):
     # Search for all waters by residue name.
-    results = system.search("resname WAT")
+    results = system.search("resname WAT").residues()
 
     # There are 3 residues in the alanine-dipeptide, then one in each water
     # molecule. This means that residue indexing should start at 3 and
@@ -89,7 +89,7 @@ def test_residue_reindexing(system):
 
 def test_molecule_reindexing(system):
     # Search for all waters by residue name.
-    results = system.search("resname WAT")
+    results = system.search("resname WAT").molecules()
 
     # There are 631 molecules in the system: an alanine-dipeptide, followed by
     # 630 water molecules. This means that molecule indexing should start at 1
@@ -103,7 +103,7 @@ def test_molecule_reindexing(system):
     # As such, we convert each result to a molecule.
     for residue in results:
         # Ensure the absolute index matches.
-        assert system.getIndex(residue.toMolecule()) == index
+        assert system.getIndex(residue) == index
 
         index += 1
 
@@ -356,3 +356,18 @@ def test_isSame(system):
     # Assert that they are the same, apart from their coordinates and space.
     assert system.isSame(other, excluded_properties=["coordinates", "space"])
     assert other.isSame(system, excluded_properties=["coordinates", "space"])
+
+
+def test_velocity_removal():
+    # Make sure that velocities are removed when molecules are combined
+    # and not all molecules have a "velocity" property.
+
+    # Load a molecule with and without velocities.
+    mol = BSS.IO.readMolecules(BSS.IO.expand(url, "methane.gro", ".bz2"))
+    mol_vel = BSS.IO.readMolecules(BSS.IO.expand(url, "methane_vel.gro", ".bz2"))
+
+    # Add together to create a new system.
+    new_system = mol + mol_vel
+
+    # Check that no molecules have a velocity property.
+    assert len(new_system.search("not mol with property velocity").molecules()) == 2
