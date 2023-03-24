@@ -44,15 +44,10 @@ from .._Utils import _try_import, _have_imported, _assert_imported
 
 import warnings as _warnings
 
-# Suppress numpy warnings from RDKit import.
-_warnings.filterwarnings("ignore", message="numpy.dtype size changed")
-_warnings.filterwarnings("ignore", message="numpy.ndarray size changed")
-_warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
-
 # Suppress duplicate to-Python converted warnings.
 # Both Sire and RDKit register the same converter.
 with _warnings.catch_warnings():
-    _warnings.filterwarnings("ignore")
+    _warnings.simplefilter("ignore")
     _rdkit = _try_import("rdkit")
 
     if _have_imported(_rdkit):
