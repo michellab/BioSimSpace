@@ -50,7 +50,7 @@ _warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
 # Suppress duplicate to-Python converted warnings.
 # Both Sire and RDKit register the same converter.
 with _warnings.catch_warnings():
-    _warnings.filterwarnings("ignore")
+    _warnings.simplefilter("ignore")
     _rdkit = _try_import("rdkit")
 
     if _have_imported(_rdkit):
