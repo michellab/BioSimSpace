@@ -184,12 +184,6 @@ class Relative:
                         "Use the 'BioSimSpace.Align' package to map and merge molecules."
                     )
 
-                if self._protocol.getPerturbationType() != "full":
-                    raise NotImplementedError(
-                        "GROMACS currently only supports the 'full' perturbation "
-                        "type. Please use engine='SOMD' when running multistep "
-                        "perturbation types."
-                    )
         else:
             # Use SOMD as a default.
             engine = "SOMD"
@@ -224,6 +218,15 @@ class Relative:
         else:
             # Use a default protocol.
             self._protocol = _Protocol.FreeEnergy()
+
+        # Check that multi-step perturbation isn't specified if GROMACS is the chosen engine.
+        if engine == "GROMACS":
+            if self._protocol.getPerturbationType() != "full":
+                raise NotImplementedError(
+                    "GROMACS currently only supports the 'full' perturbation "
+                    "type. Please use engine='SOMD' when running multistep "
+                    "perturbation types."
+                )
 
         if not isinstance(setup_only, bool):
             raise TypeError("'setup_only' must be of type 'bool'.")
