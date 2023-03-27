@@ -21,8 +21,6 @@ rdkit
 # The below are packages that aren't available on all
 # platforms/OSs and so need to be conditionally included
 
-alchemlyb<2 ; platform_machine != "aarch64"  # Needs pymbar, not on Linux/aarch64
-
 mdtraj ; platform_machine != "aarch64"       # not on Linux/aarch64
 
 mdanalysis ; platform_machine != "aarch64"   # not on Linux/aarch64
