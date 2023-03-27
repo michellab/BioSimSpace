@@ -916,7 +916,7 @@ def matchAtoms(
         # Convert the molecules to RDKit format.
         mols = [
             _Convert.toRDKit(molecule0, property_map=property_map0),
-            _Convert.toRDkit(molecule1, property_map=property_map1),
+            _Convert.toRDKit(molecule1, property_map=property_map1),
         ]
 
         # Generate the MCS match.
