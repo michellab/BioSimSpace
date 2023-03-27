@@ -1003,6 +1003,7 @@ class Namd(_process.Process):
         if self.isError():
             _warnings.warn("The process exited with an error!")
 
+        self.stdout(0)
         return self._stdout_dict.copy()
 
     def getCurrentRecords(self):

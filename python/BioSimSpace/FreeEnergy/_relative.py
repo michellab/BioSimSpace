@@ -805,10 +805,11 @@ class Relative:
         # Initialise list to store the processe
         processes = []
 
-        # Convert to an appropriate AMBER topology. (Required by SOMD for its
-        # FEP setup.)
+        # Convert to an appropriate water topology.
         if self._engine == "SOMD":
             system._set_water_topology("AMBER", property_map=self._property_map)
+        elif self._engine == "GROMACS":
+            system._set_water_topology("GROMACS", property_map=self._property_map)
 
         # Setup all of the simulation processes for each leg.
 
