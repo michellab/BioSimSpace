@@ -24,7 +24,19 @@
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
 
-__all__ = ["smiles", "supportedFormats", "to", "toBioSimSpace", "toRDKit", "toSire"]
+__all__ = [
+    "smiles",
+    "supportedFormats",
+    "to",
+    "toBioSimSpace",
+    "toOpenMM",
+    "toRDKit",
+    "toSire",
+]
+
+from .._Utils import _try_import, _have_imported
+
+_openmm = _try_import("openmm")
 
 import os as _os
 
@@ -37,6 +49,8 @@ from sire import smiles as _sire_smiles
 
 import sire.legacy.Mol as _SireMol
 import sire.legacy.System as _SireSystem
+
+import sire.system as _NewSireSystem
 
 from .._Exceptions import ConversionError as _ConversionError
 from .. import IO as _IO
@@ -172,6 +186,81 @@ def to(obj, format="biosimspace", property_map={}):
     if not isinstance(property_map, dict):
         raise TypeError("'property_map' must be of type 'dict'.")
 
+    # Special handling for OpenMM conversion. Currently this is a one-way (toOpenMM)
+    # conversion only and is only supported for specific Sire and BioSimSpace types.
+    if format == "openmm":
+        if not _have_imported(_openmm):
+            raise ConversionError(
+                "Conversion to OpenMM format is currently not supported on this platform."
+            )
+
+        # BioSimSpace objects.
+        if isinstance(obj, _SireWrappers._sire_wrapper.SireWrapper):
+            # Convert to a system where possible.
+            try:
+                obj = obj.toSystem()
+            except:
+                # Otherwise, convert residues/atoms to a molecule.
+                try:
+                    obj = obj.toMolecule()
+                except:
+                    raise _ConversionError("Unable to convert object to OpenMM format!")
+
+            # Now try to convert the object to OpenMM format.
+            try:
+                return _sire_convert.to(
+                    obj,
+                    "openmm",
+                    map=property_map,
+                )
+            except:
+                raise _ConversionError("Unable to convert object to OpenMM format!")
+
+        elif isinstance(obj, _SireWrappers.SearchResult):
+            # Convert search results to molecules then a system.
+            try:
+                obj = _SireWrappers.Molecules(obj.molecules()._sire_object).toSystem()
+            except:
+                raise _ConversionError("Unable to convert object to OpenMM format!")
+
+            # Now try to convert the object to OpenMM format.
+            try:
+                return _sire_convert.to(
+                    obj,
+                    "openmm",
+                    map=property_map,
+                )
+            except:
+                raise _ConversionError("Unable to convert object to OpenMM format!")
+
+        # Sire objects.
+        elif isinstance(
+            obj,
+            (
+                _NewSireSystem.System,
+                _SireSystem.System,
+                _SireMol.SelectorMol,
+                _SireMol.MoleculeGroup,
+                _SireMol.Molecules,
+                _SireMol.Molecule,
+                _SireMol.Residue,
+            ),
+        ):
+            try:
+                # First convert the object to BioSimSpace format.
+                obj = to(obj, format="biosimspace", property_map=property_map)
+
+                # Now try converting to OpenMM format.
+                return to(obj, format="openmm", property_map=property_map)
+
+            except:
+                raise _ConversionError("Unable to convert object to OpenMM format!")
+
+        else:
+            raise _ConversionError(
+                f"Currently unable to convert object of type {type(obj)} to OpenMM format!"
+            )
+
     # Now do some work to handle different types of input. Where possible, we
     # try to convert to the "expected" format, i.e. atom to atom, residue
     # to residue, etc. This means that we need to use sire.legacy.Mol.PartialMolecule
@@ -214,6 +303,7 @@ def to(obj, format="biosimspace", property_map={}):
     elif isinstance(
         obj,
         (
+            _NewSireSystem.System,
             _SireSystem.System,
             _SireMol.SelectorMol,
             _SireMol.MoleculeGroup,
@@ -224,6 +314,14 @@ def to(obj, format="biosimspace", property_map={}):
         ),
     ):
         if format == "biosimspace":
+            if isinstance(obj, _NewSireSystem.System):
+                try:
+                    return _SireWrappers.System(obj._system)
+                except:
+                    raise _ConversionError(
+                        "Unable to convert object to BioSimSpace format!"
+                    )
+
             if isinstance(obj, _SireSystem.System):
                 try:
                     return _SireWrappers.System(obj)
@@ -283,7 +381,9 @@ def to(obj, format="biosimspace", property_map={}):
                     )
 
         elif format == "rdkit":
-            if isinstance(obj, (_SireSystem.System, _SireMol.MoleculeGroup)):
+            if isinstance(
+                obj, (_NewSireSystem.System, _SireSystem.System, _SireMol.MoleculeGroup)
+            ):
                 try:
                     return _sire_convert.to(obj.molecules(), "rdkit", map=property_map)
                 except:
@@ -349,7 +449,7 @@ def to(obj, format="biosimspace", property_map={}):
             raise TypeError(f"Cannot convert object of type '{type(obj)}'")
 
     else:
-        raise TypeError(f"Cannot convert object of type '{type(obj)}'")
+        raise TypeError(f"Cannot convert from object of type '{type(obj)}'")
 
 
 def toBioSimSpace(obj, property_map={}):
@@ -376,6 +476,35 @@ def toBioSimSpace(obj, property_map={}):
     return to(obj, format="biosimspace", property_map=property_map)
 
 
+def toOpenMM(obj, property_map={}):
+    """
+    Convert an object to OpenMM format.
+
+    Parameters
+    ----------
+
+    obj :
+        The input object to convert.
+
+    property_map : dict
+        A dictionary that maps system "properties" to their user defined
+        values. This allows the user to refer to properties with their
+        own naming scheme, e.g. { "charge" : "my-charge" }
+
+    Returns
+    -------
+
+    converted_obj :
+       The object in RDKit format.
+    """
+    if _have_imported(_openmm):
+        return to(obj, format="openmm", property_map=property_map)
+    else:
+        raise ConversionError(
+            "Conversion to OpenMM format is currently not supported on this platform."
+        )
+
+
 def toRDKit(obj, property_map={}):
     """
     Convert an object to RDKit format.
@@ -395,31 +524,7 @@ def toRDKit(obj, property_map={}):
     -------
 
     converted_obj :
-       The object in RDKit format.
-    """
-    return to(obj, format="rdkit", property_map=property_map)
-
-
-def toRDKit(obj, property_map={}):
-    """
-    Convert an object to RDKit format.
-
-    Parameters
-    ----------
-
-    obj :
-        The input object to convert.
-
-    property_map : dict
-        A dictionary that maps system "properties" to their user defined
-        values. This allows the user to refer to properties with their
-        own naming scheme, e.g. { "charge" : "my-charge" }
-
-    Returns
-    -------
-
-    converted_obj :
-       The object in RDKit format.
+       The object in OpenMM format.
     """
     return to(obj, format="rdkit", property_map=property_map)
 
