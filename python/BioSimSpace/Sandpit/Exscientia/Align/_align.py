@@ -116,6 +116,7 @@ def generateNetwork(
     links_file=None,
     property_map={},
     n_edges_forced=None,
+    **kwargs,
 ):
     """
     Generate a perturbation network using Lead Optimisation Mappper (LOMAP).
@@ -171,6 +172,10 @@ def generateNetwork(
         will remove the bottom n edges parsed from the LOMAP output file.
         This last option is discouraged as it can cause network cycle
         breakage and disconnecting of ligands/clusters from the network.
+
+    **kwargs : dict
+        A dictionary of keyword arguments to pass through to LOMAP. These
+        will take precedence over any default values that are set.
 
     Returns
     -------
@@ -404,19 +409,24 @@ def generateNetwork(
     else:
         lf = None
 
+    # Create a dictionary of default keyword arguments.
+    default_kwargs = {
+        "name": f"{work_dir}/outputs/lomap",
+        "links_file": lf,
+        "output": True,
+        "output_no_graph": True,
+        "output_no_images": True,
+        "threed": True,
+        "max3d": 3.0,
+        "time": 3,
+        "parallel": 10,
+    }
+
+    # Combine with **kwargs, with those taking precendence.
+    total_kwargs = {**default_kwargs, **kwargs}
+
     # Create the DBMolecules object.
-    db_mol = _lomap.DBMolecules(
-        f"{work_dir}/inputs",
-        name=f"{work_dir}/outputs/lomap",
-        links_file=lf,
-        output=True,
-        output_no_graph=True,
-        output_no_images=True,
-        threed=True,
-        max3d=3.0,
-        time=3,
-        parallel=10,
-    )
+    db_mol = _lomap.DBMolecules(f"{work_dir}/inputs", **total_kwargs)
 
     # Create the similarity matrices.
     strict, loose = db_mol.build_matrices()
