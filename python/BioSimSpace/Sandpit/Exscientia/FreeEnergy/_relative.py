@@ -52,7 +52,11 @@ if _have_imported(_alchemlyb):
     from alchemlyb.preprocessing.subsampling import (
         statistical_inefficiency as _statistical_inefficiency,
     )
-    from alchemlyb.estimators import AutoMBAR as _AutoMBAR
+
+    try:
+        from alchemlyb.estimators import AutoMBAR as _AutoMBAR
+    except ImportError:  # Work for alchemlyb 2 as well
+        from alchemlyb.estimators import MBAR as _AutoMBAR
     from alchemlyb.estimators import TI as _TI
     from alchemlyb.postprocessors.units import to_kcalmol as _to_kcalmol
 
