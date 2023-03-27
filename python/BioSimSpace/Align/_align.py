@@ -72,11 +72,10 @@ from .._Exceptions import AlignmentError as _AlignmentError
 from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from .._SireWrappers import Molecule as _Molecule
 
+from .. import Convert as _Convert
 from .. import IO as _IO
 from .. import Units as _Units
 from .. import _Utils
-
-from ..Convert._convert import _to_rdkit
 
 # lomap depends on RDKit and networkx
 _networkx = _try_import("networkx")
@@ -893,29 +892,27 @@ def matchAtoms(
     # Use RDKkit to find the maximum common substructure.
 
     try:
-        # Run inside a temporary directory.
-        with _Utils.cd(work_dir):
-            # Convert the molecules to RDKit format.
-            mols = [
-                _to_rdkit(molecule0, str(work_dir), property_map=property_map0),
-                _to_rdkit(molecule1, str(work_dir), property_map=property_map1),
-            ]
+        # Convert the molecules to RDKit format.
+        mols = [
+            _Convert.toRDKit(mol0, property_map=property_map0),
+            _Convert.toRDKit(mol1, property_map=property_map1),
+        ]
 
-            # Generate the MCS match.
-            mcs = _rdFMCS.FindMCS(
-                mols,
-                atomCompare=_rdFMCS.AtomCompare.CompareAny,
-                bondCompare=_rdFMCS.BondCompare.CompareAny,
-                completeRingsOnly=complete_rings_only,
-                ringMatchesRingOnly=True,
-                matchChiralTag=False,
-                matchValences=False,
-                maximizeBonds=False,
-                timeout=timeout,
-            )
+        # Generate the MCS match.
+        mcs = _rdFMCS.FindMCS(
+            mols,
+            atomCompare=_rdFMCS.AtomCompare.CompareAny,
+            bondCompare=_rdFMCS.BondCompare.CompareAny,
+            completeRingsOnly=complete_rings_only,
+            ringMatchesRingOnly=True,
+            matchChiralTag=False,
+            matchValences=False,
+            maximizeBonds=False,
+            timeout=timeout,
+        )
 
-            # Get the common substructure as a SMARTS string.
-            mcs_smarts = _Chem.MolFromSmarts(mcs.smartsString)
+        # Get the common substructure as a SMARTS string.
+        mcs_smarts = _Chem.MolFromSmarts(mcs.smartsString)
 
     except:
         raise RuntimeError("RDKIT MCS mapping failed!")
@@ -1230,9 +1227,6 @@ def flexAlign(
     # Convert the mapping to AtomIdx key:value pairs.
     sire_mapping = _to_sire_mapping(mapping)
 
-    # Create the working directory.
-    work_dir = _Utils.WorkDir()
-
     # Execute in the working directory.
     with _Utils.cd(work_dir):
         # Write the two molecules to PDB files.
@@ -1536,12 +1530,9 @@ def viewMapping(
         )
         molecule0 = rmsdAlign(molecule0, molecule1, mapping)
 
-    # Create the working directory.
-    work_dir = _Utils.WorkDir()
-
     # Convert the molecules to RDKit format.
-    rdmol0 = _to_rdkit(molecule0, str(work_dir), property_map=property_map0)
-    rdmol1 = _to_rdkit(molecule1, str(work_dir), property_map=property_map1)
+    rdmol0 = _Convert.toRDKit(molecule0, property_map=property_map0)
+    rdmol1 = _Convert.toRDKit(molecule1, property_map=property_map1)
 
     import py3Dmol as _py3Dmol
 
