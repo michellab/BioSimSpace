@@ -20,10 +20,12 @@ def perturbable_system():
     )
 
 
-@pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
-@pytest.mark.parametrize("engine", BSS.FreeEnergy.engines())
-def test_setup(perturbable_system, engine):
-    """Test setup for a relative alchemical free energy leg."""
+def test_setup_somd(perturbable_system):
+    """Test setup for a relative alchemical free energy leg using SOMD."""
+    free_nrg = BSS.FreeEnergy.Relative(perturbable_system, engine="somd")
 
-    # Try to instantiate a free energy object for the simulation leg.
-    free_nrg = BSS.FreeEnergy.Relative(perturbable_system, engine=engine)
+
+@pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
+def test_setup_gromacs(perturbable_system):
+    """Test setup for a relative alchemical free energy leg using GROMACS."""
+    free_nrg = BSS.FreeEnergy.Relative(perturbable_system, engine="gromacs")
