@@ -100,11 +100,16 @@ class Gromacs(_Config):
             if not all(isinstance(line, str) for line in extra_lines):
                 raise TypeError("Lines in 'extra_lines' must be of type 'str'.")
 
-        # For free energy simulations, the report interval must be a multiple
-        # of the nstcalcenergy frequency which is 250 steps.
+        # Make sure the report interval is a multiple of nstcalcenergy.
+        if isinstance(self._protocol, _FreeEnergyMixin):
+            nstcalcenergy = 250
+        else:
+            nstcalcenergy = 100
         report_interval = self.reportInterval()
-        if report_interval % 250 != 0:
-            report_interval = 250 * _math.ceil(report_interval / 250)
+        if report_interval % nstcalcenergy != 0:
+            report_interval = nstcalcenergy * _math.ceil(
+                report_interval / nstcalcenergy
+            )
 
         # Define some miscellaneous defaults.
         protocol_dict = {
