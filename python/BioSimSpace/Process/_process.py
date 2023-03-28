@@ -899,6 +899,9 @@ class Process:
             # Wait for the process to finish.
             self._process.wait()
 
+            # Store the final run time.
+            self.runTime()
+
     def isQueued(self):
         """
         Return whether the process is queued.
