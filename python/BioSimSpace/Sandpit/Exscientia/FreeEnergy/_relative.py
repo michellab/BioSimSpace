@@ -52,6 +52,7 @@ if _have_imported(_alchemlyb):
     from alchemlyb.preprocessing.subsampling import (
         statistical_inefficiency as _statistical_inefficiency,
     )
+
     try:
         from alchemlyb.estimators import AutoMBAR as _AutoMBAR
     except ImportError:
