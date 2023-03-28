@@ -28,10 +28,11 @@ __all__ = ["Somd"]
 
 from .._Utils import _try_import
 
-import os as _os
-
 _pygtail = _try_import("pygtail")
+
 import glob as _glob
+import math as _math
+import os as _os
 import random as _random
 import string as _string
 import sys as _sys
@@ -48,6 +49,7 @@ from .. import _isVerbose
 from .._Config import Somd as _SomdConfig
 from .._Exceptions import IncompatibleError as _IncompatibleError
 from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
+from ..Protocol._free_energy_mixin import _FreeEnergyMixin
 from .._SireWrappers import Molecule as _Molecule
 from .._SireWrappers import System as _System
 
@@ -138,6 +140,33 @@ class Somd(_process.Process):
             raise _IncompatibleError(
                 "Unsupported protocol: '%s'" % self._protocol.__class__.__name__
             )
+
+        # SOMD currently doesn't support FreeEnergyMinimisation or FreeEnergyEquilibration
+        # protocols at intermediate lambda values. Check to see if we're at an end state
+        # and convert the protocol accordingly.
+        if isinstance(protocol, _FreeEnergyMixin):
+            if not isinstance(protocol, _Protocol.FreeEnergyProduction):
+                # Get the lambda value.
+                lam = protocol.getLambda()
+
+                # Check the end states.
+
+                # Lambda = 0 (default)
+                if _math.isclose(lam, 0, abs_tol=1e-4):
+                    pass
+                # Lambda = 1 (specify via property map)
+                elif _math.isclose(lam, 1, abs_tol=1e-4):
+                    self._property_map["is_lambda1"] = _SireBase.wrap(True)
+                # Not supported.
+                else:
+                    raise ValueError(
+                        f"SOMD cannot execute the 'BioSimSpace.Protocol.{protocol.__class__.__name__}' "
+                        f"protocol at the intermediate lambda value of {lam:.4f}. Simulations are only "
+                        "possible at the lambda end states, i.e. lambda = 0 or lambda = 1."
+                    )
+
+                # If we get this far, convert to a regular protocol.
+                self._protocol = protocol._to_regular_protocol()
 
         # Set the package name.
         self._package_name = "SOMD"

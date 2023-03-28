@@ -13,6 +13,10 @@ molecule will be returned as a residue, a single atom residue will be returned a
 an atom. As always, you can use the native functionality of the returned object
 to convert to a different object if desired.
 
+We currently only support conversion to an `OpenMM <https://openmm.org>`_ context
+from specific BioSimSpace and `Sire <https://github.com/openbiosim/sire>`_ objects.
+At present the conversion is one-way only.
+
 .. automodule:: BioSimSpace.Convert
 
 .. toctree::

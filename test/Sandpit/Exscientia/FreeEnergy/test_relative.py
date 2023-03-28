@@ -25,7 +25,7 @@ from BioSimSpace.Sandpit.Exscientia.Protocol import FreeEnergyEquilibration
 from BioSimSpace.Sandpit.Exscientia.Align._decouple import decouple
 from BioSimSpace.Sandpit.Exscientia import Types as _Types
 
-# Make sure GROMSCS is installed.
+# Make sure GROMACS is installed.
 has_gromacs = BSS._gmx_exe is not None
 
 # Store the tutorial URL.

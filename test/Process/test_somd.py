@@ -68,6 +68,23 @@ def test_free_energy(perturbable_system):
     run_process(perturbable_system, protocol)
 
 
+def test_free_energy_mixin(perturbable_system):
+    """Check that SOMD only works with FreeEnergyMixin protocols for lambda end states."""
+
+    # Lambda = 0, this should pass.
+    protocol = BSS.Protocol.FreeEnergyMinimisation(lam=0, steps=100)
+    run_process(perturbable_system, protocol)
+
+    # Lambda = 1, this should pass.
+    protocol = BSS.Protocol.FreeEnergyMinimisation(lam=1, steps=100)
+    run_process(perturbable_system, protocol)
+
+    # Lambda = 0.5, this isn't allowed.
+    protocol = BSS.Protocol.FreeEnergyMinimisation(lam=0.5, steps=100)
+    with pytest.raises(ValueError):
+        run_process(perturbable_system, protocol)
+
+
 def test_pert_file():
     """Test the perturbation file writer."""
 

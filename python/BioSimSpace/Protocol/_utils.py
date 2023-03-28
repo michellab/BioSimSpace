@@ -28,7 +28,9 @@ __all__ = ["protocols", "createProtocol"]
 
 from ._custom import *
 from ._equilibration import *
-from ._free_energy import *
+from ._free_energy_minimisation import *
+from ._free_energy_equilibration import *
+from ._free_energy_production import *
 from ._metadynamics import *
 from ._minimisation import *
 from ._production import *

@@ -52,7 +52,11 @@ if _have_imported(_alchemlyb):
     from alchemlyb.preprocessing.subsampling import (
         statistical_inefficiency as _statistical_inefficiency,
     )
-    from alchemlyb.estimators import AutoMBAR as _AutoMBAR
+
+    try:
+        from alchemlyb.estimators import AutoMBAR as _AutoMBAR
+    except ImportError:
+        from alchemlyb.estimators import MBAR as _AutoMBAR
     from alchemlyb.estimators import TI as _TI
     from alchemlyb.postprocessors.units import to_kcalmol as _to_kcalmol
 
@@ -1303,9 +1307,9 @@ class Relative:
             # Name the directory.
             new_dir = f"{self._work_dir}/lambda_{self._protocol.getLambdaIndex()}"
 
-            # Use the full path.
-            if new_dir[0] != "/":
-                new_dir = _os.getcwd() + "/" + new_dir
+            # Use absolute path.
+            if not _os.path.isabs(new_dir):
+                new_dir = _os.path.abspath(new_dir)
 
             # Delete any existing directories.
             if _os.path.isdir(new_dir):

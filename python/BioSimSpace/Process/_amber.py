@@ -45,6 +45,7 @@ from .. import _amber_home, _isVerbose
 from .._Config import Amber as _AmberConfig
 from .._Exceptions import IncompatibleError as _IncompatibleError
 from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
+from ..Protocol._position_restraint_mixin import _PositionRestraintMixin
 from .._SireWrappers import System as _System
 from ..Types._type import Type as _Type
 
@@ -307,8 +308,8 @@ class Amber(_process.Process):
 
         # Skip if the user has passed a custom protocol.
         if not isinstance(self._protocol, _Protocol.Custom):
-            # Append a reference file if this a restrained equilibration.
-            if isinstance(self._protocol, _Protocol.Equilibration):
+            # Append a reference file if a position restraint is specified.
+            if isinstance(self._protocol, _PositionRestraintMixin):
                 if self._protocol.getRestraint() is not None:
                     self.setArg("-ref", "%s.rst7" % self._name)
 
@@ -1496,7 +1497,12 @@ class Amber(_process.Process):
             line = line.strip()
 
             # Skip empty lines and summary reports.
-            if len(line) > 0 and line[0] != "|" and line[0] != "-":
+            if (
+                len(line) > 0
+                and line[0] != "|"
+                and line[0] != "-"
+                and not line.startswith("EAMBER")
+            ):
                 # Flag that we've started recording results.
                 if not self._has_results and line.startswith("NSTEP"):
                     self._has_results = True
