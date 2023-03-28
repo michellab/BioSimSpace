@@ -5,6 +5,9 @@ import pytest
 # Store the tutorial URL.
 url = BSS.tutorialUrl()
 
+# Make sure GROMACS is installed.
+has_gromacs = BSS._gmx_exe is not None
+
 
 @pytest.fixture(scope="session")
 def perturbable_system():
@@ -17,6 +20,7 @@ def perturbable_system():
     )
 
 
+@pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
 @pytest.mark.parametrize("engine", BSS.FreeEnergy.engines())
 def test_setup(perturbable_system, engine):
     """Test setup for a relative alchemical free energy leg."""
