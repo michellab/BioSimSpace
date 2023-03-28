@@ -216,30 +216,12 @@ def to(obj, format="biosimspace", property_map={}):
             except:
                 raise _ConversionError("Unable to convert object to OpenMM format!")
 
-        elif isinstance(obj, _SireWrappers.SearchResult):
-            # Convert search results to molecules then a system.
-            try:
-                obj = _SireWrappers.Molecules(obj.molecules()._sire_object).toSystem()
-            except:
-                raise _ConversionError("Unable to convert object to OpenMM format!")
-
-            # Now try to convert the object to OpenMM format.
-            try:
-                return _sire_convert.to(
-                    obj,
-                    "openmm",
-                    map=property_map,
-                )
-            except:
-                raise _ConversionError("Unable to convert object to OpenMM format!")
-
         # Sire objects.
         elif isinstance(
             obj,
             (
                 _NewSireSystem.System,
                 _SireSystem.System,
-                _SireMol.SelectorMol,
                 _SireMol.MoleculeGroup,
                 _SireMol.Molecules,
                 _SireMol.Molecule,
