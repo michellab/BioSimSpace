@@ -26,4 +26,4 @@ def test_setup(perturbable_system, engine):
     """Test setup for a relative alchemical free energy leg."""
 
     # Try to instantiate a free energy object for the simulation leg.
-    free_nrg = BSS.FreeEnergy.Relative(perturbable_system)
+    free_nrg = BSS.FreeEnergy.Relative(perturbable_system, engine=engine)
