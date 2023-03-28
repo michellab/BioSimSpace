@@ -26,7 +26,7 @@ _MDRestraintsGenerator = _try_import(
 
 is_MDRestraintsGenerator = _have_imported(_MDRestraintsGenerator)
 
-# Make sure GROMSCS is installed.
+# Make sure GROMACS is installed.
 has_gromacs = BSS._gmx_exe is not None
 
 # Store the tutorial URL.

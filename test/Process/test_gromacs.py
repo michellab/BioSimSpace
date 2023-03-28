@@ -12,7 +12,7 @@ from BioSimSpace.Units.Temperature import kelvin
 from BioSimSpace.Units.Time import picosecond
 from BioSimSpace.Units.Volume import nanometer3
 
-# Make sure GROMSCS is installed.
+# Make sure GROMACS is installed.
 has_gromacs = BSS._gmx_exe is not None
 
 # Store the tutorial URL.
