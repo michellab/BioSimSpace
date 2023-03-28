@@ -1307,9 +1307,9 @@ class Relative:
             # Name the directory.
             new_dir = f"{self._work_dir}/lambda_{self._protocol.getLambdaIndex()}"
 
-            # Use the full path.
-            if new_dir[0] != "/":
-                new_dir = _os.getcwd() + "/" + new_dir
+            # Use absolute path.
+            if not _os.path.isabs(new_dir):
+                new_dir = _os.path.abspath(new_dir)
 
             # Delete any existing directories.
             if _os.path.isdir(new_dir):
