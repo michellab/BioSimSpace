@@ -194,17 +194,24 @@ def to(obj, format="biosimspace", property_map={}):
                 "Conversion to OpenMM format is currently not supported on this platform."
             )
 
+        # If this is already an OpenMM context, then simply return it.
+        if isinstance(obj, _openmm.openmm.Context):
+            return obj
+
         # BioSimSpace objects.
         if isinstance(obj, _SireWrappers._sire_wrapper.SireWrapper):
-            # Convert to a system where possible.
-            try:
-                obj = obj.toSystem()
-            except:
-                # Otherwise, convert residues/atoms to a molecule.
+            if not isinstance(obj, _SireWrappers.System):
+                # Convert to a system where possible.
                 try:
-                    obj = obj.toMolecule()
+                    obj = obj.toSystem()
                 except:
-                    raise _ConversionError("Unable to convert object to OpenMM format!")
+                    # Otherwise, convert residues/atoms to a molecule.
+                    try:
+                        obj = obj.toMolecule()
+                    except:
+                        raise _ConversionError(
+                            "Unable to convert object to OpenMM format!"
+                        )
 
             # Now try to convert the object to OpenMM format.
             try:
