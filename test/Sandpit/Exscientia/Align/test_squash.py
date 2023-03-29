@@ -195,7 +195,8 @@ def test_squashed_molecule_mapping_order(
     """Test if the molecules are in the correct order. For example, if I have a system
     that is in the order of perturbed molecule (0), decoupled molecule (1) and normal molecule (2),
     the order of the molecules in the unsquashed system would be 0, 1, 2.
-    After squashing, the order would be 1, 2, 0. This test checks if the correct order has been generated."""
+    After squashing, the order would be 1, 2, 0. This test checks if the correct order has been generated.
+    """
     mol_list = []
     for mol in [first, second, third]:
         if mol == "normal":

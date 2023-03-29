@@ -5,7 +5,7 @@ package:
   version: {{ GIT_DESCRIBE_TAG if GIT_DESCRIBE_TAG is not none else 'PR' }}
 
 source:
-  git_url: https://github.com/michellab/BioSimSpace.git
+  git_url: https://github.com/openbiosim/biosimspace.git
   git_tag: BSS_BRANCH
 
 build:

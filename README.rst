@@ -17,16 +17,6 @@
    :target: https://joss.theoj.org/papers/4ba84ad443693b5dded90e35bf5f8225
    :alt: Paper
 
-Note
-----
-
-`BioSimSpace <https://biosimspace.openbiosim.org>`__ is now supported and maintained
-by `OpenBioSim <https://www.openbiosim.org>`__ and is available through their
-`GitHub organisation <https://github.com/OpenBioSim/biosimspace>`__. This
-repository will only be maintained for legacy development work, with bug-fixes
-back-ported periodically. Developers can update their remote to point to the new
-location.
-
 About
 -----
 
