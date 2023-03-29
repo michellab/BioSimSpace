@@ -52,6 +52,21 @@ def system_vel(system):
 
 
 @pytest.fixture
+def system_vel0(system):
+    mol = system.getMolecule(0)
+    mol_sire = mol._sire_object
+
+    # Edit the molecule
+    mol_edit = mol_sire.edit()
+
+    mol_edit.setProperty("velocity0", 1)
+
+    # Update the Sire molecule object of the new molecule.
+    mol._sire_object = mol_edit.commit()
+    return mol.toSystem()
+
+
+@pytest.fixture
 def free_energy():
     return {
         "lam": pd.Series(data={"fep": 0.5}),
@@ -132,7 +147,7 @@ def test_amber(protocol, system, tmp_path):
     reason="Requires AmberTools/antechamber and OpenFF to be installed.",
 )
 @pytest.mark.parametrize("restart", [True, False])
-@pytest.mark.parametrize("name", ["system", "system_vel"])
+@pytest.mark.parametrize("name", ["system", "system_vel", "system_vel0"])
 @pytest.mark.parametrize(
     "protocol", [BSS.Protocol.Production, BSS.Protocol.Equilibration]
 )
@@ -141,6 +156,6 @@ def test_process(protocol, name, request, restart, production):
     _protocol = protocol(**production, restart=restart)
     process = Process(request.getfixturevalue(name), _protocol)
     if name == "system":
-        assert process._protocol.isRestart() == False
+        assert process._protocol.isRestart() is False
     else:
-        assert process._protocol.isRestart() == restart
+        assert process._protocol.isRestart() is restart
