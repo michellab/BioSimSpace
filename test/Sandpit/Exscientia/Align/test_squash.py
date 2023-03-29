@@ -1,5 +1,6 @@
 import os
 import pickle
+
 import pytest
 
 import BioSimSpace.Sandpit.Exscientia as BSS
@@ -128,3 +129,83 @@ def test_unsquash_multires(perturbed_tripeptide):
         mol0.isPerturbable() == mol1.isPerturbable()
         for mol0, mol1 in zip(perturbed_tripeptide, new_perturbed_system)
     ]
+
+
+@pytest.fixture(scope="module")
+def benzene():
+    return BSS.Parameters.gaff("c1ccccc1").getMolecule()
+
+
+@pytest.fixture(scope="module")
+def decoupled_system(benzene):
+    mol = BSS.Align.decouple(benzene, charge=(True, False), LJ=(True, False))
+    return mol.copy()
+
+
+@pytest.fixture(scope="module")
+def redecoupled_system(benzene):
+    return BSS.Align.decouple(benzene, charge=(False, True), LJ=(False, True))
+
+
+@pytest.mark.parametrize(
+    "mol,is_lambda1,dummies,expect",
+    [
+        ("decoupled_system", False, True, True),
+        ("decoupled_system", True, True, False),
+        ("redecoupled_system", False, True, False),
+        ("redecoupled_system", True, True, True),
+        ("decoupled_system", False, False, False),
+        ("decoupled_system", True, False, False),
+        ("redecoupled_system", False, False, False),
+        ("redecoupled_system", True, False, False),
+    ],
+)
+def test_squashed_molecule_mapping_decouple_lambda(
+    mol, is_lambda1, expect, dummies, request
+):
+    """Test if the result is generated for the correct side of the lambda.
+    If mol is being decoupled, the mapping should be in lambda_0 but not in lambda_1.
+    If mol is being recoupled, the mapping should be in lambda_1 but not in lambda_0.
+    If dummies is False, don't return any mapping."""
+    mol = request.getfixturevalue(mol)
+    mapping = BSS.Align._squash._squashed_atom_mapping(
+        mol, dummies=dummies, is_lambda1=is_lambda1
+    )
+    if expect:
+        assert mapping[0] == 0
+        assert mapping[11] == 11
+    else:
+        assert len(mapping) == 0
+
+
+@pytest.mark.parametrize(
+    "first,second,third,order",
+    [
+        ("decouple", "merge", "normal", (0, 2, 1)),
+        ("decouple", "normal", "merge", (0, 1, 2)),
+        ("merge", "decouple", "normal", (2, 0, 1)),
+        ("merge", "normal", "decouple", (2, 0, 1)),
+        ("normal", "merge", "decouple", (0, 2, 1)),
+        ("normal", "decouple", "merge", (0, 1, 2)),
+    ],
+)
+def test_squashed_molecule_mapping_order(
+    first, second, third, order, benzene, decoupled_system
+):
+    """Test if the molecules are in the correct order. For example, if I have a system
+    that is in the order of perturbed molecule (0), decoupled molecule (1) and normal molecule (2),
+    the order of the molecules in the unsquashed system would be 0, 1, 2.
+    After squashing, the order would be 1, 2, 0. This test checks if the correct order has been generated."""
+    mol_list = []
+    for mol in [first, second, third]:
+        if mol == "normal":
+            mol_list.append(benzene)
+        elif mol == "merge":
+            mol_list.append(BSS.Align.merge(benzene, benzene))
+        else:
+            mol_list.append(decoupled_system)
+    system = BSS._SireWrappers.System(mol_list)
+    mapping = BSS.Align._squash._squashed_atom_mapping(system)
+    for atom_idx, squashed_idx in enumerate(order):
+        # The index is 0-based so need the offset
+        assert mapping[(atom_idx + 1) * 12 - 1] == (squashed_idx + 1) * 12 - 1

@@ -1,5 +1,6 @@
 import math as _math
 import warnings as _warnings
+
 from sire.legacy import Units as _SireUnits
 
 from .. import Protocol as _Protocol
@@ -100,29 +101,44 @@ class ConfigFactory:
             A dictionary of AMBER-compatible options.
         """
         # Get the merged to squashed atom mapping of the whole system for both endpoints.
-        atom_mapping0 = _squashed_atom_mapping(self.system, is_lambda1=False)
-        atom_mapping1 = _squashed_atom_mapping(self.system, is_lambda1=True)
+        mcs_mapping0 = _squashed_atom_mapping(
+            self.system, is_lambda1=False, environment=False, common=True, dummies=False
+        )
+        mcs_mapping1 = _squashed_atom_mapping(
+            self.system, is_lambda1=True, environment=False, common=True, dummies=False
+        )
+        dummy_mapping0 = _squashed_atom_mapping(
+            self.system, is_lambda1=False, environment=False, common=False, dummies=True
+        )
+        dummy_mapping1 = _squashed_atom_mapping(
+            self.system, is_lambda1=True, environment=False, common=False, dummies=True
+        )
 
-        # Generate the ti and dummy masks.
+        # Generate the TI and dummy masks.
         mcs0_indices, mcs1_indices, dummy0_indices, dummy1_indices = [], [], [], []
         for i in range(self.system.nAtoms()):
-            if i not in atom_mapping0:
-                dummy1_indices.append(atom_mapping1[i])
-            elif i not in atom_mapping1:
-                dummy0_indices.append(atom_mapping0[i])
-            # The TI region is defined by all different squashed atoms that are mapped to the same merged atom.
-            elif atom_mapping0[i] != atom_mapping1[i]:
-                mcs0_indices.append(atom_mapping0[i])
-                mcs1_indices.append(atom_mapping1[i])
+            if i in dummy_mapping0:
+                dummy0_indices.append(dummy_mapping0[i])
+            if i in dummy_mapping1:
+                dummy1_indices.append(dummy_mapping1[i])
+            if i in mcs_mapping0:
+                mcs0_indices.append(mcs_mapping0[i])
+            if i in mcs_mapping1:
+                mcs1_indices.append(mcs_mapping1[i])
         ti0_indices = mcs0_indices + dummy0_indices
         ti1_indices = mcs1_indices + dummy1_indices
+
+        # AMBER doesn't seem to work well with the same atom being defined as a scmask in both endstates
+        common_dummies = set(dummy0_indices) & set(dummy1_indices)
+        dummy0_indices = sorted(set(dummy0_indices) - common_dummies)
+        dummy1_indices = sorted(set(dummy1_indices) - common_dummies)
 
         # Define whether HMR is used based on the timestep.
         # When HMR is used, there can be no SHAKE.
         if timestep >= 0.004:
             no_shake_mask = ""
         else:
-            no_shake_mask = _amber_mask_from_indices(mcs0_indices + mcs1_indices)
+            no_shake_mask = _amber_mask_from_indices(ti0_indices + ti1_indices)
 
         # Create an option dict with amber masks generated from the above indices.
         option_dict = {
@@ -208,12 +224,12 @@ class ConfigFactory:
             protocol_dict["ntf"] = 2  # Don't calculate forces for constrained bonds.
 
         # PBC.
-        if not self._has_box or not self._has_water:
-            protocol_dict["ntb"] = 0  # No periodic box.
-            protocol_dict["cut"] = "999."  # Non-bonded cut-off.
-        else:
+        if self._has_box:
             protocol_dict["cut"] = "8.0"  # Non-bonded cut-off.
             protocol_dict["iwrap"] = 1  # Wrap the coordinates.
+        else:
+            protocol_dict["ntb"] = 0  # No periodic box.
+            protocol_dict["cut"] = "999."  # Non-bonded cut-off.
 
         # Restraints.
         if isinstance(self.protocol, _Protocol._PositionRestraintMixin):
@@ -289,6 +305,8 @@ class ConfigFactory:
                     _warnings.warn(
                         "Cannot use a barostat for a vacuum or non-periodic simulation"
                     )
+            else:
+                protocol_dict["ntb"] = 1  # constant volume.
 
         # Temperature control.
         if not isinstance(self.protocol, _Protocol.Minimisation):
@@ -321,12 +339,15 @@ class ConfigFactory:
             protocol_dict["icfe"] = 1  # Free energy mode.
             protocol_dict["ifsc"] = 1  # Use softcore potentials.
             protocol_dict["ntf"] = 1  # Remove SHAKE constraints.
-            protocol = [str(x) for x in self.protocol.getLambdaValues()]
+            lambda_values = self.protocol.getLambdaValues(type="dataframe")
+            protocol = [f"{lam:.5f}" for lam in lambda_values["fep"]]
             protocol_dict["mbar_states"] = len(protocol)  # Number of lambda values.
             protocol_dict["mbar_lambda"] = ", ".join(protocol)  # Lambda values.
-            protocol_dict[
-                "clambda"
-            ] = self.protocol.getLambda()  # Current lambda value.
+            Lambda = self.protocol.getLambda(type="series")
+            protocol_dict["clambda"] = "{:.5f}".format(
+                Lambda["fep"]
+            )  # Current lambda value.
+
             if isinstance(self.protocol, _Protocol.Production):
                 protocol_dict["ifmbar"] = 1  # Calculate MBAR energies.
                 protocol_dict["logdvdl"] = 1  # Output dVdl

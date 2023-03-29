@@ -291,8 +291,19 @@ class Process:
         return protocol
 
     def _has_velocity(self, system):
-        velocity_prop = self._property_map.get("velocity", "velocity")
-        return system[0]._sire_object.hasProperty(velocity_prop)
+        # We only check the first 10 molecules for performance reasons
+        # This should handle most cases where e.g. one molecule has velocities and another one doesn't
+        for mol in system[:10]:
+            siremol = mol._sire_object
+            if "velocity" in self._property_map:
+                has_velocity = self._property_map["velocity"] in siremol.propertyKeys()
+            else:
+                has_velocity = any(
+                    x.startswith("velocity") for x in siremol.propertyKeys()
+                )
+            if not has_velocity:
+                return False
+        return True
 
     def __str__(self):
         """Return a human readable string representation of the object."""
