@@ -147,6 +147,7 @@ def redecoupled_system(benzene):
     return BSS.Align.decouple(benzene, charge=(False, True), LJ=(False, True))
 
 
+@pytest.mark.skipif(has_amber is False, reason="Requires AMBER to be installed.")
 @pytest.mark.parametrize(
     "mol,is_lambda1,dummies,expect",
     [
@@ -178,6 +179,7 @@ def test_squashed_molecule_mapping_decouple_lambda(
         assert len(mapping) == 0
 
 
+@pytest.mark.skipif(has_amber is False, reason="Requires AMBER to be installed.")
 @pytest.mark.parametrize(
     "first,second,third,order",
     [
