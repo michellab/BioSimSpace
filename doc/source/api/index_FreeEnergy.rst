@@ -142,4 +142,4 @@ for minimising or equilibrating structures for each lambda window. See the
 :class:`FreeEnergyMinimisation <BioSimSpace.Protocol.FreeEnergyMinimisation>` and
 :class:`FreeEnergyEquilibration <BioSimSpace.Protocol.FreeEnergyEquilibration>`
 protocols for details. At present, these protocols are only supported when not
-using SOMD as the simulation engine.
+using :class:`SOMD <BioSimSpace.Process.Somd>` as the simulation engine.
