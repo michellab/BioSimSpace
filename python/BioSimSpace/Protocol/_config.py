@@ -752,9 +752,10 @@ class ConfigFactory:
             # Turn on the thermostat.
             protocol_dict["thermostat"] = "True"
 
-            if protocol_dict["integrator_type"] == "langevinmiddle":
-                # Turn off the thermostat for langevin middle integrator.
-                protocol_dict["thermostat"] = "False"
+            if "integrator_type" in protocol_dict:
+                if protocol_dict["integrator_type"] == "langevinmiddle":
+                    # Turn off the thermostat for langevin middle integrator.
+                    protocol_dict["thermostat"] = "False"
             else:
                 pass
 
