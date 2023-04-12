@@ -26,20 +26,17 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Relative", "getData"]
 
-from collections import defaultdict as _defaultdict, OrderedDict as _OrderedDict
 import copy as _copy
-from glob import glob as _glob
 import math as _math
-import shlex as _shlex
-import sys as _sys
 import os as _os
-import re as _re
 import shutil as _shutil
 import subprocess as _subprocess
+import sys as _sys
 import warnings as _warnings
 import zipfile as _zipfile
+from glob import glob as _glob
 
-from .._Utils import _try_import, _have_imported, _assert_imported
+from .._Utils import _assert_imported, _have_imported, _try_import
 
 # alchemlyb isn't available on all variants of Python that we support, so we
 # need to try_import it.
@@ -632,7 +629,6 @@ class Relative:
         if estimator not in ["MBAR", "TI"]:
             raise ValueError("'estimator' must be either 'MBAR' or 'TI'.")
 
-        dir = work_dir + "/lambda_*/"
         if engine == "AMBER":
             prefix = "amber"
             suffix = "out"
@@ -645,7 +641,7 @@ class Relative:
         workflow = ABFE(
             units="kcal/mol",
             software=engine,
-            dir=dir,
+            dir=work_dir,
             prefix=prefix,
             suffix=suffix,
             T=temperature / _Units.Temperature.kelvin,
