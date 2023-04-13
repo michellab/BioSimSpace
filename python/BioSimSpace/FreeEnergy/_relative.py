@@ -108,7 +108,9 @@ class Relative:
             a single perturbable molecule and is assumed to have already
             been equilibrated.
 
-        protocol : :class:`Protocol.FreeEnergy <BioSimSpace.Protocol.FreeEnergy>`, \
+        protocol : :class:`Protocol.FreeEnergyMinimisation <BioSimSpace.Protocol.FreeEnergyMinimisation>`, \
+                   :class:`Protocol.FreeEnergyEquilibration <BioSimSpace.Protocol.FreeEnergyEquilibration>`, \
+                   :class:`Protocol.FreeEnergyProduction <BioSimSpace.Protocol.FreeEnergyProduction>`
             The simulation protocol.
 
         work_dir : str
@@ -153,30 +155,6 @@ class Relative:
             # Store a copy of solvated system.
             self._system = system.copy()
 
-        if protocol is not None:
-            if isinstance(protocol, _Protocol.FreeEnergy):
-                self._protocol = protocol
-            else:
-                raise TypeError(
-                    "'protocol' must be of type 'BioSimSpace.Protocol.FreeEnergy'"
-                )
-        else:
-            # Use a default protocol.
-            self._protocol = _Protocol.FreeEnergy()
-
-        if not isinstance(setup_only, bool):
-            raise TypeError("'setup_only' must be of type 'bool'.")
-        else:
-            self._setup_only = setup_only
-
-        if work_dir is None and setup_only:
-            raise ValueError(
-                "A 'work_dir' must be specified when 'setup_only' is True!"
-            )
-
-        # Create the working directory.
-        self._work_dir = _Utils.WorkDir(work_dir)
-
         # Validate the user specified molecular dynamics engine.
         if engine is not None:
             if not isinstance(engine, str):
@@ -206,12 +184,6 @@ class Relative:
                         "Use the 'BioSimSpace.Align' package to map and merge molecules."
                     )
 
-                if self._protocol.getPerturbationType() != "full":
-                    raise NotImplementedError(
-                        "GROMACS currently only supports the 'full' perturbation "
-                        "type. Please use engine='SOMD' when running multistep "
-                        "perturbation types."
-                    )
         else:
             # Use SOMD as a default.
             engine = "SOMD"
@@ -225,6 +197,49 @@ class Relative:
 
         # Set the engine.
         self._engine = engine
+
+        # Validate the protocol.
+        if protocol is not None:
+            from ..Protocol._free_energy_mixin import _FreeEnergyMixin
+
+            if isinstance(protocol, _FreeEnergyMixin):
+                if engine == "SOMD" and not isinstance(
+                    protocol, _Protocol.FreeEnergyProduction
+                ):
+                    raise ValueError(
+                        "Currently SOMD only supports protocols of type 'BioSimSpace.Protocol.FreeEnergyProduction'"
+                    )
+
+                self._protocol = protocol
+            else:
+                raise TypeError(
+                    "'protocol' must be of type 'BioSimSpace.Protocol.FreeEnergy'"
+                )
+        else:
+            # Use a default protocol.
+            self._protocol = _Protocol.FreeEnergy()
+
+        # Check that multi-step perturbation isn't specified if GROMACS is the chosen engine.
+        if engine == "GROMACS":
+            if self._protocol.getPerturbationType() != "full":
+                raise NotImplementedError(
+                    "GROMACS currently only supports the 'full' perturbation "
+                    "type. Please use engine='SOMD' when running multistep "
+                    "perturbation types."
+                )
+
+        if not isinstance(setup_only, bool):
+            raise TypeError("'setup_only' must be of type 'bool'.")
+        else:
+            self._setup_only = setup_only
+
+        if work_dir is None and setup_only:
+            raise ValueError(
+                "A 'work_dir' must be specified when 'setup_only' is True!"
+            )
+
+        # Create the working directory.
+        self._work_dir = _Utils.WorkDir(work_dir)
 
         if not isinstance(ignore_warnings, bool):
             raise ValueError("'ignore_warnings' must be of type 'bool.")
@@ -805,10 +820,11 @@ class Relative:
         # Initialise list to store the processe
         processes = []
 
-        # Convert to an appropriate AMBER topology. (Required by SOMD for its
-        # FEP setup.)
+        # Convert to an appropriate water topology.
         if self._engine == "SOMD":
             system._set_water_topology("AMBER", property_map=self._property_map)
+        elif self._engine == "GROMACS":
+            system._set_water_topology("GROMACS", property_map=self._property_map)
 
         # Setup all of the simulation processes for each leg.
 
@@ -866,9 +882,9 @@ class Relative:
             # Name the directory.
             new_dir = "%s/lambda_%5.4f" % (self._work_dir, lam)
 
-            # Use the full path.
-            if new_dir[0] != "/":
-                new_dir = _os.getcwd() + "/" + new_dir
+            # Use absolute path.
+            if not _os.path.isabs(new_dir):
+                new_dir = _os.path.abspath(new_dir)
 
             # Delete any existing directories.
             if _os.path.isdir(new_dir):

@@ -47,6 +47,7 @@ from .._Exceptions import IncompatibleError as _IncompatibleError
 from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from .._SireWrappers import System as _System
 from ..Metadynamics import CollectiveVariable as _CollectiveVariable
+from ..Protocol._position_restraint_mixin import _PositionRestraintMixin
 from ..Types._type import Type as _Type
 
 from .. import IO as _IO
@@ -293,6 +294,7 @@ class OpenMM(_process.Process):
         if isinstance(self._protocol, _Protocol.Minimisation):
             # Write the OpenMM import statements.
             self._add_config_imports()
+            self._add_config_monkey_patches()
 
             # Load the input files.
             self.addToConfig("\n# Load the topology and coordinate files.")
@@ -321,6 +323,9 @@ class OpenMM(_process.Process):
 
             # Add the platform information.
             self._add_config_platform()
+
+            # Add any position restraints.
+            self._add_config_restraints()
 
             # Set up the simulation object.
             self.addToConfig("\n# Initialise and configure the simulation object.")
@@ -401,46 +406,8 @@ class OpenMM(_process.Process):
                         self.addToConfig(f"barostat.setRandomNumberSeed({self._seed})")
                     self.addToConfig("system.addForce(barostat)")
 
-            # Add backbone restraints. This uses the approach from:
-            # https://github.com/openmm/openmm/issues/2262#issuecomment-464157489
-            # Here zero-mass dummy atoms are bonded to the restrained atoms to avoid
-            # issues with position rescaling during barostat updates.
-            restraint = self._protocol.getRestraint()
-            if restraint is not None:
-                # Search for the atoms to restrain by keyword.
-                if isinstance(restraint, str):
-                    restrained_atoms = self._system.getRestraintAtoms(restraint)
-                # Use the user-defined list of indices.
-                else:
-                    restrained_atoms = restraint
-
-                # Get the force constant in units of kJ_per_mol/nanometer**2
-                force_constant = self._protocol.getForceConstant()._sire_unit
-                force_constant = force_constant.to(
-                    _SireUnits.kJ_per_mol / _SireUnits.nanometer2
-                )
-
-                self.addToConfig(
-                    "\n# Restrain the position of backbone atoms using zero-mass dummy atoms."
-                )
-                self.addToConfig("restraint = HarmonicBondForce()")
-                self.addToConfig("restraint.setUsesPeriodicBoundaryConditions(True)")
-                self.addToConfig("system.addForce(restraint)")
-                self.addToConfig(
-                    "nonbonded = [f for f in system.getForces() if isinstance(f, NonbondedForce)][0]"
-                )
-                self.addToConfig("dummy_indices = []")
-                self.addToConfig("positions = inpcrd.positions")
-                self.addToConfig(f"restrained_atoms = {restrained_atoms}")
-                self.addToConfig("for i in restrained_atoms:")
-                self.addToConfig("    j = system.addParticle(0)")
-                self.addToConfig("    nonbonded.addParticle(0, 1, 0)")
-                self.addToConfig("    nonbonded.addException(i, j, 0, 1, 0)")
-                self.addToConfig(
-                    f"    restraint.addBond(i, j, 0*nanometers, {force_constant}*kilojoules_per_mole/nanometer**2)"
-                )
-                self.addToConfig("    dummy_indices.append(j)")
-                self.addToConfig("    positions.append(positions[i])")
+            # Add any position restraints.
+            self._add_config_restraints()
 
             # Get the integration time step from the protocol.
             timestep = self._protocol.getTimeStep().picoseconds().value()
@@ -450,7 +417,12 @@ class OpenMM(_process.Process):
             self.addToConfig(
                 f"integrator = LangevinMiddleIntegrator({temperature}*kelvin,"
             )
-            self.addToConfig("                                1/picosecond,")
+            friction = (
+                1 / self._protocol.getThermostatTimeConstant().picoseconds().value()
+            )
+            self.addToConfig(
+                f"                                {friction:.5f}/picosecond,"
+            )
             self.addToConfig(f"                                {timestep}*picoseconds)")
             if self._is_seeded:
                 self.addToConfig(f"integrator.setRandomNumberSeed({self._seed})")
@@ -561,6 +533,7 @@ class OpenMM(_process.Process):
         elif isinstance(self._protocol, _Protocol.Production):
             # Write the OpenMM import statements.
             self._add_config_imports()
+            self._add_config_monkey_patches()
 
             # Production specific import.
             self.addToConfig("import os")
@@ -613,6 +586,9 @@ class OpenMM(_process.Process):
                         self.addToConfig(f"barostat.setRandomNumberSeed({self._seed})")
                     self.addToConfig("system.addForce(barostat)")
 
+            # Add any position restraints.
+            self._add_config_restraints()
+
             # Get the integration time step from the protocol.
             timestep = self._protocol.getTimeStep().picoseconds().value()
 
@@ -621,7 +597,12 @@ class OpenMM(_process.Process):
             self.addToConfig(
                 f"integrator = LangevinMiddleIntegrator({temperature}*kelvin,"
             )
-            self.addToConfig("                                1/picosecond,")
+            friction = (
+                1 / self._protocol.getThermostatTimeConstant().picoseconds().value()
+            )
+            self.addToConfig(
+                f"                                {friction:.5f}/picosecond,"
+            )
             self.addToConfig(f"                                {timestep}*picoseconds)")
             if self._is_seeded:
                 self.addToConfig(f"integrator.setRandomNumberSeed({self._seed})")
@@ -1560,6 +1541,7 @@ class OpenMM(_process.Process):
         if self.isError():
             _warnings.warn("The process exited with an error!")
 
+        self._update_stdout_dict()
         return self._stdout_dict.copy()
 
     def getCurrentRecords(self):
@@ -2017,7 +1999,8 @@ class OpenMM(_process.Process):
     def _add_config_reporters(
         self, state_interval=100, traj_interval=500, is_restart=False
     ):
-        """Helper function to write the reporter (output statements) section
+        """
+        Helper function to write the reporter (output statements) section
         to the OpenMM Python script (config file).
 
         Parameters
@@ -2095,6 +2078,49 @@ class OpenMM(_process.Process):
         self.addToConfig(
             "                                              separator=' '))"
         )
+
+    def _add_config_restraints(self):
+        """Helper function to add position restraints to the OpenMM script (config file)."""
+        # Add position restraints. This uses the approach from:
+        # https://github.com/openmm/openmm/issues/2262#issuecomment-464157489
+        # Here zero-mass dummy atoms are bonded to the restrained atoms to avoid
+        # issues with position rescaling during barostat updates.
+        restraint = self._protocol.getRestraint()
+        if restraint is not None:
+            # Search for the atoms to restrain by keyword.
+            if isinstance(restraint, str):
+                restrained_atoms = self._system.getRestraintAtoms(restraint)
+            # Use the user-defined list of indices.
+            else:
+                restrained_atoms = restraint
+
+            # Get the force constant in units of kJ_per_mol/nanometer**2
+            force_constant = self._protocol.getForceConstant()._sire_unit
+            force_constant = force_constant.to(
+                _SireUnits.kJ_per_mol / _SireUnits.nanometer2
+            )
+
+            self.addToConfig(
+                "\n# Restrain the position of backbone atoms using zero-mass dummy atoms."
+            )
+            self.addToConfig("restraint = HarmonicBondForce()")
+            self.addToConfig("restraint.setUsesPeriodicBoundaryConditions(True)")
+            self.addToConfig("system.addForce(restraint)")
+            self.addToConfig(
+                "nonbonded = [f for f in system.getForces() if isinstance(f, NonbondedForce)][0]"
+            )
+            self.addToConfig("dummy_indices = []")
+            self.addToConfig("positions = inpcrd.positions")
+            self.addToConfig(f"restrained_atoms = {restrained_atoms}")
+            self.addToConfig("for i in restrained_atoms:")
+            self.addToConfig("    j = system.addParticle(0)")
+            self.addToConfig("    nonbonded.addParticle(0, 1, 0)")
+            self.addToConfig("    nonbonded.addException(i, j, 0, 1, 0)")
+            self.addToConfig(
+                f"    restraint.addBond(i, j, 0*nanometers, {force_constant}*kilojoules_per_mole/nanometer**2)"
+            )
+            self.addToConfig("    dummy_indices.append(j)")
+            self.addToConfig("    positions.append(positions[i])")
 
     def _update_stdout_dict(self):
         """Update the dictionary of thermodynamic records."""

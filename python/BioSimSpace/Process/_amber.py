@@ -26,18 +26,9 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Amber"]
 
-from .._Utils import _try_import, _have_imported
+from .._Utils import _try_import
 
-_watchdog = _try_import("watchdog")
-
-if _have_imported(_watchdog):
-    from watchdog.events import (
-        PatternMatchingEventHandler as _PatternMatchingEventHandler,
-    )
-    from watchdog.observers import Observer as _Observer
-else:
-    _PatternMatchingEventHandler = _watchdog
-    _Observer = _watchdog
+_pygtail = _try_import("pygtail")
 
 import os as _os
 import re as _re
@@ -54,6 +45,7 @@ from .. import _amber_home, _isVerbose
 from .._Config import Amber as _AmberConfig
 from .._Exceptions import IncompatibleError as _IncompatibleError
 from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
+from ..Protocol._position_restraint_mixin import _PositionRestraintMixin
 from .._SireWrappers import System as _System
 from ..Types._type import Type as _Type
 
@@ -66,100 +58,6 @@ from .. import _Utils
 from . import _process
 
 from ._plumed import Plumed as _Plumed
-
-
-class _Watcher:
-    """
-    A class to watch for changes to the AMBER energy info file. An event handler
-    is used trigger updates to the energy dictionary each time the file is modified.
-    """
-
-    def __init__(self, proc):
-        """
-        Constructor.
-
-        Parameters
-        ----------
-
-        proc : :class:`Process.Amber <BioSimSpace.Process.Amber>`
-            The Amber Process object.
-        """
-
-        self._process = proc
-        self._observer = _Observer()
-
-    def start(self):
-        """Start the file watcher."""
-
-        # Setup the event handler and observer.
-        event_handler = _Handler(self._process)
-        self._observer.schedule(event_handler, self._process.workDir())
-        self._observer.daemon = True
-        self._observer.start()
-
-
-if _have_imported(_watchdog):
-
-    class _Handler(_PatternMatchingEventHandler):
-        """An event handler to trigger updates to the energy dictionary each time
-        the log file is changed.
-        """
-
-        def __init__(self, proc):
-            """
-            Constructor.
-
-            Parameters
-            ----------
-
-            proc : :class:`Process.Amber <BioSimSpace.Process.Amber>`
-                The Amber Process object.
-            """
-            self._process = proc
-
-            super(_Handler, self).__init__(
-                case_sensitive=False,
-                ignore_directories=True,
-                ignore_patterns=[],
-                patterns=["*.nrg"],
-            )
-
-        def on_any_event(self, event):
-            """
-            Update the dictionary when the file is modified.
-
-            Parameters
-            ----------
-
-            event : str
-                The file system event.
-            """
-
-            # N.B.
-            #
-            # Since the watchdog package is cross-platform it doesn't support
-            # detection of "close-write" operations, so multiple "modified" events
-            # can be triggered while the log file is being written. As such, we
-            # check whether the file has been updated by seeing if the NSTEP record
-            # is different to the most recent entry in the dictionary.
-            # So far, no issues have been found with processing partially written
-            # files, i.e. duplicate or missing records.
-
-            if event.event_type == "modified":
-                # If this is the first time the file has been modified since the
-                # process started, then wipe the dictionary and flag that the file
-                # is now being watched.
-                if not self._process._is_watching:
-                    self._process._stdout_dict = _process._MultiDict()
-                    self._process._is_watching = True
-
-                # Make sure the file exists.
-                if _os.path.isfile(self._process._nrg_file):
-                    # Now update the dictionary with any new records.
-                    self._process._update_energy_dict()
-
-else:
-    _Handler = _watchdog
 
 
 class Amber(_process.Process):
@@ -264,14 +162,10 @@ class Amber(_process.Process):
         # Initialise the energy dictionary and header.
         self._stdout_dict = _process._MultiDict()
 
-        # Create the name of the energy output file and wipe the
-        # contents of any existing file.
-        self._nrg_file = "%s/%s.nrg" % (self._work_dir, name)
-        open(self._nrg_file, "w").close()
-
-        # Initialise the energy watcher.
-        self._watcher = None
-        self._is_watching = False
+        # Initialise log file parsing flags.
+        self._has_results = False
+        self._finished_results = False
+        self._is_header = False
 
         # The names of the input files.
         self._rst_file = "%s/%s.rst7" % (self._work_dir, name)
@@ -414,8 +308,8 @@ class Amber(_process.Process):
 
         # Skip if the user has passed a custom protocol.
         if not isinstance(self._protocol, _Protocol.Custom):
-            # Append a reference file if this a restrained equilibration.
-            if isinstance(self._protocol, _Protocol.Equilibration):
+            # Append a reference file if a position restraint is specified.
+            if isinstance(self._protocol, _PositionRestraintMixin):
                 if self._protocol.getRestraint() is not None:
                     self.setArg("-ref", "%s.rst7" % self._name)
 
@@ -443,9 +337,6 @@ class Amber(_process.Process):
             if self._process.isRunning():
                 return
 
-        # Reset the watcher.
-        self._is_watching = False
-
         # Run the process in the working directory.
         with _Utils.cd(self._work_dir):
             # Create the arguments string list.
@@ -469,10 +360,6 @@ class Amber(_process.Process):
             self._process = _SireBase.Process.run(
                 self._exe, args, "", "%s.err" % self._name
             )
-
-        # Watch the energy info file for changes.
-        self._watcher = _Watcher(self)
-        self._watcher.start()
 
         return self
 
@@ -764,6 +651,7 @@ class Amber(_process.Process):
         if self.isError():
             _warnings.warn("The process exited with an error!")
 
+        self.stdout(0)
         return self._stdout_dict.copy()
 
     def getCurrentRecords(self):
@@ -1585,37 +1473,61 @@ class Amber(_process.Process):
         """
         return self.getDensity(time_series, block=False)
 
-    def _update_energy_dict(self):
-        """Read the energy info file and update the dictionary."""
+    def stdout(self, n=10):
+        """
+        Print the last n lines of the stdout buffer.
 
-        # Return if the file doesn't exist, e.g. it could have been deleted.
-        if not _os.path.isfile(self._nrg_file):
-            return
+        Parameters
+        ----------
+
+        n : int
+            The number of lines to print.
+        """
+
+        # Ensure that the number of lines is positive.
+        if n < 0:
+            raise ValueError("The number of lines must be positive!")
 
         # Flag that this isn't a header line.
-        is_header = False
+        self._is_header = False
 
-        # Open the file for reading.
-        with open(self._nrg_file, "r") as file:
-            # Loop over all of the lines.
-            for line in file:
-                # Skip empty lines and summary reports.
-                if len(line) > 0 and line[0] != "|":
+        # Append any new lines to the stdout list.
+        for line in _pygtail.Pygtail(self._stdout_file):
+            self._stdout.append(line.rstrip())
+            line = line.strip()
+
+            # Skip empty lines and summary reports.
+            if (
+                len(line) > 0
+                and line[0] != "|"
+                and line[0] != "-"
+                and not line.startswith("EAMBER")
+            ):
+                # Flag that we've started recording results.
+                if not self._has_results and line.startswith("NSTEP"):
+                    self._has_results = True
+                    self._finished_results = False
+                # Flag that we've finished recording results.
+                elif "A V E R A G E S" in line:
+                    self._finished_results = True
+
+                # Parse the results.
+                if self._has_results and not self._finished_results:
                     # The output format is different for minimisation protocols.
                     if isinstance(self._protocol, _Protocol.Minimisation):
                         # No equals sign in the line.
-                        if "=" not in line:
+                        if "NSTEP" in line and "=" not in line:
                             # Split the line using whitespace.
                             data = line.upper().split()
 
                             # If we find a header, jump to the top of the loop.
                             if len(data) > 0:
                                 if data[0] == "NSTEP":
-                                    is_header = True
+                                    self._is_header = True
                                     continue
 
                         # Process the header record.
-                        if is_header:
+                        if self._is_header:
                             # Split the line using whitespace.
                             data = line.upper().split()
 
@@ -1624,15 +1536,15 @@ class Amber(_process.Process):
                                 "NSTEP" in self._stdout_dict
                                 and data[0] == self._stdout_dict["NSTEP"][-1]
                             ):
-                                return
+                                self._finished_results = True
+                                continue
 
-                            else:
-                                # Add the timestep and energy records to the dictionary.
-                                self._stdout_dict["NSTEP"] = data[0]
-                                self._stdout_dict["ENERGY"] = data[1]
+                            # Add the timestep and energy records to the dictionary.
+                            self._stdout_dict["NSTEP"] = data[0]
+                            self._stdout_dict["ENERGY"] = data[1]
 
-                                # Turn off the header flag now that the data has been recorded.
-                                is_header = False
+                            # Turn off the header flag now that the data has been recorded.
+                            self._is_header = False
 
                     # All other protocols have output that is formatted as RECORD = VALUE.
 
@@ -1646,81 +1558,27 @@ class Amber(_process.Process):
                     for key, value in records:
                         # Strip whitespace from the record key.
                         key = key.strip()
+                        self._stdout_dict[key] = value
 
-                        # The file hasn't been updated.
-                        if key == "NSTEP":
-                            if (
-                                "NSTEP" in self._stdout_dict
-                                and value == self._stdout_dict["NSTEP"][-1]
-                            ):
-                                return
-                            else:
-                                self._stdout_dict[key] = value
-                        else:
-                            self._stdout_dict[key] = value
+        # Get the current number of lines.
+        num_lines = len(self._stdout)
+
+        # Set the line from which to start printing.
+        if num_lines < n:
+            start = 0
+        else:
+            start = num_lines - n
+
+        # Print the lines.
+        for x in range(start, num_lines):
+            print(self._stdout[x])
 
     def kill(self):
         """Kill the running process."""
 
-        # Stop and join the watchdog observer.
-        if self._watcher is not None:
-            self._watcher._observer.stop()
-            self._watcher._observer.join()
-
         # Kill the process.
         if not self._process is None and self._process.isRunning():
             self._process.kill()
-
-    def wait(self, max_time=None):
-        """
-        Wait for the process to finish.
-
-        Parameters
-        ----------
-
-        max_time : :class:`Time <BioSimSpace.Types.Time>`, int, float
-            The maximum time to wait (in minutes).
-        """
-
-        # The process isn't running.
-        if not self.isRunning():
-            return
-
-        if max_time is not None:
-            # Convert int to float.
-            if type(max_time) is int:
-                max_time = float(max_time)
-
-            # BioSimSpace.Types.Time
-            if isinstance(max_time, _Type):
-                max_time = max_time.minutes().value()
-
-            # Float.
-            elif isinstance(max_time, float):
-                if max_time <= 0:
-                    raise ValueError("'max_time' cannot be negative!")
-
-            else:
-                raise TypeError(
-                    "'max_time' must be of type 'BioSimSpace.Types.Time' or 'float'."
-                )
-
-        # Loop until the process is finished.
-        # For some reason we can't use Sire.Base.Process.wait() since it
-        # doesn't work properly with the background threads used for the
-        # watchdog observer.
-        while self._process.isRunning():
-            _time.sleep(1)
-
-            # The maximum run time has been exceeded, kill the job.
-            if max_time is not None:
-                if self.runTime().value() > max_time:
-                    self.kill()
-                    return
-
-        # Stop and join the watchdog observer.
-        self._watcher._observer.stop()
-        self._watcher._observer.join()
 
     def _get_stdout_record(self, key, time_series=False, unit=None):
         """
@@ -1744,6 +1602,9 @@ class Amber(_process.Process):
         record :
             The matching stdout record.
         """
+
+        # Update the standard output dictionary.
+        self.stdout(0)
 
         # No data!
         if len(self._stdout_dict) == 0:

@@ -20,7 +20,7 @@ jobs:
       max-parallel: 9
       fail-fast: false
       matrix:
-        python-version: ["3.8", "3.9"]
+        python-version: ["3.8", "3.9", "3.10"]
         platform:
           - {
               name: "windows",
@@ -68,10 +68,18 @@ jobs:
         run: mamba install -y -c conda-forge boa anaconda-client packaging=21 pip-requirements-parser
 #
       - name: Update Conda recipe
-        run: python ${{ github.workspace }}/BioSimSpace/actions/update_recipe.py
+        run: python ${{ github.workspace }}/biosimspace/actions/update_recipe.py
 #
       - name: Prepare build location
         run: mkdir ${{ github.workspace }}/build
 #
       - name: Build Conda package using mamba build
-        run: conda mambabuild -c conda-forge -c openbiosim/label/dev ${{ github.workspace }}/BioSimSpace/recipes/biosimspace
+        run: conda mambabuild -c conda-forge -c openbiosim/label/dev ${{ github.workspace }}/biosimspace/recipes/biosimspace
+#
+      - name: Upload Conda package
+        run: python ${{ github.workspace }}/biosimspace/actions/upload_package.py
+        env:
+          SRC_DIR: ${{ github.workspace }}/biosimspace
+          BUILD_DIR: ${{ github.workspace }}/build
+          ANACONDA_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
+        if: github.event_name != 'pull_request'

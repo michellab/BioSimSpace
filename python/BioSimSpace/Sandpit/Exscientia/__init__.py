@@ -51,6 +51,11 @@ __all__ = [
     "Units",
 ]
 
+# Disable NumPy warnings.
+import warnings as _warnings
+
+_warnings.filterwarnings("ignore", module="numpy")
+
 # Make sure we're using the Sire python interpreter.
 try:
     import sire
@@ -132,8 +137,6 @@ def _isVerbose():
     global _is_verbose
     return _is_verbose
 
-
-from warnings import warn as _warn
 
 # Check to see if AMBERHOME is set.
 if "AMBERHOME" in _environ:

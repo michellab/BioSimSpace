@@ -32,14 +32,12 @@ import warnings as _warnings
 from .. import Types as _Types
 from .. import Units as _Units
 
+from ._position_restraint_mixin import _PositionRestraintMixin
 from ._protocol import Protocol as _Protocol
 
 
-class Equilibration(_Protocol):
+class Equilibration(_PositionRestraintMixin):
     """A class for storing equilibration protocols."""
-
-    # Supported restraint keywords.
-    _restraints = ["backbone", "heavy", "all", "none"]
 
     def __init__(
         self,
@@ -49,6 +47,7 @@ class Equilibration(_Protocol):
         temperature_end=_Types.Temperature(300, "kelvin"),
         temperature=None,
         pressure=None,
+        thermostat_time_constant=_Types.Time(1, "picosecond"),
         report_interval=100,
         restart_interval=500,
         restraint=None,
@@ -79,6 +78,9 @@ class Equilibration(_Protocol):
         pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
             The pressure. If this argument is omitted then the simulation
             is run using the NVT ensemble.
+
+        thermostat_time_constant : :class:`Time <BioSimSpace.Types.Time>`
+            Time constant for thermostat coupling.
 
         report_interval : int
             The frequency at which statistics are recorded. (In integration steps.)
@@ -144,63 +146,44 @@ class Equilibration(_Protocol):
         else:
             self._pressure = None
 
+        # Set the thermostat time constant.
+        self.setThermostatTimeConstant(thermostat_time_constant)
+
         # Set the report interval.
         self.setReportInterval(report_interval)
 
         # Set the restart interval.
         self.setRestartInterval(restart_interval)
 
-        # Set the restraint.
-        if restraint is not None:
-            self.setRestraint(restraint)
-        else:
-            self._restraint = None
+        # Set the posistion restraint.
+        _PositionRestraintMixin.__init__(self, restraint, force_constant)
 
-        # Set the force constant.
-        self.setForceConstant(force_constant)
+    def _get_parm(self):
+        """Return a string representation of the parameters."""
+        return (
+            f"timestep={self._timestep}, "
+            f"runtime={self._runtime}, "
+            f"temperature_start={self._temperature_start}, "
+            f"temperature_end={self._temperature_end}, "
+            f"pressure={self._pressure}, "
+            f"report_interval={self._report_interval}, "
+            f"restart_interval={self._restart_interval}, "
+            f"restart={self._restart}, " + _PositionRestraintMixin._get_parm(self)
+        )
 
     def __str__(self):
         """Return a human readable string representation of the object."""
         if self._is_customised:
             return "<BioSimSpace.Protocol.Custom>"
         else:
-            return (
-                "<BioSimSpace.Protocol.Equilibration: timestep=%s, runtime=%s, "
-                "temperature_start=%s, temperature_end=%s, pressure=%s, "
-                "report_interval=%d, restart_interval=%d,restraint=%r, "
-                "force_constant=%3.2f kcal_per_mol/angstrom**2>"
-            ) % (
-                self._timestep,
-                self._runtime,
-                self._temperature_start,
-                self._temperature_end,
-                self._pressure,
-                self._report_interval,
-                self._restart_interval,
-                self._restraint,
-                self._force_constant.value(),
-            )
+            return f"<BioSimSpace.Protocol.Equilibration: {self._get_parm()}>"
 
     def __repr__(self):
         """Return a string showing how to instantiate the object."""
         if self._is_customised:
-            return "<BioSimSpace.Protocol.Custom>"
+            return "BioSimSpace.Protocol.Custom"
         else:
-            return (
-                "BioSimSpace.Protocol.Equilibration(timestep=%s, runtime=%s, "
-                "temperature_start=%s, temperature_end=%s, pressure=%s, "
-                "report_interval=%d, restart_interval=%d, restraint=%r, force_constant=%3.2f)"
-            ) % (
-                self._timestep,
-                self._runtime,
-                self._temperature_start,
-                self._temperature_end,
-                self._pressure,
-                self._report_interval,
-                self._restart_interval,
-                self._restraint,
-                self._force_constant.value(),
-            )
+            return f"BioSimSpace.Protocol.Equilibration({self._get_parm()})"
 
     def getTimeStep(self):
         """
@@ -346,6 +329,35 @@ class Equilibration(_Protocol):
         else:
             raise TypeError("'pressure' must be of type 'BioSimSpace.Types.Pressure'")
 
+    def getThermostatTimeConstant(self):
+        """
+        Return the time constant for the thermostat.
+
+        Returns
+        -------
+
+        runtime : :class:`Time <BioSimSpace.Types.Time>`
+            The time constant for the thermostat.
+        """
+        return self._thermostat_time_constant
+
+    def setThermostatTimeConstant(self, thermostat_time_constant):
+        """
+        Set the time constant for the thermostat.
+
+        Parameters
+        ----------
+
+        thermostat_time_constant : :class:`Time <BioSimSpace.Types.Time>`
+            The time constant for the thermostat.
+        """
+        if isinstance(thermostat_time_constant, _Types.Time):
+            self._thermostat_time_constant = thermostat_time_constant
+        else:
+            raise TypeError(
+                "'thermostat_time_constant' must be of type 'BioSimSpace.Types.Time'"
+            )
+
     def getReportInterval(self):
         """
         Return the interval between reporting statistics. (In integration steps.).
@@ -411,112 +423,6 @@ class Equilibration(_Protocol):
             restart_interval = 500
 
         self._restart_interval = restart_interval
-
-    def getRestraint(self):
-        """
-        Return the type of restraint.
-
-        Returns
-        -------
-
-        restraint : str, [int]
-            The type of restraint.
-        """
-        return self._restraint
-
-    def setRestraint(self, restraint):
-        """
-        Set the type of restraint.
-
-        Parameters
-        ----------
-
-        restraint : str, [int]
-            The type of restraint to perform. This should be one of the
-            following options:
-                "backbone"
-                     Protein backbone atoms. The matching is done by a name
-                     template, so is unreliable on conversion between
-                     molecular file formats.
-                "heavy"
-                     All non-hydrogen atoms that aren't part of water
-                     molecules or free ions.
-                "all"
-                     All atoms that aren't part of water molecules or free
-                     ions.
-            Alternatively, the user can pass a list of atom indices for
-            more fine-grained control.
-        """
-
-        if isinstance(restraint, str):
-            # Convert to lower case and strip whitespace.
-            restraint = restraint.lower().replace(" ", "")
-            if restraint not in self._restraints:
-                raise ValueError(f"'restraint' must be one of: {self._restraints}")
-            # Set to NoneType if equal to "none", since this makes checking
-            # whether a restraint is set elsewhere much easier.
-            if restraint == "none":
-                restraint = None
-
-        elif isinstance(restraint, (list, tuple)):
-            if not all(type(x) is int for x in restraint):
-                raise ValueError("'restraint' must be a list of 'int' types!")
-            # Create a set to sort and ensure no duplicates, then convert back to a list.
-            restraint = list(set(restraint))
-            restraint.sort()
-
-        else:
-            raise TypeError(
-                "'restraint' must be of type 'str', or a list of 'int' types."
-            )
-
-        self._restraint = restraint
-
-    def getForceConstant(self):
-        """
-        Return the force constant for the restraint.
-
-        Returns
-        -------
-
-        force_constant : class:`GeneralUnit <BioSimSpace.Types._GeneralUnit>`
-            The force constant for the restraint, in units of
-            kcal_per_mol/angstrom**2.
-        """
-        return self._force_constant
-
-    def setForceConstant(self, force_constant):
-        """
-        Set the type force constant for the restraint.
-
-        Parameters
-        ----------
-
-        force_constant : :class:`GeneralUnit <BioSimSpace.Types._GeneralUnit>`, float
-        """
-
-        # Convert int to float.
-        if type(force_constant) is int:
-            force_constant = float(force_constant)
-
-        if isinstance(force_constant, float):
-            # Use default units.
-            force_constant *= _Units.Energy.kcal_per_mol / _Units.Area.angstrom2
-
-        elif isinstance(force_constant, _Types._GeneralUnit):
-            # Validate the dimensions.
-            if force_constant.dimensions() != (0, 0, 0, 1, -1, 0, -2):
-                raise ValueError(
-                    "'force_constant' has invalid dimensions! "
-                    f"Expected dimensions are 'M Q-1 T-2', found '{force_constant.unit()}'"
-                )
-
-        else:
-            raise TypeError(
-                "'force_constant' must be of type 'BioSimSpace.Types._GeneralUnit', or 'float'."
-            )
-
-        self._force_constant = force_constant
 
     def isConstantTemp(self):
         """

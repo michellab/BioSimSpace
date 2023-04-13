@@ -20,7 +20,7 @@ if BSS._amber_home is not None:
 else:
     has_amber = False
 
-# Make sure GROMSCS is installed.
+# Make sure GROMACS is installed.
 has_gromacs = BSS._gmx_exe is not None
 
 # Make sure openff is installed.

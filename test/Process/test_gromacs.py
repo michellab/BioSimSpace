@@ -1,12 +1,25 @@
-import BioSimSpace as BSS
-
+import numpy as np
+import shutil
 import pytest
 
-# Make sure GROMSCS is installed.
+import BioSimSpace as BSS
+
+from BioSimSpace.Units.Angle import radian
+from BioSimSpace.Units.Energy import kcal_per_mol, kj_per_mol
+from BioSimSpace.Units.Length import angstrom
+from BioSimSpace.Units.Pressure import bar
+from BioSimSpace.Units.Temperature import kelvin
+from BioSimSpace.Units.Time import picosecond
+from BioSimSpace.Units.Volume import nanometer3
+
+# Make sure GROMACS is installed.
 has_gromacs = BSS._gmx_exe is not None
 
 # Store the tutorial URL.
 url = BSS.tutorialUrl()
+
+# Store the allowed restraints.
+restraints = BSS.Protocol._position_restraint_mixin._PositionRestraintMixin.restraints()
 
 
 @pytest.fixture(scope="session")
@@ -27,18 +40,19 @@ def perturbable_system():
 
 
 @pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
-def test_minimise(system):
+@pytest.mark.parametrize("restraint", restraints)
+def test_minimise(system, restraint):
     """Test a minimisation protocol."""
 
     # Create a short minimisation protocol.
-    protocol = BSS.Protocol.Minimisation(steps=100)
+    protocol = BSS.Protocol.Minimisation(steps=100, restraint=restraint)
 
-    # Run the process and check that it finishes without error.
-    assert run_process(system, protocol)
+    # Run the process, check that it finished without error, and returns a system.
+    run_process(system, protocol)
 
 
 @pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
-@pytest.mark.parametrize("restraint", ["backbone", "heavy", "all", "none"])
+@pytest.mark.parametrize("restraint", restraints)
 def test_equilibrate(system, restraint):
     """Test an equilibration protocol."""
 
@@ -47,8 +61,8 @@ def test_equilibrate(system, restraint):
         runtime=BSS.Types.Time(0.001, "nanoseconds"), restraint=restraint
     )
 
-    # Run the process and check that it finishes without error.
-    assert run_process(system, protocol)
+    # Run the process, check that it finished without error, and returns a system.
+    run_process(system, protocol)
 
 
 @pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
@@ -62,8 +76,8 @@ def test_heat(system):
         temperature_end=BSS.Types.Temperature(300, "kelvin"),
     )
 
-    # Run the process and check that it finishes without error.
-    assert run_process(system, protocol)
+    # Run the process, check that it finished without error, and returns a system.
+    run_process(system, protocol)
 
 
 @pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
@@ -77,21 +91,22 @@ def test_cool(system):
         temperature_end=BSS.Types.Temperature(0, "kelvin"),
     )
 
-    # Run the process and check that it finishes without error.
-    assert run_process(
-        system, protocol, extra_options={"verlet-buffer-tolerance": "2e-07"}
-    )
+    # Run the process, check that it finished without error, and returns a system.
+    run_process(system, protocol, extra_options={"verlet-buffer-tolerance": "2e-07"})
 
 
 @pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
-def test_production(system):
+@pytest.mark.parametrize("restraint", restraints)
+def test_production(system, restraint):
     """Test a production protocol."""
 
     # Create a short production protocol.
-    protocol = BSS.Protocol.Production(runtime=BSS.Types.Time(0.001, "nanoseconds"))
+    protocol = BSS.Protocol.Production(
+        runtime=BSS.Types.Time(0.001, "nanoseconds"), restraint=restraint
+    )
 
-    # Run the process and check that it finishes without error.
-    assert run_process(system, protocol)
+    # Run the process, check that it finished without error, and returns a system.
+    run_process(system, protocol)
 
 
 @pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
@@ -105,8 +120,8 @@ def test_vacuum_water(system):
     # This will be an alanine-dipeptide and water in vacuum.
     new_system = (system[0] + system[1]).toSystem()
 
-    # Run the process and check that it finishes without error.
-    assert run_process(new_system, protocol)
+    # Run the process, check that it finished without error, and returns a system.
+    run_process(system, protocol)
 
 
 @pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
@@ -136,9 +151,80 @@ def run_process(system, protocol, **kwargs):
     # Wait for the process to end.
     process.wait()
 
-    # Wait for the process to end.
-    system = process.getSystem(block=True)
-    assert system is not None
+    # Make sure the process didn't error.
+    assert not process.isError()
 
-    # Return the process exit code.
-    return not process.isError()
+    # Make sure that we get a molecular system back.
+    assert process.getSystem() is not None
+
+
+@pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
+class TestGetRecord:
+    @staticmethod
+    @pytest.fixture()
+    def setup(system):
+        protocol = BSS.Protocol.Production(
+            runtime=BSS.Types.Time(60, "picosecond"),
+            timestep=BSS.Types.Time(4, "femtosecond"),
+            report_interval=200,
+        )
+        process = BSS.Process.Gromacs(system, protocol)
+        shutil.copyfile(
+            "test/output/gromacs.edr",
+            process.workDir() + "/gromacs.edr",
+        )
+        process._update_energy_dict()
+        return process
+
+    @pytest.mark.parametrize(
+        "func,time_series,value,unit",
+        [
+            ("getStep", True, 0, 1),
+            ("getStep", False, 15000, 1),
+            ("getTime", True, 0.0, picosecond),
+            ("getTime", False, 60.0, picosecond),
+            ("getBondEnergy", True, 191.762558, kj_per_mol),
+            ("getBondEnergy", False, 214.545654, kj_per_mol),
+            ("getAngleEnergy", True, 908.064758, kj_per_mol),
+            ("getAngleEnergy", False, 925.678772, kj_per_mol),
+            ("getProperEnergy", True, 521.629150, kj_per_mol),
+            ("getProperEnergy", False, 507.826538, kj_per_mol),
+            ("getImproperEnergy", True, 0.000000, kj_per_mol),
+            ("getImproperEnergy", False, 0.000000, kj_per_mol),
+            ("getLennardJones14", True, 149.906967, kj_per_mol),
+            ("getLennardJones14", False, 163.615982, kj_per_mol),
+            ("getLennardJonesSR", True, 8568.126953, kj_per_mol),
+            ("getLennardJonesSR", False, 8971.750000, kj_per_mol),
+            ("getCoulomb14", True, -11420.338867, kj_per_mol),
+            ("getCoulomb14", False, -11493.004883, kj_per_mol),
+            ("getCoulombSR", True, -63410.824219, kj_per_mol),
+            ("getCoulombSR", False, -64019.128906, kj_per_mol),
+            ("getCoulombReciprocal", True, 586.427307, kj_per_mol),
+            ("getCoulombReciprocal", False, 251.100098, kj_per_mol),
+            ("getDispersionCorrection", True, -575.343933, kj_per_mol),
+            ("getDispersionCorrection", False, -577.368042, kj_per_mol),
+            ("getPotentialEnergy", True, -64480.589844, kj_per_mol),
+            ("getPotentialEnergy", False, -65054.984375, kj_per_mol),
+            ("getKineticEnergy", True, 11556.777344, kj_per_mol),
+            ("getKineticEnergy", False, 11280.177734, kj_per_mol),
+            ("getTotalEnergy", True, -52923.812500, kj_per_mol),
+            ("getTotalEnergy", False, -53774.804688, kj_per_mol),
+            ("getConservedEnergy", True, -52937.847656, kj_per_mol),
+            ("getConservedEnergy", False, -51628.320312, kj_per_mol),
+            ("getTemperature", True, 306.766907, kelvin),
+            ("getTemperature", False, 299.424744, kelvin),
+            ("getPressure", True, 119.490417, bar),
+            ("getPressure", False, 756.571045, bar),
+            ("getPressureDC", True, -214.083145, bar),
+            ("getPressureDC", False, -215.590363, bar),
+            ("getVolume", True, 44.679958, nanometer3),
+            ("getVolume", False, 44.523510, nanometer3),
+        ],
+    )
+    def test_get(self, setup, func, time_series, value, unit):
+        energy = getattr(setup, func)(time_series, block=False)
+        if time_series:
+            assert len(energy) == 76
+            np.testing.assert_almost_equal(energy[0] / unit, value, decimal=3)
+        else:
+            np.testing.assert_almost_equal(energy / unit, value, decimal=3)

@@ -30,6 +30,7 @@ import math as _math
 import warnings as _warnings
 
 from .. import Protocol as _Protocol
+from ..Protocol._position_restraint_mixin import _PositionRestraintMixin
 
 from ._config import Config as _Config
 
@@ -129,7 +130,7 @@ class Somd(_Config):
 
             # For free energy simulations, the report interval must be a multiple
             # of the energy frequency which is 250 steps.
-            if isinstance(self._protocol, _Protocol.FreeEnergy):
+            if isinstance(self._protocol, _Protocol.FreeEnergyProduction):
                 if report_interval % 250 != 0:
                     report_interval = 250 * _math.ceil(report_interval / 250)
 
@@ -148,7 +149,7 @@ class Somd(_Config):
             # For free energy simulations, the buffer frequency must be an integer
             # multiple of the frequency at which free energies are written, which
             # is 250 steps. Round down to the closest multiple.
-            if isinstance(self._protocol, _Protocol.FreeEnergy):
+            if isinstance(self._protocol, _Protocol.FreeEnergyProduction):
                 if buffer_freq > 0:
                     buffer_freq = 250 * _math.floor(buffer_freq / 250)
 
@@ -182,14 +183,16 @@ class Somd(_Config):
             # Periodic box.
             protocol_dict["cutoff type"] = "cutoffperiodic"
         # Non-bonded cut-off.
-        protocol_dict["cutoff distance"] = "8 angstrom"
+        protocol_dict["cutoff distance"] = "10 angstrom"
 
         # Restraints.
         if (
-            isinstance(self._protocol, _Protocol.Equilibration)
+            isinstance(self._protocol, _PositionRestraintMixin)
             and self._protocol.getRestraint() is not None
         ):
-            raise _IncompatibleError("We currently don't support restraints with SOMD.")
+            raise _IncompatibleError(
+                "We currently don't support position restraints with SOMD."
+            )
 
         # Pressure control.
         protocol_dict["barostat"] = False
@@ -229,13 +232,17 @@ class Somd(_Config):
                     % self._protocol.getStartTemperature().kelvin().value()
                 )
 
+            # Friction coefficient (1 / ps).
+            protocol_dict["inverse friction"] = "{:.5f}".format(
+                1 / self._protocol.getThermostatTimeConstant().picoseconds().value()
+            )
+
         # Free energies.
-        if isinstance(self._protocol, _Protocol.FreeEnergy):
-            if not isinstance(self._protocol, _Protocol.Minimisation):
-                # Handle hydrogen perturbations.
-                protocol_dict["constraint"] = "hbonds-notperturbed"
-                # Write gradients every 250 steps.
-                protocol_dict["energy frequency"] = 250
+        if isinstance(self._protocol, _Protocol.FreeEnergyProduction):
+            # Handle hydrogen perturbations.
+            protocol_dict["constraint"] = "hbonds-notperturbed"
+            # Write gradients every 250 steps.
+            protocol_dict["energy frequency"] = 250
 
             protocol = [str(x) for x in self._protocol.getLambdaValues()]
             protocol_dict["lambda array"] = ", ".join(protocol)

@@ -142,6 +142,9 @@ class Process:
                 _warnings.warn(
                     "Attempting to parameterise a molecule without hydrogen atoms!"
                 )
+        # Strip whitespace from SMILES strings.
+        else:
+            molecule = molecule.replace(" ", "")
 
         # Set attributes.
         self._molecule = molecule

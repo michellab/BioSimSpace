@@ -26,20 +26,17 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Relative", "getData"]
 
-from collections import defaultdict as _defaultdict, OrderedDict as _OrderedDict
 import copy as _copy
-from glob import glob as _glob
 import math as _math
-import shlex as _shlex
-import sys as _sys
 import os as _os
-import re as _re
 import shutil as _shutil
 import subprocess as _subprocess
+import sys as _sys
 import warnings as _warnings
 import zipfile as _zipfile
+from glob import glob as _glob
 
-from .._Utils import _try_import, _have_imported, _assert_imported
+from .._Utils import _assert_imported, _have_imported, _try_import
 
 # alchemlyb isn't available on all variants of Python that we support, so we
 # need to try_import it.
@@ -52,7 +49,11 @@ if _have_imported(_alchemlyb):
     from alchemlyb.preprocessing.subsampling import (
         statistical_inefficiency as _statistical_inefficiency,
     )
-    from alchemlyb.estimators import AutoMBAR as _AutoMBAR
+
+    try:
+        from alchemlyb.estimators import AutoMBAR as _AutoMBAR
+    except ImportError:
+        from alchemlyb.estimators import MBAR as _AutoMBAR
     from alchemlyb.estimators import TI as _TI
     from alchemlyb.postprocessors.units import to_kcalmol as _to_kcalmol
 
@@ -628,7 +629,6 @@ class Relative:
         if estimator not in ["MBAR", "TI"]:
             raise ValueError("'estimator' must be either 'MBAR' or 'TI'.")
 
-        dir = work_dir + "/lambda_*/"
         if engine == "AMBER":
             prefix = "amber"
             suffix = "out"
@@ -641,7 +641,7 @@ class Relative:
         workflow = ABFE(
             units="kcal/mol",
             software=engine,
-            dir=dir,
+            dir=work_dir,
             prefix=prefix,
             suffix=suffix,
             T=temperature / _Units.Temperature.kelvin,
@@ -1222,10 +1222,11 @@ class Relative:
         # Initialise list to store the processe
         processes = []
 
-        # Convert to an appropriate AMBER topology. (Required by SOMD for its
-        # FEP setup.)
-        if self._engine == "SOMD":
+        # Convert to an appropriate water topology.
+        if self._engine in ["AMBER", "SOMD"]:
             system._set_water_topology("AMBER", property_map=self._property_map)
+        elif self._engine == "GROMACS":
+            system._set_water_topology("GROMACS", property_map=self._property_map)
 
         # Setup all of the simulation processes for each leg.
 
@@ -1302,9 +1303,9 @@ class Relative:
             # Name the directory.
             new_dir = f"{self._work_dir}/lambda_{self._protocol.getLambdaIndex()}"
 
-            # Use the full path.
-            if new_dir[0] != "/":
-                new_dir = _os.getcwd() + "/" + new_dir
+            # Use absolute path.
+            if not _os.path.isabs(new_dir):
+                new_dir = _os.path.abspath(new_dir)
 
             # Delete any existing directories.
             if _os.path.isdir(new_dir):

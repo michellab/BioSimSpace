@@ -2,6 +2,12 @@
 Metadynamics
 ============
 
+.. note ::
+
+   You will need to install a version of `GROMACS <https://www.gromacs.org>`__
+   patched with `PLUMED <https://www.plumed.org>`__ into your environment in
+   order to be able to run this tutorial.
+
 In this tutorial you'll use BioSimSpace to set up and run a simple
 `metadyamics <https://en.wikipedia.org/wiki/Metadynamics>`__ simulation to
 calculate the free energy as a function of the :math:`{\phi}` and :math:`{\psi}`

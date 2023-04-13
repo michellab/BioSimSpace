@@ -134,3 +134,12 @@ the path to a working directory to :class:`FreeEnergy.Relative.analyse <BioSimSp
 
 .. toctree::
    :maxdepth: 1
+
+As well as the :class:`protocol <BioSimSpace.Protocol.FreeEnergy>` used for production
+simulations, it is also possible to use
+:class:`FreeEnergy.Relative <BioSimSpace.FreeEnergy.Relative>` to setup and run simulations
+for minimising or equilibrating structures for each lambda window. See the
+:class:`FreeEnergyMinimisation <BioSimSpace.Protocol.FreeEnergyMinimisation>` and
+:class:`FreeEnergyEquilibration <BioSimSpace.Protocol.FreeEnergyEquilibration>`
+protocols for details. At present, these protocols are only supported when not
+using :class:`SOMD <BioSimSpace.Process.Somd>` as the simulation engine.

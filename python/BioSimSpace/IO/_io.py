@@ -47,15 +47,6 @@ import sys as _sys
 import subprocess as _subprocess
 import warnings as _warnings
 
-# Wrap the import of PyPDB since it imports Matplotlib, which will fail if
-# we don't have a display running.
-try:
-    import pypdb as _pypdb
-
-    _has_pypdb = True
-except:
-    _has_pypdb = False
-
 # Flag that we've not yet raised a warning about GROMACS not being installed.
 _has_gmx_warned = False
 
@@ -259,10 +250,6 @@ def readPDB(id, pdb4amber=False, work_dir=None, show_warnings=False, property_ma
     >>> system = BSS.IO.readPDB("file.pdb", pdb4amber=True)
     """
 
-    if not _has_pypdb:
-        _warnings.warn("BioSimSpace.IO: PyPDB could not be imported on this system.")
-        return None
-
     if not isinstance(id, str):
         raise TypeError("'id' must be of type 'str'")
 
@@ -290,30 +277,23 @@ def readPDB(id, pdb4amber=False, work_dir=None, show_warnings=False, property_ma
 
     # ID from the Protein Data Bank.
     else:
-        if not _has_pypdb:
-            _warnings.warn(
-                "BioSimSpace.IO: PyPDB could not be imported on this system."
-            )
-            return None
-
         # Strip any whitespace from the PDB ID and convert to upper case.
         id = id.replace(" ", "").upper()
 
-        # Attempt to download the PDB file. (Compression is currently broken!)
-        with _warnings.catch_warnings(record=True) as w:
-            pdb_string = _pypdb.get_pdb_file(id, filetype="pdb", compression=False)
-            if w:
-                raise IOError("Retrieval failed, invalid PDB ID: %s" % id)
-
-        # Create the name of the PDB file.
-        pdb_file = "%s/%s.pdb" % (work_dir, id)
-
-        # Now write the PDB string to file.
-        with open(pdb_file, "w") as file:
-            file.write(pdb_string)
+        # Use Sire to download the PDB.
+        try:
+            system = _patch_sire_load(id, directory=str(work_dir))
+        except:
+            raise IOError("Retrieval failed, invalid PDB ID: %s" % id)
 
         # Store the absolute path of the file.
-        pdb_file = _os.path.abspath(pdb_file)
+        pdb_file = f"{work_dir}/{id}"
+
+        # Save to PDB format.
+        saveMolecules(pdb_file, _System(system), "pdb")
+
+        # Add the extension.
+        pdb_file += ".pdb"
 
     # Process the file with pdb4amber.
     if pdb4amber:
@@ -717,7 +697,7 @@ def saveMolecules(filebase, system, fileformat, property_map={}, **kwargs):
             # Make sure AMBER and GROMACS files have the expected water topology
             # and save GROMACS files with an extension such that they can be run
             # directly by GROMACS without needing to be renamed.
-            if format == "PRM7" or format == "RST7":
+            if format == "PRM7":
                 system_copy = system.copy()
                 system_copy._set_water_topology("AMBER", _property_map)
                 file = _SireIO.MoleculeParser.save(
@@ -725,7 +705,7 @@ def saveMolecules(filebase, system, fileformat, property_map={}, **kwargs):
                 )
             elif format == "GroTop":
                 system_copy = system.copy()
-                system_copy._set_water_topology("GROMACS")
+                system_copy._set_water_topology("GROMACS", _property_map)
                 file = _SireIO.MoleculeParser.save(
                     system_copy._sire_object, filebase, _property_map
                 )[0]

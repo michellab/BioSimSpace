@@ -32,6 +32,7 @@ Functions
     supportedFormats
     to
     toBioSimSpace
+    toOpenMM
     toRDKit
     toSire
 

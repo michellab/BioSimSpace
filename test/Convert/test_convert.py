@@ -77,3 +77,17 @@ def test_atom(system):
     bss_atom = BSS.Convert.toBioSimSpace(sire_atom)
 
     assert isinstance(bss_atom, BSS._SireWrappers.Atom)
+
+
+def test_molecule_rename():
+    """
+    Test that a parameterised molecule generated from a SMILES string
+    starting with the "[" character is renamed with a "smiles:" prefix
+    so that it can be parsed by gmx when used in a GROMACS topology file.
+    """
+
+    # Create the parameterised molecule.
+    mol = BSS.Convert.smiles("[C@@H](C(F)(F)F)(OC(F)F)Cl")
+
+    # Make sure the name is correct.
+    assert mol._sire_object.name().value() == "smiles:[C@@H](C(F)(F)F)(OC(F)F)Cl"

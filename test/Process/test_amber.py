@@ -18,6 +18,9 @@ else:
 # Store the tutorial URL.
 url = BSS.tutorialUrl()
 
+# Store the allowed restraints.
+restraints = BSS.Protocol._position_restraint_mixin._PositionRestraintMixin.restraints()
+
 
 @pytest.fixture(scope="session")
 def system():
@@ -26,18 +29,19 @@ def system():
 
 
 @pytest.mark.skipif(has_amber is False, reason="Requires AMBER to be installed.")
-def test_minimise(system):
+@pytest.mark.parametrize("restraint", restraints)
+def test_minimise(system, restraint):
     """Test a minimisation protocol."""
 
     # Create a short minimisation protocol.
-    protocol = BSS.Protocol.Minimisation(steps=100)
+    protocol = BSS.Protocol.Minimisation(steps=100, restraint=restraint)
 
-    # Run the process and check that it finishes without error.
-    assert run_process(system, protocol)
+    # Run the process, check that it finished without error, and returns a system.
+    run_process(system, protocol)
 
 
 @pytest.mark.skipif(has_amber is False, reason="Requires AMBER to be installed.")
-@pytest.mark.parametrize("restraint", ["backbone", "heavy", "all", "none"])
+@pytest.mark.parametrize("restraint", restraints)
 def test_equilibrate(system, restraint):
     """Test an equilibration protocol."""
 
@@ -46,8 +50,8 @@ def test_equilibrate(system, restraint):
         runtime=BSS.Types.Time(0.001, "nanoseconds"), restraint=restraint
     )
 
-    # Run the process and check that it finishes without error.
-    assert run_process(system, protocol)
+    # Run the process, check that it finished without error, and returns a system.
+    run_process(system, protocol)
 
 
 @pytest.mark.skipif(has_amber is False, reason="Requires AMBER to be installed.")
@@ -61,8 +65,8 @@ def test_heat(system):
         temperature_end=BSS.Types.Temperature(300, "kelvin"),
     )
 
-    # Run the process and check that it finishes without error.
-    assert run_process(system, protocol)
+    # Run the process, check that it finished without error, and returns a system.
+    run_process(system, protocol)
 
 
 @pytest.mark.skipif(has_amber is False, reason="Requires AMBER to be installed.")
@@ -76,19 +80,22 @@ def test_cool(system):
         temperature_end=BSS.Types.Temperature(0, "kelvin"),
     )
 
-    # Run the process and check that it finishes without error.
-    assert run_process(system, protocol)
+    # Run the process, check that it finished without error, and returns a system.
+    run_process(system, protocol)
 
 
 @pytest.mark.skipif(has_amber is False, reason="Requires AMBER to be installed.")
-def test_production(system):
+@pytest.mark.parametrize("restraint", restraints)
+def test_production(system, restraint):
     """Test a production protocol."""
 
     # Create a short production protocol.
-    protocol = BSS.Protocol.Production(runtime=BSS.Types.Time(0.001, "nanoseconds"))
+    protocol = BSS.Protocol.Production(
+        runtime=BSS.Types.Time(0.001, "nanoseconds"), restraint=restraint
+    )
 
-    # Run the process and check that it finishes without error.
-    assert run_process(system, protocol)
+    # Run the process, check that it finished without error, and returns a system.
+    run_process(system, protocol, check_data=True)
 
 
 @pytest.mark.skipif(has_amber is False, reason="Requires AMBER to be installed.")
@@ -199,7 +206,7 @@ def test_args(system):
     assert arg_string == "-x X -a A -b B -y -e -f 6 -g -h H -k K -z Z"
 
 
-def run_process(system, protocol):
+def run_process(system, protocol, check_data=False):
     """Helper function to run various simulation protocols."""
 
     # Initialise the AMBER process.
@@ -211,5 +218,32 @@ def run_process(system, protocol):
     # Wait for the process to end.
     process.wait()
 
-    # Return the process exit code.
-    return not process.isError()
+    # Make sure the process didn't error.
+    assert not process.isError()
+
+    # Make sure that we get a molecular system back.
+    assert process.getSystem() is not None
+
+    # Make sure the correct amount of data is generated.
+    if check_data:
+        # Get the config from the process.
+        config = process.getConfig()
+
+        # Parse the config to get the report frequency and total number of steps.
+        freq = None
+        nsteps = None
+        for line in config:
+            if "ntpr" in line:
+                freq = int(line.split("=")[1].split(",")[0])
+            elif "nstlim" in line:
+                nsteps = int(line.split("=")[1].split(",")[0])
+
+        if freq and nsteps:
+            # Work out the number of records. (Add one since the zero step is recorded.)
+            nrec = int(nsteps / freq) + 1
+
+            # Get the record data.
+            data = process.getRecords()
+
+            for k, v in data.items():
+                assert len(v) == nrec

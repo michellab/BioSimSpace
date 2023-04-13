@@ -123,11 +123,9 @@ finally:
             "py3dmol",
             "pydot",
             "pygtail",
-            "pypdb",
             "pyyaml",
             "rdkit",
             "sire",
-            "watchdog",
         ]
 
         # Don't try to install things that are already installed...
