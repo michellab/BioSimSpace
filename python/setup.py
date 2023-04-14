@@ -39,7 +39,7 @@ if not os.getenv("BSS_CONDA_INSTALL"):
         )
 
     # Check the Sire version.
-    if int(sire.legacy.__version__.replace(".", "")) < min_ver_int:
+    if int(sire.legacy.__version__.replace(".", "").replace("dev", "")) < min_ver_int:
         raise ImportError("BioSimSpace requires Sire version '%s' or above." % min_ver)
 
 from setuptools import setup, find_packages
