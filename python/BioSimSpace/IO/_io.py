@@ -420,6 +420,9 @@ def readMolecules(files, show_warnings=False, download_dir=None, property_map={}
             raise TypeError("'files' must be a list of 'str' types.")
         if len(files) == 0:
             raise ValueError("The list of input files is empty!")
+        # Convert tuple to list.
+        if isinstance(files, tuple):
+            files = list(files)
     else:
         raise TypeError("'files' must be of type 'str', or a list of 'str' types.")
 
