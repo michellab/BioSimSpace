@@ -20,22 +20,38 @@
 #####################################################################
 
 """
-.. currentmodule:: BioSimSpace._Exceptions
+.. currentmodule:: BioSimSpace.Stream
 
-Classes
-=======
+Functions
+=========
 
 .. autosummary::
     :toctree: generated/
 
-    AlignmentError
-    AnalysisError
-    ConversionError
-    IncompatibleError
-    MissingSoftwareError
-    ParameterisationError
-    StreamError
-    ThirdPartyError
+    save
+    load
+
+Examples
+========
+
+Stream a :class:`System <BioSimSpace._SireWrappers.System>` object to and from
+file.
+
+.. code-block:: python
+
+   import BioSimSpace as BSS
+
+   # Load a molecular system.
+   system0 = BSS.IO.readMolecules(["ala.rst7", "ala.prm7"])
+
+   # Stream to file.
+   BSS.Stream.save(system0, "system")
+
+   # Alternatively, stream the system object directly.
+   system0.save("system")
+
+   # Stream from file.
+   system1 = BSS.Stream.load("system.s3")
 """
 
-from ._exceptions import *
+from ._stream import *
