@@ -455,7 +455,7 @@ class ConfigFactory:
             # Interval between writing to the trajectory file.
             "nstxout": self._restart_interval,
         }
-
+        
         # Minimisation.
         if isinstance(self.protocol, _Protocol.Minimisation):
             # Minimisation simulation.
@@ -548,6 +548,9 @@ class ConfigFactory:
                 else:
                     _warnings.warn(
                         "Cannot use a barostat for a vacuum or non-periodic simulation")
+            else:
+                # no pressure coupling if no pressure
+                protocol_dict["pcoupl"] = "no"
 
         # Temperature control.
         if not isinstance(self.protocol, _Protocol.Minimisation):
@@ -582,6 +585,20 @@ class ConfigFactory:
                     self.protocol.getStartTemperature().kelvin().value(),
                     self.protocol.getEndTemperature().kelvin().value(),
                 )
+
+            # if is restart, set as a continuation
+            if self._restart:
+                protocol_dict["continuation"] = "yes"
+                protocol_dict["gen-vel"] = "no"
+            else:
+                # else, generate velocities for the
+                protocol_dict["continuation"] = "no"
+                protocol_dict["gen-vel"] = "yes"
+                protocol_dict["gen-seed"] = "-1"
+                if isinstance(self.protocol, _Protocol.Equilibration):
+                    protocol_dict["gen-temp"] = "%.2f" % self.protocol.getStartTemperature().kelvin().value()
+                else:
+                    protocol_dict["gen-temp"] = "%.2f" % self.protocol.getTemperature().kelvin().value()
 
         # Free energies.
         if isinstance(self.protocol, _Protocol._FreeEnergyMixin):
