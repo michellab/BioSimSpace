@@ -1,12 +1,10 @@
-name: Release Main
+name: Release Devel
 
 on:
   workflow_dispatch:
-    inputs:
-      upload_packages:
-        description: "Upload packages to anaconda (yes/no)?"
-        required: true
-        default: "no"
+  push:
+    branches: [ devel ]
+
 jobs:
   build:
     name: build (${{ matrix.python-version }}, ${{ matrix.platform.name }})
@@ -20,6 +18,18 @@ jobs:
           - { name: "windows", os: "windows-latest", shell: "pwsh" }
           - { name: "linux", os: "ubuntu-latest", shell: "bash -l {0}" }
           - { name: "macos", os: "macos-latest", shell: "bash -l {0}" }
+        exclude:
+          # Exclude all but the latest Python from all but Linux
+          - platform:
+              { name: "macos", os: "macos-latest", shell: "bash -l {0}" }
+            python-version: "3.8"
+          - platform: { name: "windows", os: "windows-latest", shell: "pwsh" }
+            python-version: "3.8"
+          - platform:
+              { name: "macos", os: "macos-latest", shell: "bash -l {0}" }
+            python-version: "3.9"
+          - platform: { name: "windows", os: "windows-latest", shell: "pwsh" }
+            python-version: "3.9"
     environment:
       name: biosimspace-build
     defaults:
@@ -38,8 +48,8 @@ jobs:
           miniforge-variant: Mambaforge
           use-mamba: true
 #
-      - name: Clone the main branch
-        run: git clone -b main https://github.com/openbiosim/biosimspace
+      - name: Clone the devel branch
+        run: git clone -b devel https://github.com/openbiosim/biosimspace
 #
       - name: Setup Conda
         run: mamba install -y -c conda-forge boa anaconda-client packaging=21 pip-requirements-parser
@@ -51,11 +61,10 @@ jobs:
         run: mkdir ${{ github.workspace }}/build
 #
       - name: Build Conda package using mamba build
-        run: conda mambabuild -c conda-forge -c openbiosim/label/main ${{ github.workspace }}/biosimspace/recipes/biosimspace
+        run: conda mambabuild -c conda-forge -c openbiosim/label/dev ${{ github.workspace }}/biosimspace/recipes/biosimspace
 #
       - name: Upload Conda package
         run: python ${{ github.workspace }}/biosimspace/actions/upload_package.py
         env:
           ANACONDA_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
-          ANACONDA_LABEL: main
-        if: github.event.inputs.upload_packages == 'yes'
+          ANACONDA_LABEL: dev
