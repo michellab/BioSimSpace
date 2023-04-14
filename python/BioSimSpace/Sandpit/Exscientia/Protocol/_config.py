@@ -1,11 +1,11 @@
-import math as _math
 import warnings as _warnings
 
+import math as _math
 from sire.legacy import Units as _SireUnits
 
 from .. import Protocol as _Protocol
-from ..Align._squash import _amber_mask_from_indices, _squashed_atom_mapping
 from .._Exceptions import IncompatibleError as _IncompatibleError
+from ..Align._squash import _amber_mask_from_indices, _squashed_atom_mapping
 
 
 class ConfigFactory:
@@ -133,9 +133,8 @@ class ConfigFactory:
         dummy0_indices = sorted(set(dummy0_indices) - common_dummies)
         dummy1_indices = sorted(set(dummy1_indices) - common_dummies)
 
-        # Define whether HMR is used based on the timestep.
-        # When HMR is used, there can be no SHAKE.
-        if timestep >= 0.004:
+        # SHAKE should be used for timestep > 1 fs.
+        if timestep >= 0.002:
             no_shake_mask = ""
         else:
             no_shake_mask = _amber_mask_from_indices(ti0_indices + ti1_indices)
