@@ -9,6 +9,12 @@ def system(scope="session"):
     return BSS.IO.readMolecules(["test/input/ala.top", "test/input/ala.crd"])
 
 
+@pytest.fixture(autouse=True)
+def run_around_tests():
+    yield
+    os.remove("test.s3")
+
+
 def test_system(system):
     """Test streaming of a Sire system."""
 
@@ -27,9 +33,6 @@ def test_system(system):
         assert m0.nResidues() == m1.nResidues()
         assert m0.nAtoms() == m1.nAtoms()
 
-    # Remove the test file.
-    os.remove("test.s3")
-
 
 def test_molecule(system):
     """Test streaming of a Sire molecule."""
@@ -46,9 +49,6 @@ def test_molecule(system):
     # Check that the molecules contain the same number of residues and atoms.
     assert m0.nResidues() == m1.nResidues()
     assert m0.nAtoms() == m1.nAtoms()
-
-    # Remove the test file.
-    os.remove("test.s3")
 
 
 def test_molecules(system):
@@ -70,9 +70,6 @@ def test_molecules(system):
         assert m0.nResidues() == m1.nResidues()
         assert m0.nAtoms() == m1.nAtoms()
 
-    # Remove the test file.
-    os.remove("test.s3")
-
 
 def test_residue(system):
     """Test streaming of a Sire residue."""
@@ -88,9 +85,6 @@ def test_residue(system):
 
     # Check that the residues contain the same number of atoms.
     assert r0.nAtoms() == r1.nAtoms()
-
-    # Remove the test file.
-    os.remove("test.s3")
 
 
 def test_atom(system):
@@ -108,10 +102,8 @@ def test_atom(system):
     # Check that the atom elements are the same.
     assert a0.element() == a1.element()
 
-    # Remove the test file.
-    os.remove("test.s3")
 
-
+@pytest.mark.xfail(reason="Sire streaming for Selector<T> types is not yet exposed.")
 def test_select_result(system):
     """Test streaming of a Sire select result."""
 
@@ -131,6 +123,3 @@ def test_select_result(system):
     for a0, a1 in zip(s0.atoms(), s1.atoms()):
         assert a0.index() == a1.index()
         assert a0.element() == a1.element()
-
-    # Remove the test file.
-    os.remove("test.s3")
