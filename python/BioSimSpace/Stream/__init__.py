@@ -41,8 +41,10 @@ file.
 
    import BioSimSpace as BSS
 
+   files = BSS.IO.expand(BSS.tutorialUrl(), ["ala.top", "ala.crd"], ".bz2")
+
    # Load a molecular system.
-   system0 = BSS.IO.readMolecules(["ala.rst7", "ala.prm7"])
+   system0 = BSS.IO.readMolecules(files)
 
    # Stream to file.
    BSS.Stream.save(system0, "system")
