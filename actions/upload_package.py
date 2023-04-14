@@ -16,6 +16,12 @@ if "ANACONDA_TOKEN" in os.environ:
 else:
     conda_token = "TEST"
 
+# Get the anaconda channel labels.
+if "ANACONDA_LABEL" in os.environ:
+    conda_label = os.environ["ANACONDA_LABEL"]
+else:
+    conda_label = "dev"
+
 # get the root conda directory
 conda = os.environ["CONDA"]
 
@@ -50,17 +56,8 @@ gitdir = os.path.join(srcdir, ".git")
 
 tag = run_cmd(f"git --git-dir={gitdir} --work-tree={srcdir} tag --contains")
 
-# If the tag is not empty, then set the label to main (this is a release)
-if tag is not None and tag.lstrip().rstrip() != "":
-    print(f"\nTag {tag} is set. This is a 'main' release.")
-    label = "--label main --label dev"
-else:
-    # this is a development release
-    print("\nNo tag is set. This is a 'devel' release.")
-    label = "--label dev"
-
 # Upload the packages to the openbiosim channel on Anaconda Cloud.
-cmd = f"anaconda --token {conda_token} upload --user openbiosim {label} --force {packages}"
+cmd = f"anaconda --token {conda_token} upload --user openbiosim --label {conda_label} --force {packages}"
 
 print(f"\nUpload command:\n\n{cmd}\n")
 
