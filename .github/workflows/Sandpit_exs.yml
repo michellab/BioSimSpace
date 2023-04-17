@@ -35,7 +35,7 @@ jobs:
 
       - name: Install dependency
         run: |
-          mamba install -c conda-forge -c openbiosim/label/dev biosimspace python=3.8 ambertools gromacs "sire>=2023.2.1" alchemlyb pytest "openff-interchange<0.3.0"
+          mamba install -c conda-forge -c openbiosim/label/main biosimspace python=3.8 ambertools gromacs "sire=2023.2.2" alchemlyb pytest "openff-interchange<0.3.0"
           python -m pip install git+https://github.com/Exscientia/MDRestraintsGenerator.git 
           # For the testing of BSS.FreeEnergy.Relative.analysis
           python -m pip install https://github.com/alchemistry/alchemtest/archive/master.zip
