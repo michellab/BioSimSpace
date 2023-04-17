@@ -36,7 +36,7 @@ from ._position_restraint_mixin import _PositionRestraintMixin
 from ._protocol import Protocol as _Protocol
 
 
-class Production(_PositionRestraintMixin):
+class Production(_Protocol, _PositionRestraintMixin):
     """A class for storing production protocols."""
 
     def __init__(

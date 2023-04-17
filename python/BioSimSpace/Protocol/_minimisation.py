@@ -34,7 +34,7 @@ from ._position_restraint_mixin import _PositionRestraintMixin
 from ._protocol import Protocol as _Protocol
 
 
-class Minimisation(_PositionRestraintMixin):
+class Minimisation(_Protocol, _PositionRestraintMixin):
     """A class for storing minimisation protocols."""
 
     def __init__(
