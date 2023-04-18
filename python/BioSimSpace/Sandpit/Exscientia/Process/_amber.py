@@ -72,6 +72,7 @@ class Amber(_process.Process):
         extra_options=None,
         extra_lines=None,
         reference_system=None,
+        explicit_dummies=False,
         property_map={},
     ):
         """
@@ -105,14 +106,17 @@ class Amber(_process.Process):
             A list of extra lines to be put at the end of the script.
 
         reference_system : :class:`System <BioSimSpace._SireWrappers.System>` or None
-               An optional system to use as a source of reference coordinates, if applicable.
-               It is assumed that this system has the same topology as "system". If this is
-               None, then "system" is used as a reference.
+            An optional system to use as a source of reference coordinates, if applicable.
+            It is assumed that this system has the same topology as "system". If this is
+            None, then "system" is used as a reference.
 
-           property_map : dict
-               A dictionary that maps system "properties" to their user defined
-               values. This allows the user to refer to properties with their
-               own naming scheme, e.g. { "charge" : "my-charge" }
+        explicit_dummies : bool
+            Whether to keep the dummy atoms explicit at the endstates or remove them.
+
+        property_map : dict
+            A dictionary that maps system "properties" to their user defined
+            values. This allows the user to refer to properties with their
+            own naming scheme, e.g. { "charge" : "my-charge" }
         """
 
         # Call the base class constructor.
@@ -180,6 +184,9 @@ class Amber(_process.Process):
 
         # Create the list of input files.
         self._input_files = [self._config_file, self._rst_file, self._top_file]
+
+        # Set whether the dummies are explicit
+        self._explicit_dummies = explicit_dummies
 
         # Now set up the working directory for the process.
         self._setup()
@@ -249,7 +256,7 @@ class Amber(_process.Process):
         # Check for perturbable molecules and convert to the chosen end state.
         if isinstance(self._protocol, _Protocol._FreeEnergyMixin):
             # Represent the perturbed system in an AMBER-friendly format.
-            system, mapping = _squash(system)
+            system, mapping = _squash(system, explicit_dummies=self._explicit_dummies)
         else:
             system = self._checkPerturbable(system)
             mapping = {
@@ -458,7 +465,9 @@ class Amber(_process.Process):
 
         # Set the configuration.
         if not isinstance(self._protocol, _Protocol.Dummy):
-            config = _Protocol.ConfigFactory(self._system, self._protocol)
+            config = _Protocol.ConfigFactory(
+                self._system, self._protocol, explicit_dummies=self._explicit_dummies
+            )
             self.addToConfig(
                 config.generateAmberConfig(
                     extra_options={**config_options, **self._extra_options},

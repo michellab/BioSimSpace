@@ -48,20 +48,32 @@ def perturbed_tripeptide():
 
 
 @pytest.mark.skipif(has_amber is False, reason="Requires AMBER to be installed.")
-def test_squash(perturbed_system):
-    squashed_system, mapping = BSS.Align._squash._squash(perturbed_system)
+@pytest.mark.parametrize(
+    "explicit,expected_n_atoms",
+    [
+        (False, [12, 21, 24, 15, 18, 27, 30]),
+        (True, [12, 21, 24, 18, 18, 30, 30]),
+    ],
+)
+def test_squash(perturbed_system, explicit, expected_n_atoms):
+    squashed_system, mapping = BSS.Align._squash._squash(
+        perturbed_system, explicit_dummies=explicit
+    )
     assert len(squashed_system) == 7
     n_atoms = [mol.nAtoms() for mol in squashed_system]
     assert squashed_system[-2].getResidues()[0].name() == "LIG"
     assert squashed_system[-1].getResidues()[0].name() == "LIG"
     # First we must have the unperturbed molecules, and then the perturbed ones.
-    assert n_atoms == [12, 21, 24, 15, 18, 27, 30]
+    assert n_atoms == expected_n_atoms
     python_mapping = {k.value(): v.value() for k, v in mapping.items()}
     assert python_mapping == {0: 0, 2: 1, 3: 2}
 
 
-def test_squash_multires(perturbed_tripeptide):
-    squashed_system, mapping = BSS.Align._squash._squash(perturbed_tripeptide)
+@pytest.mark.parametrize("explicit", [False, True])
+def test_squash_multires(perturbed_tripeptide, explicit):
+    squashed_system, mapping = BSS.Align._squash._squash(
+        perturbed_tripeptide, explicit_dummies=explicit
+    )
     assert len(squashed_system) == 1
     assert len(squashed_system[0].getResidues()) == 4
 
@@ -80,9 +92,9 @@ def test_squashed_molecule_mapping(perturbed_system, is_lambda1):
 
 
 @pytest.mark.parametrize("is_lambda1", [False, True])
-def test_squashed_atom_mapping(perturbed_tripeptide, is_lambda1):
+def test_squashed_atom_mapping_implicit(perturbed_tripeptide, is_lambda1):
     res = BSS.Align._squash._squashed_atom_mapping(
-        perturbed_tripeptide, is_lambda1=is_lambda1
+        perturbed_tripeptide, is_lambda1=is_lambda1, explicit_dummies=False
     )
     if not is_lambda1:
         merged_indices = list(range(16)) + list(range(16, 30)) + list(range(43, 51))
@@ -100,9 +112,26 @@ def test_squashed_atom_mapping(perturbed_tripeptide, is_lambda1):
     assert res == expected
 
 
+@pytest.mark.parametrize("is_lambda1", [False, True])
+def test_squashed_atom_mapping_explicit(perturbed_tripeptide, is_lambda1):
+    res = BSS.Align._squash._squashed_atom_mapping(
+        perturbed_tripeptide, is_lambda1=is_lambda1, explicit_dummies=True
+    )
+    merged_indices = list(range(51))
+    if not is_lambda1:
+        squashed_indices = list(range(16)) + list(range(16, 43)) + list(range(43, 51))
+    else:
+        squashed_indices = list(range(16)) + list(range(51, 78)) + list(range(43, 51))
+    expected = dict(zip(merged_indices, squashed_indices))
+    assert res == expected
+
+
 @pytest.mark.skipif(has_amber is False, reason="Requires AMBER to be installed.")
-def test_unsquash(perturbed_system):
-    squashed_system, mapping = BSS.Align._squash._squash(perturbed_system)
+@pytest.mark.parametrize("explicit", [False, True])
+def test_unsquash(perturbed_system, explicit):
+    squashed_system, mapping = BSS.Align._squash._squash(
+        perturbed_system, explicit_dummies=explicit
+    )
     new_perturbed_system = BSS.Align._squash._unsquash(
         perturbed_system, squashed_system, mapping
     )
@@ -116,8 +145,11 @@ def test_unsquash(perturbed_system):
     ]
 
 
-def test_unsquash_multires(perturbed_tripeptide):
-    squashed_system, mapping = BSS.Align._squash._squash(perturbed_tripeptide)
+@pytest.mark.parametrize("explicit", [False, True])
+def test_unsquash_multires(perturbed_tripeptide, explicit):
+    squashed_system, mapping = BSS.Align._squash._squash(
+        perturbed_tripeptide, explicit_dummies=explicit
+    )
     new_perturbed_system = BSS.Align._squash._unsquash(
         perturbed_tripeptide, squashed_system, mapping
     )
