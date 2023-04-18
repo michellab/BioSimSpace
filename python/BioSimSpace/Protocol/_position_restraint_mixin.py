@@ -29,10 +29,8 @@ __all__ = ["_PositionRestraintMixin"]
 from .. import Types as _Types
 from .. import Units as _Units
 
-from ._protocol import Protocol as _Protocol
 
-
-class _PositionRestraintMixin(_Protocol):
+class _PositionRestraintMixin:
     """A mixin for applying position restraints to other protocols."""
 
     # Supported restraint keywords.
