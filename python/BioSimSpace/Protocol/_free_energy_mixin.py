@@ -30,10 +30,8 @@ import warnings as _warnings
 
 from .. import Types as _Types
 
-from ._protocol import Protocol as _Protocol
 
-
-class _FreeEnergyMixin(_Protocol):
+class _FreeEnergyMixin:
     """A mixin for alchemical free energy protocols."""
 
     def __init__(
