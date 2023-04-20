@@ -184,8 +184,8 @@ There are a number of stages to go through to create a major release:
    CI passes and it has been approved by an authorised developer it can be merged.
 
 7. An authorised developer will now create a tag for this release on ``main``, e.g.
-   using ``git tag -a {VERSION} -m "{VERSION} release"``, e.g.
-   ``git tag -a 2023.1.0 -m "2023.1.0 release"`` would be the tag for the
+   using ``git tag -as {VERSION} -m "{VERSION} release"``, e.g.
+   ``git tag -as 2023.1.0 -m "2023.1.0 release"`` would be the tag for the
    ``2023.1.0`` release. The tag can then be pushed to GitHub with
    ``git push origin tag``, where ``tag`` is the new tag that you've created,
    e.g. ``2023.1.0``.
