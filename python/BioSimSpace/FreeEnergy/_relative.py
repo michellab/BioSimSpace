@@ -142,10 +142,11 @@ class Relative:
             when a different molecular dynamics engine is chosen.
 
         extra_options : dict
-            A dictionary containing extra options. Overrides the ones generated from the protocol.
+            A dictionary containing extra options. Overrides the defaults generated
+            by the protocol.
 
         extra_lines : [str]
-            A list of extra lines to be put at the end of the script.
+            A list of extra lines to put at the end of the configuration file.
 
         property_map : dict
             A dictionary that maps system "properties" to their user defined
