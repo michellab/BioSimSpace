@@ -103,6 +103,7 @@ packages are present.)
 
    It's possible to use a different protocol or molecular dynamics engine for each leg.
 
+>>> protocol = BSS.Protocol.FreeEnergyProduction()
 >>> free_somd = BSS.FreeEnergy.Relative(solvated, protocol, engine="somd", work_dir="freenrg_somd/free")
 >>> vac_somd = BSS.FreeEnergy.Relative(merged.toSystem(), protocol, engine="somd", work_dir="freenrg_somd/vacuum")
 
