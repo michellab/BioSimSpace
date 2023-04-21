@@ -99,12 +99,25 @@ dynamics engine called SOMD. (This is a wrapper around the excellent
 `OpenMM <https://openmm.org>`__ package and is the default engine if no other
 packages are present.)
 
-.. note ::
-
-   It's possible to use a different protocol or molecular dynamics engine for each leg.
-
+>>> protocol = BSS.Protocol.FreeEnergyProduction()
 >>> free_somd = BSS.FreeEnergy.Relative(solvated, protocol, engine="somd", work_dir="freenrg_somd/free")
 >>> vac_somd = BSS.FreeEnergy.Relative(merged.toSystem(), protocol, engine="somd", work_dir="freenrg_somd/vacuum")
+
+.. note ::
+
+   For GROMACS, you can use :data:`BioSimSpace.Protocol.FreeEnergyMinimisation` and
+   :data:`BioSimSpace.Protocol.FreeEnergyEquilibration` to minimise and equilibrate at each
+   :math:`{\lambda}` value prior to setting up to the production run above. For SOMD this
+   isn't possible, so you can either use GROMACS to prepare production input for each window,
+   or use the regular :data:`BioSimSpace.Protocol.Minimisation` and
+   :data:`BioSimSpace.Protocol.Equilibration` protocols to minimise and equilibrate
+   the :math:`{\lambda=0}` and :math:`{\lambda=1}` states only using any supported
+   engine from :data:`BioSimSpace.Process`.
+
+.. note ::
+
+   It's possible to use a different protocol or molecular dynamics engine for each leg,
+   e.g. if you want to use a different :math:`{\lambda}` schedule.
 
 When complete, BioSimSpace will have set up a folder hierarchy containing
 everything that is needed to run the hydration free energy calculation

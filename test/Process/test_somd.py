@@ -172,10 +172,8 @@ def run_process(system, protocol):
                 )
                 res = False
 
-    return not res
-
     # Make sure the process didn't error.
-    assert not process.isError()
+    assert not res
 
     # Make sure that we get a molecular system back.
     assert process.getSystem() is not None
