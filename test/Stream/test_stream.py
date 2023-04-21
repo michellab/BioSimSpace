@@ -12,7 +12,7 @@ def system(scope="session"):
 @pytest.fixture(autouse=True)
 def run_around_tests():
     yield
-    os.remove("test.s3")
+    os.remove("test.bss")
 
 
 def test_system(system):
@@ -22,7 +22,7 @@ def test_system(system):
     BSS.Stream.save(system, "test")
 
     # Stream from file.
-    s = BSS.Stream.load("test.s3")
+    s = BSS.Stream.load("test.bss")
 
     # Check that both systems contain the same number of molecules.
     assert system.nMolecules() == s.nMolecules()
@@ -44,7 +44,7 @@ def test_molecule(system):
     BSS.Stream.save(m0, "test")
 
     # Stream from file.
-    m1 = BSS.Stream.load("test.s3")
+    m1 = BSS.Stream.load("test.bss")
 
     # Check that the molecules contain the same number of residues and atoms.
     assert m0.nResidues() == m1.nResidues()
@@ -58,7 +58,7 @@ def test_molecules(system):
     BSS.Stream.save(system.getMolecules(), "test")
 
     # Stream from file.
-    m = BSS.Stream.load("test.s3")
+    m = BSS.Stream.load("test.bss")
 
     # Check that the system contain the same number of molecules as the
     # molecule group.
@@ -81,7 +81,7 @@ def test_residue(system):
     BSS.Stream.save(r0, "test")
 
     # Stream from file.
-    r1 = BSS.Stream.load("test.s3")
+    r1 = BSS.Stream.load("test.bss")
 
     # Check that the residues contain the same number of atoms.
     assert r0.nAtoms() == r1.nAtoms()
@@ -97,7 +97,7 @@ def test_atom(system):
     BSS.Stream.save(a0, "test")
 
     # Stream from file.
-    a1 = BSS.Stream.load("test.s3")
+    a1 = BSS.Stream.load("test.bss")
 
     # Check that the atom elements are the same.
     assert a0.element() == a1.element()
@@ -114,7 +114,7 @@ def test_select_result(system):
     BSS.Stream.save(s0, "test")
 
     # Stream from file.
-    s1 = BSS.Stream.load("test.s3")
+    s1 = BSS.Stream.load("test.bss")
 
     # Check that the number of search results is the same.
     assert len(s0.atoms()) == len(s1.atoms())

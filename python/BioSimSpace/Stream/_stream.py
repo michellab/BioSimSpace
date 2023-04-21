@@ -66,9 +66,9 @@ def save(sire_object, filebase):
         raise TypeError("'filebase' must be of type 'str'.")
 
     try:
-        _SireStream.save(sire_object._sire_object, f"{filebase}.s3")
+        _SireStream.save(sire_object._sire_object, f"{filebase}.bss")
     except Exception as e:
-        msg = f"Failed to stream {sire_object} to file '{filebase}.s3'."
+        msg = f"Failed to stream {sire_object} to file '{filebase}.bss'."
         if _isVerbose():
             raise IOError(msg) from e
         else:
