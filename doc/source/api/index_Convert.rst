@@ -1,4 +1,4 @@
-.. _ref-Box:
+.. _ref-Convert:
 
 BioSimSpace.Convert
 ===================
