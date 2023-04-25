@@ -133,7 +133,7 @@ def test_unsquash(perturbed_system, explicit):
         perturbed_system, explicit_dummies=explicit
     )
     new_perturbed_system = BSS.Align._squash._unsquash(
-        perturbed_system, squashed_system, mapping
+        perturbed_system, squashed_system, mapping, explicit_dummies=explicit
     )
     assert [
         mol0.nAtoms() == mol1.nAtoms()
@@ -151,7 +151,7 @@ def test_unsquash_multires(perturbed_tripeptide, explicit):
         perturbed_tripeptide, explicit_dummies=explicit
     )
     new_perturbed_system = BSS.Align._squash._unsquash(
-        perturbed_tripeptide, squashed_system, mapping
+        perturbed_tripeptide, squashed_system, mapping, explicit_dummies=explicit
     )
     assert [
         mol0.nAtoms() == mol1.nAtoms()

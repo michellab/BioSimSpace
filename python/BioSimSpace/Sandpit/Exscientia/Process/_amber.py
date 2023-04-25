@@ -618,7 +618,12 @@ class Amber(_process.Process):
                 )
 
                 # Update the unsquashed system based on the updated squashed system.
-                old_system = _unsquash(old_system, self._squashed_system, self._mapping)
+                old_system = _unsquash(
+                    old_system,
+                    self._squashed_system,
+                    self._mapping,
+                    explicit_dummies=self._explicit_dummies,
+                )
             else:
                 # Update the coordinates and velocities and return a mapping between
                 # the molecule indices in the two systems.
