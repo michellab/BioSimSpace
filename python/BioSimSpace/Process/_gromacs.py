@@ -445,7 +445,7 @@ class Gromacs(_process.Process):
 
         # Warnings don't trigger an error.
         if self._ignore_warnings:
-            command += " --maxwarn -1"
+            command += " --maxwarn 9999"
 
         # Run the command.
         proc = _subprocess.run(
