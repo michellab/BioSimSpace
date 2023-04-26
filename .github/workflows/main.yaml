@@ -6,7 +6,12 @@ on:
       upload_packages:
         description: "Upload packages to anaconda (yes/no)?"
         required: true
-        default: "no"
+        type: choice
+        default: 'no'
+        options:
+          - no
+          - yes
+
 jobs:
   build:
     name: build (${{ matrix.python-version }}, ${{ matrix.platform.name }})
