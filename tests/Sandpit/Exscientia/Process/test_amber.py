@@ -4,6 +4,7 @@ from collections import OrderedDict
 
 import os
 import pytest
+import shutil
 
 # Make sure AMBER is installed.
 if BSS._amber_home is not None:
@@ -240,3 +241,52 @@ def run_process(system, protocol, check_data=False):
 
             for k, v in data.items():
                 assert len(v) == nrec
+
+
+@pytest.mark.skipif(has_amber is False, reason="Requires AMBER to be installed.")
+@pytest.mark.parametrize(
+    "protocol", [BSS.Protocol.FreeEnergy(), BSS.Protocol.FreeEnergyMinimisation()]
+)
+def test_parse_fep_output(system, protocol):
+    """Make sure that we can correctly parse AMBER FEP output."""
+
+    # Copy the system.
+    system_copy = system.copy()
+
+    # Decouple a single molecule in the system.
+    mol = system_copy[0]
+    mol = BSS.Align.decouple(mol)
+    system_copy.updateMolecule(0, mol)
+
+    # Create a process using any system and the protocol.
+    process = BSS.Process.Amber(system_copy, protocol)
+
+    # Copy the existing output file into the working directory.
+    shutil.copyfile(
+        "tests/Sandpit/Exscientia/output/amber_fep.out",
+        process.workDir() + "/amber.out",
+    )
+
+    # Update the stdout record dictionaries.
+    process.stdout(0)
+
+    # Get back the records for each degree of freedom.
+    records0 = process.getRecords(dof=0)
+    records1 = process.getRecords(dof=1)
+    records2 = process.getRecords(dof=2)
+
+    # Make sure NSTEP is present.
+    assert "NSTEP" in records0
+
+    # Get the number of records.
+    num_records = len(records0["NSTEP"])
+
+    # Now make sure that the records for the two TI regions contain the
+    # same number of values.
+    for v0, v1 in zip(records0.values(), records1.values()):
+        assert len(v0) == len(v1) == num_records
+
+    # Now check that are records for the softcore region contain the correct
+    # number of values.
+    for v in records2.values():
+        assert len(v) == num_records
