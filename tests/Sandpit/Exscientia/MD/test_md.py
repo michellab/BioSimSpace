@@ -81,7 +81,11 @@ def test_namd():
 
     # Load the molecular system.
     system = BSS.IO.readMolecules(
-        ["tests/input/alanin.psf", "tests/input/alanin.pdb", "tests/input/alanin.params"]
+        [
+            "tests/input/alanin.psf",
+            "tests/input/alanin.pdb",
+            "tests/input/alanin.params",
+        ]
     )
 
     # Initialise the NAMD process.

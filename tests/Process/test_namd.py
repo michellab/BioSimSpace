@@ -22,7 +22,11 @@ restraints = BSS.Protocol._position_restraint_mixin._PositionRestraintMixin.rest
 def system():
     """Re-use the same molecuar system for each test."""
     return BSS.IO.readMolecules(
-        ["tests/input/alanin.psf", f"tests/input/alanin.pdb", f"tests/input/alanin.params"]
+        [
+            "tests/input/alanin.psf",
+            f"tests/input/alanin.pdb",
+            f"tests/input/alanin.params",
+        ]
     )
 
 
