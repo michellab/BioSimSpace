@@ -35,10 +35,10 @@ test:
     - BioSimSpace
   source_files:
     - python/BioSimSpace # [linux and x86_64 and py39]
-    - test
+    - tests
   commands:
     - pytest -vvv --color=yes --black python/BioSimSpace # [linux and x86_64 and py39]
-    - pytest -vvv --color=yes --import-mode=importlib test
+    - pytest -vvv --color=yes --import-mode=importlib tests
 
 about:
   home: https://biosimspace.openbiosim.org
