@@ -205,25 +205,25 @@ To run the full test suite, simply type:
 
 .. code-block:: bash
 
-   pytest
+   pytest tests
 
 To run tests for a specific sub-module, e.g.:
 
 .. code-block:: bash
 
-   pytest test/Process
+   pytest tests/Process
 
 To only run the unit tests in a particular file, e.g.:
 
 .. code-block:: bash
 
-   pytest test/Process/test_namd.py
+   pytest tests/Process/test_namd.py
 
 To run a specific unit tests in a particular file, e.g.:
 
 .. code-block:: bash
 
-   pytest test/Process/test_namd.py::test_minimise
+   pytest tests/Process/test_namd.py::test_minimise
 
 To get more detailed information about each test, run pytests using the
 *verbose* flag, e.g.:
