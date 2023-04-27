@@ -895,7 +895,7 @@ class Amber(_process.Process):
         energy : :class:`Energy <BioSimSpace.Types.Energy>`
            The electrostatic energy.
         """
-        return self.getRecord("EELECT", time_series, _Units.Energy.kcal_per_mol, block)
+        return self.getRecord("EELEC", time_series, _Units.Energy.kcal_per_mol, block)
 
     def getCurrentElectrostaticEnergy(self, time_series=False):
         """
