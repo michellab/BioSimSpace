@@ -803,14 +803,14 @@ class Amber(_process.Process):
 
         # Strip whitespace from the beginning and end of the record and convert
         # to upper case.
-        record = record.strip().upper()
+        cleaned_record = record.strip().upper()
 
         # Make sure the record exists in the key mapping.
-        if not record in self._stdout_key[dof].values():
+        if not cleaned_record in self._stdout_key[dof].values():
             raise ValueError(f"No key found for record '{record}'")
 
         return list(self._stdout_key[dof].keys())[
-            list(self._stdout_key[dof].values()).index(record)
+            list(self._stdout_key[dof].values()).index(cleaned_record)
         ]
 
     def getRecord(self, key, time_series=False, unit=None, dof=0, block="AUTO"):
@@ -2275,6 +2275,7 @@ class Amber(_process.Process):
             # Default stdout dictionary.
             else:
                 stdout_dict = self._stdout_dict[0]
+                stdout_key = self._stdout_key[0]
 
             # Skip empty lines and summary reports.
             if len(line) > 0 and line[0] != "|" and line[0] != "-":
