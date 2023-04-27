@@ -167,6 +167,11 @@ class Amber(_process.Process):
             _process._MultiDict(),
         ]
 
+        # Initialise mappings between "universal" stdout keys, and the actual
+        # record key used for the different degrees of freedom in the AMBER
+        # output.
+        self._stdout_key = [{}, {}, {}]
+
         # Initialise log file parsing flags.
         self._has_results = False
         self._finished_results = False
@@ -762,15 +767,64 @@ class Amber(_process.Process):
         except:
             return None
 
-    def getRecord(self, record, time_series=False, unit=None, dof=0, block="AUTO"):
+    def getRecordKey(self, record, dof=0):
+        """
+        Parameters
+        ----------
+
+        record : str
+            The record used in the AMBER standard output, e.g. 'TEMP(K)'.
+            Please consult the current AMBER manual for details:
+            https://ambermd.org/Manuals.php
+
+        dof : int
+            The degree of freedom to which the record corresponds. There will
+            only be more than one degree of freedom for FreeEnergy protocols,
+            where 1 indicates the second TI region and 2 is the softcore part
+            of the system (if present).
+
+        Returns
+        -------
+
+        key : str
+            The universal record key that can be used with getRecord.
+        """
+
+        # Validate the record string.
+        if not isinstance(record, str):
+            raise TypeError("'record' must be of type 'str'")
+
+        # Validate the degree of freedom.
+        if not isinstance(dof, int):
+            raise TypeError("'dof' must be of type 'int'")
+        else:
+            if dof < 0 or dof > 2:
+                raise ValueError("'dof' must be in range [0, 2]")
+
+        # Strip whitespace from the beginning and end of the record and convert
+        # to upper case.
+        record = record.strip().upper()
+
+        # Make sure the record exists in the key mapping.
+        if not record in self._stdout_key[dof].values():
+            raise ValueError(f"No key found for record '{record}'")
+
+        return list(self._stdout_key[dof].keys())[
+            list(self._stdout_key[dof].values()).index(record)
+        ]
+
+    def getRecord(self, key, time_series=False, unit=None, dof=0, block="AUTO"):
         """
         Get a record from the stdout dictionary.
 
         Parameters
         ----------
 
-        record : str
-            The record key.
+        key : str
+            A universal record key based on the key used in the AMBER standard
+            output. Use 'getRecordKey(record)` to generate the key. The records
+            are those used in the AMBER standard output, e.g. 'TEMP(K)'. Please
+            consult the current AMBER manual for details: https://ambermd.org/Manuals.php
 
         time_series : bool
             Whether to return a list of time series records.
@@ -804,17 +858,20 @@ class Amber(_process.Process):
         if self.isError():
             _warnings.warn("The process exited with an error!")
 
-        return self._get_stdout_record(record.strip().upper(), time_series, unit, dof)
+        return self._get_stdout_record(key.strip().upper(), time_series, unit, dof)
 
-    def getCurrentRecord(self, record, time_series=False, unit=None, dof=0):
+    def getCurrentRecord(self, key, time_series=False, unit=None, dof=0):
         """
         Get a current record from the stdout dictionary.
 
         Parameters
         ----------
 
-        record : str
-            The record key.
+        key : str
+            A universal record key based on the key used in the AMBER standard
+            output. Use 'getRecordKey(record)` to generate the key. The records
+            are those used in the AMBER standard output, e.g. 'TEMP(K)'. Please
+            consult the current AMBER manual for details: https://ambermd.org/Manuals.php
 
         time_series : bool
             Whether to return a list of time series records.
@@ -839,7 +896,7 @@ class Amber(_process.Process):
         if self.isError():
             _warnings.warn("The process exited with an error!")
 
-        return self._get_stdout_record(record.strip().upper(), time_series, unit, dof)
+        return self._get_stdout_record(key.strip().upper(), time_series, unit, dof)
 
     def getRecords(self, dof=0, block="AUTO"):
         """
@@ -2205,12 +2262,15 @@ class Amber(_process.Process):
             if isinstance(self._protocol, _Protocol._FreeEnergyMixin):
                 if "TI region  1" in line and dof_flag != 0:
                     stdout_dict = self._stdout_dict[0]
+                    stdout_key = self._stdout_key[0]
                     dof_flag = 0
                 elif "TI region  2" in line and dof_flag != 1:
                     stdout_dict = self._stdout_dict[1]
+                    stdout_key = self._stdout_key[1]
                     dof_flag = 1
                 elif "Softcore part" in line and dof_flag != 2:
                     stdout_dict = self._stdout_dict[2]
+                    stdout_key = self._stdout_key[2]
                     dof_flag = 2
             # Default stdout dictionary.
             else:
@@ -2258,6 +2318,10 @@ class Amber(_process.Process):
                             stdout_dict["NSTEP"] = data[0]
                             stdout_dict["ENERGY"] = data[1]
 
+                            # Add the keys to the mapping
+                            stdout_key["NSTEP"] = "NSTEP"
+                            stdout_key["ENERGY"] = "ENERGY"
+
                             # Turn off the header flag now that the data has been recorded.
                             self._is_header = False
 
@@ -2271,16 +2335,24 @@ class Amber(_process.Process):
 
                     # Append each record to the dictionary.
                     for key, value in records:
+                        # Strip whitespace from beginning and end.
+                        key = key.strip()
+
                         # Format key so it can be re-used for records corresponding to
                         # different degrees of freedom, which use different abbreviations.
-                        key = (
+                        universal_key = (
                             key.replace("SC_", "")
                             .replace(" ", "")
                             .replace("-", "")
                             .replace("EELEC", "EEL")
                             .replace("VDWAALS", "VDW")
                         )
+
+                        # Store the record using the original key.
                         stdout_dict[key] = value
+
+                        # Map the universal key to the original.
+                        stdout_key[universal_key] = key
 
         # Get the current number of lines.
         num_lines = len(self._stdout)
@@ -2310,7 +2382,7 @@ class Amber(_process.Process):
         ----------
 
         key : str
-            The record key.
+            The universal record key.
 
         time_series : bool
             Whether to return a time series of records.
@@ -2356,6 +2428,9 @@ class Amber(_process.Process):
 
         # Extract the dictionary of stdout records for the specified degree of freedom.
         stdout_dict = self._stdout_dict[dof]
+
+        # Map the universal key to the original key used for this degree of freedom.
+        key = self._stdout_key[dof][key]
 
         # Return the list of dictionary values.
         if time_series:
