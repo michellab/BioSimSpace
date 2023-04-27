@@ -242,6 +242,8 @@ class Somd(_Config):
 
         # Free energies.
         if isinstance(self._protocol, _Protocol.FreeEnergyProduction):
+            # Perform a pre-minimisation.
+            protocol_dict["minimise"] = True
             # Handle hydrogen perturbations.
             protocol_dict["constraint"] = "hbonds-notperturbed"
             # Write gradients every 250 steps.
