@@ -2431,7 +2431,10 @@ class Amber(_process.Process):
         stdout_dict = self._stdout_dict[dof]
 
         # Map the universal key to the original key used for this degree of freedom.
-        key = self._stdout_key[dof][key]
+        try:
+            key = self._stdout_key[dof][key]
+        except:
+            return None
 
         # Return the list of dictionary values.
         if time_series:
