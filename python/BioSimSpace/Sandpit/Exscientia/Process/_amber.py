@@ -157,16 +157,15 @@ class Amber(_process.Process):
             else:
                 raise IOError("AMBER executable doesn't exist: '%s'" % exe)
 
-        # Initialise the energy dictionary and header.
-        self._stdout_dict = _process._MultiDict()
-
-        # If this is a free-energy protocol then we need dictionaries to hold
-        # the records for the second TI region, and for the softcore part of
-        # the system (if present). We'll create empty dictionaries regardless
-        # of whether these are used so that we can parse existing free energy
-        # output using any dummy protocol.
-        self._stdout_dict_ti2 = _process._MultiDict()
-        self._stdout_dict_sc = _process._MultiDict()
+        # Initialise dictionaries to hold stdout records for all possible
+        # degrees of freedom. For regular simulations there will be one,
+        # for free-energy simulations there will be three, i.e. one for
+        # each of the TI regions and one for the soft-core part of the system.
+        self._stdout_dict = [
+            _process._MultiDict(),
+            _process._MultiDict(),
+            _process._MultiDict(),
+        ]
 
         # Initialise log file parsing flags.
         self._has_results = False
@@ -884,12 +883,7 @@ class Amber(_process.Process):
 
         self.stdout(0)
 
-        if dof == 0:
-            return self._stdout_dict.copy()
-        elif dof == 1:
-            return self._stdout_dict_ti2.copy()
-        elif dof == 2:
-            return self._stdout_dict_sc.copy()
+        return self._stdout_dict[dof].copy()
 
     def getCurrentRecords(self, dof=0):
         """
@@ -2210,17 +2204,17 @@ class Amber(_process.Process):
             # which the next block of records correspond.
             if isinstance(self._protocol, _Protocol._FreeEnergyMixin):
                 if "TI region  1" in line and dof_flag != 0:
-                    stdout_dict = self._stdout_dict
+                    stdout_dict = self._stdout_dict[0]
                     dof_flag = 0
                 elif "TI region  2" in line and dof_flag != 1:
-                    stdout_dict = self._stdout_dict_ti2
+                    stdout_dict = self._stdout_dict[1]
                     dof_flag = 1
                 elif "Softcore part" in line and dof_flag != 2:
-                    stdout_dict = self._stdout_dict_sc
+                    stdout_dict = self._stdout_dict[2]
                     dof_flag = 2
             # Default stdout dictionary.
             else:
-                stdout_dict = self._stdout_dict
+                stdout_dict = self._stdout_dict[0]
 
             # Skip empty lines and summary reports.
             if len(line) > 0 and line[0] != "|" and line[0] != "-":
@@ -2360,12 +2354,8 @@ class Amber(_process.Process):
             if dof < 0 or dof > 2:
                 raise ValueError("'dof' must be in range [0, 2]")
 
-        if dof == 0:
-            stdout_dict = self._stdout_dict
-        elif dof == 1:
-            stdout_dict = self._stdout_dict_ti2
-        elif dof == 2:
-            stdout_dict = self._stdout_dict_sc
+        # Extract the dictionary of stdout records for the specified degree of freedom.
+        stdout_dict = self._stdout_dict[dof]
 
         # Return the list of dictionary values.
         if time_series:
