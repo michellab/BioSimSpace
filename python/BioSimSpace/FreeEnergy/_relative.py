@@ -835,36 +835,22 @@ class Relative():
 
         # consider passed kwarg arguments
 
+        # assign variables as default incase not passed in during kwargs
+        auto_eq = False
+        stat_ineff = False
+        truncate = False
+        truncate_keep = "start"
+
         for key,value in kwargs.items():
-            if key == "auto_equilibration" or key == "auto equilibration":
+            key = key.replace(" ","").replace("_","").upper()
+            if key == "AUTOEQUILIBRATION":
                 auto_eq = value
-            if key == "statistical_inefficiency" or key == "statistical inefficiency":
+            if key == "STATISTICALINEFFICIENCY":
                 stat_ineff = value
-            if key == "truncate_percentage" or key == "truncate percentage":
+            if key == "TRUNCATEPERCENTAGE":
                 truncate = value
-            if key == "truncate_keep" or key == "truncate keep":
+            if key == "TRUNCATEKEEP":
                 truncate_keep = value
-
-
-        # assign variables if not passed in during kwargs
-        if not kwargs:
-            auto_eq = True
-            stat_ineff = False
-            truncate = False
-        if auto_eq:
-            pass
-        else:
-            auto_eq = False
-        if stat_ineff:
-            pass
-        else:
-            stat_ineff = False
-        if truncate:
-            pass
-            if not truncate_keep:
-                truncate_keep = "start"
-        else:
-            truncate = False
 
         # first truncate data
         raw_data = data
@@ -1010,7 +996,8 @@ class Relative():
 
         # check kwargs incase there is an mbar_method and then use this
         for key,value in kwargs.items():
-            if key == "mbar_method" or key == "mbar method":
+            key = key.replace(" ","").replace("_","").upper()
+            if key == "MBARMETHOD":
                 mbar_method = value
 
         if mbar_method:
