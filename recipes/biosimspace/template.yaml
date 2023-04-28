@@ -18,7 +18,26 @@ requirements:
     BSS_RUN_REQUIREMENTS
   run:
     - python
-    BSS_RUN_REQUIREMENTS
+    - sire >=SIRE_VERSION,<NEXT_SIRE_VERSION.0a0
+    - alchemlyb
+    - configargparse
+    - fkcombu
+    - lomap2
+    - mdtraj
+    - mdanalysis
+    - networkx
+    - nglview
+    - openff-interchange
+    - openff-toolkit-base
+    - parmed
+    - py3dmol
+    - pydot
+    - pygtail
+    - pypdb
+    - pytest
+    - pyyaml
+    - rdkit
+    - watchdog
 
 test:
   script_env:

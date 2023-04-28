@@ -389,7 +389,7 @@ class Relative:
                 elif mass != approx(hmr_factor * hydrogen_amu, rel=1e-2):
                     raise _IncompatibleError("""
                     The system is repartitioned at a factor different from that specified in 'hmr_factor'
-                    or at the auto default for this engine (3 for AMBER and 4 for GROMACS).
+                    or at the auto default for this engine (3 for AMBER and 4 for GROMACS, None for SOMD (as this is specified in the cfg file)).
                     Please pass a correctly partitioned or entirely unpartitioned system.""")
 
             # Repartition if necessary.
@@ -1300,7 +1300,7 @@ class Relative:
                 _gmx_exe, work_dir, work_dir)
 
             # Run the first command.
-            proc = _subprocess.run(_shlex.split(command), shell=False,
+            proc = _subprocess.run(_shlex.split(command), shell=True,
                                    stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
             if proc.returncode != 0:
                 raise _AnalysisError("GROMACS free-energy analysis failed!")

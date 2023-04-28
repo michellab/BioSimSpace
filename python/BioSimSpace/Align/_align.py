@@ -422,18 +422,16 @@ def generateNetwork(
         lf = None
 
     # Create the DBMolecules object.
-    db_mol = _lomap.DBMolecules(
-        f"{work_dir}/inputs",
-        name=f"{work_dir}/outputs/lomap",
-        links_file=lf,
-        output=True,
-        output_no_graph=True,
-        output_no_images=True,
-        threed=True,
-        max3d=3.0,
-        time=3,
-        parallel=10,
-    )
+    db_mol = _lomap.DBMolecules(f"{work_dir}/inputs",
+                                name=f"{work_dir}/outputs/lomap",
+                                links_file=lf,
+                                output=True,
+                                output_no_graph=True,
+                                output_no_images=True,
+                                threed=False,
+                                max3d=3.0,
+                                time=3,
+                                parallel=10)
 
     # Create the similarity matrices.
     strict, loose = db_mol.build_matrices()

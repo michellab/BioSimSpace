@@ -50,7 +50,7 @@ _warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
 # Suppress duplicate to-Python converted warnings.
 # Both Sire and RDKit register the same converter.
 with _warnings.catch_warnings():
-    _warnings.filterwarnings("ignore")
+    _warnings.simplefilter("ignore")
     _rdkit = _try_import("rdkit")
 
     if _have_imported(_rdkit):
@@ -78,10 +78,12 @@ else:
 _openff = _try_import("openff")
 
 if _have_imported(_openff):
+    from openff.interchange import Interchange as _Interchange
     from openff.toolkit.topology import Molecule as _OpenFFMolecule
     from openff.toolkit.topology import Topology as _OpenFFTopology
     from openff.toolkit.typing.engines.smirnoff import ForceField as _Forcefield
 else:
+    _Interchange = _openff
     _OpenFFMolecule = _openff
     _OpenFFTopology = _openff
     _Forcefield = _openff
@@ -99,6 +101,7 @@ from ... import IO as _IO
 from ..._Exceptions import IncompatibleError as _IncompatibleError
 from ..._Exceptions import ThirdPartyError as _ThirdPartyError
 from ..._SireWrappers import Molecule as _Molecule
+from ... import _Utils
 
 from . import _protocol
 
@@ -129,8 +132,11 @@ class OpenForceField(_protocol.Protocol):
         self._tleap = False
         self._pdb2gmx = False
 
+
+
     def run(self, molecule, work_dir=None, queue=None):
-        """Run the parameterisation protocol.
+        """
+        Run the parameterisation protocol.
 
         Parameters
         ----------
@@ -300,9 +306,11 @@ class OpenForceField(_protocol.Protocol):
             else:
                 raise _ThirdPartyError(msg) from None
 
-        # Obtain the OpenMM Topology object from the OpenFF topology.
+        # Create an Interchange object.
         try:
-            omm_topology = off_topology.to_openmm()
+            interchange = _Interchange.from_smirnoff(
+                force_field=forcefield, topology=off_topology
+            )
         except Exception as e:
             msg = "Unable to convert Open Force Field topology to OpenMM topology!"
             if _isVerbose():
@@ -337,10 +345,10 @@ class OpenForceField(_protocol.Protocol):
 
         # Export AMBER format files.
         try:
-            parmed_structure.save(prefix + "parmed.prmtop", overwrite=True)
-            parmed_structure.save(prefix + "parmed.inpcrd", overwrite=True)
+            interchange.to_prmtop(prefix + "interchange.prmtop")
+            interchange.to_inpcrd(prefix + "interchange.inpcrd")
         except Exception as e:
-            msg = "Unable to write ParmEd structure to AMBER format!"
+            msg = "Unable to write Interchange object to AMBER format!"
             if _isVerbose():
                 msg += ": " + getattr(e, "message", repr(e))
                 raise _ThirdPartyError(msg) from e
@@ -371,8 +379,15 @@ class OpenForceField(_protocol.Protocol):
             # this will be missing.
 
             # Rename the molecule with the original SMILES string.
+            # Since the name is written to topology file formats, we
+            # need to ensure that it doesn't start with an [ character,
+            # which would break GROMACS.
+            name = molecule
+            if name.startswith("["):
+                name = f"smiles:{name}"
+
             edit_mol = new_mol._sire_object.edit()
-            edit_mol = edit_mol.rename(molecule).molecule()
+            edit_mol = edit_mol.rename(name).molecule()
 
             # Rename the residue LIG.
             resname = _SireMol.ResName("LIG")

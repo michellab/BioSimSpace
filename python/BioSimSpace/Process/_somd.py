@@ -376,15 +376,9 @@ class Somd(_process.Process):
                     # gpu_id = int(_os.environ.get("CUDA_VISIBLE_DEVICES").split(",")[0])
                     gpu_id = 0
                 except:
-                    raise EnvironmentError(
-                        "'CUDA' platform is selected but cannot parse "
-                        "'CUDA_VISIBLE_DEVICES' environment variable!"
-                    )
-            else:
-                raise EnvironmentError(
-                    "'CUDA' platform selected but 'CUDA_VISIBLE_DEVICES' "
-                    "environment variable is unset."
-                )
+                    pass
+            # GPU device ID.
+            # config_options["gpu"] = gpu_id
 
         if not isinstance(self._protocol, (_Protocol.Minimisation, _Protocol.Equilibration, _Protocol.Production)):
             raise _IncompatibleError(
