@@ -37,6 +37,7 @@ from alchemlyb.parsing.gmx import extract_dHdl as _gmx_extract_dHdl
 from alchemlyb.parsing.gmx import extract_u_nk as _gmx_extract_u_nk
 from alchemlyb.preprocessing.subsampling import equilibrium_detection as _equilibrium_detection
 from alchemlyb.preprocessing.subsampling import statistical_inefficiency as _statistical_inefficiency
+from alchemlyb.preprocessing.subsampling import slicing as _slicing
 from alchemlyb.postprocessors.units import to_kcalmol as _to_kcalmol
 from alchemlyb.postprocessors.units import kJ2kcal as _kJ2kcal
 from alchemlyb.postprocessors.units import R_kJmol as _R_kJmol
@@ -772,7 +773,7 @@ class Relative:
         return(df)
 
     @staticmethod
-    def analyse(work_dir, estimator='MBAR', method="alchemlyb"):
+    def analyse(work_dir, estimator='MBAR', method="alchemlyb", **kwargs):
         """Analyse existing free-energy data from a simulation working directory.
 
         Parameters
@@ -824,7 +825,7 @@ class Relative:
             if data and engine == "GROMACS" and method == "native":
                 _warnings.warn(f"{engine} with {method} cannot do MBAR/TI. BAR will be used.")
             if data:
-                return func(work_dir, estimator, method)
+                return func(work_dir, estimator, method, **kwargs)
 
         raise ValueError(
             "Couldn't find any SOMD, GROMACS or AMBER free-energy output?")
@@ -850,8 +851,8 @@ class Relative:
         return Relative.analyse(self._work_dir, self._estimator)
 
     @staticmethod
-    def _preprocessing_extracted_data(data):
-        """_summary_
+    def _preprocessing_extracted_data(data, **kwargs):
+        """preprocess the data
 
         Parameters
         ----------
@@ -867,35 +868,115 @@ class Relative:
             detection followed by statistical inefficiency.
         """
 
-        # Subsample according to equilibration detection.
-        eq_okay = False
-        try:
-            sampled_data = [_equilibrium_detection(i, i.iloc[:, 0])
-                       for i in data]
-            eq_okay = True
-        except:
-            pass
+        # consider passed kwarg arguments
+
+        # assign variables as default incase not passed in during kwargs
+        auto_eq = False
+        stat_ineff = False
+        truncate = False
+        truncate_keep = "start"
+
+        for key,value in kwargs.items():
+            key = key.replace(" ","").replace("_","").upper()
+            if key == "AUTOEQUILIBRATION":
+                auto_eq = value
+            if key == "STATISTICALINEFFICIENCY":
+                stat_ineff = value
+            if key == "TRUNCATEPERCENTAGE":
+                truncate = value
+            if key == "TRUNCATEKEEP":
+                truncate_keep = value
+
+        # first truncate data
+        raw_data = data
+        if truncate:
+
+            # get the upper and lower bounds for truncate
+            data_len = len(data[0]) # use just the first window for this
+            data_step = round((data[0].index[-1][0] - data[0].index[-2][0]),1)
+            data_kept = data_len * (truncate/100)
+            data_time = data_kept * data_step
+            if truncate_keep == "start":
+                truncate_lower = 0
+                truncate_upper = data_time - data_step
+            if truncate_keep == "end":
+                truncate_lower = (data_len * data_step) - data_time
+                truncate_upper = (data_len * data_step) - data_step
+
+            trunc_okay = False
+            try:
+                data = [_slicing(i, lower=truncate_lower, upper=truncate_upper)
+                        for i in raw_data]
+                trunc_okay = True
+            except:
+                pass
         
-        # Throw errors if either failed
-        if not eq_okay:
-            _warnings.warn("Could not detect equilibration.")
+            # Throw errors if either failed
+            if not trunc_okay:
+                _warnings.warn("Could not truncate data.")
+                data = raw_data
+        else:
+            data = raw_data
+
+
+        if auto_eq:
+            # Subsample according to equilibration detection.
+            eq_okay = False
+            try:
+                sampled_data = [_equilibrium_detection(i, i.iloc[:, 0])
+                        for i in data]
+                eq_okay = True
+            except:
+                pass
+        
+            # Throw errors if either failed
+            if not eq_okay:
+                _warnings.warn("Could not detect equilibration.")
+                sampled_data = data
+
+            # make sure there are more than 50 samples for the analysis
+            if eq_okay:
+                for i in sampled_data:
+                    if len(i.iloc[:, 0]) < 50:
+                        _warnings.warn(
+                            "Less than 50 samples as a result of preprocessing. No preprocessing will be performed.")
+                        sampled_data = data
+        else:
             sampled_data = data
 
-        # make sure there are more than 50 samples for the analysis
-        if eq_okay:
-            for i in sampled_data:
-                if len(i.iloc[:, 0]) < 50:
-                    _warnings.warn(
-                        "Less than 50 samples as a result of preprocessing. No preprocessing will be performed.")
-                    sampled_data = data
+        if stat_ineff:
+            
+            # Subsample data that eq detection was or was not performed on
+            data = sampled_data        
+            stat_okay = False
+            try:
+                sampled_data = [_statistical_inefficiency(i, i.iloc[:, 0])
+                        for i in data]
+                stat_okay = True
+            except:
+                pass
+        
+            # Throw errors if either failed
+            if not stat_okay:
+                _warnings.warn("Could not calcuate statistical inefficiency.")
+                sampled_data = data
+
+            # make sure there are more than 50 samples for the analysis
+            if stat_okay:
+                for i in sampled_data:
+                    if len(i.iloc[:, 0]) < 50:
+                        _warnings.warn(
+                            "Less than 50 samples as a result of preprocessing. No preprocessing will be performed.")
+                        sampled_data = data
 
         # concatanate in alchemlyb format
         processed_data = _alchemlyb.concat(sampled_data)
 
         return processed_data
 
+
     @staticmethod
-    def _analyse_mbar(files, temperatures, lambdas, engine):
+    def _analyse_mbar(files, temperatures, lambdas, engine, **kwargs):
         """Analyse existing free-energy data using MBAR and the alchemlyb library.
 
            Parameters
@@ -943,14 +1024,15 @@ class Relative:
 
         # Preprocess the data.
         try:
-            processed_u_nk = Relative._preprocessing_extracted_data(u_nk)
+            processed_u_nk = Relative._preprocessing_extracted_data(u_nk, **kwargs)
         except:
             _warnings.warn("Could not preprocess the data.")
             processed_u_nk = u_nk
 
         # check kwargs incase there is an mbar_method and then use this
         for key,value in kwargs.items():
-            if key == "mbar_method":
+            key = key.replace(" ","").replace("_","").upper()
+            if key == "MBARMETHOD":
                 mbar_method = value
 
         if mbar_method:
@@ -986,7 +1068,7 @@ class Relative:
         return (data, overlap)
 
     @staticmethod
-    def _analyse_ti(files, temperatures, lambdas, engine):
+    def _analyse_ti(files, temperatures, lambdas, engine, **kwargs):
         """Analyse existing free-energy data using TI and the alchemlyb library.
 
            Parameters
@@ -1034,7 +1116,7 @@ class Relative:
 
         # Preprocess the data.
         try:
-            processed_dhdl = Relative._preprocessing_extracted_data(dhdl)
+            processed_dhdl = Relative._preprocessing_extracted_data(dhdl, **kwargs)
         except:
             _warnings.warn("Could not preprocess the data.")
             processed_dhdl = dhdl
@@ -1063,7 +1145,7 @@ class Relative:
         return (data, ti)
 
     @staticmethod
-    def _analyse_amber(work_dir=None, estimator=None, method="alchemlyb"):
+    def _analyse_amber(work_dir=None, estimator=None, method="alchemlyb", **kwargs):
         """Analyse the AMBER free energy data.
 
            Parameters
@@ -1123,16 +1205,16 @@ class Relative:
 
         if estimator == 'MBAR':
             data, overlap = Relative._analyse_mbar(
-                files, temperatures, lambdas, "AMBER")
+                files, temperatures, lambdas, "AMBER", **kwargs)
 
         if estimator == 'TI':
             data, overlap = Relative._analyse_ti(
-                files, temperatures, lambdas, "AMBER")
+                files, temperatures, lambdas, "AMBER", **kwargs)
 
         return (data, overlap)
 
     @staticmethod
-    def _analyse_gromacs(work_dir=None, estimator=None, method="alchemlyb"):
+    def _analyse_gromacs(work_dir=None, estimator=None, method="alchemlyb", **kwargs):
         """Analyse the GROMACS free energy data.
 
         Parameters
@@ -1201,11 +1283,11 @@ class Relative:
 
             if estimator == 'MBAR':
                 data, overlap = Relative._analyse_mbar(
-                    files, temperatures, lambdas, "GROMACS")
+                    files, temperatures, lambdas, "GROMACS", **kwargs)
 
             if estimator == 'TI':
                 data, overlap = Relative._analyse_ti(
-                    files, temperatures, lambdas, "GROMACS")
+                    files, temperatures, lambdas, "GROMACS", **kwargs)
 
             return (data, overlap)
 
@@ -1279,9 +1361,8 @@ class Relative:
             return (data, None)
 
     @staticmethod
-    def _analyse_somd(work_dir=None, estimator=None, method="alchemlyb"):
-        """
-        Analyse the SOMD free energy data.
+    def _analyse_somd(work_dir=None, estimator=None, method="alchemlyb", **kwargs):
+        """Analyse the SOMD free energy data.
 
         Parameters
         ----------
@@ -1344,11 +1425,11 @@ class Relative:
 
             if estimator == 'MBAR':
                 data, overlap = Relative._analyse_mbar(
-                    files, temperatures, lambdas, "SOMD")
+                    files, temperatures, lambdas, "SOMD", **kwargs)
 
             if estimator == 'TI':
                 data, overlap = Relative._analyse_ti(
-                    files, temperatures, lambdas, "SOMD")
+                    files, temperatures, lambdas, "SOMD", **kwargs)
 
         elif method == "native":
 
