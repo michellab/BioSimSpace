@@ -254,7 +254,7 @@ class Amber(_process.Process):
         # Add configuration variables for a metadynamics simulation.
         if isinstance(self._protocol, (_Protocol.Metadynamics, _Protocol.Steering)):
             extra_options["plumed"] = 1
-            extra_options["plumedfile"] = "plumed.dat"
+            extra_options["plumedfile"] = "'plumed.dat'"
 
             # Create the PLUMED input file and copy auxiliary files to the working directory.
             self._plumed = _Plumed(str(self._work_dir))

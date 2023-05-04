@@ -339,7 +339,7 @@ class Amber(_process.Process):
 
         if isinstance(self._protocol, _Protocol.Metadynamics):
             config_options["plumed"] = 1
-            config_options["plumedfile"] = "plumed.dat"
+            config_options["plumedfile"] = "'plumed.dat'"
 
             # Create the PLUMED input file and copy auxiliary files to the working directory.
             self._plumed = _Plumed(str(self._work_dir))
