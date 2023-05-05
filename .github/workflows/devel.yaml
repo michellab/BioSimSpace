@@ -1,0 +1,70 @@
+name: Release Devel
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ devel ]
+
+jobs:
+  build:
+    name: build (${{ matrix.python-version }}, ${{ matrix.platform.name }})
+    runs-on: ${{ matrix.platform.os }}
+    strategy:
+      max-parallel: 9
+      fail-fast: false
+      matrix:
+        python-version: ["3.8", "3.9", "3.10"]
+        platform:
+          - { name: "windows", os: "windows-latest", shell: "pwsh" }
+          - { name: "linux", os: "ubuntu-latest", shell: "bash -l {0}" }
+          - { name: "macos", os: "macos-latest", shell: "bash -l {0}" }
+        exclude:
+          # Exclude all but the latest Python from all but Linux
+          - platform:
+              { name: "macos", os: "macos-latest", shell: "bash -l {0}" }
+            python-version: "3.8"
+          - platform: { name: "windows", os: "windows-latest", shell: "pwsh" }
+            python-version: "3.8"
+          - platform:
+              { name: "macos", os: "macos-latest", shell: "bash -l {0}" }
+            python-version: "3.9"
+          - platform: { name: "windows", os: "windows-latest", shell: "pwsh" }
+            python-version: "3.9"
+    environment:
+      name: biosimspace-build
+    defaults:
+      run:
+        shell: ${{ matrix.platform.shell }}
+    env:
+      SIRE_DONT_PHONEHOME: 1
+      SIRE_SILENT_PHONEHOME: 1
+    steps:
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          auto-update-conda: true
+          python-version: ${{ matrix.python-version }}
+          activate-environment: bss_build
+          miniforge-version: latest
+          miniforge-variant: Mambaforge
+          use-mamba: true
+#
+      - name: Clone the devel branch
+        run: git clone -b devel https://github.com/openbiosim/biosimspace
+#
+      - name: Setup Conda
+        run: mamba install -y -c conda-forge boa anaconda-client packaging=21 pip-requirements-parser
+#
+      - name: Update Conda recipe
+        run: python ${{ github.workspace }}/biosimspace/actions/update_recipe.py
+#
+      - name: Prepare build location
+        run: mkdir ${{ github.workspace }}/build
+#
+      - name: Build Conda package using mamba build
+        run: conda mambabuild -c conda-forge -c openbiosim/label/dev ${{ github.workspace }}/biosimspace/recipes/biosimspace
+#
+      - name: Upload Conda package
+        run: python ${{ github.workspace }}/biosimspace/actions/upload_package.py
+        env:
+          ANACONDA_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
+          ANACONDA_LABEL: dev

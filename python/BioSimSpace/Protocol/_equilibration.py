@@ -36,7 +36,7 @@ from ._position_restraint_mixin import _PositionRestraintMixin
 from ._protocol import Protocol as _Protocol
 
 
-class Equilibration(_PositionRestraintMixin):
+class Equilibration(_Protocol, _PositionRestraintMixin):
     """A class for storing equilibration protocols."""
 
     def __init__(
@@ -168,7 +168,7 @@ class Equilibration(_PositionRestraintMixin):
             f"pressure={self._pressure}, "
             f"report_interval={self._report_interval}, "
             f"restart_interval={self._restart_interval}, "
-            f"restart={self._restart}, " + _PositionRestraintMixin._get_parm(self)
+            + _PositionRestraintMixin._get_parm(self)
         )
 
     def __str__(self):

@@ -232,13 +232,18 @@ class Somd(_Config):
                     % self._protocol.getStartTemperature().kelvin().value()
                 )
 
-            # Friction coefficient (1 / ps).
-            protocol_dict["inverse friction"] = "{:.5f}".format(
+            # Friction coefficient (1 / ps). Note that the unit is written
+            # to the configuration file as "picosecond". This is because SOMD
+            # applies the value to OpenMM without inverting it, so has things the
+            # wrong way round, i.e. it uses the inverse friction as the friction.
+            protocol_dict["inverse friction"] = "{:.5f} picosecond".format(
                 1 / self._protocol.getThermostatTimeConstant().picoseconds().value()
             )
 
         # Free energies.
         if isinstance(self._protocol, _Protocol.FreeEnergyProduction):
+            # Perform a pre-minimisation.
+            protocol_dict["minimise"] = True
             # Handle hydrogen perturbations.
             protocol_dict["constraint"] = "hbonds-notperturbed"
             # Write gradients every 250 steps.

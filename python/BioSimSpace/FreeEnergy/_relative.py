@@ -95,6 +95,8 @@ class Relative:
         setup_only=False,
         ignore_warnings=False,
         show_errors=True,
+        extra_options={},
+        extra_lines=[],
         property_map={},
     ):
         """
@@ -138,6 +140,13 @@ class Relative:
             Whether to show warning/error messages when generating the binary
             run file. This option is specific to GROMACS and will be ignored
             when a different molecular dynamics engine is chosen.
+
+        extra_options : dict
+            A dictionary containing extra options. Overrides the defaults generated
+            by the protocol.
+
+        extra_lines : [str]
+            A list of extra lines to put at the end of the configuration file.
 
         property_map : dict
             A dictionary that maps system "properties" to their user defined
@@ -248,6 +257,23 @@ class Relative:
         if not isinstance(show_errors, bool):
             raise ValueError("'show_errors' must be of type 'bool.")
         self._show_errors = show_errors
+
+        # Check the extra options.
+        if not isinstance(extra_options, dict):
+            raise TypeError("'extra_options' must be of type 'dict'.")
+        else:
+            keys = extra_options.keys()
+            if not all(isinstance(k, str) for k in keys):
+                raise TypeError("Keys of 'extra_options' must be of type 'str'.")
+        self._extra_options = extra_options
+
+        # Check the extra lines.
+        if not isinstance(extra_lines, list):
+            raise TypeError("'extra_lines' must be of type 'list'.")
+        else:
+            if not all(isinstance(line, str) for line in extra_lines):
+                raise TypeError("Lines in 'extra_lines' must be of type 'str'.")
+        self._extra_lines = extra_lines
 
         # Check that the map is valid.
         if not isinstance(property_map, dict):
@@ -856,6 +882,8 @@ class Relative:
                 self._protocol,
                 platform=platform,
                 work_dir=first_dir,
+                extra_options=self._extra_options,
+                extra_lines=self._extra_lines,
                 property_map=self._property_map,
             )
             if self._setup_only:
@@ -871,6 +899,9 @@ class Relative:
                 work_dir=first_dir,
                 ignore_warnings=self._ignore_warnings,
                 show_errors=self._show_errors,
+                extra_options=self._extra_options,
+                extra_lines=self._extra_lines,
+                property_map=self._property_map,
             )
             if self._setup_only:
                 del first_process
