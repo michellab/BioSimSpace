@@ -858,7 +858,9 @@ class Amber(_process.Process):
         if self.isError():
             _warnings.warn("The process exited with an error!")
 
-        return self._get_stdout_record(key.strip().upper(), time_series, unit, dof)
+        return self._get_stdout_record(
+            key.strip().upper(), time_series=time_series, unit=unit, dof=dof
+        )
 
     def getCurrentRecord(self, key, time_series=False, unit=None, dof=0):
         """
@@ -896,7 +898,9 @@ class Amber(_process.Process):
         if self.isError():
             _warnings.warn("The process exited with an error!")
 
-        return self._get_stdout_record(key.strip().upper(), time_series, unit, dof)
+        return self._get_stdout_record(
+            key.strip().upper(), time_series=time_series, unit=unit, dof=dof
+        )
 
     def getRecords(self, dof=0, block="AUTO"):
         """
