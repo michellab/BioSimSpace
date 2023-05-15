@@ -273,11 +273,9 @@ def test_set_box(system):
     # Get the updated box dimensions and angles.
     box, angles = system.getBox()
 
-    # Store the expected box dimensions and angles. These are different
-    # to the initial values (angles at least) due to the application
-    # of a lattice reduction.
+    # Store the expected box dimensions and angles.
     expected_box = [30, 30, 30] * BSS.Units.Length.angstrom
-    expected_angles = [70.5288, 109.4712, 70.5288] * BSS.Units.Angle.degree
+    expected_angles = [109.4712, 70.5288, 70.5288] * BSS.Units.Angle.degree
 
     # Check that the box dimensions match.
     for b0, b1 in zip(box, expected_box):

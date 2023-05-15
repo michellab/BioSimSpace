@@ -339,7 +339,7 @@ class Amber(_process.Process):
 
         if isinstance(self._protocol, _Protocol.Metadynamics):
             config_options["plumed"] = 1
-            config_options["plumedfile"] = "plumed.dat"
+            config_options["plumedfile"] = "'plumed.dat'"
 
             # Create the PLUMED input file and copy auxiliary files to the working directory.
             self._plumed = _Plumed(str(self._work_dir))
@@ -858,7 +858,9 @@ class Amber(_process.Process):
         if self.isError():
             _warnings.warn("The process exited with an error!")
 
-        return self._get_stdout_record(key.strip().upper(), time_series, unit, dof)
+        return self._get_stdout_record(
+            key.strip().upper(), time_series=time_series, unit=unit, dof=dof
+        )
 
     def getCurrentRecord(self, key, time_series=False, unit=None, dof=0):
         """
@@ -896,7 +898,9 @@ class Amber(_process.Process):
         if self.isError():
             _warnings.warn("The process exited with an error!")
 
-        return self._get_stdout_record(key.strip().upper(), time_series, unit, dof)
+        return self._get_stdout_record(
+            key.strip().upper(), time_series=time_series, unit=unit, dof=dof
+        )
 
     def getRecords(self, dof=0, block="AUTO"):
         """
