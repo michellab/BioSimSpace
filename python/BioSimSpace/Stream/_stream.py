@@ -153,7 +153,7 @@ def _add_metadata(sire_object):
 
     from sire import __version__ as _sire_version
     from sire import __revisionid__ as _sire_revisionid
-    from .. import __version__ as _bss_version
+    from .. import _version
 
     # Create a copy of the object.
     try:
@@ -167,9 +167,14 @@ def _add_metadata(sire_object):
     except:
         sandpit = "None"
 
+    # Extract the BioSimSpace version and revision ID.
+    _bss_version = _version.get_versions()["version"].split("+")[0]
+    _bss_revisionid = _version.get_versions()["full-revisionid"][0:7]
+
     # Generate the metadata.
     metadata = {
         "bss_version": _bss_version,
+        "bss_revisionid": _bss_revisionid,
         "sire_version": _sire_version,
         "sire_revisionid": _sire_revisionid,
         "sandpit": sandpit,
