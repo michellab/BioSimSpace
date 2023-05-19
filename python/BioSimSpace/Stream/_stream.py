@@ -41,7 +41,8 @@ from .. import _SireWrappers
 
 
 def save(sire_object, filebase):
-    """Stream a wrapped Sire object to file.
+    """
+    Stream a wrapped Sire object to file.
 
     Parameters
     ----------
@@ -66,6 +67,11 @@ def save(sire_object, filebase):
         raise TypeError("'filebase' must be of type 'str'.")
 
     try:
+        sire_object = _add_metadata(sire_object)
+    except:
+        raise _StreamError("Unable to add metadata to streamed object!")
+
+    try:
         _SireStream.save(sire_object._sire_object, f"{filebase}.bss")
     except Exception as e:
         msg = f"Failed to stream {sire_object} to file '{filebase}.bss'."
@@ -76,7 +82,8 @@ def save(sire_object, filebase):
 
 
 def load(file):
-    """Stream a wrapped Sire object from file.
+    """
+    Stream a wrapped Sire object from file.
 
     Parameters
     ----------
@@ -118,3 +125,71 @@ def load(file):
             raise IOError(msg) from e
         else:
             raise IOError(msg) from None
+
+
+def _add_metadata(sire_object):
+    """
+    Internal function to tag a Sire object with metadata.
+
+    Parameters
+    ----------
+
+    sire_object : :class:`System <BioSimSpace._SireWrappers.SireWrapper>`
+        The wrapped Sire object to stream.
+
+    Returns
+    -------
+
+    sire_object : :class:`System <BioSimSpace._SireWrappers.SireWrapper>`
+        The tagged wrapped Sire object.
+    """
+
+    if not isinstance(sire_object, _SireWrapper) and not isinstance(
+        sire_object, _SireWrappers.SearchResult
+    ):
+        raise TypeError(
+            "'sire_object' must be of type 'BioSimSpace._SireWrappers.SireWrapper'."
+        )
+
+    from sire import __version__ as _sire_version
+    from sire import __revisionid__ as _sire_revisionid
+    from .. import __version__ as _bss_version
+
+    # Create a copy of the object.
+    try:
+        _sire_object = sire_object.copy()
+    except:
+        _sire_object = sire_object
+
+    # Work out the name of the Sandpit.
+    try:
+        sandpit = sire_object.__module__.split("Sandpit")[1].split(".")[1]
+    except:
+        sandpit = "None"
+
+    # Generate the metadata.
+    metadata = {
+        "bss_version": _bss_version,
+        "sire_version": _sire_version,
+        "sire_revisionid": _sire_revisionid,
+        "sandpit": sandpit,
+    }
+
+    # Tag the object.
+    try:
+        # Set a system level property.
+        _sire_object._sire_object.setProperty("metadata", metadata)
+    except:
+        # Set an object (molecule, residue, or atom) level property.
+        # Make sure to convert back to the correct type.
+        try:
+            _sire_object = _sire_object.__class__(
+                sire_object._sire_object.edit()
+                .setProperty("metadata", metadata)
+                .molecule()
+                .commit()
+            )
+        except:
+            pass
+
+    return _sire_object
