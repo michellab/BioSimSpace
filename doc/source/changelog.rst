@@ -9,6 +9,27 @@ company supporting open-source development of fostering academic/industrial coll
 within the biomolecular simulation community. Our software is hosted via the `OpenBioSim`
 `GitHub <https://github.com/OpenBioSim/biosimspace>`__ organisation.
 
+`2023.2.2 <https://github.com/openbiosim/biosimspace/compare/2023.2.1...2023.2.2>`_ - May 15 2023
+-------------------------------------------------------------------------------------------------
+
+* Rename tests directory to ``tests`` for compliance with ``pytest`` standard (`#51 <https://github.com/OpenBioSim/biosimspace/pull/51>`__).
+* Fixed parsing of AMBER standard output records (`#56 <https://github.com/OpenBioSim/biosimspace/pull/56>`__).
+* Re-add pre-minimisation stage to SOMD FEP configuration (`#59 <https://github.com/OpenBioSim/biosimspace/pull/59>`__).
+* Fixed reference to ``plumed.dat`` file in AMBER configuration input for steered molecular dynamics (`#64 <https://github.com/OpenBioSim/biosimspace/pull/64>`__).
+* Fixed :meth:`getDensity <BioSimSpace.Process.Amber.getDensity>` method (`#64 <https://github.com/OpenBioSim/biosimspace/pull/64>`__).
+
+`2023.2.1 <https://github.com/openbiosim/biosimspace/compare/2023.2.0...2023.2.1>`_ - Apr 27 2023
+-------------------------------------------------------------------------------------------------
+
+* Update GitHub CI for our new release process (`#34 <https://github.com/OpenBioSim/biosimspace/pull/34>`__).
+* Fixed :func:`readMolecules <BioSimSpace.IO.readMolecules>` so that can handle a tuple of input files again (`#38 <https://github.com/OpenBioSim/biosimspace/pull/38>`__).
+* Fixed protocol mixin inheritance (`#41 <https://github.com/OpenBioSim/biosimspace/pull/41>`__).
+* Update documentation for new development and release process (`#43 <https://github.com/OpenBioSim/biosimspace/pull/43>`__).
+* Fixed SOMD inverse friction coefficient configuration parameter (`#49 <https://github.com/OpenBioSim/biosimspace/pull/49>`__).
+* Fixes to the hydration free energy tutorial (`#49 <https://github.com/OpenBioSim/biosimspace/pull/49>`__).
+* Fixed bug in SOMD test runner that caused it to return prior to assertions (`#49 <https://github.com/OpenBioSim/biosimspace/pull/49>`__).
+* Expose ``extra_options`` and ``extra_lines`` parameters in :class:`BioSimSpace.FreeEnergy.Relative <BioSimSpace.FreeEnergy.Relative>` (`#49 <https://github.com/OpenBioSim/biosimspace/pull/49>`__).
+
 `2023.2.0 <https://github.com/openbiosim/biosimspace/compare/2023.1.2...2023.2.0>`_ - Mar 30 2023
 -------------------------------------------------------------------------------------------------
 
