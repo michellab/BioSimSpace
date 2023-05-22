@@ -286,25 +286,6 @@ class SireWrapper:
         """
         _save(self, filebase)
 
-    def getMetadata(self):
-        """
-        Get the metadata associated with this object.
-
-        Returns
-        -------
-
-        metadata : {}
-            A dictionary of metadata.
-        """
-
-        try:
-            sire_metadata = self._sire_object.property("metadata")
-            metadata = {k: v.toString() for k, v in sire_metadata.items()}
-        except:
-            metadata = {}
-
-        return metadata
-
     def _getSireObject(self):
         """
         Return the underlying Sire object.

@@ -128,20 +128,14 @@ def test_select_result(system):
 def test_metadata(system):
     """Test that streamed metadata is saved and recovered correctly."""
 
-    # Add the metadata to the system.
-    new_system = BSS.Stream._stream._add_metadata(system)
-
-    # Store the original metadata.
-    original_metadata = new_system._sire_object.property("metadata")
+    # Add the metadata for the system.
+    original_metadata = BSS.Stream._stream._add_metadata(system)
 
     # Stream to file.
     BSS.Stream.save(system, "test")
 
-    # Stream from file.
-    s = BSS.Stream.load("test.bss")
-
-    # Get the metadata.
-    metadata = s.getMetadata()
+    # Query the metadata.
+    metadata = BSS.Stream.getMetadata("test.bss")
 
     # Make sure that the metadata is the same.
     for k, v in metadata.items():
