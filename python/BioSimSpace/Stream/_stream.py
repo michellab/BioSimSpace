@@ -205,7 +205,7 @@ def getSireMetadata(file):
             elif line.startswith("* "):
                 # Convert to a nicely formatted key:value record.
                 line = line.replace("*", "")
-                k, v = line.split(" : ")
+                k, v = line.split(":", 1)
 
                 # Handle the System key separately, since it contains multiple records.
                 if len(system_data) != 0:
