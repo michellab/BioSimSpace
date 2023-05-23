@@ -134,6 +134,7 @@ finally:
         print("Checking for dependencies that are already installed...")
 
         from shutil import which
+
         conda_exe = which("mamba")
         real_conda_exe = which("conda")
 
