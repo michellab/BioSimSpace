@@ -29,6 +29,8 @@ __all__ = ["Gromacs"]
 import glob as _glob
 import os as _os
 
+import pandas as pd
+
 from .._Utils import _try_import
 
 _pygtail = _try_import("pygtail")
@@ -46,6 +48,7 @@ from sire.legacy import IO as _SireIO
 from sire.legacy import Maths as _SireMaths
 from sire.legacy import Units as _SireUnits
 from sire.legacy import Vol as _SireVol
+from alchemlyb.parsing.gmx import extract
 
 from .. import _gmx_exe
 from .. import _isVerbose
@@ -2591,6 +2594,46 @@ class Gromacs(_process.Process):
                     return None
         else:
             return self._traj_file
+
+    def saveMetric(
+        self, filename="metric.parquet", u_nk="u_nk.parquet", dHdl="dHdl.parquet"
+    ):
+        """
+        Helper function to save the simulation metrics to `filename`, which is a
+        pandas dataframe that can be loaded with `pd.read_parquet`. if the protocol
+        is Free Energy protocol, the dHdl and the u_nk data will be saved in the
+        same parquet format as well.
+        """
+        self._update_energy_dict()
+        datadict = {
+            "Time (ps)": [time / _Units.Time.picosecond for time in self.getTime(True)],
+            "PotentialEnergy (kJ/mol)": [
+                energy / _Units.Energy.kj_per_mol
+                for energy in self.getPotentialEnergy(True)
+            ],
+            "Volume (nm^3)": [
+                volume / _Units.Volume.nanometer3 for volume in self.getVolume(True)
+            ],
+            "Pressure (bar)": [
+                pressure / _Units.Pressure.bar for pressure in self.getPressure(True)
+            ],
+            "Temperature (kelvin)": [
+                temperature / _Units.Temperature.kelvin
+                for temperature in self.getTemperature(True)
+            ],
+        }
+        df = pd.DataFrame(data=datadict)
+        df = df.set_index("Time (ps)")
+        df.to_parquet(path=f"{self.workDir()}/{filename}", index=True)
+        if isinstance(self._protocol, _Protocol._FreeEnergyMixin):
+            energy = extract(
+                f"{self.workDir()}/{self._name}.xvg",
+                T=self._protocol.getTemperature() / _Units.Temperature.kelvin,
+            )
+            if "u_nk" in energy:
+                energy["u_nk"].to_parquet(path=f"{self.workDir()}/{u_nk}", index=True)
+            if "dHdl" in energy:
+                energy["dHdl"].to_parquet(path=f"{self.workDir()}/{dHdl}", index=True)
 
 
 def _is_minimisation(config):

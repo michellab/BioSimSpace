@@ -26,6 +26,7 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Amber"]
 
+
 from .._Utils import _try_import
 
 _pygtail = _try_import("pygtail")
@@ -39,6 +40,8 @@ import warnings as _warnings
 from sire.legacy import Base as _SireBase
 from sire.legacy import IO as _SireIO
 from sire.legacy import Mol as _SireMol
+import pandas as pd
+from alchemlyb.parsing.amber import extract
 
 from .. import _amber_home, _isVerbose
 from ..Align._squash import _squash, _unsquash
@@ -1646,7 +1649,7 @@ class Amber(_process.Process):
         """
         return self.getRecord(
             "EPTOT",
-            times_series=time_series,
+            time_series=time_series,
             unit=_Units.Energy.kcal_per_mol,
             dof=dof,
             block=block,
@@ -2481,3 +2484,42 @@ class Amber(_process.Process):
 
             except KeyError:
                 return None
+
+    def saveMetric(
+        self, filename="metric.parquet", u_nk="u_nk.parquet", dHdl="dHdl.parquet"
+    ):
+        """
+        Helper function to save the simulation metrics to `filename`, which is a
+        pandas dataframe that can be loaded with `pd.read_parquet`. if the protocol
+        is Free Energy protocol, the dHdl and the u_nk data will be saved in the
+        same parquet format as well.
+        """
+        datadict = {
+            "Time (ps)": [time / _Units.Time.picosecond for time in self.getTime(True)],
+            "PotentialEnergy (kJ/mol)": [
+                energy / _Units.Energy.kj_per_mol
+                for energy in self.getPotentialEnergy(True)
+            ],
+            "Volume (nm^3)": [
+                volume / _Units.Volume.nanometer3 for volume in self.getVolume(True)
+            ],
+            "Pressure (bar)": [
+                pressure / _Units.Pressure.bar for pressure in self.getPressure(True)
+            ],
+            "Temperature (kelvin)": [
+                temperature / _Units.Temperature.kelvin
+                for temperature in self.getTemperature(True)
+            ],
+        }
+        df = pd.DataFrame(data=datadict)
+        df = df.set_index("Time (ps)")
+        df.to_parquet(path=f"{self.workDir()}/{filename}", index=True)
+        if isinstance(self._protocol, _Protocol._FreeEnergyMixin):
+            energy = extract(
+                f"{self.workDir()}/{self._name}.out",
+                T=self._protocol.getTemperature() / _Units.Temperature.kelvin,
+            )
+            if "u_nk" in energy and energy["u_nk"] is not None:
+                energy["u_nk"].to_parquet(path=f"{self.workDir()}/{u_nk}", index=True)
+            if "dHdl" in energy and energy["dHdl"] is not None:
+                energy["dHdl"].to_parquet(path=f"{self.workDir()}/{dHdl}", index=True)
