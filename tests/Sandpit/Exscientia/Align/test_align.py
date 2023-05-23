@@ -32,10 +32,11 @@ def system1():
     )
 
 
-@pytest.mark.skip(
-    reason="Non-reproducibly giving different mappings on certain platforms."
-)
 def test_flex_align(system0, system1):
+    # This tests that the flex align functionality runs. We can't test
+    # for consistent output, since we have occasionally observed different
+    # mappings across platforms.
+
     # Extract the molecules.
     m0 = system0.getMolecules()[0]
     m1 = system1.getMolecules()[0]
