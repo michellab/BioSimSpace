@@ -50,7 +50,7 @@ jobs:
           use-mamba: true
 #
       - name: Clone the feature branch
-        run: git clone -b ${{ github.head_ref }} --single-branch https://github.com/${{ env.REPO }}
+        run: git clone -b ${{ github.head_ref }} --single-branch https://github.com/${{ env.REPO }} biosimspace
 #
       - name: Setup Conda
         run: mamba install -y -c conda-forge boa anaconda-client packaging=21 pip-requirements-parser
