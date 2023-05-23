@@ -1,6 +1,15 @@
 import BioSimSpace.Sandpit.Exscientia as BSS
 
+from BioSimSpace.Sandpit.Exscientia._Utils import _try_import, _have_imported
+
 import pytest
+
+# Make sure GROMACS is installed.
+has_gromacs = BSS._gmx_exe is not None
+
+# Make sure openff is installed.
+_openff = _try_import("openff")
+has_openff = _have_imported(_openff)
 
 # Store the tutorial URL.
 url = BSS.tutorialUrl()
@@ -71,6 +80,29 @@ def test_production(system):
 
     # Run the process, check that it finished without error, and returns a system.
     run_process(system, protocol)
+
+
+@pytest.mark.skipif(
+    has_gromacs is False or has_openff is False,
+    reason="Requires GROMACS and OpenFF to be installed",
+)
+def test_rhombic_dodecahedron():
+    """Test that OpenMM can load and run rhombic dodecahedral triclinic spaces."""
+
+    # Create a methane molecule.
+    mol = BSS.Parameters.openff_unconstrained_2_0_0("C").getMolecule()
+
+    # Generate box dimensions and angles for a hexagonal rhombic dodecahedron.
+    box, angles = BSS.Box.rhombicDodecahedronHexagon(5 * BSS.Units.Length.nanometer)
+
+    # Create a solvated system.
+    solvated = BSS.Solvent.tip3p(mol, box=box, angles=angles)
+
+    # Create a short minimisation protocol.
+    protocol = BSS.Protocol.Minimisation(steps=100)
+
+    # Run the process, check that it finished without error, and returns a system.
+    run_process(solvated, protocol)
 
 
 def run_process(system, protocol):
