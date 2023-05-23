@@ -161,6 +161,11 @@ class Amber(_process.Process):
         # regions. For regular simulations there will be one, for free-energy
         # simulations there can be up to four, i.e. one for each of the TI regions
         # and one for the soft-core part of the system in each region, if present.
+        # The order of the dictionaries is:
+        #  - TI region 1
+        #  - TI region 1 (soft-core part)
+        #  - TI region 2
+        #  - TI region 2 (soft-core part)
         self._stdout_dict = [
             _process._MultiDict(),
             _process._MultiDict(),
@@ -170,7 +175,7 @@ class Amber(_process.Process):
 
         # Initialise mappings between "universal" stdout keys, and the actual
         # record key used for the different regions (and soft-core parts) from
-        # in the AMBER output.
+        # in the AMBER output. Ordering is the same as for the stdout_dicts above.
         self._stdout_key = [{}, {}, {}, {}]
 
         # Flag for the current record region in the AMBER output file.
