@@ -1069,7 +1069,7 @@ class Amber(_process.Process):
             else:
                 return (time_steps * _Units.Time.picosecond)._to_default_unit()
 
-    def getCurrentTime(self, time_series=False, soft_core=False, region=0):
+    def getCurrentTime(self, time_series=False, region=0, soft_core=False):
         """
         Get the current simulation time.
 
