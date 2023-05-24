@@ -1268,7 +1268,7 @@ def flexAlign(
     # Convert the mapping to AtomIdx key:value pairs.
     sire_mapping = _to_sire_mapping(mapping)
 
-    # Create the working directory.
+    # Create a temporary working directory.
     work_dir = _Utils.WorkDir()
 
     # Execute in the working directory.
