@@ -176,3 +176,11 @@ def test_dimensionless_value():
     )
 
     assert value == pytest.approx(418.4)
+
+
+def test_value_and_unit():
+    """
+    Regression test to make sure that a general unit with a value and unit can
+    be parsed correctly.
+    """
+    general_unit = Types._GeneralUnit(2, "kcal per mol / angstrom**2")
