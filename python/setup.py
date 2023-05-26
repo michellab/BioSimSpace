@@ -133,26 +133,16 @@ finally:
 
         print("Checking for dependencies that are already installed...")
 
-        if sys.platform == "win32":
-            conda_exe = os.path.join(bin_dir, "Scripts", "mamba.exe")
-            real_conda_exe = os.path.join(bin_dir, "Scripts", "conda.exe")
+        from shutil import which
 
-            if not os.path.exists(conda_exe):
-                conda_exe = real_conda_exe
-        else:
-            conda_exe = os.path.join(bin_dir, "mamba")
-            real_conda_exe = os.path.join(bin_dir, "conda")
+        conda_exe = which("mamba")
+        real_conda_exe = which("conda")
 
-            if not os.path.exists(conda_exe):
-                # This could be in an environment
-                conda_exe = os.path.join(bin_dir, "..", "..", "..", "bin", "mamba")
-                real_conda_exe = os.path.join(bin_dir, "..", "..", "..", "bin", "conda")
+        if conda_exe is None or not os.path.exists(conda_exe):
+            conda_exe = real_conda_exe
 
-                if not os.path.exists(conda_exe):
-                    if not os.path.exists(real_conda_exe):
-                        real_conda_exe = os.path.join(bin_dir, "conda")
-
-                conda_exe = real_conda_exe
+        if conda_exe is None or not os.path.exists(conda_exe):
+            raise IOError("Unable to install as cannot find conda or mamba!")
 
         for dep in conda_deps:
             if not is_installed(dep, conda=conda_exe):

@@ -1237,6 +1237,9 @@ def flexAlign(
     # Convert the mapping to AtomIdx key:value pairs.
     sire_mapping = _to_sire_mapping(mapping)
 
+    # Create a temporary working directory.
+    work_dir = _Utils.WorkDir()
+
     # Execute in the working directory.
     with _Utils.cd(work_dir):
         # Write the two molecules to PDB files.
