@@ -13,7 +13,7 @@ def test_file_cache():
     """
 
     # Clear the file cache.
-    BSS.IO._file_cache._cache = {}
+    BSS.IO._file_cache._cache = BSS.IO._file_cache._FixedSizeOrderedDict()
 
     # Load the molecular system.
     s = BSS.IO.readMolecules(["tests/input/ala.crd", "tests/input/ala.top"])
@@ -62,3 +62,20 @@ def test_file_cache():
 
     # The directory should now contain 7 files.
     assert len(glob.glob(f"{tmp_path}/*")) == 7
+
+    # Now delete a key and check that the number of atoms is decremented.
+
+    # Get the first key.
+    key = list(BSS.IO._file_cache._cache.keys())[0]
+
+    # Store the number of atoms for this key.
+    num_atoms = BSS.IO._file_cache._cache[key][0].nAtoms()
+
+    # Store the total number of atoms in the cache.
+    total_atoms = BSS.IO._file_cache._cache._num_atoms
+
+    # Delete the key.
+    del BSS.IO._file_cache._cache[key]
+
+    # Make sure the number of atoms in the cache was decremented.
+    assert BSS.IO._file_cache._cache._num_atoms == total_atoms - num_atoms

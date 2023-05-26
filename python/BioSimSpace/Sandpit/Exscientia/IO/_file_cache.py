@@ -68,6 +68,11 @@ class _FixedSizeOrderedDict(_collections.OrderedDict):
                 key, value = self.popitem(False)
                 self._num_atoms -= value[0].nAtoms()
 
+    def __delitem__(self, key):
+        value = self[key]
+        self._num_atoms -= value[0].nAtoms()
+        _collections.OrderedDict.__delitem__(self, key)
+
 
 # Initialise a "cache" dictionary. This maps a key of the system UID, file format
 # and excluded properties a value of the system and file path. When saving to a
