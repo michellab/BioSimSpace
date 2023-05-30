@@ -378,6 +378,9 @@ def test_isSame(system):
     reason="Requires AMBER and OpenFF to be installed",
 )
 def test_isSame_mol_nums():
+    # Make sure that isSame works when two systems have the same UID,
+    # but contain different MolNums.
+
     # Create an initial system.
     system = BSS.Parameters.openff_unconstrained_2_0_0("CO").getMolecule().toSystem()
 
