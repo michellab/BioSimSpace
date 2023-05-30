@@ -1,9 +1,25 @@
 import BioSimSpace.Sandpit.Exscientia as BSS
 
+from BioSimSpace.Sandpit.Exscientia._Utils import _try_import, _have_imported
+
 import glob
 import os
 import pytest
 import tempfile
+
+# Make sure AMBER is installed.
+if BSS._amber_home is not None:
+    exe = "%s/bin/sander" % BSS._amber_home
+    if os.path.isfile(exe):
+        has_amber = True
+    else:
+        has_amber = False
+else:
+    has_amber = False
+
+# Make sure openff is installed.
+_openff = _try_import("openff")
+has_openff = _have_imported(_openff)
 
 
 def test_file_cache():
@@ -79,3 +95,40 @@ def test_file_cache():
 
     # Make sure the number of atoms in the cache was decremented.
     assert BSS.IO._file_cache._cache._num_atoms == total_atoms - num_atoms
+
+
+@pytest.mark.skipif(
+    has_amber is False or has_openff is False,
+    reason="Requires AMBER and OpenFF to be installed",
+)
+def test_file_cache_mol_nuums():
+    """
+    Make sure that systems can be cached if they have the same UID, but
+    contain different MolNUms.
+    """
+
+    # Clear the file cache.
+    BSS.IO._file_cache._cache = BSS.IO._file_cache._FixedSizeOrderedDict()
+
+    # Create an initial system.
+    system = BSS.Parameters.openff_unconstrained_2_0_0("CO").getMolecule().toSystem()
+
+    # Create two different 5 atom molecules.
+    mol0 = BSS.Parameters.openff_unconstrained_2_0_0("C").getMolecule()
+    mol1 = BSS.Parameters.openff_unconstrained_2_0_0("CF").getMolecule()
+
+    # Create two new systems by adding the different molecules to the original
+    # system. These will have the same UID, but different molecule numbers.
+    system0 = system + mol0
+    system1 = system + mol1
+
+    # Create a temporary working directory.
+    tmp_dir = tempfile.TemporaryDirectory()
+    tmp_path = tmp_dir.name
+
+    # Write the two systems to PDB format.
+    BSS.IO.saveMolecules(f"{tmp_path}/tmp0", system0, "pdb")
+    BSS.IO.saveMolecules(f"{tmp_path}/tmp1", system1, "pdb")
+
+    # The cache shold have two entries.
+    assert len(BSS.IO._file_cache._cache) == 2

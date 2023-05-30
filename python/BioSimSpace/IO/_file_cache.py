@@ -151,6 +151,7 @@ def check_cache(
     key = (
         system._sire_object.uid().toString(),
         format,
+        str(system._mol_nums),
         str(set(excluded_properties)),
         str(skip_water),
     )
@@ -267,6 +268,7 @@ def update_cache(
     key = (
         system._sire_object.uid().toString(),
         format,
+        str(system._mol_nums),
         str(set(excluded_properties)),
         str(skip_water),
     )
