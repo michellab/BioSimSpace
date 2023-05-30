@@ -1,6 +1,6 @@
 import BioSimSpace.Sandpit.Exscientia as BSS
 
-from BioSimSpace._Utils import _try_import, _have_imported
+from BioSimSpace.Sandpit.Exscientia._Utils import _try_import, _have_imported
 
 import math
 import os
