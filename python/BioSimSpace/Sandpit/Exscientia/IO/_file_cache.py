@@ -155,16 +155,11 @@ def check_cache(
         str(skip_water),
     )
 
-    print(f"\nChecking cache for key: {key}")
-
     # Get the existing file path and MD5 hash from the cache.
     try:
         (prev_system, path, original_hash) = _cache[key]
     except:
-        print("No key found!")
         return False
-
-    print(f"Key matches: {prev_system}, {path}, {original_hash}")
 
     # Whether the cache entry is still valid.
     cache_valid = True
@@ -177,24 +172,20 @@ def check_cache(
         property_map1=property_map,
         skip_water=skip_water,
     ):
-        print("System has been updated. Cache is invalid!")
         cache_valid = False
 
     # Make sure the file still exists.
     if not _os.path.exists(path):
-        print("File no longer exists. Cache is invalid!")
         cache_valid = False
     # Make sure the MD5 sum is still the same.
     else:
         current_hash = _get_md5_hash(path)
         if current_hash != original_hash:
-            print("File MD5 mismatch. Cache is invalid!")
             cache_valid = False
 
     # If the cache isn't valid, delete the entry and return False.
     if not cache_valid:
         if key in _cache:
-            print("Deleting key from cache.")
             del _cache[key]
         return False
 
@@ -208,13 +199,10 @@ def check_cache(
 
         # Copy the file to the new location.
         try:
-            print(f"Copying existing file {path} --> {new_path}")
             _shutil.copyfile(path, new_path)
         except _shutil.SameFileError:
-            print(f"Copy failed. Same file already exists at new path.")
             pass
         except:
-            print(f"Copy failed. Removing cache entry.")
             del _cache[key]
             return False
 
@@ -285,8 +273,6 @@ def update_cache(
 
     # Update the cache.
     _cache[key] = (system.copy(), path, hash)
-
-    print(f"\nUpdated cache: key = {key}, value = {system}, {path}, {hash}")
 
 
 def _get_md5_hash(path):
