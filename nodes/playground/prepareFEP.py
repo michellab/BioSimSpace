@@ -13,8 +13,8 @@
 
 import os
 import zipfile
-from sire.legacy.Mol import AtomIdx
 import BioSimSpace as BSS
+from sire.legacy.Mol import AtomIdx
 
 
 # In[ ]:
