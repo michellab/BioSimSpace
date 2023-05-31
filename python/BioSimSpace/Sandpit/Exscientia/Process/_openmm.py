@@ -293,6 +293,7 @@ class OpenMM(_process.Process):
         if isinstance(self._protocol, _Protocol.Minimisation):
             # Write the OpenMM import statements.
             self._add_config_imports()
+            self._add_config_monkey_patches()
 
             # Load the input files.
             self.addToConfig("\n# Load the topology and coordinate files.")
@@ -524,6 +525,7 @@ class OpenMM(_process.Process):
         elif isinstance(self._protocol, _Protocol.Production):
             # Write the OpenMM import statements.
             self._add_config_imports()
+            self._add_config_monkey_patches()
 
             # Production specific import.
             self.addToConfig("import os")
@@ -706,6 +708,8 @@ class OpenMM(_process.Process):
 
             # Write the OpenMM import statements.
             self._add_config_imports()
+            self._add_config_monkey_patches()
+
             self.addToConfig(
                 "from metadynamics import *"
             )  # Use local patched metadynamics module.
