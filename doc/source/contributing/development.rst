@@ -142,6 +142,29 @@ Instead use:
    print(c.getList())
    [1, 2, 3, 4, 5]
 
+Sire
+----
+
+BioSimSpace is built on top of the `Sire <https://github.com/openbiosim/sire>`__
+and makes exstensive use of its API. Sire has recently been updated to a new,
+Python compliant API. Within BioSimSpace, Sire is currently imported in a
+*mixed* mode so that we can use *both* the new and legacy APIs while we
+work to port things over. A consequence of this is that Sire imports
+*must* follow those for BioSimSpace, e.g.:
+
+.. code-block:: python
+
+     from sire.mol import AtomIdx
+     import BioSimSpace as BSS
+
+will fail, while the following will work:
+
+.. code-block:: python
+
+     import BioSimSpace as BSS
+     from sire.mol import AtomIdx
+
+
 Workflow
 ========
 
