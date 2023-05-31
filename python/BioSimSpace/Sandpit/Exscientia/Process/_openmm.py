@@ -879,6 +879,47 @@ class OpenMM(_process.Process):
                         self.addToConfig(f"barostat.setRandomNumberSeed({self._seed})")
                     self.addToConfig("system.addForce(barostat)")
 
+            # Add backbone restraints. This uses the approach from:
+            # https://github.com/openmm/openmm/issues/2262#issuecomment-464157489
+            # Here zero-mass dummy atoms are bonded to the restrained atoms to avoid
+            # issues with position rescaling during barostat updates.
+            restraint = self._protocol.getRestraint()
+            if restraint is not None:
+                # Search for the atoms to restrain by keyword.
+                if isinstance(restraint, str):
+                    restrained_atoms = self._system.getRestraintAtoms(restraint)
+                # Use the user-defined list of indices.
+                else:
+                    restrained_atoms = restraint
+
+                # Get the force constant in units of kJ_per_mol/nanometer**2
+                force_constant = self._protocol.getForceConstant()._sire_unit
+                force_constant = force_constant.to(
+                    _SireUnits.kJ_per_mol / _SireUnits.nanometer2
+                )
+
+                self.addToConfig(
+                    "\n# Restrain the position of backbone atoms using zero-mass dummy atoms."
+                )
+                self.addToConfig("restraint = HarmonicBondForce()")
+                self.addToConfig("restraint.setUsesPeriodicBoundaryConditions(True)")
+                self.addToConfig("system.addForce(restraint)")
+                self.addToConfig(
+                    "nonbonded = [f for f in system.getForces() if isinstance(f, NonbondedForce)][0]"
+                )
+                self.addToConfig("dummy_indices = []")
+                self.addToConfig("positions = inpcrd.positions")
+                self.addToConfig(f"restrained_atoms = {restrained_atoms}")
+                self.addToConfig("for i in restrained_atoms:")
+                self.addToConfig("    j = system.addParticle(0)")
+                self.addToConfig("    nonbonded.addParticle(0, 1, 0)")
+                self.addToConfig("    nonbonded.addException(i, j, 0, 1, 0)")
+                self.addToConfig(
+                    f"    restraint.addBond(i, j, 0*nanometers, {force_constant}*kilojoules_per_mole/nanometer**2)"
+                )
+                self.addToConfig("    dummy_indices.append(j)")
+                self.addToConfig("    positions.append(positions[i])")
+
             # Store the number of atoms in each molecule.
             atom_nums = []
             for mol in self._system:
