@@ -25,7 +25,7 @@ def test_minimise(system, restraint):
     # Run the process, check that it finished without error, and returns a system.
     new_system = run_process(system, protocol)
 
-    if restraint is None:
+    if restraint == "none":
         return
 
     # Check if restrained atoms stayed in place
@@ -52,7 +52,7 @@ def test_equilibrate(system, restraint):
     # Run the process, check that it finished without error, and returns a system.
     new_system = run_process(system, protocol)
 
-    if restraint is None:
+    if restraint == "none":
         return
 
     # Check if restrained atoms stayed in place
@@ -107,7 +107,7 @@ def test_production(system, restraint):
     # Run the process, check that it finished without error, and returns a system.
     new_system = run_process(system, protocol)
 
-    if restraint is None:
+    if restraint == "none":
         return
 
     # Check if restrained atoms stayed in place
