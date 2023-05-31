@@ -151,7 +151,7 @@ def check_cache(
     key = (
         system._sire_object.uid().toString(),
         format,
-        str(system._mol_nums),
+        _compress_molnum_key(str(system._mol_nums)),
         str(set(excluded_properties)),
         str(skip_water),
     )
@@ -268,7 +268,7 @@ def update_cache(
     key = (
         system._sire_object.uid().toString(),
         format,
-        str(system._mol_nums),
+        _compress_molnum_key(str(system._mol_nums)),
         str(set(excluded_properties)),
         str(skip_water),
     )
@@ -294,3 +294,10 @@ def _get_md5_hash(path):
             hash.update(chunk)
 
     return hash.hexdigest()
+
+
+def _compress_molnum_key(str):
+    """
+    Internal helper function to compress the MolNum list section of the key.
+    """
+    return str.replace("MolNum(", "").replace(")", "")
