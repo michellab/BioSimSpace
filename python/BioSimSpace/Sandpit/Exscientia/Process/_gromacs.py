@@ -2454,7 +2454,7 @@ class Gromacs(_process.Process):
             # If this is a vacuum simulation, then translate the centre of mass
             # of the system back to the origin.
             if not space_prop in old_system._sire_object.propertyKeys():
-                com = new_system._getCenterOfMass()
+                com = old_system._getCenterOfMass()
                 old_system.translate([-x for x in com])
 
             return old_system
