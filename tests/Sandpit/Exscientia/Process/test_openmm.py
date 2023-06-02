@@ -1,10 +1,13 @@
-import BioSimSpace.Sandpit.Exscientia as BSS
+import math
 
+import BioSimSpace.Sandpit.Exscientia as BSS
 import pytest
 
 # Store the tutorial URL.
 url = BSS.tutorialUrl()
 
+# Store the allowed restraints.
+restraints = BSS.Protocol._position_restraint._PositionRestraintMixin.restraints()
 
 @pytest.fixture(scope="session")
 def system():
@@ -12,27 +15,56 @@ def system():
     return BSS.IO.readMolecules(["tests/input/ala.top", "tests/input/ala.crd"])
 
 
-def test_minimise(system):
+@pytest.mark.parametrize("restraint", restraints)
+def test_minimise(system, restraint):
     """Test a minimisation protocol."""
 
     # Create a short minimisation protocol.
-    protocol = BSS.Protocol.Minimisation(steps=100)
+    protocol = BSS.Protocol.Minimisation(
+        steps=100, restraint=restraint, force_constant=1000
+        )
 
     # Run the process, check that it finished without error, and returns a system.
-    run_process(system, protocol)
+    new_system = run_process(system, protocol)
+
+    if restraint == "none":
+        return
+
+    # Check if restrained atoms stayed in place
+    restraint_atoms = system.getRestraintAtoms(restraint)
+    did_not_move = [
+        get_dist_atoms(system.getAtom(x), new_system.getAtom(x)) < 0.05
+        for x in restraint_atoms
+    ]
+
+    assert all(did_not_move)
 
 
-@pytest.mark.parametrize("restraint", ["backbone", "heavy", "all", "none"])
+@pytest.mark.parametrize("restraint", restraints)
 def test_equilibrate(system, restraint):
     """Test an equilibration protocol."""
 
     # Create a short equilibration protocol.
     protocol = BSS.Protocol.Equilibration(
-        runtime=BSS.Types.Time(0.001, "nanoseconds"), restraint=restraint
+        runtime=BSS.Types.Time(0.001, "nanoseconds"),
+        restraint=restraint,
+        force_constant=1000
     )
 
     # Run the process, check that it finished without error, and returns a system.
-    run_process(system, protocol)
+    new_system = run_process(system, protocol)
+
+    if restraint == "none":
+        return
+
+    # Check if restrained atoms stayed in place
+    restraint_atoms = system.getRestraintAtoms(restraint)
+    did_not_move = [
+        get_dist_atoms(system.getAtom(x), new_system.getAtom(x)) < 0.05
+        for x in restraint_atoms
+    ]
+
+    assert all(did_not_move)
 
 
 def test_heat(system):
@@ -63,14 +95,31 @@ def test_cool(system):
     run_process(system, protocol)
 
 
-def test_production(system):
+@pytest.mark.parametrize("restraint", restraints)
+def test_production(system, restraint):
     """Test a production protocol."""
 
     # Create a short production protocol.
-    protocol = BSS.Protocol.Production(runtime=BSS.Types.Time(0.001, "nanoseconds"))
+    protocol = BSS.Protocol.Production(
+        runtime=BSS.Types.Time(0.001, "nanoseconds"),
+        restraint=restraint,
+        force_constant=1000
+    )
 
     # Run the process, check that it finished without error, and returns a system.
-    run_process(system, protocol)
+    new_system = run_process(system, protocol)
+
+    if restraint == "none":
+        return
+
+    # Check if restrained atoms stayed in place
+    restraint_atoms = system.getRestraintAtoms(restraint)
+    did_not_move = [
+        get_dist_atoms(system.getAtom(x), new_system.getAtom(x)) < 0.05
+        for x in restraint_atoms
+    ]
+
+    assert all(did_not_move)
 
 
 def run_process(system, protocol):
@@ -95,4 +144,13 @@ def run_process(system, protocol):
     assert not process.isError()
 
     # Make sure that we get a molecular system back.
-    assert process.getSystem() is not None
+    new_system = process.getSystem()
+    assert new_system is not None
+
+    return new_system
+
+
+def get_dist_atoms(a, b):
+    """Return the distance between two `BioSimSpace.Atom` instances"""
+    v = a.coordinates() - b.coordinates()
+    return math.sqrt(sum([v.x().value()**2, v.y().value()**2, v.z().value()**2]))
