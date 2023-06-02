@@ -28,6 +28,7 @@ __all__ = ["Gromacs"]
 
 import glob as _glob
 import os as _os
+import warnings as _warnings
 
 import pandas as pd
 
@@ -917,11 +918,7 @@ class Gromacs(_process.Process):
             The current simulation time in nanoseconds.
         """
 
-        if isinstance(self._protocol, _Protocol.Minimisation):
-            return None
-
-        else:
-            return self.getRecord("TIME", time_series, _Units.Time.picosecond, block)
+        return self.getRecord("TIME", time_series, _Units.Time.picosecond, block)
 
     def getCurrentTime(self, time_series=False):
         """
@@ -2611,21 +2608,33 @@ class Gromacs(_process.Process):
                 energy / _Units.Energy.kj_per_mol
                 for energy in self.getPotentialEnergy(True)
             ],
-            "Volume (nm^3)": [
-                volume / _Units.Volume.nanometer3 for volume in self.getVolume(True)
-            ],
-            "Pressure (bar)": [
+        }
+        if not isinstance(self._protocol, _Protocol.Minimisation):
+            if self.getVolume():
+                datadict["Volume (nm^3)"] = [
+                    volume / _Units.Volume.nanometer3 for volume in self.getVolume(True)
+                ]
+            datadict["Pressure (bar)"] = [
                 pressure / _Units.Pressure.bar for pressure in self.getPressure(True)
-            ],
-            "Temperature (kelvin)": [
+            ]
+
+            datadict["Temperature (kelvin)"] = [
                 temperature / _Units.Temperature.kelvin
                 for temperature in self.getTemperature(True)
-            ],
-        }
-        df = pd.DataFrame(data=datadict)
+            ]
+
+        try:
+            df = pd.DataFrame(data=datadict)
+        except ValueError:
+            length_dict = {key: len(value) for key, value in datadict.items()}
+            _warnings.warn(f'Not all metric has the same number of data points ({length_dict}).'
+                          f'All columns will be truncated the same length.')
+            length = min(length_dict.values())
+            new_datadict = {key: value[:length] for key, value in datadict.items()}
+            df = pd.DataFrame(data=new_datadict)
         df = df.set_index("Time (ps)")
         df.to_parquet(path=f"{self.workDir()}/{filename}", index=True)
-        if isinstance(self._protocol, _Protocol._FreeEnergyMixin):
+        if isinstance(self._protocol, _Protocol.FreeEnergy):
             energy = extract(
                 f"{self.workDir()}/{self._name}.xvg",
                 T=self._protocol.getTemperature() / _Units.Temperature.kelvin,

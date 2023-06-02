@@ -215,6 +215,8 @@ def run_process(system, protocol, check_data=False):
     # Wait for the process to end.
     process.wait()
 
+    process.saveMetric()
+
     # Make sure the process didn't error.
     assert not process.isError()
 
