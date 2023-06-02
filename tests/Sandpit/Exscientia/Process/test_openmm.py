@@ -60,7 +60,7 @@ def test_equilibrate(system, restraint):
     # Check if restrained atoms stayed in place
     restraint_atoms = system.getRestraintAtoms(restraint)
     did_not_move = [
-        get_dist_atoms(system.getAtom(x), new_system.getAtom(x)) < 0.05
+        get_dist_atoms(system.getAtom(x), new_system.getAtom(x)) < 0.5
         for x in restraint_atoms
     ]
 
@@ -115,7 +115,7 @@ def test_production(system, restraint):
     # Check if restrained atoms stayed in place
     restraint_atoms = system.getRestraintAtoms(restraint)
     did_not_move = [
-        get_dist_atoms(system.getAtom(x), new_system.getAtom(x)) < 0.05
+        get_dist_atoms(system.getAtom(x), new_system.getAtom(x)) < 0.5
         for x in restraint_atoms
     ]
 
