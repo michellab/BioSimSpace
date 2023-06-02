@@ -261,32 +261,43 @@ def test_parse_fep_output(system, protocol):
     # Create a process using any system and the protocol.
     process = BSS.Process.Amber(system_copy, protocol)
 
+    # Assign the path to the output file.
+    if isinstance(protocol, BSS.Protocol.FreeEnergy):
+        out_file = "tests/Sandpit/Exscientia/output/amber_fep.out"
+    else:
+        out_file = "tests/Sandpit/Exscientia/output/amber_fep_min.out"
+
     # Copy the existing output file into the working directory.
-    shutil.copyfile(
-        "tests/Sandpit/Exscientia/output/amber_fep.out",
-        process.workDir() + "/amber.out",
-    )
+    shutil.copyfile(out_file, process.workDir() + "/amber.out")
 
     # Update the stdout record dictionaries.
     process.stdout(0)
 
-    # Get back the records for each degree of freedom.
-    records0 = process.getRecords(dof=0)
-    records1 = process.getRecords(dof=1)
-    records2 = process.getRecords(dof=2)
+    # Get back the records for each region and soft-core part.
+    records_ti0 = process.getRecords(region=0)
+    records_sc0 = process.getRecords(region=0, soft_core=True)
+    records_ti1 = process.getRecords(region=1)
+    records_sc1 = process.getRecords(region=1, soft_core=True)
 
     # Make sure NSTEP is present.
-    assert "NSTEP" in records0
+    assert "NSTEP" in records_ti0
 
     # Get the number of records.
-    num_records = len(records0["NSTEP"])
+    num_records = len(records_ti0["NSTEP"])
 
     # Now make sure that the records for the two TI regions contain the
     # same number of values.
-    for v0, v1 in zip(records0.values(), records1.values()):
+    for v0, v1 in zip(records_ti0.values(), records_ti1.values()):
         assert len(v0) == len(v1) == num_records
 
-    # Now check that are records for the softcore region contain the correct
+    # Now check that are records for the soft-core parts contain the correct
     # number of values.
-    for v in records2.values():
+    for v in records_sc0.values():
         assert len(v) == num_records
+    for k, v in records_sc1.items():
+        assert len(v) == num_records
+    if isinstance(protocol, BSS.Protocol.FreeEnergy):
+        assert len(records_sc0) == len(records_sc1)
+    else:
+        assert len(records_sc0) == 0
+        assert len(records_sc1) != 0
