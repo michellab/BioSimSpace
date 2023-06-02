@@ -158,19 +158,28 @@ class Amber(_process.Process):
                 raise IOError("AMBER executable doesn't exist: '%s'" % exe)
 
         # Initialise dictionaries to hold stdout records for all possible
-        # degrees of freedom. For regular simulations there will be one,
-        # for free-energy simulations there will be three, i.e. one for
-        # each of the TI regions and one for the soft-core part of the system.
+        # regions. For regular simulations there will be one, for free-energy
+        # simulations there can be up to four, i.e. one for each of the TI regions
+        # and one for the soft-core part of the system in each region, if present.
+        # The order of the dictionaries is:
+        #  - TI region 1
+        #  - TI region 1 (soft-core part)
+        #  - TI region 2
+        #  - TI region 2 (soft-core part)
         self._stdout_dict = [
+            _process._MultiDict(),
             _process._MultiDict(),
             _process._MultiDict(),
             _process._MultiDict(),
         ]
 
         # Initialise mappings between "universal" stdout keys, and the actual
-        # record key used for the different degrees of freedom in the AMBER
-        # output.
-        self._stdout_key = [{}, {}, {}]
+        # record key used for the different regions (and soft-core parts) from
+        # in the AMBER output. Ordering is the same as for the stdout_dicts above.
+        self._stdout_key = [{}, {}, {}, {}]
+
+        # Flag for the current record region in the AMBER output file.
+        self._current_region = 0
 
         # Initialise log file parsing flags.
         self._has_results = False
@@ -767,7 +776,7 @@ class Amber(_process.Process):
         except:
             return None
 
-    def getRecordKey(self, record, dof=0):
+    def getRecordKey(self, record, region=0, soft_core=False):
         """
         Parameters
         ----------
@@ -777,11 +786,14 @@ class Amber(_process.Process):
             Please consult the current AMBER manual for details:
             https://ambermd.org/Manuals.php
 
-        dof : int
-            The degree of freedom to which the record corresponds. There will
-            only be more than one degree of freedom for FreeEnergy protocols,
-            where 1 indicates the second TI region and 2 is the softcore part
-            of the system (if present).
+        region : int
+            The region to which the record corresponds. There will only be more
+            than one region for FreeEnergy protocols, where 1 indicates the second
+            TI region.
+
+        soft_core : bool
+            Whether to get the record for the soft-core part of the system for the
+            chosen region.
 
         Returns
         -------
@@ -794,26 +806,35 @@ class Amber(_process.Process):
         if not isinstance(record, str):
             raise TypeError("'record' must be of type 'str'")
 
-        # Validate the degree of freedom.
-        if not isinstance(dof, int):
-            raise TypeError("'dof' must be of type 'int'")
+        # Validate the region.
+        if not isinstance(region, int):
+            raise TypeError("'region' must be of type 'int'")
         else:
-            if dof < 0 or dof > 2:
-                raise ValueError("'dof' must be in range [0, 2]")
+            if region < 0 or region > 1:
+                raise ValueError("'region' must be in range [0, 1]")
+
+        # Validate the soft-core flag.
+        if not isinstance(soft_core, bool):
+            raise TypeError("'soft_core' must be of type 'bool'.")
+
+        # Convert to the full index.
+        idx = 2 * region + int(soft_core)
 
         # Strip whitespace from the beginning and end of the record and convert
         # to upper case.
         cleaned_record = record.strip().upper()
 
         # Make sure the record exists in the key mapping.
-        if not cleaned_record in self._stdout_key[dof].values():
+        if not cleaned_record in self._stdout_key[idx].values():
             raise ValueError(f"No key found for record '{record}'")
 
-        return list(self._stdout_key[dof].keys())[
-            list(self._stdout_key[dof].values()).index(cleaned_record)
+        return list(self._stdout_key[idx].keys())[
+            list(self._stdout_key[idx].values()).index(cleaned_record)
         ]
 
-    def getRecord(self, key, time_series=False, unit=None, dof=0, block="AUTO"):
+    def getRecord(
+        self, key, time_series=False, unit=None, region=0, soft_core=False, block="AUTO"
+    ):
         """
         Get a record from the stdout dictionary.
 
@@ -832,11 +853,14 @@ class Amber(_process.Process):
         unit : :class:`Unit <BioSimSpace.Units>`
             The unit to convert the record to.
 
-        dof : int
-            The degree of freedom to which the record corresponds. There will
-            only be more than one degree of freedom for FreeEnergy protocols,
-            where 1 indicates the second TI region and 2 is the softcore part
-            of the system (if present).
+        region : int
+            The region to which the record corresponds. There will only be more
+            than one region for FreeEnergy protocols, where 1 indicates the second
+            TI region.
+
+        soft_core : bool
+            Whether to get the record for the soft-core part of the system for the
+            chosen region.
 
         block : bool
             Whether to block until the process has finished running.
@@ -859,10 +883,16 @@ class Amber(_process.Process):
             _warnings.warn("The process exited with an error!")
 
         return self._get_stdout_record(
-            key.strip().upper(), time_series=time_series, unit=unit, dof=dof
+            key.strip().upper(),
+            time_series=time_series,
+            unit=unit,
+            region=region,
+            soft_core=soft_core,
         )
 
-    def getCurrentRecord(self, key, time_series=False, unit=None, dof=0):
+    def getCurrentRecord(
+        self, key, time_series=False, unit=None, region=0, soft_core=False
+    ):
         """
         Get a current record from the stdout dictionary.
 
@@ -881,11 +911,14 @@ class Amber(_process.Process):
         unit : :class:`Unit <BioSimSpace.Units>`
             The unit to convert the record to.
 
-        dof : int
-            The degree of freedom to which the record corresponds. There will
-            only be more than one degree of freedom for FreeEnergy protocols,
-            where 1 indicates the second TI region and 2 is the softcore part
-            of the system (if present).
+        region : int
+            The region to which the record corresponds. There will only be more
+            than one region for FreeEnergy protocols, where 1 indicates the second
+            TI region.
+
+        soft_core : bool
+            Whether to get the record for the soft-core part of the system for the
+            chosen region.
 
         Returns
         -------
@@ -899,21 +932,28 @@ class Amber(_process.Process):
             _warnings.warn("The process exited with an error!")
 
         return self._get_stdout_record(
-            key.strip().upper(), time_series=time_series, unit=unit, dof=dof
+            key.strip().upper(),
+            time_series=time_series,
+            unit=unit,
+            region=region,
+            soft_core=soft_core,
         )
 
-    def getRecords(self, dof=0, block="AUTO"):
+    def getRecords(self, region=0, soft_core=False, block="AUTO"):
         """
         Return the dictionary of stdout time-series records.
 
         Parameters
         ----------
 
-        dof : int
-            The degree of freedom to which the record corresponds. There will
-            only be more than one degree of freedom for FreeEnergy protocols,
-            where 1 indicates the second TI region and 2 is the softcore part
-            of the system (if present).
+        region : int
+            The region to which the record corresponds. There will only be more
+            than one region for FreeEnergy protocols, where 1 indicates the second
+            TI region.
+
+        soft_core : bool
+            Whether to get the record for the soft-core part of the system for the
+            chosen region.
 
         block : bool
             Whether to block until the process has finished running.
@@ -926,11 +966,18 @@ class Amber(_process.Process):
         """
 
         # Validate the degree of freedom.
-        if not isinstance(dof, int):
-            raise TypeError("'dof' must be of type 'int'")
+        if not isinstance(region, int):
+            raise TypeError("'region' must be of type 'int'")
         else:
-            if dof < 0 or dof > 2:
-                raise ValueError("'dof' must be in range [0, 2]")
+            if region < 0 or region > 1:
+                raise ValueError("'region' must be in range [0, 1]")
+
+        # Validate the soft-core flag.
+        if not isinstance(soft_core, bool):
+            raise TypeError("'soft_core' must be of type 'bool'.")
+
+        # Convert to the full index, region + soft_core.
+        idx = 2 * region + int(soft_core)
 
         # Wait for the process to finish.
         if block is True:
@@ -944,20 +991,23 @@ class Amber(_process.Process):
 
         self.stdout(0)
 
-        return self._stdout_dict[dof].copy()
+        return self._stdout_dict[idx].copy()
 
-    def getCurrentRecords(self, dof=0):
+    def getCurrentRecords(self, region=0, soft_core=False):
         """
         Return the current dictionary of stdout time-series records.
 
         Parameters
         ----------
 
-        dof : int
-            The degree of freedom to which the record corresponds. There will
-            only be more than one degree of freedom for FreeEnergy protocols,
-            where 1 indicates the second TI region and 2 is the softcore part
-            of the system (if present).
+        region : int
+            The region to which the record corresponds. There will only be more
+            than one region for FreeEnergy protocols, where 1 indicates the second
+            TI region.
+
+        soft_core : bool
+            Whether to get the record for the soft-core part of the system for the
+            chosen region.
 
         Returns
         -------
@@ -965,9 +1015,9 @@ class Amber(_process.Process):
         records : :class:`MultiDict <BioSimSpace.Process._process._MultiDict>`
            The dictionary of time-series records.
         """
-        return self.getRecords(dof=dof, block=False)
+        return self.getRecords(region=region, soft_core=soft_core, block=False)
 
-    def getTime(self, time_series=False, dof=0, block="AUTO"):
+    def getTime(self, time_series=False, region=0, soft_core=False, block="AUTO"):
         """
         Get the simulation time.
 
@@ -977,11 +1027,14 @@ class Amber(_process.Process):
         time_series : bool
             Whether to return a list of time series records.
 
-        dof : int
-            The degree of freedom to which the record corresponds. There will
-            only be more than one degree of freedom for FreeEnergy protocols,
-            where 1 indicates the second TI region and 2 is the softcore part
-            of the system (if present).
+        region : int
+            The region to which the record corresponds. There will only be more
+            than one region for FreeEnergy protocols, where 1 indicates the second
+            TI region.
+
+        soft_core : bool
+            Whether to get the record for the soft-core part of the system for the
+            chosen region.
 
         block : bool
             Whether to block until the process has finished running.
@@ -999,7 +1052,12 @@ class Amber(_process.Process):
 
         # Get the list of time steps.
         time_steps = self.getRecord(
-            "TIME(PS)", time_series=time_series, unit=None, dof=dof, block=block
+            "TIME(PS)",
+            time_series=time_series,
+            unit=None,
+            region=region,
+            soft_core=soft_core,
+            block=block,
         )
 
         # Convert from picoseconds to nanoseconds.
@@ -1011,7 +1069,7 @@ class Amber(_process.Process):
             else:
                 return (time_steps * _Units.Time.picosecond)._to_default_unit()
 
-    def getCurrentTime(self, time_series=False, dof=0):
+    def getCurrentTime(self, time_series=False, region=0, soft_core=False):
         """
         Get the current simulation time.
 
@@ -1021,11 +1079,14 @@ class Amber(_process.Process):
         time_series : bool
             Whether to return a list of time series records.
 
-        dof : int
-            The degree of freedom to which the record corresponds. There will
-            only be more than one degree of freedom for FreeEnergy protocols,
-            where 1 indicates the second TI region and 2 is the softcore part
-            of the system (if present).
+        region : int
+            The region to which the record corresponds. There will only be more
+            than one region for FreeEnergy protocols, where 1 indicates the second
+            TI region.
+
+        soft_core : bool
+            Whether to get the record for the soft-core part of the system for the
+            chosen region.
 
         Returns
         -------
@@ -1033,9 +1094,11 @@ class Amber(_process.Process):
         time : :class:`Time <BioSimSpace.Types.Time>`
             The current simulation time in nanoseconds.
         """
-        return self.getTime(time_series=time_series, dof=dof, block=False)
+        return self.getTime(
+            time_series=time_series, region=region, soft_core=soft_core, block=False
+        )
 
-    def getStep(self, time_series=False, dof=0, block="AUTO"):
+    def getStep(self, time_series=False, region=0, soft_core=False, block="AUTO"):
         """
         Get the number of integration steps.
 
@@ -1045,11 +1108,14 @@ class Amber(_process.Process):
         time_series : bool
             Whether to return a list of time series records.
 
-        dof : int
-            The degree of freedom to which the record corresponds. There will
-            only be more than one degree of freedom for FreeEnergy protocols,
-            where 1 indicates the second TI region and 2 is the softcore part
-            of the system (if present).
+        region : int
+            The region to which the record corresponds. There will only be more
+            than one region for FreeEnergy protocols, where 1 indicates the second
+            TI region.
+
+        soft_core : bool
+            Whether to get the record for the soft-core part of the system for the
+            chosen region.
 
         block : bool
             Whether to block until the process has finished running.
@@ -1061,10 +1127,15 @@ class Amber(_process.Process):
             The current number of integration steps.
         """
         return self.getRecord(
-            "NSTEP", time_series=time_series, unit=None, dof=dof, block=block
+            "NSTEP",
+            time_series=time_series,
+            unit=None,
+            region=region,
+            soft_core=soft_core,
+            block=block,
         )
 
-    def getCurrentStep(self, time_series=False, dof=0):
+    def getCurrentStep(self, time_series=False, region=0, soft_core=False):
         """
         Get the current number of integration steps.
 
@@ -1074,11 +1145,14 @@ class Amber(_process.Process):
         time_series : bool
             Whether to return a list of time series records.
 
-        dof : int
-            The degree of freedom to which the record corresponds. There will
-            only be more than one degree of freedom for FreeEnergy protocols,
-            where 1 indicates the second TI region and 2 is the softcore part
-            of the system (if present).
+        region : int
+            The region to which the record corresponds. There will only be more
+            than one region for FreeEnergy protocols, where 1 indicates the second
+            TI region.
+
+        soft_core : bool
+            Whether to get the record for the soft-core part of the system for the
+            chosen region.
 
         Returns
         -------
@@ -1086,9 +1160,11 @@ class Amber(_process.Process):
         step : int
             The current number of integration steps.
         """
-        return self.getStep(time_series=time_series, dof=dof, block=False)
+        return self.getStep(
+            time_series=time_series, region=region, soft_core=soft_core, block=False
+        )
 
-    def getBondEnergy(self, time_series=False, dof=0, block="AUTO"):
+    def getBondEnergy(self, time_series=False, region=0, soft_core=False, block="AUTO"):
         """
         Get the bond energy.
 
@@ -1098,11 +1174,14 @@ class Amber(_process.Process):
         time_series : bool
             Whether to return a list of time series records.
 
-        dof : int
-            The degree of freedom to which the record corresponds. There will
-            only be more than one degree of freedom for FreeEnergy protocols,
-            where 1 indicates the second TI region and 2 is the softcore part
-            of the system (if present).
+        region : int
+            The region to which the record corresponds. There will only be more
+            than one region for FreeEnergy protocols, where 1 indicates the second
+            TI region.
+
+        soft_core : bool
+            Whether to get the record for the soft-core part of the system for the
+            chosen region.
 
         block : bool
             Whether to block until the process has finished running.
@@ -1117,11 +1196,12 @@ class Amber(_process.Process):
             "BOND",
             time_series=time_series,
             unit=_Units.Energy.kcal_per_mol,
-            dof=dof,
+            region=region,
+            soft_core=soft_core,
             block=block,
         )
 
-    def getCurrentBondEnergy(self, time_series=False, dof=0):
+    def getCurrentBondEnergy(self, time_series=False, region=0, soft_core=False):
         """
         Get the current bond energy.
 
@@ -1131,11 +1211,14 @@ class Amber(_process.Process):
         time_series : bool
             Whether to return a list of time series records.
 
-        dof : int
-            The degree of freedom to which the record corresponds. There will
-            only be more than one degree of freedom for FreeEnergy protocols,
-            where 1 indicates the second TI region and 2 is the softcore part
-            of the system (if present).
+        region : int
+            The region to which the record corresponds. There will only be more
+            than one region for FreeEnergy protocols, where 1 indicates the second
+            TI region.
+
+        soft_core : bool
+            Whether to get the record for the soft-core part of the system for the
+            chosen region.
 
         Returns
         -------
@@ -1143,9 +1226,13 @@ class Amber(_process.Process):
         energy : :class:`Energy <BioSimSpace.Types.Energy>`
            The bond energy.
         """
-        return self.getBondEnergy(time_series=time_series, dof=dof, block=False)
+        return self.getBondEnergy(
+            time_series=time_series, region=region, soft_core=soft_core, block=False
+        )
 
-    def getAngleEnergy(self, time_series=False, dof=0, block="AUTO"):
+    def getAngleEnergy(
+        self, time_series=False, region=0, soft_core=False, block="AUTO"
+    ):
         """
         Get the angle energy.
 
@@ -1155,11 +1242,14 @@ class Amber(_process.Process):
         time_series : bool
             Whether to return a list of time series records.
 
-        dof : int
-            The degree of freedom to which the record corresponds. There will
-            only be more than one degree of freedom for FreeEnergy protocols,
-            where 1 indicates the second TI region and 2 is the softcore part
-            of the system (if present).
+        region : int
+            The region to which the record corresponds. There will only be more
+            than one region for FreeEnergy protocols, where 1 indicates the second
+            TI region.
+
+        soft_core : bool
+            Whether to get the record for the soft-core part of the system for the
+            chosen region.
 
         block : bool
             Whether to block until the process has finished running.
@@ -1174,11 +1264,12 @@ class Amber(_process.Process):
             "ANGLE",
             time_series=time_series,
             unit=_Units.Energy.kcal_per_mol,
-            dof=dof,
+            region=region,
+            soft_core=soft_core,
             block=block,
         )
 
-    def getCurrentAngleEnergy(self, time_series=False, dof=0):
+    def getCurrentAngleEnergy(self, time_series=False, region=0, soft_core=False):
         """
         Get the current angle energy.
 
@@ -1188,11 +1279,14 @@ class Amber(_process.Process):
         time_series : bool
             Whether to return a list of time series records.
 
-        dof : int
-            The degree of freedom to which the record corresponds. There will
-            only be more than one degree of freedom for FreeEnergy protocols,
-            where 1 indicates the second TI region and 2 is the softcore part
-            of the system (if present).
+        region : int
+            The region to which the record corresponds. There will only be more
+            than one region for FreeEnergy protocols, where 1 indicates the second
+            TI region.
+
+        soft_core : bool
+            Whether to get the record for the soft-core part of the system for the
+            chosen region.
 
         Returns
         -------
@@ -1200,9 +1294,13 @@ class Amber(_process.Process):
         energy : :class:`Energy <BioSimSpace.Types.Energy>`
            The angle energy.
         """
-        return self.getAngleEnergy(time_series=time_series, dof=dof, block=False)
+        return self.getAngleEnergy(
+            time_series=time_series, region=region, soft_core=soft_core, block=False
+        )
 
-    def getDihedralEnergy(self, time_series=False, dof=0, block="AUTO"):
+    def getDihedralEnergy(
+        self, time_series=False, region=0, soft_core=False, block="AUTO"
+    ):
         """
         Get the total dihedral energy (proper + improper).
 
@@ -1212,11 +1310,14 @@ class Amber(_process.Process):
         time_series : bool
             Whether to return a list of time series records.
 
-        dof : int
-            The degree of freedom to which the record corresponds. There will
-            only be more than one degree of freedom for FreeEnergy protocols,
-            where 1 indicates the second TI region and 2 is the softcore part
-            of the system (if present).
+        region : int
+            The region to which the record corresponds. There will only be more
+            than one region for FreeEnergy protocols, where 1 indicates the second
+            TI region.
+
+        soft_core : bool
+            Whether to get the record for the soft-core part of the system for the
+            chosen region.
 
         block : bool
             Whether to block until the process has finished running.
@@ -1231,11 +1332,12 @@ class Amber(_process.Process):
             "DIHED",
             time_series=time_series,
             unit=_Units.Energy.kcal_per_mol,
-            dof=dof,
+            region=region,
+            soft_core=soft_core,
             block=block,
         )
 
-    def getCurrentDihedralEnergy(self, time_series=False, dof=0):
+    def getCurrentDihedralEnergy(self, time_series=False, region=0, soft_core=False):
         """
         Get the current total dihedral energy (proper + improper).
 
@@ -1245,11 +1347,14 @@ class Amber(_process.Process):
         time_series : bool
             Whether to return a list of time series records.
 
-        dof : int
-            The degree of freedom to which the record corresponds. There will
-            only be more than one degree of freedom for FreeEnergy protocols,
-            where 1 indicates the second TI region and 2 is the softcore part
-            of the system (if present).
+        region : int
+            The region to which the record corresponds. There will only be more
+            than one region for FreeEnergy protocols, where 1 indicates the second
+            TI region.
+
+        soft_core : bool
+            Whether to get the record for the soft-core part of the system for the
+            chosen region.
 
         Returns
         -------
@@ -1257,9 +1362,13 @@ class Amber(_process.Process):
         energy : :class:`Energy <BioSimSpace.Types.Energy>`
            The total dihedral energy.
         """
-        return self.getDihedralEnergy(time_series=time_series, dof=dof, block=False)
+        return self.getDihedralEnergy(
+            time_series=time_series, region=region, soft_core=soft_core, block=False
+        )
 
-    def getElectrostaticEnergy(self, time_series=False, dof=0, block="AUTO"):
+    def getElectrostaticEnergy(
+        self, time_series=False, region=0, soft_core=False, block="AUTO"
+    ):
         """
         Get the electrostatic energy.
 
@@ -1269,11 +1378,14 @@ class Amber(_process.Process):
         time_series : bool
             Whether to return a list of time series records.
 
-        dof : int
-            The degree of freedom to which the record corresponds. There will
-            only be more than one degree of freedom for FreeEnergy protocols,
-            where 1 indicates the second TI region and 2 is the softcore part
-            of the system (if present).
+        region : int
+            The region to which the record corresponds. There will only be more
+            than one region for FreeEnergy protocols, where 1 indicates the second
+            TI region.
+
+        soft_core : bool
+            Whether to get the record for the soft-core part of the system for the
+            chosen region.
 
         block : bool
             Whether to block until the process has finished running.
@@ -1288,11 +1400,14 @@ class Amber(_process.Process):
             "EEL",
             time_series=time_series,
             unit=_Units.Energy.kcal_per_mol,
-            dof=dof,
+            region=region,
+            soft_core=soft_core,
             block=block,
         )
 
-    def getCurrentElectrostaticEnergy(self, time_series=False, dof=0):
+    def getCurrentElectrostaticEnergy(
+        self, time_series=False, region=0, soft_core=False
+    ):
         """
         Get the current dihedral energy.
 
@@ -1302,11 +1417,14 @@ class Amber(_process.Process):
         time_series : bool
             Whether to return a list of time series records.
 
-        dof : int
-            The degree of freedom to which the record corresponds. There will
-            only be more than one degree of freedom for FreeEnergy protocols,
-            where 1 indicates the second TI region and 2 is the softcore part
-            of the system (if present).
+        region : int
+            The region to which the record corresponds. There will only be more
+            than one region for FreeEnergy protocols, where 1 indicates the second
+            TI region.
+
+        soft_core : bool
+            Whether to get the record for the soft-core part of the system for the
+            chosen region.
 
         Returns
         -------
@@ -1315,10 +1433,12 @@ class Amber(_process.Process):
            The electrostatic energy.
         """
         return self.getElectrostaticEnergy(
-            time_series=time_series, dof=dof, block=False
+            time_series=time_series, region=region, soft_core=soft_core, block=False
         )
 
-    def getElectrostaticEnergy14(self, time_series=False, dof=0, block="AUTO"):
+    def getElectrostaticEnergy14(
+        self, time_series=False, region=0, soft_core=False, block="AUTO"
+    ):
         """
         Get the electrostatic energy between atoms 1 and 4.
 
@@ -1328,11 +1448,14 @@ class Amber(_process.Process):
         time_series : bool
             Whether to return a list of time series records.
 
-        dof : int
-            The degree of freedom to which the record corresponds. There will
-            only be more than one degree of freedom for FreeEnergy protocols,
-            where 1 indicates the second TI region and 2 is the softcore part
-            of the system (if present).
+        region : int
+            The region to which the record corresponds. There will only be more
+            than one region for FreeEnergy protocols, where 1 indicates the second
+            TI region.
+
+        soft_core : bool
+            Whether to get the record for the soft-core part of the system for the
+            chosen region.
 
         block : bool
             Whether to block until the process has finished running.
@@ -1347,11 +1470,14 @@ class Amber(_process.Process):
             "14EEL",
             time_series=time_series,
             unit=_Units.Energy.kcal_per_mol,
-            dof=dof,
+            region=region,
+            soft_core=soft_core,
             block=block,
         )
 
-    def getCurrentElectrostaticEnergy14(self, time_series=False, dof=0):
+    def getCurrentElectrostaticEnergy14(
+        self, time_series=False, region=0, soft_core=False
+    ):
         """
         Get the current electrostatic energy between atoms 1 and 4.
 
@@ -1361,11 +1487,14 @@ class Amber(_process.Process):
         time_series : bool
             Whether to return a list of time series records.
 
-        dof : int
-            The degree of freedom to which the record corresponds. There will
-            only be more than one degree of freedom for FreeEnergy protocols,
-            where 1 indicates the second TI region and 2 is the softcore part
-            of the system (if present).
+        region : int
+            The region to which the record corresponds. There will only be more
+            than one region for FreeEnergy protocols, where 1 indicates the second
+            TI region.
+
+        soft_core : bool
+            Whether to get the record for the soft-core part of the system for the
+            chosen region.
 
         Returns
         -------
@@ -1374,10 +1503,12 @@ class Amber(_process.Process):
            The electrostatic energy between atoms 1 and 4.
         """
         return self.getElectrostaticEnergy14(
-            time_series=time_series, dof=dof, block=False
+            time_series=time_series, region=region, soft_core=False, block=False
         )
 
-    def getVanDerWaalsEnergy(self, time_series=False, dof=0, block="AUTO"):
+    def getVanDerWaalsEnergy(
+        self, time_series=False, region=0, soft_core=False, block="AUTO"
+    ):
         """
         Get the Van der Vaals energy.
 
@@ -1387,11 +1518,14 @@ class Amber(_process.Process):
         time_series : bool
             Whether to return a list of time series records.
 
-        dof : int
-            The degree of freedom to which the record corresponds. There will
-            only be more than one degree of freedom for FreeEnergy protocols,
-            where 1 indicates the second TI region and 2 is the softcore part
-            of the system (if present).
+        region : int
+            The region to which the record corresponds. There will only be more
+            than one region for FreeEnergy protocols, where 1 indicates the second
+            TI region.
+
+        soft_core : bool
+            Whether to get the record for the soft-core part of the system for the
+            chosen region.
 
         block : bool
             Whether to block until the process has finished running.
@@ -1406,11 +1540,12 @@ class Amber(_process.Process):
             "VDW",
             time_series=time_series,
             unit=_Units.Energy.kcal_per_mol,
-            dof=dof,
+            region=region,
+            soft_core=soft_core,
             block=block,
         )
 
-    def getCurrentVanDerWaalsEnergy(self, time_series=False, dof=0):
+    def getCurrentVanDerWaalsEnergy(self, time_series=False, region=0, soft_core=False):
         """
         Get the current Van der Vaals energy.
 
@@ -1420,11 +1555,14 @@ class Amber(_process.Process):
         time_series : bool
             Whether to return a list of time series records.
 
-        dof : int
-            The degree of freedom to which the record corresponds. There will
-            only be more than one degree of freedom for FreeEnergy protocols,
-            where 1 indicates the second TI region and 2 is the softcore part
-            of the system (if present).
+        region : int
+            The region to which the record corresponds. There will only be more
+            than one region for FreeEnergy protocols, where 1 indicates the second
+            TI region.
+
+        soft_core : bool
+            Whether to get the record for the soft-core part of the system for the
+            chosen region.
 
         Returns
         -------
@@ -1432,9 +1570,13 @@ class Amber(_process.Process):
         energy : :class:`Energy <BioSimSpace.Types.Energy>`
            The Van der Vaals energy.
         """
-        return self.getVanDerWaalsEnergy(time_series=time_series, block=False, dof=dof)
+        return self.getVanDerWaalsEnergy(
+            time_series=time_series, block=False, region=region, soft_core=soft_core
+        )
 
-    def getVanDerWaalsEnergy14(self, time_series=False, dof=0, block="AUTO"):
+    def getVanDerWaalsEnergy14(
+        self, time_series=False, region=0, soft_core=False, block="AUTO"
+    ):
         """
         Get the Van der Vaals energy between atoms 1 and 4.
 
@@ -1444,11 +1586,14 @@ class Amber(_process.Process):
         time_series : bool
             Whether to return a list of time series records.
 
-        dof : int
-            The degree of freedom to which the record corresponds. There will
-            only be more than one degree of freedom for FreeEnergy protocols,
-            where 1 indicates the second TI region and 2 is the softcore part
-            of the system (if present).
+        region : int
+            The region to which the record corresponds. There will only be more
+            than one region for FreeEnergy protocols, where 1 indicates the second
+            TI region.
+
+        soft_core : bool
+            Whether to get the record for the soft-core part of the system for the
+            chosen region.
 
         block : bool
             Whether to block until the process has finished running.
@@ -1463,11 +1608,14 @@ class Amber(_process.Process):
             "14VDW",
             time_series=time_series,
             unit=_Units.Energy.kcal_per_mol,
-            dof=dof,
+            region=region,
+            soft_core=soft_core,
             block=block,
         )
 
-    def getCurrentVanDerWaalsEnergy14(self, time_series=False, dof=0):
+    def getCurrentVanDerWaalsEnergy14(
+        self, time_series=False, region=0, soft_core=False
+    ):
         """
         Get the current Van der Vaals energy between atoms 1 and 4.
 
@@ -1477,11 +1625,14 @@ class Amber(_process.Process):
         time_series : bool
             Whether to return a list of time series records.
 
-        dof : int
-            The degree of freedom to which the record corresponds. There will
-            only be more than one degree of freedom for FreeEnergy protocols,
-            where 1 indicates the second TI region and 2 is the softcore part
-            of the system (if present).
+        region : int
+            The region to which the record corresponds. There will only be more
+            than one region for FreeEnergy protocols, where 1 indicates the second
+            TI region.
+
+        soft_core : bool
+            Whether to get the record for the soft-core part of the system for the
+            chosen region.
 
         Returns
         -------
@@ -1489,9 +1640,13 @@ class Amber(_process.Process):
         energy : :class:`Energy <BioSimSpace.Types.Energy>`
            The Van der Vaals energy between atoms 1 and 4.
         """
-        return self.getVanDerWaalsEnergy(time_series=time_series, block=False, dof=dof)
+        return self.getVanDerWaalsEnergy(
+            time_series=time_series, block=False, region=region, soft_core=soft_core
+        )
 
-    def getHydrogenBondEnergy(self, time_series=False, dof=0, block="AUTO"):
+    def getHydrogenBondEnergy(
+        self, time_series=False, region=0, soft_core=False, block="AUTO"
+    ):
         """
         Get the hydrogen bond energy.
 
@@ -1501,11 +1656,14 @@ class Amber(_process.Process):
         time_series : bool
             Whether to return a list of time series records.
 
-        dof : int
-            The degree of freedom to which the record corresponds. There will
-            only be more than one degree of freedom for FreeEnergy protocols,
-            where 1 indicates the second TI region and 2 is the softcore part
-            of the system (if present).
+        region : int
+            The region to which the record corresponds. There will only be more
+            than one region for FreeEnergy protocols, where 1 indicates the second
+            TI region.
+
+        soft_core : bool
+            Whether to get the record for the soft-core part of the system for the
+            chosen region.
 
         block : bool
             Whether to block until the process has finished running.
@@ -1520,11 +1678,14 @@ class Amber(_process.Process):
             "EHBOND",
             time_series=time_series,
             unit=_Units.Energy.kcal_per_mol,
-            dof=dof,
+            region=region,
+            soft_core=soft_core,
             block=block,
         )
 
-    def getCurrentHydrogenBondEnergy(self, time_series=False, dof=0):
+    def getCurrentHydrogenBondEnergy(
+        self, time_series=False, region=0, soft_core=False
+    ):
         """
         Get the current hydrogen bond energy.
 
@@ -1534,11 +1695,14 @@ class Amber(_process.Process):
         time_series : bool
             Whether to return a list of time series records.
 
-        dof : int
-            The degree of freedom to which the record corresponds. There will
-            only be more than one degree of freedom for FreeEnergy protocols,
-            where 1 indicates the second TI region and 2 is the softcore part
-            of the system (if present).
+        region : int
+            The region to which the record corresponds. There will only be more
+            than one region for FreeEnergy protocols, where 1 indicates the second
+            TI region.
+
+        soft_core : bool
+            Whether to get the record for the soft-core part of the system for the
+            chosen region.
 
         Returns
         -------
@@ -1546,9 +1710,13 @@ class Amber(_process.Process):
         energy : :class:`Energy <BioSimSpace.Types.Energy>`
            The hydrogen bond energy.
         """
-        return self.getHydrogenBondEnergy(time_series=time_series, dof=dof, block=False)
+        return self.getHydrogenBondEnergy(
+            time_series=time_series, region=region, soft_core=soft_core, block=False
+        )
 
-    def getRestraintEnergy(self, time_series=False, dof=0, block="AUTO"):
+    def getRestraintEnergy(
+        self, time_series=False, region=0, soft_core=False, block="AUTO"
+    ):
         """
         Get the restraint energy.
 
@@ -1558,11 +1726,14 @@ class Amber(_process.Process):
         time_series : bool
             Whether to return a list of time series records.
 
-        dof : int
-            The degree of freedom to which the record corresponds. There will
-            only be more than one degree of freedom for FreeEnergy protocols,
-            where 1 indicates the second TI region and 2 is the softcore part
-            of the system (if present).
+        region : int
+            The region to which the record corresponds. There will only be more
+            than one region for FreeEnergy protocols, where 1 indicates the second
+            TI region.
+
+        soft_core : bool
+            Whether to get the record for the soft-core part of the system for the
+            chosen region.
 
         block : bool
             Whether to block until the process has finished running.
@@ -1577,11 +1748,12 @@ class Amber(_process.Process):
             "RESTRAINT",
             time_series=time_series,
             unit=_Units.Energy.kcal_per_mol,
-            dof=dof,
+            region=region,
+            soft_core=soft_core,
             block=block,
         )
 
-    def getCurrentRestraintEnergy(self, time_series=False, dof=0):
+    def getCurrentRestraintEnergy(self, time_series=False, region=0, soft_core=False):
         """
         Get the current restraint energy.
 
@@ -1591,11 +1763,14 @@ class Amber(_process.Process):
         time_series : bool
             Whether to return a list of time series records.
 
-        dof : int
-            The degree of freedom to which the record corresponds. There will
-            only be more than one degree of freedom for FreeEnergy protocols,
-            where 1 indicates the second TI region and 2 is the softcore part
-            of the system (if present).
+        region : int
+            The region to which the record corresponds. There will only be more
+            than one region for FreeEnergy protocols, where 1 indicates the second
+            TI region.
+
+        soft_core : bool
+            Whether to get the record for the soft-core part of the system for the
+            chosen region.
 
         block : bool
             Whether to block until the process has finished running.
@@ -1606,9 +1781,13 @@ class Amber(_process.Process):
         energy : :class:`Energy <BioSimSpace.Types.Energy>`
            The restraint energy.
         """
-        return self.getRestraintEnergy(time_series=time_series, dof=dof, block=False)
+        return self.getRestraintEnergy(
+            time_series=time_series, region=region, soft_core=soft_core, block=False
+        )
 
-    def getPotentialEnergy(self, time_series=False, dof=0, block="AUTO"):
+    def getPotentialEnergy(
+        self, time_series=False, region=0, soft_core=False, block="AUTO"
+    ):
         """
         Get the potential energy.
 
@@ -1618,11 +1797,14 @@ class Amber(_process.Process):
         time_series : bool
             Whether to return a list of time series records.
 
-        dof : int
-            The degree of freedom to which the record corresponds. There will
-            only be more than one degree of freedom for FreeEnergy protocols,
-            where 1 indicates the second TI region and 2 is the softcore part
-            of the system (if present).
+        region : int
+            The region to which the record corresponds. There will only be more
+            than one region for FreeEnergy protocols, where 1 indicates the second
+            TI region.
+
+        soft_core : bool
+            Whether to get the record for the soft-core part of the system for the
+            chosen region.
 
         block : bool
             Whether to block until the process has finished running.
@@ -1637,11 +1819,12 @@ class Amber(_process.Process):
             "EPTOT",
             times_series=time_series,
             unit=_Units.Energy.kcal_per_mol,
-            dof=dof,
+            region=region,
+            soft_core=soft_core,
             block=block,
         )
 
-    def getCurrentPotentialEnergy(self, time_series=False, dof=0):
+    def getCurrentPotentialEnergy(self, time_series=False, region=0, soft_core=False):
         """
         Get the current potential energy.
 
@@ -1651,11 +1834,14 @@ class Amber(_process.Process):
         time_series : bool
             Whether to return a list of time series records.
 
-        dof : int
-            The degree of freedom to which the record corresponds. There will
-            only be more than one degree of freedom for FreeEnergy protocols,
-            where 1 indicates the second TI region and 2 is the softcore part
-            of the system (if present).
+        region : int
+            The region to which the record corresponds. There will only be more
+            than one region for FreeEnergy protocols, where 1 indicates the second
+            TI region.
+
+        soft_core : bool
+            Whether to get the record for the soft-core part of the system for the
+            chosen region.
 
         Returns
         -------
@@ -1663,9 +1849,13 @@ class Amber(_process.Process):
         energy : :class:`Energy <BioSimSpace.Types.Energy>`
            The potential energy.
         """
-        return self.getPotentialEnergy(time_series=time_series, dof=dof, block=False)
+        return self.getPotentialEnergy(
+            time_series=time_series, region=region, soft_core=soft_core, block=False
+        )
 
-    def getKineticEnergy(self, time_series=False, dof=0, block="AUTO"):
+    def getKineticEnergy(
+        self, time_series=False, region=0, soft_core=False, block="AUTO"
+    ):
         """
         Get the kinetic energy.
 
@@ -1675,11 +1865,14 @@ class Amber(_process.Process):
         time_series : bool
             Whether to return a list of time series records.
 
-        dof : int
-            The degree of freedom to which the record corresponds. There will
-            only be more than one degree of freedom for FreeEnergy protocols,
-            where 1 indicates the second TI region and 2 is the softcore part
-            of the system (if present).
+        region : int
+            The region to which the record corresponds. There will only be more
+            than one region for FreeEnergy protocols, where 1 indicates the second
+            TI region.
+
+        soft_core : bool
+            Whether to get the record for the soft-core part of the system for the
+            chosen region.
 
         block : bool
             Whether to block until the process has finished running.
@@ -1694,11 +1887,12 @@ class Amber(_process.Process):
             "EKTOT",
             time_series=time_series,
             unit=_Units.Energy.kcal_per_mol,
-            dof=dof,
+            region=region,
+            soft_core=soft_core,
             block=block,
         )
 
-    def getCurrentKineticEnergy(self, time_series=False, dof=0):
+    def getCurrentKineticEnergy(self, time_series=False, region=0, soft_core=False):
         """
         Get the current kinetic energy.
 
@@ -1708,11 +1902,14 @@ class Amber(_process.Process):
         time_series : bool
             Whether to return a list of time series records.
 
-        dof : int
-            The degree of freedom to which the record corresponds. There will
-            only be more than one degree of freedom for FreeEnergy protocols,
-            where 1 indicates the second TI region and 2 is the softcore part
-            of the system (if present).
+        region : int
+            The region to which the record corresponds. There will only be more
+            than one region for FreeEnergy protocols, where 1 indicates the second
+            TI region.
+
+        soft_core : bool
+            Whether to get the record for the soft-core part of the system for the
+            chosen region.
 
         Returns
         -------
@@ -1720,9 +1917,13 @@ class Amber(_process.Process):
         energy : :class:`Energy <BioSimSpace.Types.Energy>`
            The kinetic energy.
         """
-        return self.getKineticEnergy(time_series=time_series, dof=dof, block=False)
+        return self.getKineticEnergy(
+            time_series=time_series, region=region, soft_core=soft_core, block=False
+        )
 
-    def getNonBondedEnergy14(self, time_series=False, dof=0, block="AUTO"):
+    def getNonBondedEnergy14(
+        self, time_series=False, region=0, soft_core=False, block="AUTO"
+    ):
         """
         Get the non-bonded energy between atoms 1 and 4.
 
@@ -1732,11 +1933,14 @@ class Amber(_process.Process):
         time_series : bool
             Whether to return a list of time series records.
 
-        dof : int
-            The degree of freedom to which the record corresponds. There will
-            only be more than one degree of freedom for FreeEnergy protocols,
-            where 1 indicates the second TI region and 2 is the softcore part
-            of the system (if present).
+        region : int
+            The region to which the record corresponds. There will only be more
+            than one region for FreeEnergy protocols, where 1 indicates the second
+            TI region.
+
+        soft_core : bool
+            Whether to get the record for the soft-core part of the system for the
+            chosen region.
 
         block : bool
             Whether to block until the process has finished running.
@@ -1751,11 +1955,12 @@ class Amber(_process.Process):
             "14NB",
             time_series=time_series,
             unit=_Units.Energy.kcal_per_mol,
-            dof=dof,
+            region=region,
+            soft_core=soft_core,
             block=block,
         )
 
-    def getCurrentNonBondedEnergy14(self, time_series=False, dof=0):
+    def getCurrentNonBondedEnergy14(self, time_series=False, region=0, soft_core=False):
         """
         Get the current non-bonded energy between atoms 1 and 4.
 
@@ -1765,11 +1970,14 @@ class Amber(_process.Process):
         time_series : bool
             Whether to return a list of time series records.
 
-        dof : int
-            The degree of freedom to which the record corresponds. There will
-            only be more than one degree of freedom for FreeEnergy protocols,
-            where 1 indicates the second TI region and 2 is the softcore part
-            of the system (if present).
+        region : int
+            The region to which the record corresponds. There will only be more
+            than one region for FreeEnergy protocols, where 1 indicates the second
+            TI region.
+
+        soft_core : bool
+            Whether to get the record for the soft-core part of the system for the
+            chosen region.
 
         Returns
         -------
@@ -1777,9 +1985,13 @@ class Amber(_process.Process):
         energy : :class:`Energy <BioSimSpace.Types.Energy>`
            The non-bonded energy between atoms 1 and 4.
         """
-        return self.getNonBondedEnergy14(time_series=time_series, dof=dof, block=False)
+        return self.getNonBondedEnergy14(
+            time_series=time_series, region=region, soft_core=soft_core, block=False
+        )
 
-    def getTotalEnergy(self, time_series=False, dof=0, block="AUTO"):
+    def getTotalEnergy(
+        self, time_series=False, region=0, soft_core=False, block="AUTO"
+    ):
         """
         Get the total energy.
 
@@ -1789,11 +2001,14 @@ class Amber(_process.Process):
         time_series : bool
             Whether to return a list of time series records.
 
-        dof : int
-            The degree of freedom to which the record corresponds. There will
-            only be more than one degree of freedom for FreeEnergy protocols,
-            where 1 indicates the second TI region and 2 is the softcore part
-            of the system (if present).
+        region : int
+            The region to which the record corresponds. There will only be more
+            than one region for FreeEnergy protocols, where 1 indicates the second
+            TI region.
+
+        soft_core : bool
+            Whether to get the record for the soft-core part of the system for the
+            chosen region.
 
         block : bool
             Whether to block until the process has finished running.
@@ -1805,18 +2020,26 @@ class Amber(_process.Process):
            The total energy.
         """
 
-        if not isinstance(dof, int):
-            raise TypeError("'dof' must be of type 'int'")
+        if not isinstance(region, int):
+            raise TypeError("'region' must be of type 'int'")
         else:
-            if dof < 0 or dof > 2:
-                raise ValueError("'dof' must be in range [0, 2]")
+            if region < 0 or region > 1:
+                raise ValueError("'region' must be in range [0, 1]")
 
-        if isinstance(self._protocol, _Protocol.Minimisation) and dof < 2:
+        # Validate the soft-core flag.
+        if not isinstance(soft_core, bool):
+            raise TypeError("'soft_core' must be of type 'bool'.")
+
+        # Convert to the full index, region + soft_core.
+        idx = 2 * region + int(soft_core)
+
+        if isinstance(self._protocol, _Protocol.Minimisation) and not soft_core:
             return self.getRecord(
                 "ENERGY",
                 time_series=time_series,
                 unit=_Units.Energy.kcal_per_mol,
-                dof=dof,
+                region=region,
+                soft_core=soft_core,
                 block=block,
             )
         else:
@@ -1824,11 +2047,12 @@ class Amber(_process.Process):
                 "ETOT",
                 time_series=time_series,
                 unit=_Units.Energy.kcal_per_mol,
-                dof=dof,
+                region=region,
+                soft_core=soft_core,
                 block=block,
             )
 
-    def getCurrentTotalEnergy(self, time_series=False, dof=0):
+    def getCurrentTotalEnergy(self, time_series=False, region=0, soft_core=False):
         """
         Get the current total energy.
 
@@ -1838,11 +2062,14 @@ class Amber(_process.Process):
         time_series : bool
             Whether to return a list of time series records.
 
-        dof : int
-            The degree of freedom to which the record corresponds. There will
-            only be more than one degree of freedom for FreeEnergy protocols,
-            where 1 indicates the second TI region and 2 is the softcore part
-            of the system (if present).
+        region : int
+            The region to which the record corresponds. There will only be more
+            than one region for FreeEnergy protocols, where 1 indicates the second
+            TI region.
+
+        soft_core : bool
+            Whether to get the record for the soft-core part of the system for the
+            chosen region.
 
         Returns
         -------
@@ -1850,9 +2077,13 @@ class Amber(_process.Process):
         energy : :class:`Energy <BioSimSpace.Types.Energy>`
            The total energy.
         """
-        return self.getTotalEnergy(time_series=time_series, dof=dof, block=False)
+        return self.getTotalEnergy(
+            time_series=time_series, region=region, soft_core=soft_core, block=False
+        )
 
-    def getCentreOfMassKineticEnergy(self, time_series=False, dof=0, block="AUTO"):
+    def getCentreOfMassKineticEnergy(
+        self, time_series=False, region=0, soft_core=False, block="AUTO"
+    ):
         """
         Get the kinetic energy of the centre of mass in translation.
 
@@ -1862,11 +2093,14 @@ class Amber(_process.Process):
         time_series : bool
             Whether to return a list of time series records.
 
-        dof : int
-            The degree of freedom to which the record corresponds. There will
-            only be more than one degree of freedom for FreeEnergy protocols,
-            where 1 indicates the second TI region and 2 is the softcore part
-            of the system (if present).
+        region : int
+            The region to which the record corresponds. There will only be more
+            than one region for FreeEnergy protocols, where 1 indicates the second
+            TI region.
+
+        soft_core : bool
+            Whether to get the record for the soft-core part of the system for the
+            chosen region.
 
         block : bool
             Whether to block until the process has finished running.
@@ -1881,11 +2115,14 @@ class Amber(_process.Process):
             "EKCMT",
             time_series=time_series,
             unit=_Units.Energy.kcal_per_mol,
-            dof=dof,
+            region=region,
+            soft_core=soft_core,
             block=block,
         )
 
-    def getCurrentCentreOfMassKineticEnergy(self, time_series=False, dof=0):
+    def getCurrentCentreOfMassKineticEnergy(
+        self, time_series=False, region=0, soft_core=False
+    ):
         """
         Get the current kinetic energy of the centre of mass in translation.
 
@@ -1895,11 +2132,14 @@ class Amber(_process.Process):
         time_series : bool
             Whether to return a list of time series records.
 
-        dof : int
-            The degree of freedom to which the record corresponds. There will
-            only be more than one degree of freedom for FreeEnergy protocols,
-            where 1 indicates the second TI region and 2 is the softcore part
-            of the system (if present).
+        region : int
+            The region to which the record corresponds. There will only be more
+            than one region for FreeEnergy protocols, where 1 indicates the second
+            TI region.
+
+        soft_core : bool
+            Whether to get the record for the soft-core part of the system for the
+            chosen region.
 
         Returns
         -------
@@ -1908,10 +2148,10 @@ class Amber(_process.Process):
            The centre of mass kinetic energy.
         """
         return self.getCentreOfMassKineticEnergy(
-            time_series=time_series, dof=dof, block=False
+            time_series=time_series, region=region, soft_core=soft_core, block=False
         )
 
-    def getVirial(self, time_series=False, dof=0, block="AUTO"):
+    def getVirial(self, time_series=False, region=0, soft_core=False, block="AUTO"):
         """
         Get the virial.
 
@@ -1921,11 +2161,14 @@ class Amber(_process.Process):
         time_series : bool
             Whether to return a list of time series records.
 
-        dof : int
-            The degree of freedom to which the record corresponds. There will
-            only be more than one degree of freedom for FreeEnergy protocols,
-            where 1 indicates the second TI region and 2 is the softcore part
-            of the system (if present).
+        region : int
+            The region to which the record corresponds. There will only be more
+            than one region for FreeEnergy protocols, where 1 indicates the second
+            TI region.
+
+        soft_core : bool
+            Whether to get the record for the soft-core part of the system for the
+            chosen region.
 
         block : bool
             Whether to block until the process has finished running.
@@ -1936,9 +2179,15 @@ class Amber(_process.Process):
         virial : float
            The virial.
         """
-        return self.getRecord("VIRIAL", time_series=time_series, dof=dof, block=block)
+        return self.getRecord(
+            "VIRIAL",
+            time_series=time_series,
+            region=region,
+            soft_core=soft_core,
+            block=block,
+        )
 
-    def getCurrentVirial(self, time_series=False, dof=0):
+    def getCurrentVirial(self, time_series=False, region=0, soft_core=False):
         """
         Get the current virial.
 
@@ -1948,11 +2197,14 @@ class Amber(_process.Process):
         time_series : bool
             Whether to return a list of time series records.
 
-        dof : int
-            The degree of freedom to which the record corresponds. There will
-            only be more than one degree of freedom for FreeEnergy protocols,
-            where 1 indicates the second TI region and 2 is the softcore part
-            of the system (if present).
+        region : int
+            The region to which the record corresponds. There will only be more
+            than one region for FreeEnergy protocols, where 1 indicates the second
+            TI region.
+
+        soft_core : bool
+            Whether to get the record for the soft-core part of the system for the
+            chosen region.
 
         Returns
         -------
@@ -1960,9 +2212,13 @@ class Amber(_process.Process):
         virial : float
            The virial.
         """
-        return self.getVirial(time_series=time_series, dof=dof, block=False)
+        return self.getVirial(
+            time_series=time_series, region=region, soft_core=soft_core, block=False
+        )
 
-    def getTemperature(self, time_series=False, dof=0, block="AUTO"):
+    def getTemperature(
+        self, time_series=False, region=0, soft_core=False, block="AUTO"
+    ):
         """
         Get the temperature.
 
@@ -1972,11 +2228,14 @@ class Amber(_process.Process):
         time_series : bool
             Whether to return a list of time series records.
 
-        dof : int
-            The degree of freedom to which the record corresponds. There will
-            only be more than one degree of freedom for FreeEnergy protocols,
-            where 1 indicates the second TI region and 2 is the softcore part
-            of the system (if present).
+        region : int
+            The region to which the record corresponds. There will only be more
+            than one region for FreeEnergy protocols, where 1 indicates the second
+            TI region.
+
+        soft_core : bool
+            Whether to get the record for the soft-core part of the system for the
+            chosen region.
 
         block : bool
             Whether to block until the process has finished running.
@@ -1991,11 +2250,12 @@ class Amber(_process.Process):
             "TEMP(K)",
             time_series=time_series,
             unit=_Units.Temperature.kelvin,
-            dof=dof,
+            region=region,
+            soft_core=soft_core,
             block=block,
         )
 
-    def getCurrentTemperature(self, time_series=False, dof=0):
+    def getCurrentTemperature(self, time_series=False, region=0, soft_core=False):
         """
         Get the current temperature.
 
@@ -2005,11 +2265,14 @@ class Amber(_process.Process):
         time_series : bool
             Whether to return a list of time series records.
 
-        dof : int
-            The degree of freedom to which the record corresponds. There will
-            only be more than one degree of freedom for FreeEnergy protocols,
-            where 1 indicates the second TI region and 2 is the softcore part
-            of the system (if present).
+        region : int
+            The region to which the record corresponds. There will only be more
+            than one region for FreeEnergy protocols, where 1 indicates the second
+            TI region.
+
+        soft_core : bool
+            Whether to get the record for the soft-core part of the system for the
+            chosen region.
 
         Returns
         -------
@@ -2017,9 +2280,11 @@ class Amber(_process.Process):
         temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
            The temperature.
         """
-        return self.getTemperature(time_series=time_series, dof=dof, block=False)
+        return self.getTemperature(
+            time_series=time_series, region=region, soft_core=soft_core, block=False
+        )
 
-    def getPressure(self, time_series=False, dof=0, block="AUTO"):
+    def getPressure(self, time_series=False, region=0, soft_core=False, block="AUTO"):
         """
         Get the pressure.
 
@@ -2029,11 +2294,14 @@ class Amber(_process.Process):
         time_series : bool
             Whether to return a list of time series records.
 
-        dof : int
-            The degree of freedom to which the record corresponds. There will
-            only be more than one degree of freedom for FreeEnergy protocols,
-            where 1 indicates the second TI region and 2 is the softcore part
-            of the system (if present).
+        region : int
+            The region to which the record corresponds. There will only be more
+            than one region for FreeEnergy protocols, where 1 indicates the second
+            TI region.
+
+        soft_core : bool
+            Whether to get the record for the soft-core part of the system for the
+            chosen region.
 
         block : bool
             Whether to block until the process has finished running.
@@ -2048,11 +2316,12 @@ class Amber(_process.Process):
             "PRESS",
             time_series=time_series,
             unit=_Units.Pressure.bar,
-            dof=dof,
+            region=region,
+            soft_core=soft_core,
             block=block,
         )
 
-    def getCurrentPressure(self, time_series=False, dof=0):
+    def getCurrentPressure(self, time_series=False, region=0, soft_core=False):
         """
         Get the current pressure.
 
@@ -2062,11 +2331,14 @@ class Amber(_process.Process):
         time_series : bool
             Whether to return a list of time series records.
 
-        dof : int
-            The degree of freedom to which the record corresponds. There will
-            only be more than one degree of freedom for FreeEnergy protocols,
-            where 1 indicates the second TI region and 2 is the softcore part
-            of the system (if present).
+        region : int
+            The region to which the record corresponds. There will only be more
+            than one region for FreeEnergy protocols, where 1 indicates the second
+            TI region.
+
+        soft_core : bool
+            Whether to get the record for the soft-core part of the system for the
+            chosen region.
 
         Returns
         -------
@@ -2074,9 +2346,11 @@ class Amber(_process.Process):
         pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
            The pressure.
         """
-        return self.getPressure(time_series=time_series, dof=dof, block=False)
+        return self.getPressure(
+            time_series=time_series, region=region, soft_core=soft_core, block=False
+        )
 
-    def getVolume(self, time_series=False, dof=0, block="AUTO"):
+    def getVolume(self, time_series=False, region=0, soft_core=False, block="AUTO"):
         """
         Get the volume.
 
@@ -2086,11 +2360,14 @@ class Amber(_process.Process):
         time_series : bool
             Whether to return a list of time series records.
 
-        dof : int
-            The degree of freedom to which the record corresponds. There will
-            only be more than one degree of freedom for FreeEnergy protocols,
-            where 1 indicates the second TI region and 2 is the softcore part
-            of the system (if present).
+        region : int
+            The region to which the record corresponds. There will only be more
+            than one region for FreeEnergy protocols, where 1 indicates the second
+            TI region.
+
+        soft_core : bool
+            Whether to get the record for the soft-core part of the system for the
+            chosen region.
 
         block : bool
             Whether to block until the process has finished running.
@@ -2105,11 +2382,12 @@ class Amber(_process.Process):
             "VOLUME",
             time_series=time_series,
             unit=_Units.Volume.angstrom3,
-            dof=dof,
+            region=region,
+            soft_core=soft_core,
             block=block,
         )
 
-    def getCurrentVolume(self, time_series=False, dof=0):
+    def getCurrentVolume(self, time_series=False, region=0, soft_core=False):
         """
         Get the current volume.
 
@@ -2119,11 +2397,14 @@ class Amber(_process.Process):
         time_series : bool
             Whether to return a list of time series records.
 
-        dof : int
-            The degree of freedom to which the record corresponds. There will
-            only be more than one degree of freedom for FreeEnergy protocols,
-            where 1 indicates the second TI region and 2 is the softcore part
-            of the system (if present).
+        region : int
+            The region to which the record corresponds. There will only be more
+            than one region for FreeEnergy protocols, where 1 indicates the second
+            TI region.
+
+        soft_core : bool
+            Whether to get the record for the soft-core part of the system for the
+            chosen region.
 
         Returns
         -------
@@ -2131,9 +2412,11 @@ class Amber(_process.Process):
         volume : :class:`Volume <BioSimSpace.Types.Volume>`
            The volume.
         """
-        return self.getVolume(time_series=time_series, dof=dof, block=False)
+        return self.getVolume(
+            time_series=time_series, region=region, soft_core=soft_core, block=False
+        )
 
-    def getDensity(self, time_series=False, dof=0, block="AUTO"):
+    def getDensity(self, time_series=False, region=0, soft_core=False, block="AUTO"):
         """
         Get the density.
 
@@ -2143,11 +2426,14 @@ class Amber(_process.Process):
         time_series : bool
             Whether to return a list of time series records.
 
-        dof : int
-            The degree of freedom to which the record corresponds. There will
-            only be more than one degree of freedom for FreeEnergy protocols,
-            where 1 indicates the second TI region and 2 is the softcore part
-            of the system (if present).
+        region : int
+            The region to which the record corresponds. There will only be more
+            than one region for FreeEnergy protocols, where 1 indicates the second
+            TI region.
+
+        soft_core : bool
+            Whether to get the record for the soft-core part of the system for the
+            chosen region.
 
         block : bool
             Whether to block until the process has finished running.
@@ -2158,9 +2444,15 @@ class Amber(_process.Process):
         density : float
            The density.
         """
-        return self.getRecord("DENSITY", time_series=time_series, dof=dof, block=block)
+        return self.getRecord(
+            "DENSITY",
+            time_series=time_series,
+            region=region,
+            soft_core=soft_core,
+            block=block,
+        )
 
-    def getCurrentDensity(self, time_series=False, dof=0):
+    def getCurrentDensity(self, time_series=False, region=0, soft_core=False):
         """
         Get the current density.
 
@@ -2170,11 +2462,14 @@ class Amber(_process.Process):
         time_series : bool
             Whether to return a list of time series records.
 
-        dof : int
-            The degree of freedom to which the record corresponds. There will
-            only be more than one degree of freedom for FreeEnergy protocols,
-            where 1 indicates the second TI region and 2 is the softcore part
-            of the system (if present).
+        region : int
+            The region to which the record corresponds. There will only be more
+            than one region for FreeEnergy protocols, where 1 indicates the second
+            TI region.
+
+        soft_core : bool
+            Whether to get the record for the soft-core part of the system for the
+            chosen region.
 
         Returns
         -------
@@ -2182,9 +2477,11 @@ class Amber(_process.Process):
         density : float
            The density.
         """
-        return self.getDensity(time_series=time_series, dof=dof, block=False)
+        return self.getDensity(
+            time_series=time_series, region=region, soft_core=soft_core, block=False
+        )
 
-    def getDVDL(self, time_series=False, dof=0, block="AUTO"):
+    def getDVDL(self, time_series=False, region=0, soft_core=False, block="AUTO"):
         """
         Get the gradient of the total energy with respect to lambda.
 
@@ -2194,11 +2491,14 @@ class Amber(_process.Process):
         time_series : bool
             Whether to return a list of time series records.
 
-        dof : int
-            The degree of freedom to which the record corresponds. There will
-            only be more than one degree of freedom for FreeEnergy protocols,
-            where 1 indicates the second TI region and 2 is the softcore part
-            of the system (if present).
+        region : int
+            The region to which the record corresponds. There will only be more
+            than one region for FreeEnergy protocols, where 1 indicates the second
+            TI region.
+
+        soft_core : bool
+            Whether to get the record for the soft-core part of the system for the
+            chosen region.
 
         block : bool
             Whether to block until the process has finished running.
@@ -2209,9 +2509,15 @@ class Amber(_process.Process):
         dv_dl : float
             The gradient of the total energy with respect to lambda.
         """
-        return self.getRecord("DVDL", time_series=time_series, dof=dof, block=block)
+        return self.getRecord(
+            "DVDL",
+            time_series=time_series,
+            region=region,
+            soft_core=soft_core,
+            block=block,
+        )
 
-    def getCurrentDVDL(self, time_series=False, dof=0):
+    def getCurrentDVDL(self, time_series=False, region=0, soft_core=False):
         """
         Get the current gradient of the total energy with respect to lambda.
 
@@ -2221,11 +2527,14 @@ class Amber(_process.Process):
         time_series : bool
             Whether to return a list of time series records.
 
-        dof : int
-            The degree of freedom to which the record corresponds. There will
-            only be more than one degree of freedom for FreeEnergy protocols,
-            where 1 indicates the second TI region and 2 is the softcore part
-            of the system (if present).
+        region : int
+            The region to which the record corresponds. There will only be more
+            than one region for FreeEnergy protocols, where 1 indicates the second
+            TI region.
+
+        soft_core : bool
+            Whether to get the record for the soft-core part of the system for the
+            chosen region.
 
         Returns
         -------
@@ -2233,7 +2542,9 @@ class Amber(_process.Process):
         dv_dl : float
             The current gradient of the total energy with respect to lambda.
         """
-        return self.getDVDL(time_series=time_series, dof=dof, block=False)
+        return self.getDVDL(
+            time_series=time_series, region=region, soft_core=soft_core, block=False
+        )
 
     def stdout(self, n=10):
         """
@@ -2253,9 +2564,6 @@ class Amber(_process.Process):
         # Flag that this isn't a header line.
         self._is_header = False
 
-        # Flag for the current degree of freedom for free energy simulations.
-        dof_flag = 0
-
         # Append any new lines to the stdout list.
         for line in _pygtail.Pygtail(self._stdout_file):
             self._stdout.append(line.rstrip())
@@ -2264,22 +2572,28 @@ class Amber(_process.Process):
             # Swap dictionary based on the protocol and the degre of freedom to
             # which the next block of records correspond.
             if isinstance(self._protocol, _Protocol._FreeEnergyMixin):
-                if "TI region  1" in line and dof_flag != 0:
-                    stdout_dict = self._stdout_dict[0]
-                    stdout_key = self._stdout_key[0]
-                    dof_flag = 0
-                elif "TI region  2" in line and dof_flag != 1:
-                    stdout_dict = self._stdout_dict[1]
-                    stdout_key = self._stdout_key[1]
-                    dof_flag = 1
-                elif "Softcore part" in line and dof_flag != 2:
-                    stdout_dict = self._stdout_dict[2]
-                    stdout_key = self._stdout_key[2]
-                    dof_flag = 2
+                if "TI region  1" in line:
+                    self._current_region = 0
+                elif "TI region  2" in line:
+                    self._current_region = 2
+                elif "Softcore part" in line and self._current_region == 0:
+                    self._current_region = 1
+                elif "Softcore part" in line and self._current_region == 2:
+                    self._current_region = 3
+                elif "Detailed TI info" in line:
+                    # This flags that we should skip records until the start of
+                    # the next set for the first TI region.
+                    self._current_region = 4
             # Default stdout dictionary.
             else:
-                stdout_dict = self._stdout_dict[0]
-                stdout_key = self._stdout_key[0]
+                self._current_region = 0
+
+            # Continue if we are ignoring this record block.
+            if self._current_region == 4:
+                continue
+
+            stdout_dict = self._stdout_dict[self._current_region]
+            stdout_key = self._stdout_key[self._current_region]
 
             # Skip empty lines and summary reports.
             if len(line) > 0 and line[0] != "|" and line[0] != "-":
@@ -2379,7 +2693,9 @@ class Amber(_process.Process):
         if not self._process is None and self._process.isRunning():
             self._process.kill()
 
-    def _get_stdout_record(self, key, time_series=False, unit=None, dof=0):
+    def _get_stdout_record(
+        self, key, time_series=False, unit=None, region=0, soft_core=False
+    ):
         """
         Helper function to get a stdout record from the dictionary.
 
@@ -2395,11 +2711,14 @@ class Amber(_process.Process):
         unit : :class:`Type <BioSimSpace.Types._type.Type>`
             The unit to convert the record to.
 
-        dof : int
-            The degree of freedom to which the record corresponds. There will
-            only be more than one degree of freedom for FreeEnergy protocols,
-            where 1 indicates the second TI region and 2 is the softcore part
-            of the system (if present).
+        region : int
+            The region to which the record corresponds. There will only be more
+            than one region for FreeEnergy protocols, where 1 indicates the second
+            TI region.
+
+        soft_core : bool
+            Whether to get the record for the soft-core part of the system for the
+            chosen region.
 
         Returns
         -------
@@ -2424,19 +2743,26 @@ class Amber(_process.Process):
             if not isinstance(unit, _Type):
                 raise TypeError("'unit' must be of type 'BioSimSpace.Types'")
 
-        # Validate the degree of freedom.
-        if not isinstance(dof, int):
-            raise TypeError("'dof' must be of type 'int'")
+        # Validate the region.
+        if not isinstance(region, int):
+            raise TypeError("'region' must be of type 'int'")
         else:
-            if dof < 0 or dof > 2:
-                raise ValueError("'dof' must be in range [0, 2]")
+            if region < 0 or region > 1:
+                raise ValueError("'region' must be in range [0, 1]")
 
-        # Extract the dictionary of stdout records for the specified degree of freedom.
-        stdout_dict = self._stdout_dict[dof]
+        # Validate the soft-core flag.
+        if not isinstance(soft_core, bool):
+            raise TypeError("'soft_core' must be of type 'bool'.")
+
+        # Convert to the full index, region + soft_core.
+        idx = 2 * region + int(soft_core)
+
+        # Extract the dictionary of stdout records for the specified region and soft-core flag.
+        stdout_dict = self._stdout_dict[idx]
 
         # Map the universal key to the original key used for this degree of freedom.
         try:
-            key = self._stdout_key[dof][key]
+            key = self._stdout_key[idx][key]
         except:
             return None
 
