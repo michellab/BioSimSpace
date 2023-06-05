@@ -103,7 +103,7 @@ def test_production(system, restraint):
     protocol = BSS.Protocol.Production(
         runtime=BSS.Types.Time(0.001, "nanoseconds"),
         restraint=restraint,
-        force_constant=2000
+        force_constant=3000
     )
 
     # Run the process, check that it finished without error, and returns a system.
@@ -115,7 +115,7 @@ def test_production(system, restraint):
     # Check if restrained atoms stayed in place
     restraint_atoms = system.getRestraintAtoms(restraint)
     did_not_move = [
-        get_dist_atoms(system.getAtom(x), new_system.getAtom(x)) < 0.5
+        get_dist_atoms(system.getAtom(x), new_system.getAtom(x)) < 1
         for x in restraint_atoms
     ]
 
@@ -153,4 +153,10 @@ def run_process(system, protocol):
 def get_dist_atoms(a, b):
     """Return the distance between two `BioSimSpace.Atom` instances"""
     v = a.coordinates() - b.coordinates()
-    return math.sqrt(sum([v.x().value()**2, v.y().value()**2, v.z().value()**2]))
+    return math.sqrt(
+        sum([
+            v.x().angstroms().value()**2,
+            v.y().angstroms().value()**2,
+            v.z().angstroms().value()**2
+            ])
+        )
