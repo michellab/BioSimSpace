@@ -2193,7 +2193,7 @@ class Gromacs(_process.Process):
                     units.append(_Units.Length.nanometer)
                     # kg/m^3 cannot be parsed as there is no mass unit.
                     _warnings.warn(
-                        "Unit {unit} cannot be parsed, record the unit as unitless."
+                        f"Unit {unit} cannot be parsed, record the unit as unitless."
                     )
         return units
 
