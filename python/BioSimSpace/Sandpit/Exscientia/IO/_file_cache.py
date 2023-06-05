@@ -68,6 +68,11 @@ class _FixedSizeOrderedDict(_collections.OrderedDict):
                 key, value = self.popitem(False)
                 self._num_atoms -= value[0].nAtoms()
 
+    def __delitem__(self, key):
+        value = self[key]
+        self._num_atoms -= value[0].nAtoms()
+        _collections.OrderedDict.__delitem__(self, key)
+
 
 # Initialise a "cache" dictionary. This maps a key of the system UID, file format
 # and excluded properties a value of the system and file path. When saving to a
@@ -146,6 +151,7 @@ def check_cache(
     key = (
         system._sire_object.uid().toString(),
         format,
+        _compress_molnum_key(str(system._mol_nums)),
         str(set(excluded_properties)),
         str(skip_water),
     )
@@ -262,12 +268,13 @@ def update_cache(
     key = (
         system._sire_object.uid().toString(),
         format,
+        _compress_molnum_key(str(system._mol_nums)),
         str(set(excluded_properties)),
         str(skip_water),
     )
 
     # Update the cache.
-    _cache[key] = (system, path, hash)
+    _cache[key] = (system.copy(), path, hash)
 
 
 def _get_md5_hash(path):
@@ -287,3 +294,10 @@ def _get_md5_hash(path):
             hash.update(chunk)
 
     return hash.hexdigest()
+
+
+def _compress_molnum_key(str):
+    """
+    Internal helper function to compress the MolNum list section of the key.
+    """
+    return str.replace("MolNum(", "").replace(")", "")
