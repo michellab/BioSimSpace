@@ -103,7 +103,7 @@ def test_production(system, restraint):
     protocol = BSS.Protocol.Production(
         runtime=BSS.Types.Time(0.001, "nanoseconds"),
         restraint=restraint,
-        force_constant=1000
+        force_constant=2000
     )
 
     # Run the process, check that it finished without error, and returns a system.
