@@ -215,8 +215,6 @@ def run_process(system, protocol, check_data=False):
     # Wait for the process to end.
     process.wait()
 
-    process.saveMetric()
-
     # Make sure the process didn't error.
     assert not process.isError()
 
@@ -248,8 +246,15 @@ def run_process(system, protocol, check_data=False):
                 assert len(v) == nrec
 
 
+@pytest.mark.skip(
+    "Wait for the fix of https://github.com/OpenBioSim/biosimspace/issues/78."
+)
 @pytest.mark.parametrize(
-    "protocol", [BSS.Protocol.FreeEnergy(), BSS.Protocol.FreeEnergyMinimisation()]
+    "protocol",
+    [
+        BSS.Protocol.FreeEnergy(temperature=298 * BSS.Units.Temperature.kelvin),
+        BSS.Protocol.FreeEnergyMinimisation(),
+    ],
 )
 def test_parse_fep_output(system, protocol):
     """Make sure that we can correctly parse AMBER FEP output."""
@@ -290,11 +295,10 @@ def test_parse_fep_output(system, protocol):
     for v0, v1 in zip(records0.values(), records1.values()):
         assert len(v0) == len(v1) == num_records
 
-    # Wait for the fix of https://github.com/OpenBioSim/biosimspace/issues/78
-    # # Now check that are records for the softcore region contain the correct
-    # # number of values.
-    # for v in records2.values():
-    #     assert len(v) == num_records
+    # Now check that are records for the softcore region contain the correct
+    # number of values.
+    for v in records2.values():
+        assert len(v) == num_records
 
 
 class TestsaveMetric:

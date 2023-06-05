@@ -2288,8 +2288,8 @@ class Gromacs(_process.Process):
         key = key.replace("BAR", "")
         return key
 
-    def _update_energy_dict(self):
-        if len(self._energy_dict) == 0:
+    def _update_energy_dict(self, initialise=False):
+        if initialise or len(self._energy_dict) == 0:
             self._initialise_energy_dict()
 
         keys = self._energy_keys
@@ -2601,34 +2601,41 @@ class Gromacs(_process.Process):
         is Free Energy protocol, the dHdl and the u_nk data will be saved in the
         same parquet format as well.
         """
-        self._update_energy_dict()
+        self._update_energy_dict(initialise=True)
         datadict = {
-            "Time (ps)": [time / _Units.Time.picosecond for time in self.getTime(True)],
+            "Time (ps)": [
+                time / _Units.Time.picosecond
+                for time in self.getTime(True, block=False)
+            ],
             "PotentialEnergy (kJ/mol)": [
                 energy / _Units.Energy.kj_per_mol
-                for energy in self.getPotentialEnergy(True)
+                for energy in self.getPotentialEnergy(True, block=False)
             ],
         }
         if not isinstance(self._protocol, _Protocol.Minimisation):
-            if self.getVolume():
+            if self.getVolume(block=False):
                 datadict["Volume (nm^3)"] = [
-                    volume / _Units.Volume.nanometer3 for volume in self.getVolume(True)
+                    volume / _Units.Volume.nanometer3
+                    for volume in self.getVolume(True, block=False)
                 ]
             datadict["Pressure (bar)"] = [
-                pressure / _Units.Pressure.bar for pressure in self.getPressure(True)
+                pressure / _Units.Pressure.bar
+                for pressure in self.getPressure(True, block=False)
             ]
 
             datadict["Temperature (kelvin)"] = [
                 temperature / _Units.Temperature.kelvin
-                for temperature in self.getTemperature(True)
+                for temperature in self.getTemperature(True, block=False)
             ]
 
         try:
             df = pd.DataFrame(data=datadict)
         except ValueError:
             length_dict = {key: len(value) for key, value in datadict.items()}
-            _warnings.warn(f'Not all metric has the same number of data points ({length_dict}).'
-                          f'All columns will be truncated the same length.')
+            _warnings.warn(
+                f"Not all metric has the same number of data points ({length_dict})."
+                f"All columns will be truncated the same length."
+            )
             length = min(length_dict.values())
             new_datadict = {key: value[:length] for key, value in datadict.items()}
             df = pd.DataFrame(data=new_datadict)
