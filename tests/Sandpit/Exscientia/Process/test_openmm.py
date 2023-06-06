@@ -1,4 +1,5 @@
 import math
+import re
 
 import BioSimSpace.Sandpit.Exscientia as BSS
 import pytest
@@ -16,7 +17,7 @@ def system():
 
 
 @pytest.mark.parametrize("restraint", restraints)
-def test_minimise(system, restraint):
+def test_minimise(system, restraint, file_regression, request):
     """Test a minimisation protocol."""
 
     # Create a short minimisation protocol.
@@ -25,7 +26,9 @@ def test_minimise(system, restraint):
         )
 
     # Run the process, check that it finished without error, and returns a system.
-    new_system = run_process(system, protocol)
+    new_system = run_process(
+        system, protocol, file_regression=file_regression, request=request
+        )
 
     if restraint == "none":
         return
@@ -41,7 +44,7 @@ def test_minimise(system, restraint):
 
 
 @pytest.mark.parametrize("restraint", restraints)
-def test_equilibrate(system, restraint):
+def test_equilibrate(system, restraint, file_regression, request):
     """Test an equilibration protocol."""
 
     # Create a short equilibration protocol.
@@ -52,7 +55,9 @@ def test_equilibrate(system, restraint):
     )
 
     # Run the process, check that it finished without error, and returns a system.
-    new_system = run_process(system, protocol)
+    new_system = run_process(
+        system, protocol, file_regression, request
+        )
 
     if restraint == "none":
         return
@@ -96,7 +101,7 @@ def test_cool(system):
 
 
 @pytest.mark.parametrize("restraint", restraints)
-def test_production(system, restraint):
+def test_production(system, restraint, file_regression, request):
     """Test a production protocol."""
 
     # Create a short production protocol.
@@ -107,7 +112,9 @@ def test_production(system, restraint):
     )
 
     # Run the process, check that it finished without error, and returns a system.
-    new_system = run_process(system, protocol)
+    new_system = run_process(
+        system, protocol, file_regression, request
+        )
 
     if restraint == "none":
         return
@@ -122,7 +129,7 @@ def test_production(system, restraint):
     assert all(did_not_move)
 
 
-def run_process(system, protocol):
+def run_process(system, protocol, file_regression=None, request=None):
     """Helper function to run various simulation protocols."""
 
     # Need to adjust protocol defaults to get trajectory frames
@@ -133,6 +140,18 @@ def run_process(system, protocol):
 
     # Initialise the OpenMM  process.
     process = BSS.Process.OpenMM(system, protocol, name="test")
+
+    if file_regression is not None:
+        assert request is not None
+
+        with open(f"{process._work_dir}/{process._name}_script.py") as fp:
+            content = fp.read()
+
+        file_regression.check(
+            content,
+            basename="out_" + re.sub(r"[\W]", "_", request.node.name),
+            extension=".py",
+        )
 
     # Start the OpenMM simulation.
     process.start()
