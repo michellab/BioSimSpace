@@ -28,12 +28,12 @@ system.addForce(restraint)
 nonbonded = [f for f in system.getForces() if isinstance(f, NonbondedForce)][0]
 dummy_indices = []
 positions = inpcrd.positions
-restrained_atoms = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21]
+restrained_atoms = [4, 5, 6, 8, 14, 15, 16]
 for i in restrained_atoms:
     j = system.addParticle(0)
     nonbonded.addParticle(0, 1, 0)
     nonbonded.addException(i, j, 0, 1, 0)
-    restraint.addBond(i, j, 0*nanometers, 418400.0*kilojoules_per_mole/nanometer**2)
+    restraint.addBond(i, j, 0*nanometers, 418400.0 * kilojoules_per_mole / nanometer**2)
     dummy_indices.append(j)
     positions.append(positions[i])
 

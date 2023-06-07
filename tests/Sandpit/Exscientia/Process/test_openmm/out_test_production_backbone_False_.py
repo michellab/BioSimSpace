@@ -11,6 +11,7 @@ def writeModelPatched(self, positions, unitCellDimensions=None, periodicBoxVecto
                unitCellDimensions=unitCellDimensions,
                periodicBoxVectors=periodicBoxVectors)
 DCDFile.writeModel = writeModelPatched
+import os
 
 # Load the topology and coordinate files.
 prmtop = AmberPrmtopFile('test.prm7')
@@ -20,6 +21,10 @@ inpcrd = AmberInpcrdFile('test.rst7')
 system = prmtop.createSystem(nonbondedMethod=PME,
                              nonbondedCutoff=1*nanometer,
                              constraints=HBonds)
+
+# Add a barostat to run at constant pressure.
+barostat = MonteCarloBarostat(1.01325*bar, 300.0*kelvin)
+system.addForce(barostat)
 
 # Restrain the position of atoms using zero-mass dummy atoms.
 restraint = HarmonicBondForce()
@@ -33,7 +38,7 @@ for i in restrained_atoms:
     j = system.addParticle(0)
     nonbonded.addParticle(0, 1, 0)
     nonbonded.addException(i, j, 0, 1, 0)
-    restraint.addBond(i, j, 0*nanometers, 418400.0*kilojoules_per_mole/nanometer**2)
+    restraint.addBond(i, j, 0*nanometers, 418400.0 * kilojoules_per_mole / nanometer**2)
     dummy_indices.append(j)
     positions.append(positions[i])
 
@@ -52,12 +57,36 @@ simulation = Simulation(prmtop.topology,
                         integrator,
                         platform,
                         properties)
-simulation.context.setPositions(positions)
+simulation.context.setPositions(inpcrd.positions)
 if inpcrd.boxVectors is not None:
     simulation.context.setPeriodicBoxVectors(*inpcrd.boxVectors)
 
 # Setting initial system velocities.
 simulation.context.setVelocitiesToTemperature(300.0)
+
+# Check for a restart file.
+if os.path.isfile('test.xml'):
+    is_restart = True
+    simulation.loadState('test.xml')
+    if not os.path.isfile('test.log'):
+        raise IOError('Missing log file: test.log')
+    with open('test.log', 'r') as f:
+        lines = f.readlines()
+        last_line = lines[-1].split()
+        try:
+            step = int(last_line[0])
+        except:
+            raise IOError('Failed to read current integration step from test.log')
+        simulation.currentStep = step
+else:
+    is_restart = False
+
+# Print restart information.
+if is_restart:
+    steps = 500
+    percent_complete = 100 * (step / steps)
+    print('Loaded state from an existing simulation.')
+    print(f'Simulation is {percent_complete}% complete.')
 
 # Add reporters.
 simulation.reporters.append(DCDReporter('test.dcd', 100, append=False))
@@ -76,5 +105,7 @@ simulation.reporters.append(StateDataReporter(log_file,
                                               remainingTime=True,
                                               separator=' '))
 
-# Run the simulation.
-simulation.step(500)
+# Run the simulation in 100 picosecond cycles.
+for x in range(0, 1):
+    simulation.step(500)
+    simulation.saveState('test.xml')

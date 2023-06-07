@@ -13,8 +13,11 @@ def system():
     return BSS.IO.readMolecules(["tests/input/ala.top", "tests/input/ala.crd"])
 
 
-@pytest.mark.parametrize("restraint", ["backbone", "heavy", "all", "none"])
-def test_minimise(system, restraint, file_regression, request):
+@pytest.mark.parametrize(
+    "restraint,dry_run",
+    [("backbone", False), ("heavy", True), ("all", True), ("none", True)]
+)
+def test_minimise(system, restraint, dry_run, file_regression, request):
     """Test a minimisation protocol."""
 
     # Create a short minimisation protocol.
@@ -24,10 +27,11 @@ def test_minimise(system, restraint, file_regression, request):
 
     # Run the process, check that it finished without error, and returns a system.
     new_system = run_process(
-        system, protocol, file_regression=file_regression, request=request
+        system, protocol, file_regression=file_regression, request=request,
+        dry_run=dry_run
         )
 
-    if restraint == "none":
+    if (restraint == "none") or (new_system is None):
         return
 
     # Check if restrained atoms stayed in place
@@ -40,8 +44,11 @@ def test_minimise(system, restraint, file_regression, request):
     assert all(did_not_move)
 
 
-@pytest.mark.parametrize("restraint", ["backbone", "heavy", "all", "none"])
-def test_equilibrate(system, restraint, file_regression, request):
+@pytest.mark.parametrize(
+    "restraint,dry_run",
+    [("backbone", False), ("heavy", True), ("all", True), ("none", True)]
+)
+def test_equilibrate(system, restraint, dry_run, file_regression, request):
     """Test an equilibration protocol."""
 
     # Create a short equilibration protocol.
@@ -53,10 +60,10 @@ def test_equilibrate(system, restraint, file_regression, request):
 
     # Run the process, check that it finished without error, and returns a system.
     new_system = run_process(
-        system, protocol, file_regression, request
+        system, protocol, file_regression, request, dry_run=dry_run
         )
 
-    if restraint == "none":
+    if (restraint == "none") or (new_system is None):
         return
 
     # Check if restrained atoms stayed in place
@@ -97,8 +104,11 @@ def test_cool(system):
     run_process(system, protocol)
 
 
-@pytest.mark.parametrize("restraint", ["backbone", "heavy", "all", "none"])
-def test_production(system, restraint, file_regression, request):
+@pytest.mark.parametrize(
+    "restraint,dry_run",
+    [("backbone", False), ("heavy", True), ("all", True), ("none", True)]
+)
+def test_production(system, restraint, dry_run, file_regression, request):
     """Test a production protocol."""
 
     # Create a short production protocol.
@@ -110,10 +120,10 @@ def test_production(system, restraint, file_regression, request):
 
     # Run the process, check that it finished without error, and returns a system.
     new_system = run_process(
-        system, protocol, file_regression, request
+        system, protocol, file_regression, request, dry_run=dry_run
         )
 
-    if restraint == "none":
+    if (restraint == "none") or (new_system is None):
         return
 
     # Check if restrained atoms stayed in place
@@ -126,8 +136,17 @@ def test_production(system, restraint, file_regression, request):
     assert all(did_not_move)
 
 
-def run_process(system, protocol, file_regression=None, request=None):
-    """Helper function to run various simulation protocols."""
+def run_process(system, protocol, file_regression=None, request=None, dry_run=False):
+    """Helper function to run various simulation protocols.
+
+    Args:
+        system: A BSS test system instance
+        protocol: A BSS protocol instance
+        file_regression: pytest file-regression fixture to check generated
+            OpenMM script
+        request: Pytest request fixture to determine name of generated
+            OpenMM script
+    """
 
     # Need to adjust protocol defaults to get trajectory frames
     # in short test runs.
@@ -149,6 +168,9 @@ def run_process(system, protocol, file_regression=None, request=None):
             basename="out_" + re.sub(r"[\W]", "_", request.node.name),
             extension=".py",
         )
+
+    if dry_run:
+        return None
 
     # Start the OpenMM simulation.
     process.start()

@@ -28,17 +28,17 @@ system.addForce(restraint)
 nonbonded = [f for f in system.getForces() if isinstance(f, NonbondedForce)][0]
 dummy_indices = []
 positions = inpcrd.positions
-restrained_atoms = [1, 4, 5, 6, 8, 10, 14, 15, 16, 18]
+restrained_atoms = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21]
 for i in restrained_atoms:
     j = system.addParticle(0)
     nonbonded.addParticle(0, 1, 0)
     nonbonded.addException(i, j, 0, 1, 0)
-    restraint.addBond(i, j, 0*nanometers, 418400.0*kilojoules_per_mole/nanometer**2)
+    restraint.addBond(i, j, 0*nanometers, 418400.0 * kilojoules_per_mole / nanometer**2)
     dummy_indices.append(j)
     positions.append(positions[i])
 
 # Define the integrator.
-integrator = LangevinMiddleIntegrator(0*kelvin,
+integrator = LangevinMiddleIntegrator(300.0*kelvin,
                                 1/picosecond,
                                 0.002*picoseconds)
 
@@ -52,27 +52,29 @@ simulation = Simulation(prmtop.topology,
                         integrator,
                         platform,
                         properties)
-simulation.context.setPositions(inpcrd.positions)
+simulation.context.setPositions(positions)
 if inpcrd.boxVectors is not None:
     simulation.context.setPeriodicBoxVectors(*inpcrd.boxVectors)
-simulation.minimizeEnergy(maxIterations=100)
+
+# Setting initial system velocities.
+simulation.context.setVelocitiesToTemperature(300.0)
 
 # Add reporters.
-simulation.reporters.append(DCDReporter('test.dcd', 1, append=False))
+simulation.reporters.append(DCDReporter('test.dcd', 100, append=False))
 log_file = open('test.log', 'a')
 simulation.reporters.append(StateDataReporter(log_file,
-                                              1,
-                                              step=False,
-                                              time=False,
+                                              100,
+                                              step=True,
+                                              time=True,
                                               potentialEnergy=True,
                                               kineticEnergy=True,
                                               totalEnergy=True,
-                                              temperature=False,
+                                              temperature=True,
                                               volume=True,
                                               totalSteps=True,
                                               speed=True,
                                               remainingTime=True,
                                               separator=' '))
 
-# Run a single simulation step to allow us to get the system and energy.
-simulation.step(1)
+# Run the simulation.
+simulation.step(500)

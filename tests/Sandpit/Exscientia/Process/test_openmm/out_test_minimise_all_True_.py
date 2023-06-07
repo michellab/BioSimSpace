@@ -11,7 +11,6 @@ def writeModelPatched(self, positions, unitCellDimensions=None, periodicBoxVecto
                unitCellDimensions=unitCellDimensions,
                periodicBoxVectors=periodicBoxVectors)
 DCDFile.writeModel = writeModelPatched
-import os
 
 # Load the topology and coordinate files.
 prmtop = AmberPrmtopFile('test.prm7')
@@ -22,10 +21,6 @@ system = prmtop.createSystem(nonbondedMethod=PME,
                              nonbondedCutoff=1*nanometer,
                              constraints=HBonds)
 
-# Add a barostat to run at constant pressure.
-barostat = MonteCarloBarostat(1.01325*bar, 300.0*kelvin)
-system.addForce(barostat)
-
 # Restrain the position of atoms using zero-mass dummy atoms.
 restraint = HarmonicBondForce()
 restraint.setUsesPeriodicBoundaryConditions(True)
@@ -33,17 +28,17 @@ system.addForce(restraint)
 nonbonded = [f for f in system.getForces() if isinstance(f, NonbondedForce)][0]
 dummy_indices = []
 positions = inpcrd.positions
-restrained_atoms = [1, 4, 5, 6, 8, 10, 14, 15, 16, 18]
+restrained_atoms = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21]
 for i in restrained_atoms:
     j = system.addParticle(0)
     nonbonded.addParticle(0, 1, 0)
     nonbonded.addException(i, j, 0, 1, 0)
-    restraint.addBond(i, j, 0*nanometers, 418400.0*kilojoules_per_mole/nanometer**2)
+    restraint.addBond(i, j, 0*nanometers, 418400.0 * kilojoules_per_mole / nanometer**2)
     dummy_indices.append(j)
     positions.append(positions[i])
 
 # Define the integrator.
-integrator = LangevinMiddleIntegrator(300.0*kelvin,
+integrator = LangevinMiddleIntegrator(0*kelvin,
                                 1/picosecond,
                                 0.002*picoseconds)
 
@@ -60,52 +55,24 @@ simulation = Simulation(prmtop.topology,
 simulation.context.setPositions(inpcrd.positions)
 if inpcrd.boxVectors is not None:
     simulation.context.setPeriodicBoxVectors(*inpcrd.boxVectors)
-
-# Setting initial system velocities.
-simulation.context.setVelocitiesToTemperature(300.0)
-
-# Check for a restart file.
-if os.path.isfile('test.xml'):
-    is_restart = True
-    simulation.loadState('test.xml')
-    if not os.path.isfile('test.log'):
-        raise IOError('Missing log file: test.log')
-    with open('test.log', 'r') as f:
-        lines = f.readlines()
-        last_line = lines[-1].split()
-        try:
-            step = int(last_line[0])
-        except:
-            raise IOError('Failed to read current integration step from test.log')
-        simulation.currentStep = step
-else:
-    is_restart = False
-
-# Print restart information.
-if is_restart:
-    steps = 500
-    percent_complete = 100 * (step / steps)
-    print('Loaded state from an existing simulation.')
-    print(f'Simulation is {percent_complete}% complete.')
+simulation.minimizeEnergy(maxIterations=100)
 
 # Add reporters.
-simulation.reporters.append(DCDReporter('test.dcd', 100, append=False))
+simulation.reporters.append(DCDReporter('test.dcd', 1, append=False))
 log_file = open('test.log', 'a')
 simulation.reporters.append(StateDataReporter(log_file,
-                                              100,
-                                              step=True,
-                                              time=True,
+                                              1,
+                                              step=False,
+                                              time=False,
                                               potentialEnergy=True,
                                               kineticEnergy=True,
                                               totalEnergy=True,
-                                              temperature=True,
+                                              temperature=False,
                                               volume=True,
                                               totalSteps=True,
                                               speed=True,
                                               remainingTime=True,
                                               separator=' '))
 
-# Run the simulation in 100 picosecond cycles.
-for x in range(0, 1):
-    simulation.step(500)
-    simulation.saveState('test.xml')
+# Run a single simulation step to allow us to get the system and energy.
+simulation.step(1)
