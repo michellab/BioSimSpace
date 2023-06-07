@@ -27,12 +27,15 @@ def test_restrain_atoms(system, restraint, protocol):
         "restraint.addBond(i, j, 0 * nanometers, 418400.0 * kilojoules_per_mole / nanometer**2)"
     ]
 
-    lines_found = check_lines_in_file(expected_lines, f"{process._work_dir}/{process._name}_script.py")
+    with open(f"{process._work_dir}/{process._name}_script.py") as fp:
+        content = fp.read()
 
-    if restraint == "none":
-        assert not any(lines_found)
-    else:
-        assert all(lines_found)
+    for line in expected_lines:
+        if restraint == "none":
+            assert line not in content
+        else:
+            assert line in content
+
 
 @pytest.mark.parametrize("restraint", ["backbone", "heavy", "all", "none"])
 def test_minimise(system, restraint):
@@ -165,24 +168,3 @@ def get_dist_atoms(a, b):
             ])
         )
 
-
-def check_lines_in_file(expected_lines, filename):
-    """Check for a number of strings if they are contained in a file
-
-    Args:
-        expected_lines: An iterable of strings
-        filename: The file to check
-
-    Returns:
-        A list of boolean values indicating which lines are found
-    """
-    with open(filename) as fp:
-        content = fp.read()
-
-    lines_found = []
-    for line in expected_lines:
-        if line in content:
-            lines_found.append(True)
-        else:
-            lines_found.append(False)
-    return lines_found
