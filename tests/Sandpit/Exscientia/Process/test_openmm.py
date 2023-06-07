@@ -7,16 +7,13 @@ import pytest
 # Store the tutorial URL.
 url = BSS.tutorialUrl()
 
-# Store the allowed restraints.
-restraints = BSS.Protocol._position_restraint._PositionRestraintMixin.restraints()
-
 @pytest.fixture(scope="session")
 def system():
     """Re-use the same molecuar system for each test."""
     return BSS.IO.readMolecules(["tests/input/ala.top", "tests/input/ala.crd"])
 
 
-@pytest.mark.parametrize("restraint", restraints)
+@pytest.mark.parametrize("restraint", ["backbone", "heavy", "all", "none"])
 def test_minimise(system, restraint, file_regression, request):
     """Test a minimisation protocol."""
 
@@ -43,7 +40,7 @@ def test_minimise(system, restraint, file_regression, request):
     assert all(did_not_move)
 
 
-@pytest.mark.parametrize("restraint", restraints)
+@pytest.mark.parametrize("restraint", ["backbone", "heavy", "all", "none"])
 def test_equilibrate(system, restraint, file_regression, request):
     """Test an equilibration protocol."""
 
@@ -100,7 +97,7 @@ def test_cool(system):
     run_process(system, protocol)
 
 
-@pytest.mark.parametrize("restraint", restraints)
+@pytest.mark.parametrize("restraint", ["backbone", "heavy", "all", "none"])
 def test_production(system, restraint, file_regression, request):
     """Test a production protocol."""
 
