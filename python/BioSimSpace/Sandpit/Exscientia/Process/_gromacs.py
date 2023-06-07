@@ -2602,44 +2602,27 @@ class Gromacs(_process.Process):
         same parquet format as well.
         """
         self._update_energy_dict(initialise=True)
-        datadict = {
-            "Time (ps)": [
-                time / _Units.Time.picosecond
-                for time in self.getTime(True, block=False)
-            ],
-            "PotentialEnergy (kJ/mol)": [
-                energy / _Units.Energy.kj_per_mol
-                for energy in self.getPotentialEnergy(True, block=False)
-            ],
-        }
+        datadict_keys = [
+            ("Time (ps)", _Units.Time.picosecond, "getTime"),
+            (
+                "PotentialEnergy (kJ/mol)",
+                _Units.Energy.kj_per_mol,
+                "getPotentialEnergy",
+            ),
+        ]
         if not isinstance(self._protocol, _Protocol.Minimisation):
-            if self.getVolume(block=False):
-                datadict["Volume (nm^3)"] = [
-                    volume / _Units.Volume.nanometer3
-                    for volume in self.getVolume(True, block=False)
+            datadict_keys.extend(
+                [
+                    ("Volume (nm^3)", _Units.Volume.nanometer3, "getVolume"),
+                    ("Pressure (bar)", _Units.Pressure.bar, "getPressure"),
+                    (
+                        "Temperature (kelvin)",
+                        _Units.Temperature.kelvin,
+                        "getTemperature",
+                    ),
                 ]
-            datadict["Pressure (bar)"] = [
-                pressure / _Units.Pressure.bar
-                for pressure in self.getPressure(True, block=False)
-            ]
-
-            datadict["Temperature (kelvin)"] = [
-                temperature / _Units.Temperature.kelvin
-                for temperature in self.getTemperature(True, block=False)
-            ]
-
-        try:
-            df = pd.DataFrame(data=datadict)
-        except ValueError:
-            length_dict = {key: len(value) for key, value in datadict.items()}
-            _warnings.warn(
-                f"Not all metric has the same number of data points ({length_dict})."
-                f"All columns will be truncated the same length."
             )
-            length = min(length_dict.values())
-            new_datadict = {key: value[:length] for key, value in datadict.items()}
-            df = pd.DataFrame(data=new_datadict)
-        df = df.set_index("Time (ps)")
+        df = self._convert_datadict_keys(datadict_keys)
         df.to_parquet(path=f"{self.workDir()}/{filename}", index=True)
         if isinstance(self._protocol, _Protocol.FreeEnergy):
             energy = extract(

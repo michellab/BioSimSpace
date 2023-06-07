@@ -26,6 +26,8 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Amber"]
 
+import os
+from pathlib import Path as _Path
 
 from .._Utils import _try_import
 
@@ -2485,6 +2487,38 @@ class Amber(_process.Process):
             except KeyError:
                 return None
 
+    def _init_stdout_dict(self):
+        """Initiate the _stdout_dict to parse from the output files from a fresh start.
+
+        This is needed when one reused the same process object. The use case is that one
+        generate a Process object, start and wait. Then swap in a new coordinate file
+        into the working directory, start and wait again. In this case, the result will
+        be a combination of both runs. This function ensures that the results are
+        regenerated from the new output file."""
+        # Initialise dictionaries to hold stdout records for all possible
+        # degrees of freedom. For regular simulations there will be one,
+        # for free-energy simulations there will be three, i.e. one for
+        # each of the TI regions and one for the soft-core part of the system.
+        self._stdout_dict = [
+            _process._MultiDict(),
+            _process._MultiDict(),
+            _process._MultiDict(),
+        ]
+
+        # Initialise mappings between "universal" stdout keys, and the actual
+        # record key used for the different degrees of freedom in the AMBER
+        # output.
+        self._stdout_key = [{}, {}, {}]
+
+        # Initialise log file parsing flags.
+        self._has_results = False
+        self._finished_results = False
+        self._is_header = False
+
+        # Initiate the pytails.
+        for file in _Path(self.workDir()).glob("*.out.offset"):
+            os.remove(file)
+
     def saveMetric(
         self, filename="metric.parquet", u_nk="u_nk.parquet", dHdl="dHdl.parquet"
     ):
@@ -2494,48 +2528,31 @@ class Amber(_process.Process):
         is Free Energy protocol, the dHdl and the u_nk data will be saved in the
         same parquet format as well.
         """
+        self._init_stdout_dict()
         datadict = dict()
         if isinstance(self._protocol, _Protocol.Minimisation):
-            datadict["Time (ps)"] = self.getStep(True, block=False)
-            datadict["PotentialEnergy (kJ/mol)"] = [
-                energy / _Units.Energy.kj_per_mol
-                for energy in self.getTotalEnergy(True, block=False)
+            datadict_keys = [
+                ("Time (ps)", None, "getStep"),
+                (
+                    "PotentialEnergy (kJ/mol)",
+                    _Units.Energy.kj_per_mol,
+                    "getTotalEnergy",
+                ),
             ]
         else:
-            datadict["Time (ps)"] = [
-                time / _Units.Time.picosecond
-                for time in self.getTime(True, block=False)
+            datadict_keys = [
+                ("Time (ps)", _Units.Time.picosecond, "getTime"),
+                (
+                    "PotentialEnergy (kJ/mol)",
+                    _Units.Energy.kj_per_mol,
+                    "getPotentialEnergy",
+                ),
+                ("Volume (nm^3)", _Units.Volume.nanometer3, "getVolume"),
+                ("Pressure (bar)", _Units.Pressure.bar, "getPressure"),
+                ("Temperature (kelvin)", _Units.Temperature.kelvin, "getTemperature"),
             ]
-            datadict["PotentialEnergy (kJ/mol)"] = [
-                energy / _Units.Energy.kj_per_mol
-                for energy in self.getPotentialEnergy(True, block=False)
-            ]
-            if self.getVolume(block=False):
-                datadict["Volume (nm^3)"] = [
-                    volume / _Units.Volume.nanometer3
-                    for volume in self.getVolume(True, block=False)
-                ]
-            datadict["Pressure (bar)"] = [
-                pressure / _Units.Pressure.bar
-                for pressure in self.getPressure(True, block=False)
-            ]
-            datadict["Temperature (kelvin)"] = [
-                temperature / _Units.Temperature.kelvin
-                for temperature in self.getTemperature(True, block=False)
-            ]
-
-        try:
-            df = pd.DataFrame(data=datadict)
-        except ValueError:
-            length_dict = {key: len(value) for key, value in datadict.items()}
-            _warnings.warn(
-                f"Not all metric has the same number of data points ({length_dict})."
-                f"All columns will be truncated the same length."
-            )
-            length = min(length_dict.values())
-            new_datadict = {key: value[:length] for key, value in datadict.items()}
-            df = pd.DataFrame(data=new_datadict)
-        df = df.set_index("Time (ps)")
+        # # Disable this now
+        df = self._convert_datadict_keys(datadict_keys)
         df.to_parquet(path=f"{self.workDir()}/{filename}", index=True)
         if isinstance(self._protocol, _Protocol.FreeEnergy):
             energy = extract(
