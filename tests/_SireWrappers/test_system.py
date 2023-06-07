@@ -1,7 +1,25 @@
 import BioSimSpace as BSS
 
+from BioSimSpace._Utils import _try_import, _have_imported
+
 import math
+import os
 import pytest
+
+# Make sure AMBER is installed.
+if BSS._amber_home is not None:
+    exe = "%s/bin/sander" % BSS._amber_home
+    if os.path.isfile(exe):
+        has_amber = True
+    else:
+        has_amber = False
+else:
+    has_amber = False
+
+# Make sure openff is installed.
+_openff = _try_import("openff")
+has_openff = _have_imported(_openff)
+
 
 # Store the tutorial URL.
 url = BSS.tutorialUrl()
@@ -354,6 +372,29 @@ def test_isSame(system):
     # Assert that they are the same, apart from their coordinates and space.
     assert system.isSame(other, excluded_properties=["coordinates", "space"])
     assert other.isSame(system, excluded_properties=["coordinates", "space"])
+
+
+@pytest.mark.skipif(
+    has_amber is False or has_openff is False,
+    reason="Requires AMBER and OpenFF to be installed",
+)
+def test_isSame_mol_nums():
+    # Make sure that isSame works when two systems have the same UID,
+    # but contain different MolNums.
+
+    # Create an initial system.
+    system = BSS.Parameters.openff_unconstrained_2_0_0("CO").getMolecule().toSystem()
+
+    # Create two different 5 atom molecules.
+    mol0 = BSS.Parameters.openff_unconstrained_2_0_0("C").getMolecule()
+    mol1 = BSS.Parameters.openff_unconstrained_2_0_0("CF").getMolecule()
+
+    # Create two new systems by adding the different molecules to the original
+    # system. These will have the same UID, but different molecule numbers.
+    system0 = system + mol0
+    system1 = system + mol1
+
+    assert not system0.isSame(system1)
 
 
 def test_velocity_removal():
