@@ -1,5 +1,4 @@
 import math
-import re
 
 import BioSimSpace.Sandpit.Exscientia as BSS
 import pytest
