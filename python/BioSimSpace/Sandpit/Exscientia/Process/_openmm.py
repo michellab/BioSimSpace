@@ -293,6 +293,8 @@ class OpenMM(_process.Process):
         if isinstance(self._protocol, _Protocol.Minimisation):
             # Write the OpenMM import statements.
             self._add_config_imports()
+
+            # Patch DCD file writer to exclude dummy atoms
             self._add_config_monkey_patches()
 
             # Load the input files.
@@ -354,6 +356,8 @@ class OpenMM(_process.Process):
         elif isinstance(self._protocol, _Protocol.Equilibration):
             # Write the OpenMM import statements and monkey-patches.
             self._add_config_imports()
+
+            # Patch DCD file writer to exclude dummy atoms
             self._add_config_monkey_patches()
 
             # Load the input files.
@@ -525,6 +529,8 @@ class OpenMM(_process.Process):
         elif isinstance(self._protocol, _Protocol.Production):
             # Write the OpenMM import statements.
             self._add_config_imports()
+
+            # Patch DCD file writer to exclude dummy atoms
             self._add_config_monkey_patches()
 
             # Production specific import.
@@ -708,6 +714,8 @@ class OpenMM(_process.Process):
 
             # Write the OpenMM import statements.
             self._add_config_imports()
+
+            # Patch DCD file writer to exclude dummy atoms
             self._add_config_monkey_patches()
 
             self.addToConfig(
@@ -1936,10 +1944,7 @@ class OpenMM(_process.Process):
                 restrained_atoms = restraint
 
             # Get the force constant in units of kJ_per_mol/nanometer**2
-            force_constant = self._protocol.getForceConstant()._sire_unit
-            force_constant = force_constant.to(
-                _SireUnits.kJ_per_mol / _SireUnits.nanometer2
-            )
+            force_constant = self._protocol.getForceConstant() / (_Units.Energy.kj_per_mol / _Units.Area.nanometer2)
 
             self.addToConfig(
                 "\n# Restrain the position of atoms using zero-mass dummy atoms."
@@ -1958,7 +1963,7 @@ class OpenMM(_process.Process):
             self.addToConfig("    nonbonded.addParticle(0, 1, 0)")
             self.addToConfig("    nonbonded.addException(i, j, 0, 1, 0)")
             self.addToConfig(
-                f"    restraint.addBond(i, j, 0*nanometers, {force_constant}*kilojoules_per_mole/nanometer**2)"
+                f"    restraint.addBond(i, j, 0*nanometers, {force_constant} * kilojoules_per_mole / nanometer**2)"
             )
             self.addToConfig("    dummy_indices.append(j)")
             self.addToConfig("    positions.append(positions[i])")
