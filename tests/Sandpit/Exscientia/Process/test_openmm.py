@@ -13,11 +13,29 @@ def system():
     return BSS.IO.readMolecules(["tests/input/ala.top", "tests/input/ala.crd"])
 
 
-@pytest.mark.parametrize(
-    "restraint,dry_run",
-    [("backbone", False), ("heavy", True), ("all", True), ("none", True)]
-)
-def test_minimise(system, restraint, dry_run):
+@pytest.mark.parametrize("restraint", ["backbone", "heavy", "all", "none"])
+@pytest.mark.parametrize("protocol", [
+    BSS.Protocol.Minimisation,
+    BSS.Protocol.Equilibration,
+    BSS.Protocol.Production,
+])
+def test_restrain_atoms(system, restraint, protocol):
+    process = BSS.Process.OpenMM(system, protocol(restraint=restraint, force_constant=1000))
+
+    expected_lines = [
+        f"restrained_atoms = {system.getRestraintAtoms(restraint) if restraint != 'none' else []}",
+        "restraint.addBond(i, j, 0 * nanometers, 418400.0 * kilojoules_per_mole / nanometer**2)"
+    ]
+
+    lines_found = check_lines_in_file(expected_lines, f"{process._work_dir}/{process._name}_script.py")
+
+    if restraint == "none":
+        assert not any(lines_found)
+    else:
+        assert all(lines_found)
+
+@pytest.mark.parametrize("restraint", ["backbone", "heavy", "all", "none"])
+def test_minimise(system, restraint):
     """Test a minimisation protocol."""
 
     # Create a short minimisation protocol.
@@ -26,39 +44,11 @@ def test_minimise(system, restraint, dry_run):
         )
 
     # Run the process, check that it finished without error, and returns a system.
-    new_system, process = run_process(
-        system, protocol, dry_run=dry_run
-        )
-
-    if restraint == "none":
-        return
-
-    # Check if restrained atoms stayed in place
-    restraint_atoms = system.getRestraintAtoms(restraint)
-
-    expected_lines = [
-        f"restrained_atoms = {restraint_atoms}",
-        "restraint.addBond(i, j, 0*nanometers, 418400.0 * kilojoules_per_mole / nanometer**2)"
-    ]
-
-    check_lines_in_file(expected_lines, f"{process._work_dir}/{process._name}_script.py")
-
-    if new_system is None:
-        return
-
-    did_not_move = [
-        get_dist_atoms(system.getAtom(x), new_system.getAtom(x)) < 0.05
-        for x in restraint_atoms
-    ]
-
-    assert all(did_not_move)
+    run_process(system, protocol, restraint=restraint, tolerance=0.05)
 
 
-@pytest.mark.parametrize(
-    "restraint,dry_run",
-    [("backbone", False), ("heavy", True), ("all", True), ("none", True)]
-)
-def test_equilibrate(system, restraint, dry_run):
+@pytest.mark.parametrize("restraint", ["backbone", "heavy", "all", "none"])
+def test_equilibrate(system, restraint):
     """Test an equilibration protocol."""
 
     # Create a short equilibration protocol.
@@ -69,32 +59,7 @@ def test_equilibrate(system, restraint, dry_run):
     )
 
     # Run the process, check that it finished without error, and returns a system.
-    new_system, process = run_process(
-        system, protocol, dry_run=dry_run
-        )
-
-    if restraint == "none":
-        return
-
-    # Check if restrained atoms stayed in place
-    restraint_atoms = system.getRestraintAtoms(restraint)
-
-    expected_lines = [
-        f"restrained_atoms = {restraint_atoms}",
-        "restraint.addBond(i, j, 0*nanometers, 418400.0 * kilojoules_per_mole / nanometer**2)"
-    ]
-
-    check_lines_in_file(expected_lines, f"{process._work_dir}/{process._name}_script.py")
-
-    if new_system is None:
-        return
-
-    did_not_move = [
-        get_dist_atoms(system.getAtom(x), new_system.getAtom(x)) < 0.5
-        for x in restraint_atoms
-    ]
-
-    assert all(did_not_move)
+    run_process(system, protocol, restraint=restraint, tolerance=0.5)
 
 
 def test_heat(system):
@@ -125,11 +90,8 @@ def test_cool(system):
     run_process(system, protocol)
 
 
-@pytest.mark.parametrize(
-    "restraint,dry_run",
-    [("backbone", False), ("heavy", True), ("all", True), ("none", True)]
-)
-def test_production(system, restraint, dry_run):
+@pytest.mark.parametrize("restraint", ["backbone", "heavy", "all", "none"])
+def test_production(system, restraint):
     """Test a production protocol."""
 
     # Create a short production protocol.
@@ -140,44 +102,21 @@ def test_production(system, restraint, dry_run):
     )
 
     # Run the process, check that it finished without error, and returns a system.
-    new_system, process = run_process(
-        system, protocol, dry_run=dry_run
-        )
-
-    if restraint == "none":
-        return
-
-    # Check if restrained atoms stayed in place
-    restraint_atoms = system.getRestraintAtoms(restraint)
-
-    expected_lines = [
-        f"restrained_atoms = {restraint_atoms}",
-        "restraint.addBond(i, j, 0*nanometers, 418400.0 * kilojoules_per_mole / nanometer**2)"
-    ]
-
-    check_lines_in_file(expected_lines, f"{process._work_dir}/{process._name}_script.py")
-
-    if new_system is None:
-        return
-
-    did_not_move = [
-        get_dist_atoms(system.getAtom(x), new_system.getAtom(x)) < 1
-        for x in restraint_atoms
-    ]
-
-    assert all(did_not_move)
+    run_process(system, protocol, restraint=restraint, tolerance=1)
 
 
-def run_process(system, protocol, dry_run=False):
+def run_process(system, protocol, restraint="none", tolerance=0.05):
     """Helper function to run various simulation protocols.
 
     Args:
         system: A BSS test system instance
         protocol: A BSS protocol instance
-        file_regression: pytest file-regression fixture to check generated
-            OpenMM script
-        request: Pytest request fixture to determine name of generated
-            OpenMM script
+
+    Returns:
+        A BSS system
+
+    Raises:
+        AssertionError:
     """
 
     # Need to adjust protocol defaults to get trajectory frames
@@ -188,9 +127,6 @@ def run_process(system, protocol, dry_run=False):
 
     # Initialise the OpenMM  process.
     process = BSS.Process.OpenMM(system, protocol, name="test")
-
-    if dry_run:
-        return None, process
 
     # Start the OpenMM simulation.
     process.start()
@@ -205,7 +141,17 @@ def run_process(system, protocol, dry_run=False):
     new_system = process.getSystem()
     assert new_system is not None
 
-    return new_system, process
+    if restraint == "none":
+        return
+
+    # Check if restrained atoms stayed in place
+    restraint_atoms = system.getRestraintAtoms(restraint)
+    did_not_move = [
+        get_dist_atoms(system.getAtom(x), new_system.getAtom(x)) < tolerance
+        for x in restraint_atoms
+    ]
+
+    assert all(did_not_move)
 
 
 def get_dist_atoms(a, b):
@@ -221,12 +167,22 @@ def get_dist_atoms(a, b):
 
 
 def check_lines_in_file(expected_lines, filename):
+    """Check for a number of strings if they are contained in a file
+
+    Args:
+        expected_lines: An iterable of strings
+        filename: The file to check
+
+    Returns:
+        A list of boolean values indicating which lines are found
+    """
+    with open(filename) as fp:
+        content = fp.read()
+
+    lines_found = []
     for line in expected_lines:
-        with open(filename) as fp:
-            for found_line in fp:
-                found_line = found_line.strip()
-                if found_line == line:
-                    break
-            else:
-                raise AssertionError(
-                    f"Expected line not found in script: {line}")
+        if line in content:
+            lines_found.append(True)
+        else:
+            lines_found.append(False)
+    return lines_found

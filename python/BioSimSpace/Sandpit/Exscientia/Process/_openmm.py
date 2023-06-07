@@ -1963,7 +1963,7 @@ class OpenMM(_process.Process):
             self.addToConfig("    nonbonded.addParticle(0, 1, 0)")
             self.addToConfig("    nonbonded.addException(i, j, 0, 1, 0)")
             self.addToConfig(
-                f"    restraint.addBond(i, j, 0*nanometers, {force_constant} * kilojoules_per_mole / nanometer**2)"
+                f"    restraint.addBond(i, j, 0 * nanometers, {force_constant} * kilojoules_per_mole / nanometer**2)"
             )
             self.addToConfig("    dummy_indices.append(j)")
             self.addToConfig("    positions.append(positions[i])")
