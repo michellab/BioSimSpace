@@ -535,7 +535,7 @@ def _squashed_atom_mapping_molecule(
             if explicit_dummies:
                 # If both endstates are dummies then we treat them as common core atoms
                 dummy0 = dummy1 = _np.asarray(
-                    [("du" in x) ^ ("du" in y) for x, y in zip(types0, types1)]
+                    [("du" in x) or ("du" in y) for x, y in zip(types0, types1)]
                 )
                 common0 = common1 = ~dummy0
                 in_mol0 = in_mol1 = _np.asarray([True] * residue.nAtoms())
