@@ -530,6 +530,7 @@ class Relative:
             "SOMD": "/lambda_*/gradients.dat",
             "GROMACS": "/lambda_*/gromacs.xvg",
             "AMBER": "/lambda_*/amber.out",
+            "PARQUET": "/lambda_*/*.parquet",
         }
 
         for engine, mask in mask_dict.items():
@@ -550,7 +551,9 @@ class Relative:
                         **kwargs,
                     )
 
-        raise ValueError("Couldn't find any SOMD, GROMACS or AMBER free-energy output?")
+        raise ValueError(
+            "Couldn't find any SOMD, GROMACS, AMBER or PARQUET free-energy output?"
+        )
 
     def _analyse(self):
         """

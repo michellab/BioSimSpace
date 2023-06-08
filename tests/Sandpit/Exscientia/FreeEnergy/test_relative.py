@@ -1,4 +1,5 @@
 import pathlib
+import shutil
 
 import pytest
 import pandas as pd
@@ -170,4 +171,21 @@ class TestRelativeAnalysis:
         dG, error = BSS.FreeEnergy.Relative.difference(gmx_complex, gmx_ligand)
         np.testing.assert_allclose(
             dG / BSS.Units.Energy.kcal_per_mol, 14.216101, atol=0.1
+        )
+
+
+class TestAnalysePARQUET:
+    @staticmethod
+    @pytest.fixture(scope="class")
+    def data(tmp_path_factory):
+        outdir = tmp_path_factory.mktemp("out")
+        shutil.copytree("tests/input/parquet", outdir / "parquet")
+        return str(outdir / "parquet")
+
+    def test_analyse(self, data):
+        result = BSS.FreeEnergy.Relative.analyse(
+            data, temperature=300 * BSS.Units.Temperature.kelvin, estimator="MBAR"
+        )
+        assert np.isclose(
+            result[0][-1][-1] / BSS.Units.Energy.kcal_per_mol, 20.87341050030068, atol=1
         )
