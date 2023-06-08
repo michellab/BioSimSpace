@@ -1,8 +1,12 @@
+import math
+import os
 import numpy as np
 import shutil
 import pytest
 
 import BioSimSpace as BSS
+
+from BioSimSpace._Utils import _try_import, _have_imported
 
 from BioSimSpace.Units.Angle import radian
 from BioSimSpace.Units.Energy import kcal_per_mol, kj_per_mol
@@ -12,8 +16,22 @@ from BioSimSpace.Units.Temperature import kelvin
 from BioSimSpace.Units.Time import picosecond
 from BioSimSpace.Units.Volume import nanometer3
 
-# Make sure GROMACS is installed.
+# Check whether AMBER is installed.
+if BSS._amber_home is not None:
+    exe = "%s/bin/sander" % BSS._amber_home
+    if os.path.isfile(exe):
+        has_amber = True
+    else:
+        has_amber = False
+else:
+    has_amber = False
+
+# Check whether GROMACS is installed.
 has_gromacs = BSS._gmx_exe is not None
+
+# Make sure openff is installed.
+_openff = _try_import("openff")
+has_openff = _have_imported(_openff)
 
 # Store the tutorial URL.
 url = BSS.tutorialUrl()
@@ -228,3 +246,46 @@ class TestGetRecord:
             np.testing.assert_almost_equal(energy[0] / unit, value, decimal=3)
         else:
             np.testing.assert_almost_equal(energy / unit, value, decimal=3)
+
+
+@pytest.mark.skipif(
+    has_amber is False or has_gromacs is False or has_openff is False,
+    reason="Requires AMBER, GROMACS, and OpenFF to be installed.",
+)
+def test_vacuum_com():
+    """
+    Test to ensure that the center of mass is moved to the origin following
+    vacuum simulation. Because of the need to fake vacuum simulations by
+    using an extremeley large box, molecular coordinates can exceed the
+    format limit used by certain molecular file formats, e.g. AMBER RST7.
+    As such, we translate the center of mass of the system to the origin.
+    """
+
+    # Create a test molecule.
+    mol = BSS.Parameters.openff_unconstrained_2_0_0("CC").getMolecule()
+
+    # Create a short minimisation protocol.
+    protocol = BSS.Protocol.Minimisation(steps=100)
+
+    # Create a process object.
+    process = BSS.Process.Gromacs(mol.toSystem(), protocol)
+
+    # Start the process and wait for it to finish.
+    process.start()
+    process.wait()
+
+    # Make sure it worked.
+    assert not process.isError()
+
+    # Get the minimised system.
+    system = process.getSystem()
+
+    # Make sure it worked.
+    assert system is not None
+
+    # Get the center of mass.
+    com = system._getCenterOfMass()
+
+    # Make sure each component is close to zero.
+    for x in com:
+        assert math.isclose(x.value(), 0, abs_tol=1e-6)
