@@ -34,8 +34,7 @@ from .. import Types as _Types
 from ._protocol import Protocol as _Protocol
 from ._hmr_mixin import _HmrMixin
 
-
-class Production(_Protocol):
+class Production(_HmrMixin, _Protocol):
     """A class for storing production protocols."""
 
     def __init__(self,

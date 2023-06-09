@@ -35,7 +35,7 @@ from ._free_energy_mixin import _FreeEnergyMixin
 from ._production import Production as _Production
 
 
-class FreeEnergy(_Production, _FreeEnergyMixin, _HmrMixin):
+class FreeEnergy(_Production, _FreeEnergyMixin):
     """A class for storing free energy production protocols."""
 
     def __init__(self,
