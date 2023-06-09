@@ -40,6 +40,7 @@ from alchemlyb.parsing.gmx import extract_u_nk as _gmx_extract_u_nk
 from alchemlyb.preprocessing.subsampling import equilibrium_detection as _equilibrium_detection
 from alchemlyb.preprocessing.subsampling import statistical_inefficiency as _statistical_inefficiency
 from alchemlyb.preprocessing.subsampling import slicing as _slicing
+from alchemlyb.preprocessing.subsampling import (decorrelate_u_nk, decorrelate_dhdl)
 from alchemlyb.postprocessors.units import to_kcalmol as _to_kcalmol
 from alchemlyb.postprocessors.units import kJ2kcal as _kJ2kcal
 from alchemlyb.postprocessors.units import R_kJmol as _R_kJmol
@@ -283,7 +284,7 @@ class Relative():
                 if self._engine == "AMBER":
                     hmr_factor = 3
                 elif self._engine == "GROMACS":
-                    hmr_factor = 4
+                    hmr_factor = 3
                 elif self._engine == "SOMD":
                     self._extra_options["hydrogen mass repartitioning factor"] = "1.5"
             else:
@@ -816,7 +817,7 @@ class Relative():
         return Relative.analyse(self._work_dir, self._estimator)
 
     @staticmethod
-    def _preprocessing_extracted_data(data, **kwargs):
+    def _preprocessing_extracted_data(data, estimator, **kwargs):
         """preprocess the data
 
         Parameters
@@ -824,6 +825,8 @@ class Relative():
 
             data : pandas.DataFrame
                 Dataframe of extracted dHdl or u_nk data.
+           estimator : str
+               The estimator ('MBAR' or 'TI') used.
 
         Returns
         -------
@@ -883,56 +886,29 @@ class Relative():
         else:
             data = raw_data
 
-
-        if auto_eq:
-            # Subsample according to equilibration detection.
-            eq_okay = False
-            try:
-                sampled_data = [_equilibrium_detection(i, i.iloc[:, 0])
-                        for i in data]
-                eq_okay = True
-            except:
-                pass
-        
-            # Throw errors if either failed
-            if not eq_okay:
-                _warnings.warn("Could not detect equilibration.")
-                sampled_data = data
-
-            # make sure there are more than 50 samples for the analysis
-            if eq_okay:
-                for i in sampled_data:
-                    if len(i.iloc[:, 0]) < 50:
-                        _warnings.warn(
-                            "Less than 50 samples as a result of preprocessing. No preprocessing will be performed.")
-                        sampled_data = data
-        else:
-            sampled_data = data
-
+        # if auto eq, want to remove burn in. This still also performs stats ineff after.
         if stat_ineff:
-            
-            # Subsample data that eq detection was or was not performed on
-            data = sampled_data        
-            stat_okay = False
-            try:
-                sampled_data = [_statistical_inefficiency(i, i.iloc[:, 0])
-                        for i in data]
-                stat_okay = True
-            except:
-                pass
-        
-            # Throw errors if either failed
-            if not stat_okay:
-                _warnings.warn("Could not calcuate statistical inefficiency.")
-                sampled_data = data
+            if estimator == "MBAR":
+                decorrelated_data = [decorrelate_u_nk(i, method='dE',remove_burnin=auto_eq)
+                            for i in data]
+                
+            elif estimator == "TI":
+                decorrelated_data = [decorrelate_dhdl(i, remove_burnin=auto_eq)
+                            for i in data]
 
-            # make sure there are more than 50 samples for the analysis
-            if stat_okay:
-                for i in sampled_data:
-                    if len(i.iloc[:, 0]) < 50:
-                        _warnings.warn(
-                            "Less than 50 samples as a result of preprocessing. No preprocessing will be performed.")
-                        sampled_data = data
+            sampled_data = decorrelated_data
+
+            for i in decorrelated_data:
+                if len(i.iloc[:, 0]) < 50:
+                    _warnings.warn(
+                        "Less than 50 samples as a result of preprocessing. No preprocessing will be performed.")
+                    sampled_data = data
+        else:
+            # need stats ineff for auto eq to run as well
+            if auto_eq:
+                _warnings.warn(
+                    "Auto equilibration can only be detected if statistical inefficiency is run as well.")
+            sampled_data = data
 
         # concatanate in alchemlyb format
         processed_data = _alchemlyb.concat(sampled_data)
@@ -989,10 +965,13 @@ class Relative():
 
         # Preprocess the data.
         try:
-            processed_u_nk = Relative._preprocessing_extracted_data(u_nk, **kwargs)
+            processed_u_nk = Relative._preprocessing_extracted_data(u_nk, "MBAR", **kwargs)
         except:
             _warnings.warn("Could not preprocess the data.")
             processed_u_nk = u_nk
+
+        # defaults
+        mbar_method = None
 
         # check kwargs incase there is an mbar_method and then use this
         for key,value in kwargs.items():
@@ -1081,7 +1060,7 @@ class Relative():
 
         # Preprocess the data.
         try:
-            processed_dhdl = Relative._preprocessing_extracted_data(dhdl, **kwargs)
+            processed_dhdl = Relative._preprocessing_extracted_data(dhdl, "TI", **kwargs)
         except:
             _warnings.warn("Could not preprocess the data.")
             processed_dhdl = dhdl
@@ -1610,7 +1589,7 @@ class Relative():
             else:
                 overlap_okay = True
 
-        return (overlap_okay)
+        return overlap_okay, too_small
 
     def _check_overlap(self):
         """Check the overlap of an FEP leg. 
