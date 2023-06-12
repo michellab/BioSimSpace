@@ -2245,7 +2245,7 @@ class Gromacs(_process.Process):
                     units.append(_Units.Length.nanometer)
                     # kg/m^3 cannot be parsed as there is no mass unit.
                     _warnings.warn(
-                        "Unit {unit} cannot be parsed, record the unit as unitless."
+                        f"Unit {unit} cannot be parsed, record the unit as unitless."
                     )
         return units
 
@@ -2436,12 +2436,26 @@ class Gromacs(_process.Process):
             # need to recompute it next time.
             self._mapping = mapping
 
-            # Update the box information in the original system.
-            if "space" in new_system._sire_object.propertyKeys():
+            # Get the "space" property name from the property map.
+            space_prop = self._property_map.get("space", "space")
+
+            # Update the box information in the original system. Only do this if
+            # the original system contains space information, since it will have
+            # been added in order to run vacuum simulations.
+            if (
+                space_prop in old_system._sire_object.propertyKeys()
+                and space_prop in new_system._sire_object.propertyKeys()
+            ):
                 box = new_system._sire_object.property("space")
                 old_system._sire_object.setProperty(
                     self._property_map.get("space", "space"), box
                 )
+
+            # If this is a vacuum simulation, then translate the centre of mass
+            # of the system back to the origin.
+            if not space_prop in old_system._sire_object.propertyKeys():
+                com = old_system._getCenterOfMass()
+                old_system.translate([-x for x in com])
 
             return old_system
 
@@ -2533,12 +2547,26 @@ class Gromacs(_process.Process):
                 # need to recompute it next time.
                 self._mapping = mapping
 
-                # Update the box information in the original system.
-                if "space" in new_system._sire_object.propertyKeys():
+                # Get the "space" property name from the property map.
+                space_prop = self._property_map.get("space", "space")
+
+                # Update the box information in the original system. Only do this if
+                # the original system contains space information, since it will have
+                # been added in order to run vacuum simulations.
+                if (
+                    space_prop in old_system._sire_object.propertyKeys()
+                    and space_prop in new_system._sire_object.propertyKeys()
+                ):
                     box = new_system._sire_object.property("space")
                     old_system._sire_object.setProperty(
                         self._property_map.get("space", "space"), box
                     )
+
+                # If this is a vacuum simulation, then translate the centre of mass
+                # of the system back to the origin.
+                if not space_prop in old_system._sire_object.propertyKeys():
+                    com = new_system._getCenterOfMass()
+                    old_system.translate([-x for x in com])
 
                 return old_system
 
