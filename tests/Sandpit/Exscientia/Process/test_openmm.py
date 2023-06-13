@@ -2,7 +2,18 @@ import BioSimSpace.Sandpit.Exscientia as BSS
 
 from BioSimSpace.Sandpit.Exscientia._Utils import _try_import, _have_imported
 
+import os
 import pytest
+
+# Make sure AMBER is installed.
+if BSS._amber_home is not None:
+    exe = "%s/bin/sander" % BSS._amber_home
+    if os.path.isfile(exe):
+        has_amber = True
+    else:
+        has_amber = False
+else:
+    has_amber = False
 
 # Make sure GROMACS is installed.
 has_gromacs = BSS._gmx_exe is not None
@@ -83,8 +94,8 @@ def test_production(system):
 
 
 @pytest.mark.skipif(
-    has_gromacs is False or has_openff is False,
-    reason="Requires GROMACS and OpenFF to be installed",
+    has_amber is False or has_gromacs is False or has_openff is False,
+    reason="Requires AMBER, GROMACS, and OpenFF to be installed",
 )
 def test_rhombic_dodecahedron():
     """Test that OpenMM can load and run rhombic dodecahedral triclinic spaces."""
