@@ -1102,6 +1102,32 @@ class System(_SireWrapper):
         """
         return len(self.getDecoupledMolecules())
 
+    def getMLMolecules(self):
+        """
+        Return a list containing all of the ML molecules in the system.
+
+        Returns
+        -------
+
+        molecules : [:class:`Molecule <BioSimSpace._SireWrappers.Molecule>`]
+            A list of ML molecules.
+        """
+        return _Molecules(
+            self._sire_object.search("molecules with property ML").toGroup()
+        )
+
+    def nMLMolecules(self):
+        """
+        Return the number of ML molecules in the system.
+
+        Returns
+        -------
+
+        num_ML : int
+            The number of ML molecules in the system.
+        """
+        return len(self.getMLMolecules())
+
     def repartitionHydrogenMass(
         self, factor=4, water="no", use_coordinates=False, property_map={}
     ):

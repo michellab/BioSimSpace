@@ -502,6 +502,22 @@ class Molecule(_SireWrapper):
         else:
             return False
 
+    def isML(self):
+        """
+        Whether this molecule is marked as ML molecule, i.e. it can be used in a
+        MM to ML transformation simulation.
+
+        Returns
+        -------
+
+        is_ML : bool
+            Whether the molecule is marked as ML.
+        """
+        if self._sire_object.hasProperty("ML"):
+            return True
+        else:
+            return False
+
     def isWater(self, property_map={}):
         """
         Whether this is a water molecule.
