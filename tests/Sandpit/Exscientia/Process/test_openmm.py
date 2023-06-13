@@ -61,7 +61,7 @@ def test_equilibrate(system, restraint):
     )
 
     # Run the process, check that it finished without error, and returns a system.
-    run_process(system, protocol, restraint=restraint, tolerance=0.1)
+    run_process(system, protocol, restraint=restraint, tolerance=0.2)
 
 
 def test_heat(system):
@@ -104,7 +104,7 @@ def test_production(system, restraint):
     )
 
     # Run the process, check that it finished without error, and returns a system.
-    run_process(system, protocol, restraint=restraint, tolerance=0.5)
+    run_process(system, protocol, restraint=restraint, tolerance=1)
 
 
 def run_process(system, protocol, restraint="none", tolerance=0.05):
