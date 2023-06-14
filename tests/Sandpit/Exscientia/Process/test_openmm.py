@@ -21,19 +21,26 @@ def system():
 def test_restrain_atoms(system, restraint, protocol):
     process = BSS.Process.OpenMM(system, protocol(restraint=restraint, force_constant=1000))
 
-    expected_lines = [
-        f"restrained_atoms = {system.getRestraintAtoms(restraint) if restraint != 'none' else []}",
-        "restraint.addBond(i, j, 0 * nanometers, 418400.0 * kilojoules_per_mole / nanometer**2)"
+    expected_lines = [  # (with restraint, without restraint)
+        (f"restrained_atoms = {system.getRestraintAtoms(restraint) if restraint != 'none' else []}", None),
+        ("restraint.addBond(i, j, 0 * nanometers, 418400.0 * kilojoules_per_mole / nanometer**2)", None),
+        ("simulation.context.setPositions(positions)", "simulation.context.setPositions(inpcrd.positions)")
     ]
 
     with open(f"{process._work_dir}/{process._name}_script.py") as fp:
         content = fp.read()
 
-    for line in expected_lines:
+    for with_restraint_line, without_restraint_line in expected_lines:
         if restraint == "none":
-            assert line not in content
+            if without_restraint_line is not None:
+                assert without_restraint_line in content
+            if with_restraint_line is not None:
+                assert with_restraint_line not in content
         else:
-            assert line in content
+            if with_restraint_line is not None:
+                assert with_restraint_line in content
+            if without_restraint_line is not None:
+                assert without_restraint_line not in content
 
 
 @pytest.mark.parametrize("restraint", ["backbone", "heavy", "all", "none"])
@@ -61,7 +68,7 @@ def test_equilibrate(system, restraint):
     )
 
     # Run the process, check that it finished without error, and returns a system.
-    run_process(system, protocol, restraint=restraint, tolerance=0.5)
+    run_process(system, protocol, restraint=restraint, tolerance=0.2)
 
 
 def test_heat(system):

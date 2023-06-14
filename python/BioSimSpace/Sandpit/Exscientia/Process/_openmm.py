@@ -334,7 +334,10 @@ class OpenMM(_process.Process):
             self.addToConfig("                        integrator,")
             self.addToConfig("                        platform,")
             self.addToConfig("                        properties)")
-            self.addToConfig("simulation.context.setPositions(inpcrd.positions)")
+            if self._protocol.getRestraint() is not None:
+                self.addToConfig("simulation.context.setPositions(positions)")
+            else:
+                self.addToConfig("simulation.context.setPositions(inpcrd.positions)")
             self.addToConfig("if inpcrd.boxVectors is not None:")
             self.addToConfig(
                 "    simulation.context.setPeriodicBoxVectors(*inpcrd.boxVectors)"
@@ -609,7 +612,10 @@ class OpenMM(_process.Process):
             self.addToConfig("                        integrator,")
             self.addToConfig("                        platform,")
             self.addToConfig("                        properties)")
-            self.addToConfig("simulation.context.setPositions(inpcrd.positions)")
+            if self._protocol.getRestraint() is not None:
+                self.addToConfig("simulation.context.setPositions(positions)")
+            else:
+                self.addToConfig("simulation.context.setPositions(inpcrd.positions)")
             self.addToConfig("if inpcrd.boxVectors is not None:")
             self.addToConfig(
                 "    simulation.context.setPeriodicBoxVectors(*inpcrd.boxVectors)"
@@ -988,7 +994,10 @@ class OpenMM(_process.Process):
             self.addToConfig("                        integrator,")
             self.addToConfig("                        platform,")
             self.addToConfig("                        properties)")
-            self.addToConfig("simulation.context.setPositions(inpcrd.positions)")
+            if self._protocol.getRestraint() is not None:
+                self.addToConfig("simulation.context.setPositions(positions)")
+            else:
+                self.addToConfig("simulation.context.setPositions(inpcrd.positions)")
             self.addToConfig("if inpcrd.boxVectors is not None:")
             self.addToConfig(
                 "    simulation.context.setPeriodicBoxVectors(*inpcrd.boxVectors)"
