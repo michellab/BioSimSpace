@@ -1,4 +1,5 @@
 import math as _math
+import time
 import warnings as _warnings
 
 from sire.legacy import Units as _SireUnits
@@ -646,43 +647,49 @@ class ConfigFactory:
             restart_interval = self._restart_interval
             runtime = self.protocol.getRunTime()
 
-            # The restart and report intervals must be a multiple of the energy frequency,
-            # which is 200 steps.
+            # Get the timestep.
+            timestep = self.protocol._timestep
+
+            # Work out the number of cycles.
+            ncycles = ( runtime / timestep) / report_interval
+
+            # If the number of cycles isn't integer valued, adjust the report
+            # interval so that we match specified the run time.
+            if ncycles - _math.floor(ncycles) != 0:
+                ncycles = _math.floor(ncycles)
+                if ncycles == 0:
+                    ncycles = 1
+                report_interval = _math.ceil( (runtime / timestep) / ncycles)
+
+            # For free energy simulations, the report interval must be a multiple
+            # of the energy frequency which is 250 steps.
             if isinstance(self.protocol, _Protocol._FreeEnergyMixin):
-                if report_interval % 200 != 0:
-                    report_interval = int(200 * _math.ceil(report_interval / 200))
-                    _warnings.warn(f"The report interval is not a multiple of 200. Changing it to {report_interval}.")
-                if restart_interval % 200 != 0:
-                    restart_interval = int(
-                        200 * _math.ceil(restart_interval / 200))
-                    _warnings.warn(f"The restart interval is not a multiple of 200. Changing it to {restart_interval}.")
-                    
-            # The number of moves per cycle - want about 1 cycle per 1 ns.
-            # if the run is less than 1 ns, want 1 cycle for this.
-            if runtime.nanoseconds().value() <= 1:
-                ncycles = int(1)       
+                if report_interval % 250 != 0:
+                    report_interval = 250 * _math.ceil(report_interval / 250)
+
+            # Work out the number of cycles per frame.
+            cycles_per_frame = restart_interval / report_interval
+
+            # Work out whether we need to adjust the buffer frequency.
+            buffer_freq = 0
+            if cycles_per_frame < 1:
+                buffer_freq = cycles_per_frame * restart_interval
+                cycles_per_frame = 1
+                self._buffer_freq = buffer_freq
             else:
-                # calculate the number of cycles - rounds up to integer value
-                ncycles = _math.ceil((runtime)/(1 * _nanosecond))
+                cycles_per_frame = _math.floor(cycles_per_frame)
 
-            # number of moves should be so that nmoves * ncycles is equal to self._steps.
-            nmoves = int(max(1, ((self._steps) // (ncycles))))
-
-            if self._steps != (nmoves * ncycles):
-                _warnings.warn(f"The runtime is not resulting in a suitable cycle/moves/steps combination. Changing it to {(nmoves * ncycles)*self.protocol.getTimeStep().nanoseconds()}.")
-
-            # Work out how many cycles need to pass before we write a trajectory frame.
-            cycles_per_frame = max(1, restart_interval // nmoves)
-
-            # How many time steps need to pass before we write a trajectory frame.
-            # The buffer frequency must be an integer multiple of the frequency
-            # at which free energies are written, which is 200 steps.
-            buffer_freq = int(nmoves * ((restart_interval / nmoves) % 1))
+            # For free energy simulations, the buffer frequency must be an integer
+            # multiple of the frequency at which free energies are written, which
+            # is 250 steps. Round down to the closest multiple.
+            if isinstance(self.protocol, _Protocol._FreeEnergyMixin):
+                if buffer_freq > 0:
+                    buffer_freq = 250 * _math.floor(buffer_freq / 250)
 
             # The number of SOMD cycles.
-            protocol_dict["ncycles"] = ncycles
+            protocol_dict["ncycles"] = int(ncycles)
             # The number of moves per cycle.
-            protocol_dict["nmoves"] = nmoves
+            protocol_dict["nmoves"] = report_interval
             # Cycles per trajectory write.
             protocol_dict["ncycles_per_snap"] = cycles_per_frame
             # Buffering frequency.
@@ -693,9 +700,8 @@ class ConfigFactory:
 
             # Use the Langevin Middle integrator if it is a 4 fs timestep
             if timestep >= 4.00:
-                protocol_dict[
-                    "integrator_type"
-                ] = "langevinmiddle"  # Langevin middle integrator
+                # Langevin middle integrator
+                protocol_dict["integrator_type"] = "langevinmiddle"
             else:
                 pass
 
@@ -759,7 +765,7 @@ class ConfigFactory:
                 ] = "hbonds-notperturbed"  # Handle hydrogen perturbations.
                 protocol_dict[
                     "energy frequency"
-                ] = 200  # Write gradients every 200 steps.
+                ] = 250  # Write gradients every 250 steps.
 
             protocol = [str(x) for x in self.protocol.getLambdaValues()]
             protocol_dict["lambda array"] = ", ".join(protocol)
