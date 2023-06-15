@@ -30,9 +30,11 @@ Classes
 
     AlignmentError
     AnalysisError
+    ConversionError
     IncompatibleError
     MissingSoftwareError
     ParameterisationError
+    StreamError
     ThirdPartyError
 """
 

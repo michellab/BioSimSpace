@@ -39,7 +39,6 @@ from collections import OrderedDict as _OrderedDict
 from glob import glob as _glob
 from io import StringIO as _StringIO
 
-import hashlib as _hashlib
 import json as _json
 import os as _os
 import shlex as _shlex
@@ -47,15 +46,6 @@ import shutil as _shutil
 import sys as _sys
 import subprocess as _subprocess
 import warnings as _warnings
-
-# Wrap the import of PyPDB since it imports Matplotlib, which will fail if
-# we don't have a display running.
-try:
-    import pypdb as _pypdb
-
-    _has_pypdb = True
-except:
-    _has_pypdb = False
 
 # Flag that we've not yet raised a warning about GROMACS not being installed.
 _has_gmx_warned = False
@@ -75,6 +65,9 @@ from .._SireWrappers import Molecule as _Molecule
 from .._SireWrappers import Molecules as _Molecules
 from .._SireWrappers import System as _System
 from .. import _Utils
+
+from ._file_cache import check_cache as _check_cache
+from ._file_cache import update_cache as _update_cache
 
 
 # Context manager for capturing stdout.
@@ -115,13 +108,6 @@ for index, line in enumerate(format_info):
 
 # Delete the redundant variables.
 del format_info, index, line, format, extensions, description
-
-
-# Initialise a "cache". This maps system UIDs and formats that have previously
-# been written to file. When saving, we can then check to see if a system has
-# previously been written to the specified format and, if the file still exists
-# and is unmodified, then we can simply copy to the new location.
-_file_cache = {}
 
 
 def expand(base, path, suffix=None):
@@ -264,10 +250,6 @@ def readPDB(id, pdb4amber=False, work_dir=None, show_warnings=False, property_ma
     >>> system = BSS.IO.readPDB("file.pdb", pdb4amber=True)
     """
 
-    if not _has_pypdb:
-        _warnings.warn("BioSimSpace.IO: PyPDB could not be imported on this system.")
-        return None
-
     if not isinstance(id, str):
         raise TypeError("'id' must be of type 'str'")
 
@@ -295,30 +277,23 @@ def readPDB(id, pdb4amber=False, work_dir=None, show_warnings=False, property_ma
 
     # ID from the Protein Data Bank.
     else:
-        if not _has_pypdb:
-            _warnings.warn(
-                "BioSimSpace.IO: PyPDB could not be imported on this system."
-            )
-            return None
-
         # Strip any whitespace from the PDB ID and convert to upper case.
         id = id.replace(" ", "").upper()
 
-        # Attempt to download the PDB file. (Compression is currently broken!)
-        with _warnings.catch_warnings(record=True) as w:
-            pdb_string = _pypdb.get_pdb_file(id, filetype="pdb", compression=False)
-            if w:
-                raise IOError("Retrieval failed, invalid PDB ID: %s" % id)
-
-        # Create the name of the PDB file.
-        pdb_file = "%s/%s.pdb" % (work_dir, id)
-
-        # Now write the PDB string to file.
-        with open(pdb_file, "w") as file:
-            file.write(pdb_string)
+        # Use Sire to download the PDB.
+        try:
+            system = _patch_sire_load(id, directory=str(work_dir))
+        except:
+            raise IOError("Retrieval failed, invalid PDB ID: %s" % id)
 
         # Store the absolute path of the file.
-        pdb_file = _os.path.abspath(pdb_file)
+        pdb_file = f"{work_dir}/{id}"
+
+        # Save to PDB format.
+        saveMolecules(pdb_file, _System(system), "pdb")
+
+        # Add the extension.
+        pdb_file += ".pdb"
 
     # Process the file with pdb4amber.
     if pdb4amber:
@@ -445,6 +420,9 @@ def readMolecules(files, show_warnings=False, download_dir=None, property_map={}
             raise TypeError("'files' must be a list of 'str' types.")
         if len(files) == 0:
             raise ValueError("The list of input files is empty!")
+        # Convert tuple to list.
+        if isinstance(files, tuple):
+            files = list(files)
     else:
         raise TypeError("'files' must be of type 'str', or a list of 'str' types.")
 
@@ -535,7 +513,7 @@ def readMolecules(files, show_warnings=False, download_dir=None, property_map={}
     return _System(system)
 
 
-def saveMolecules(filebase, system, fileformat, property_map={}):
+def saveMolecules(filebase, system, fileformat, property_map={}, **kwargs):
     """
     Save a molecular system to file.
 
@@ -680,7 +658,13 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
     # Save the system using each file format.
     for format in formats:
         # Copy an existing file if it exists in the cache.
-        ext = _check_cache(system._sire_object, format, filebase)
+        ext = _check_cache(
+            system,
+            format,
+            filebase,
+            property_map=property_map,
+            **kwargs,
+        )
         if ext:
             files.append(_os.path.abspath(filebase + ext))
             continue
@@ -716,7 +700,7 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
             # Make sure AMBER and GROMACS files have the expected water topology
             # and save GROMACS files with an extension such that they can be run
             # directly by GROMACS without needing to be renamed.
-            if format == "PRM7" or format == "RST7":
+            if format == "PRM7":
                 system_copy = system.copy()
                 system_copy._set_water_topology("AMBER", _property_map)
                 file = _SireIO.MoleculeParser.save(
@@ -724,7 +708,7 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
                 )
             elif format == "GroTop":
                 system_copy = system.copy()
-                system_copy._set_water_topology("GROMACS")
+                system_copy._set_water_topology("GROMACS", _property_map)
                 file = _SireIO.MoleculeParser.save(
                     system_copy._sire_object, filebase, _property_map
                 )[0]
@@ -750,7 +734,7 @@ def saveMolecules(filebase, system, fileformat, property_map={}):
             files += file
 
             # If this is a new file, then add it to the cache.
-            _update_cache(system._sire_object, format, file[0])
+            _update_cache(system, format, file[0], **kwargs)
 
         except Exception as e:
             msg = "Failed to save system to format: '%s'" % format
@@ -1026,149 +1010,6 @@ def readPerturbableSystem(top0, coords0, top1, coords1, property_map={}):
     system0.updateMolecules(mol)
 
     return system0
-
-
-def _check_cache(system, format, filebase):
-    """
-    Internal helper function to check whether a Sire system has previously
-    been written to the specified format.
-
-    Parameters
-    ----------
-
-    system : sire.legacy.System.System
-        The Sire system.
-
-    format : str
-        The molecular file format.
-
-    filebase : str
-        The file base to copy the file to.
-
-    Returns
-    -------
-
-    extension : str
-        The extension for cached file. False if no file was found.
-    """
-
-    # Validate input.
-
-    if not isinstance(system, _SireSystem.System):
-        raise TypeError("'system' must be of type 'Sire.System.System'")
-
-    if not isinstance(format, str):
-        raise TypeError("'format' must be of type 'str'")
-
-    if not isinstance(filebase, str):
-        raise TypeError("'filebase' must be of type 'str'")
-
-    # Create the key.
-    key = (system.uid().toString(), str(system.version()), format)
-
-    # Get the existing file path and MD5 hash from the cache.
-    try:
-        (path, original_hash) = _file_cache[key]
-    except:
-        return False
-
-    # Whether the cache entry is still valid.
-    cache_valid = True
-
-    # Make sure the file still exists.
-    if not _os.path.exists(path):
-        cache_valid = False
-    # Make sure the MD5 sum is still the same.
-    else:
-        current_hash = _get_md5_hash(path)
-        if current_hash != original_hash:
-            cache_valid = False
-
-    # If the cache isn't valid, delete the entry and return False.
-    if not cache_valid:
-        if key in _file_cache:
-            del _file_cache[key]
-        return False
-
-    # Copy the old file to the new location.
-    else:
-        # Get the file extension.
-        ext = _os.path.splitext(path)[1]
-
-        # Add the extension to the file base.
-        new_path = filebase + ext
-
-        # Copy the file to the new location.
-        try:
-            _shutil.copyfile(path, new_path)
-        except _shutil.SameFileError:
-            pass
-
-        return ext
-
-
-def _update_cache(system, format, path):
-    """
-    Internal helper function to update the file cache when a new system
-    is written to a specified format.
-
-    Parameters
-    ----------
-
-    system : sire.legacy.System.System
-        The Sire system.
-
-    format : str
-        The molecular file format.
-
-    path : str
-        The path to the file.
-    """
-
-    # Validate input.
-
-    if not isinstance(system, _SireSystem.System):
-        raise TypeError("'system' must be of type 'Sire.System.System'")
-
-    if not isinstance(format, str):
-        raise TypeError("'format' must be of type 'str'")
-
-    if not isinstance(path, str):
-        raise TypeError("'path' must be of type 'str'")
-
-    if not _os.path.exists(path):
-        raise IOError(f"File does not exist: '{path}'")
-
-    # Convert to an absolute path.
-    path = _os.path.abspath(path)
-
-    # Get the MD5 checksum for the file.
-    hash = _get_md5_hash(path)
-
-    # Create the key.
-    key = (system.uid().toString(), str(system.version()), format)
-
-    # Update the cache.
-    _file_cache[key] = (path, hash)
-
-
-def _get_md5_hash(path):
-    """
-    Internal helper function to return the MD5 checksum for a file.
-
-    Returns
-    -------
-
-    hash : hashlib.HASH
-    """
-    # Get the MD5 hash of the file. Process in chunks in case the file is too
-    # large to process.
-    hash = _hashlib.md5()
-    with open(path, "rb") as f:
-        for chunk in iter(lambda: f.read(4096), b""):
-            hash.update(chunk)
-
-    return hash.hexdigest()
 
 
 def _patch_sire_load(path, *args, show_warnings=True, property_map={}, **kwargs):

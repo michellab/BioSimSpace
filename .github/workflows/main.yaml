@@ -1,16 +1,12 @@
-name: Build
+name: Release Main
 
 on:
   workflow_dispatch:
-  push:
-    branches: [ devel ]
-  pull_request:
-    branches: [ devel ]
-
-# Note that push and pull-request builds are automatically
-# now skipped by GitHub if
-# [skip ci], [ci skip], [no ci], [skip actions], or [actions skip]
-# are in the commit message. We don't need to check for this ourselves.
+    inputs:
+      upload_packages:
+        required: true
+        description: "Upload packages to anaconda?"
+        type: boolean
 
 jobs:
   build:
@@ -20,23 +16,11 @@ jobs:
       max-parallel: 9
       fail-fast: false
       matrix:
-        python-version: ["3.8", "3.9"]
+        python-version: ["3.8", "3.9", "3.10"]
         platform:
-          - {
-              name: "windows",
-              os: "windows-latest",
-              shell: "pwsh"
-            }
-          - {
-              name: "linux",
-              os: "ubuntu-latest",
-              shell: "bash -l {0}"
-            }
-          - {
-              name: "macos",
-              os: "macos-latest",
-              shell: "bash -l {0}"
-            }
+          - { name: "windows", os: "windows-latest", shell: "pwsh" }
+          - { name: "linux", os: "ubuntu-latest", shell: "bash -l {0}" }
+          - { name: "macos", os: "macos-latest", shell: "bash -l {0}" }
     environment:
       name: biosimspace-build
     defaults:
@@ -45,7 +29,6 @@ jobs:
     env:
       SIRE_DONT_PHONEHOME: 1
       SIRE_SILENT_PHONEHOME: 1
-      REPO: "${{ github.event.pull_request.head.repo.full_name || github.repository }}"
     steps:
       - uses: conda-incubator/setup-miniconda@v2
         with:
@@ -56,13 +39,8 @@ jobs:
           miniforge-variant: Mambaforge
           use-mamba: true
 #
-      - name: Clone the devel branch (push to devel)
-        run: git clone https://github.com/${{ env.REPO }}
-        if: github.event_name != 'pull_request'
-#
-      - name: Clone the feature branch (pull request to devel)
-        run: git clone -b ${{ github.head_ref }} --single-branch https://github.com/${{ env.REPO }}
-        if: github.event_name == 'pull_request'
+      - name: Clone the main branch
+        run: git clone -b main https://github.com/openbiosim/biosimspace
 #
       - name: Setup Conda
         run: mamba install -y -c conda-forge boa anaconda-client packaging=21 pip-requirements-parser
@@ -74,12 +52,11 @@ jobs:
         run: mkdir ${{ github.workspace }}/build
 #
       - name: Build Conda package using mamba build
-        run: conda mambabuild -c conda-forge -c openbiosim/label/dev ${{ github.workspace }}/biosimspace/recipes/biosimspace
+        run: conda mambabuild -c conda-forge -c openbiosim/label/main ${{ github.workspace }}/biosimspace/recipes/biosimspace
 #
       - name: Upload Conda package
         run: python ${{ github.workspace }}/biosimspace/actions/upload_package.py
         env:
-          SRC_DIR: ${{ github.workspace }}/biosimspace
-          BUILD_DIR: ${{ github.workspace }}/build
           ANACONDA_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
-        if: github.event_name != 'pull_request'
+          ANACONDA_LABEL: main
+        if: github.event.inputs.upload_packages == 'yes'

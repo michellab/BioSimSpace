@@ -199,28 +199,6 @@ def merge(
             atoms1.append(atom)
             atoms1_idx.append(atom.index())
 
-    # Create lists of the actual property names in the molecules.
-    props0 = []
-    props1 = []
-
-    # molecule0
-    for prop in molecule0.propertyKeys():
-        if prop in inv_property_map0:
-            prop = inv_property_map0[prop]
-        props0.append(prop)
-
-    # molecule1
-    for prop in molecule1.propertyKeys():
-        if prop in inv_property_map1:
-            prop = inv_property_map1[prop]
-        props1.append(prop)
-
-    # Determine the common properties between the two molecules.
-    # These are the properties that can be perturbed.
-    shared_props = list(set(props0).intersection(props1))
-    del props0
-    del props1
-
     # Create a new molecule to hold the merged molecule.
     molecule = _SireMol.Molecule("Merged_Molecule")
 
@@ -255,6 +233,84 @@ def merge(
 
     # Make the molecule editable.
     edit_mol = molecule.edit()
+
+    # Create lists of the actual property names in the molecules.
+    props0 = []
+    props1 = []
+
+    # molecule0
+    for prop in molecule0.propertyKeys():
+        if prop in inv_property_map0:
+            prop = inv_property_map0[prop]
+        props0.append(prop)
+
+    # molecule1
+    for prop in molecule1.propertyKeys():
+        if prop in inv_property_map1:
+            prop = inv_property_map1[prop]
+        props1.append(prop)
+
+    # Determine the common properties between the two molecules.
+    # These are the properties that can be perturbed.
+    shared_props = list(set(props0).intersection(props1))
+
+    # Now add default properties in each end state. This is required since Sire
+    # removes units from atom properties that are zero valued. By pre-setting
+    # a default property for the entire molecule, we ensure that atom properties
+    # are added with the correct type.
+
+    # Properties to ignore. (These will be handled later.)
+    ignored_props = [
+        "bond",
+        "angle",
+        "dihedral",
+        "improper",
+        "connectivity",
+        "intrascale",
+    ]
+
+    # lambda = 0
+    for prop in props0:
+        if not prop in ignored_props:
+            # This is a perturbable property.
+            if prop in shared_props:
+                name = f"{prop}0"
+            # This property is unique to the lambda = 0 state.
+            else:
+                name = prop
+
+            # Get the property from molecule0.
+            property = molecule0.property(prop)
+
+            # Try to set a default property at the lambda = 0 end state.
+            try:
+                default_prop = type(property)(molecule.info())
+                edit_mol = edit_mol.setProperty(name, default_prop).molecule()
+            except:
+                pass
+
+    # lambda = 1
+    for prop in props1:
+        if not prop in ignored_props:
+            # This is a perturbable property.
+            if prop in shared_props:
+                name = f"{prop}1"
+            # This property is unique to the lambda = 1 state.
+            else:
+                name = prop
+
+            # Get the property from molecule0.
+            property = molecule1.property(prop)
+
+            # Try to set a default property at the lambda = 1 end state.
+            try:
+                default_prop = type(property)(molecule.info())
+                edit_mol = edit_mol.setProperty(name, default_prop).molecule()
+            except:
+                pass
+
+    del props0
+    del props1
 
     # We now add properties to the merged molecule. The properties are used
     # to represent the molecule at two states along the alchemical pathway:

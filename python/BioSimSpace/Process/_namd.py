@@ -43,6 +43,7 @@ from sire.legacy.Maths import Vector as _Vector
 from .. import _isVerbose
 from .._Exceptions import IncompatibleError as _IncompatibleError
 from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
+from ..Protocol._position_restraint_mixin import _PositionRestraintMixin
 from .._SireWrappers import System as _System
 from ..Types._type import Type as _Type
 
@@ -409,6 +410,40 @@ class Namd(_process.Process):
         self.addToConfig("binaryOutput          no")
         self.addToConfig("binaryRestart         no")
 
+        # Position restraints.
+        if isinstance(self._protocol, _PositionRestraintMixin):
+            restraint = self._protocol.getRestraint()
+            if restraint is not None:
+                # Create a restrained system.
+                restrained = self._createRestrainedSystem(self._system, restraint)
+
+                # Create a PDB object, mapping the "occupancy" property to "restrained".
+                prop = self._property_map.get("occupancy", "occupancy")
+
+                try:
+                    p = _SireIO.PDB2(restrained._sire_object, {prop: "restrained"})
+
+                    # File name for the restraint file.
+                    self._restraint_file = "%s/%s.restrained" % (
+                        self._work_dir,
+                        self._name,
+                    )
+
+                    # Write the PDB file.
+                    p.writeToFile(self._restraint_file)
+
+                except:
+                    _warnings.warn(
+                        "Failed to add restraints to PDB file. "
+                        "Perhaps there are no atoms matching the restraint?"
+                    )
+
+                # Update the configuration file.
+                self.addToConfig("constraints           yes")
+                self.addToConfig("consref               %s.restrained" % self._name)
+                self.addToConfig("conskfile             %s.restrained" % self._name)
+                self.addToConfig("conskcol              O")
+
         # Add configuration variables for a minimisation simulation.
         if isinstance(self._protocol, _Protocol.Minimisation):
             # Output frequency.
@@ -493,39 +528,6 @@ class Namd(_process.Process):
                 self.addToConfig("useFlexibleCell       no")
                 self.addToConfig("useConstantArea       no")
 
-            # Restrain the backbone.
-            restraint = self._protocol.getRestraint()
-            if restraint is not None:
-                # Create a restrained system.
-                restrained = self._createRestrainedSystem(self._system, restraint)
-
-                # Create a PDB object, mapping the "occupancy" property to "restrained".
-                prop = self._property_map.get("occupancy", "occupancy")
-
-                try:
-                    p = _SireIO.PDB2(restrained._sire_object, {prop: "restrained"})
-
-                    # File name for the restraint file.
-                    self._restraint_file = "%s/%s.restrained" % (
-                        self._work_dir,
-                        self._name,
-                    )
-
-                    # Write the PDB file.
-                    p.writeToFile(self._restraint_file)
-
-                except:
-                    _warnings.warn(
-                        "Failed to add restraints to PDB file. "
-                        "Perhaps there are no atoms matching the restraint?"
-                    )
-
-                # Update the configuration file.
-                self.addToConfig("constraints           yes")
-                self.addToConfig("consref               %s.restrained" % self._name)
-                self.addToConfig("conskfile             %s.restrained" % self._name)
-                self.addToConfig("conskcol              O")
-
             # Heating/cooling simulation.
             if not self._protocol.isConstantTemp():
                 # Work out temperature step size (assuming a unit increment).
@@ -589,10 +591,6 @@ class Namd(_process.Process):
                 "timestep              %.2f"
                 % self._protocol.getTimeStep().femtoseconds().value()
             )
-            if self._protocol.getFirstStep() != 0:
-                self.addToConfig(
-                    "firsttimestep         %d" % self._protocol.getFirstStep()
-                )
             self.addToConfig("rigidBonds            all")
             self.addToConfig("nonbondedFreq         1")
             self.addToConfig("fullElectFrequency    2")
@@ -1008,6 +1006,7 @@ class Namd(_process.Process):
         if self.isError():
             _warnings.warn("The process exited with an error!")
 
+        self.stdout(0)
         return self._stdout_dict.copy()
 
     def getCurrentRecords(self):

@@ -255,10 +255,6 @@ class Task:
             The name of, or link to, a zipfile containing the output.
         """
 
-        # The user has specified a working directory, return its name.
-        if self._tmp_dir is None:
-            return self._work_dir
-
         # Don't recreate an existing zip file.
         if self._zipfile is None:
             # Create the file name.

@@ -30,6 +30,8 @@ import math as _math
 import warnings as _warnings
 
 from .. import Protocol as _Protocol
+from ..Protocol._free_energy_mixin import _FreeEnergyMixin
+from ..Protocol._position_restraint_mixin import _PositionRestraintMixin
 
 from ._config import Config as _Config
 
@@ -98,12 +100,23 @@ class Gromacs(_Config):
             if not all(isinstance(line, str) for line in extra_lines):
                 raise TypeError("Lines in 'extra_lines' must be of type 'str'.")
 
+        # Make sure the report interval is a multiple of nstcalcenergy.
+        if isinstance(self._protocol, _FreeEnergyMixin):
+            nstcalcenergy = 250
+        else:
+            nstcalcenergy = 100
+        report_interval = self.reportInterval()
+        if report_interval % nstcalcenergy != 0:
+            report_interval = nstcalcenergy * _math.ceil(
+                report_interval / nstcalcenergy
+            )
+
         # Define some miscellaneous defaults.
         protocol_dict = {
             # Interval between writing to the log file.
-            "nstlog": self.reportInterval(),
+            "nstlog": report_interval,
             # Interval between writing to the energy file.
-            "nstenergy": self.reportInterval(),
+            "nstenergy": report_interval,
             # Interval between writing to the trajectory file.
             "nstxout-compressed": self.restartInterval(),
         }
@@ -164,8 +177,8 @@ class Gromacs(_Config):
         # Twin-range van der Waals cut-off.
         protocol_dict["vdwtype"] = "Cut-off"
 
-        # Restraints.
-        if isinstance(self._protocol, _Protocol.Equilibration):
+        # Position restraints.
+        if isinstance(self._protocol, _PositionRestraintMixin):
             # Note that constraints will be defined by the GROMACS process.
             protocol_dict["refcoord-scaling"] = "com"
 
@@ -193,15 +206,20 @@ class Gromacs(_Config):
                     )
 
         # Temperature control.
-        if not isinstance(self._protocol, _Protocol.Minimisation):
+        if not isinstance(
+            self._protocol,
+            (_Protocol.Metadynamics, _Protocol.Steering, _Protocol.Minimisation),
+        ):
             # Leap-frog molecular dynamics.
             protocol_dict["integrator"] = "md"
             # Temperature coupling using velocity rescaling with a stochastic term.
             protocol_dict["tcoupl"] = "v-rescale"
             # A single temperature group for the entire system.
             protocol_dict["tc-grps"] = "system"
-            # Collision frequency (ps).
-            protocol_dict["tau-t"] = 2
+            # Thermostat coupling frequency (ps).
+            protocol_dict["tau-t"] = "{:.5f}".format(
+                self._protocol.getThermostatTimeConstant().picoseconds().value()
+            )
 
             if isinstance(self._protocol, _Protocol.Equilibration):
                 if self._protocol.isConstantTemp():
@@ -238,7 +256,7 @@ class Gromacs(_Config):
                 )
 
         # Free energies.
-        if isinstance(self._protocol, _Protocol.FreeEnergy):
+        if isinstance(self._protocol, _FreeEnergyMixin):
             # Extract the lambda array.
             lam_vals = self._protocol.getLambdaValues()
 

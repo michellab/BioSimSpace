@@ -32,6 +32,7 @@ import warnings as _warnings
 from sire.legacy import Units as _SireUnits
 
 from .. import Protocol as _Protocol
+from ..Protocol._position_restraint_mixin import _PositionRestraintMixin
 
 from ._config import Config as _Config
 
@@ -114,7 +115,7 @@ class Amber(_Config):
         # Define some miscellaneous defaults.
         protocol_dict = {
             # Interval between reporting energies.
-            "ntpr": 200,
+            "ntpr": self.reportInterval(),
             # Interval between saving restart files.
             "ntwr": self.restartInterval(),
             # Trajectory sampling frequency.
@@ -152,6 +153,8 @@ class Amber(_Config):
             protocol_dict["maxcyc"] = self.steps()
             # Set the number of steepest descent steps.
             protocol_dict["ncyc"] = num_steep
+            # Report energies every 100 steps.
+            protocol_dict["ntpr"] = 100
         else:
             # Define the timestep
             timestep = self._protocol.getTimeStep().picoseconds().value()
@@ -182,8 +185,8 @@ class Amber(_Config):
             # Wrap the coordinates.
             protocol_dict["iwrap"] = 1
 
-        # Restraints.
-        if isinstance(self._protocol, _Protocol.Equilibration):
+        # Postion restraints.
+        if isinstance(self._protocol, _PositionRestraintMixin):
             # Get the restraint.
             restraint = self._protocol.getRestraint()
 
@@ -251,11 +254,16 @@ class Amber(_Config):
                     )
 
         # Temperature control.
-        if not isinstance(self._protocol, _Protocol.Minimisation):
+        if not isinstance(
+            self._protocol,
+            (_Protocol.Metadynamics, _Protocol.Steering, _Protocol.Minimisation),
+        ):
             # Langevin dynamics.
             protocol_dict["ntt"] = 3
-            # Collision frequency (ps).
-            protocol_dict["gamma_ln"] = 2
+            # Collision frequency (1 / ps).
+            protocol_dict["gamma_ln"] = "{:.5f}".format(
+                1 / self._protocol.getThermostatTimeConstant().picoseconds().value()
+            )
 
             if isinstance(self._protocol, _Protocol.Equilibration):
                 temp0 = self._protocol.getStartTemperature().kelvin().value()

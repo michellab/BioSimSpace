@@ -14,6 +14,7 @@ directory of the GitHub repository.
 
    index_Align
    index_Box
+   index_Convert
    index_FreeEnergy
    index_Gateway
    index_IO
@@ -26,6 +27,7 @@ directory of the GitHub repository.
    index_Protocol
    index_Sandpit
    index_Solvent
+   index_Stream
    index_Trajectory
    index_Types
    index_Units

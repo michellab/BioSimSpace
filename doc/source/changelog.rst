@@ -7,14 +7,62 @@ OpenBioSim
 :mod:`BioSimSpace` is supported by `OpenBioSim <https://openbiosim.org>`__, a community interest
 company supporting open-source development of fostering academic/industrial collaboration
 within the biomolecular simulation community. Our software is hosted via the `OpenBioSim`
-`<GitHub <https://github.com/OpenBioSim/biosimspace>`__ organisation.
+`GitHub <https://github.com/OpenBioSim/biosimspace>`__ organisation.
+
+`2023.2.2 <https://github.com/openbiosim/biosimspace/compare/2023.2.1...2023.2.2>`_ - May 15 2023
+-------------------------------------------------------------------------------------------------
+
+* Rename tests directory to ``tests`` for compliance with ``pytest`` standard (`#51 <https://github.com/OpenBioSim/biosimspace/pull/51>`__).
+* Fixed parsing of AMBER standard output records (`#56 <https://github.com/OpenBioSim/biosimspace/pull/56>`__).
+* Re-add pre-minimisation stage to SOMD FEP configuration (`#59 <https://github.com/OpenBioSim/biosimspace/pull/59>`__).
+* Fixed reference to ``plumed.dat`` file in AMBER configuration input for steered molecular dynamics (`#64 <https://github.com/OpenBioSim/biosimspace/pull/64>`__).
+* Fixed :meth:`getDensity <BioSimSpace.Process.Amber.getDensity>` method (`#64 <https://github.com/OpenBioSim/biosimspace/pull/64>`__).
+
+`2023.2.1 <https://github.com/openbiosim/biosimspace/compare/2023.2.0...2023.2.1>`_ - Apr 27 2023
+-------------------------------------------------------------------------------------------------
+
+* Update GitHub CI for our new release process (`#34 <https://github.com/OpenBioSim/biosimspace/pull/34>`__).
+* Fixed :func:`readMolecules <BioSimSpace.IO.readMolecules>` so that can handle a tuple of input files again (`#38 <https://github.com/OpenBioSim/biosimspace/pull/38>`__).
+* Fixed protocol mixin inheritance (`#41 <https://github.com/OpenBioSim/biosimspace/pull/41>`__).
+* Update documentation for new development and release process (`#43 <https://github.com/OpenBioSim/biosimspace/pull/43>`__).
+* Fixed SOMD inverse friction coefficient configuration parameter (`#49 <https://github.com/OpenBioSim/biosimspace/pull/49>`__).
+* Fixes to the hydration free energy tutorial (`#49 <https://github.com/OpenBioSim/biosimspace/pull/49>`__).
+* Fixed bug in SOMD test runner that caused it to return prior to assertions (`#49 <https://github.com/OpenBioSim/biosimspace/pull/49>`__).
+* Expose ``extra_options`` and ``extra_lines`` parameters in :class:`BioSimSpace.FreeEnergy.Relative <BioSimSpace.FreeEnergy.Relative>` (`#49 <https://github.com/OpenBioSim/biosimspace/pull/49>`__).
+
+`2023.2.0 <https://github.com/openbiosim/biosimspace/compare/2023.1.2...2023.2.0>`_ - Mar 30 2023
+-------------------------------------------------------------------------------------------------
+
+* Make sure that system properties are preserved when creating a new Sire system.
+* Fixed an issue with the OpenMM minimisation protocol that meant that the number of steps was ignored (`#12 <https://github.com/OpenBioSim/biosimspace/pull/12>`__).
+* Use native Sire PDB downloading functionality to remove ``pypdb`` dependency.
+* Fixed an issue with SMILES characters in molecule names causing issues for ``gmx grompp`` (`#14 <https://github.com/OpenBioSim/biosimspace/pull/14>`__).
+* Increase default SOMD cut-off since it uses reaction field (`#15 <https://github.com/OpenBioSim/biosimspace/pull/15>`__).
+* No longer downcast molecules to single residues and atoms when searching (`#19 <https://github.com/OpenBioSim/biosimspace/pull/19>`__).
+* Remove velocities when combining molecules if the property isn't present for all molecules (`#21 <https://github.com/OpenBioSim/biosimspace/pull/21>`__).
+* Set default-valued properties when merging molecules to avoid issues with zero values when units are stripped (`#24 <https://github.com/OpenBioSim/biosimspace/pull/24>`__).
+* Remove ``watchdog`` to avoid non-deterministic parsing of AMBER output (`#27 <https://github.com/OpenBioSim/biosimspace/pull/27>`__).
+* Improved handling of disulphide bonds in multi-chain PDBs sharing the same residue numbers (`#28 <https://github.com/OpenBioSim/biosimspace/pull/28>`__).
+* Allow keyword arguments to be passed through to ``lomap`` in :func:`generateNetwork <BioSimSpace.Align.generateNetwork>` (`#29 <https://github.com/OpenBioSim/biosimspace/pull/29>`__).
+* Add mixin classes to allow position restraints to be used with a wider range of protocols (`@xiki-tempula <https://github.com/xiki-tempula>`_) and alchemical simulations for non-production protocols (`@msuruzhon <https://github.com/msuruzhon>`_). Switch to using ``gmx energy`` to parse GROMACS energy records (`@xiki-tempula <https://github.com/xiki-tempula>`_) (`#30 <https://github.com/OpenBioSim/biosimspace/pull/30>`__).
+* Switch to using native RDKit conversion throughout to avoid conversion via an intermediate file format.
+* Expose Sire to OpenMM conversion functionality in :mod:`BioSimSpace.Convert <BioSimSpace.Convert>`.
+* Added Python 3.10 support and now build Python 3.10 packages. This is now the default version of Python for BioSimSpace, and the version we recommend for new workflows. Note that we will drop automatic building of Python 3.8 packages later this year (likely Q3 or Q4). This will be timed to co-incide with when we add Python 3.11 support, and when (we anticipate) conda-forge will drop Python 3.8. Our aim is to only build packages for a maximum of 3 Python versions at a time.
+
+`2023.1.2 <https://github.com/openbiosim/biosimspace/compare/2023.1.1...2023.1.2>`_ - Feb 24 2023
+-------------------------------------------------------------------------------------------------
+
+* Refactor code to use a unified :class:`WorkDir <BioSimSpace._Utils.WorkDir>` class to simplify the creation of working directories (`#2 <https://github.com/OpenBioSim/biosimspace/pull/2>`__).
+* Added :meth:`isSame <BioSimSpace._SireWrappers.System.isSame>` method to compare systems using a sub-set of system and molecular properties. This improves our file caching support, allowing a user to exclude properties when comparing cached systems prior to write, e.g. ignoring coordinates and velocities, if those are the only things that differ between the systems `(#3 <https://github.com/OpenBioSim/biosimspace/pull/3>`__).
+* Added the initial version of :mod:`BioSimSpace.Convert <BioSimSpace.Convert>`, which provides support for converting between native `BioSimSpace`, `Sire <http://sire.openbiosim.org>`__, and `RDKit <https://www.rdkit.org>`__ objects (`#9 <https://github.com/OpenBioSim/biosimspace/pull/9>`__).
+* Fixed several formatting issues with the website documentation.
 
 `2023.1.1 <https://github.com/openbiosim/biosimspace/compare/2023.1.0...2023.1.1>`_ - Feb 07 2023
 -------------------------------------------------------------------------------------------------
 
 * Minor fixes to website documentation.
 * Fixed issues with API documentation introduced by `pydocstringformatter <https://pypi.org/project/pydocstringformatter>`__.
-* Fix globbing of GROMACS trajectory files.
+* Fixed globbing of GROMACS trajectory files.
 
 `2023.1.0 <https://github.com/openbiosim/biosimspace/compare/2022.3.0...2023.1.0>`_ - Feb 03 2023
 -------------------------------------------------------------------------------------------------

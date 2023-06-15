@@ -44,15 +44,10 @@ from .._Utils import _try_import, _have_imported, _assert_imported
 
 import warnings as _warnings
 
-# Suppress numpy warnings from RDKit import.
-_warnings.filterwarnings("ignore", message="numpy.dtype size changed")
-_warnings.filterwarnings("ignore", message="numpy.ndarray size changed")
-_warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
-
 # Suppress duplicate to-Python converted warnings.
 # Both Sire and RDKit register the same converter.
 with _warnings.catch_warnings():
-    _warnings.filterwarnings("ignore")
+    _warnings.simplefilter("ignore")
     _rdkit = _try_import("rdkit")
 
     if _have_imported(_rdkit):
@@ -77,6 +72,7 @@ from .._Exceptions import AlignmentError as _AlignmentError
 from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from .._SireWrappers import Molecule as _Molecule
 
+from .. import Convert as _Convert
 from .. import IO as _IO
 from .. import Units as _Units
 from .. import _Utils
@@ -114,6 +110,7 @@ def generateNetwork(
     links_file=None,
     property_map={},
     n_edges_forced=None,
+    **kwargs,
 ):
     """
     Generate a perturbation network using Lead Optimisation Mappper (LOMAP).
@@ -169,6 +166,10 @@ def generateNetwork(
         will remove the bottom n edges parsed from the LOMAP output file.
         This last option is discouraged as it can cause network cycle
         breakage and disconnecting of ligands/clusters from the network.
+
+    **kwargs : dict
+        A dictionary of keyword arguments to pass through to LOMAP. These
+        will take precedence over any default values that are set.
 
     Returns
     -------
@@ -402,19 +403,24 @@ def generateNetwork(
     else:
         lf = None
 
+    # Create a dictionary of default keyword arguments.
+    default_kwargs = {
+        "name": f"{work_dir}/outputs/lomap",
+        "links_file": lf,
+        "output": True,
+        "output_no_graph": True,
+        "output_no_images": True,
+        "threed": True,
+        "max3d": 3.0,
+        "time": 3,
+        "parallel": 10,
+    }
+
+    # Combine with **kwargs, with those taking precendence.
+    total_kwargs = {**default_kwargs, **kwargs}
+
     # Create the DBMolecules object.
-    db_mol = _lomap.DBMolecules(
-        f"{work_dir}/inputs",
-        name=f"{work_dir}/outputs/lomap",
-        links_file=lf,
-        output=True,
-        output_no_graph=True,
-        output_no_images=True,
-        threed=True,
-        max3d=3.0,
-        time=3,
-        parallel=10,
-    )
+    db_mol = _lomap.DBMolecules(f"{work_dir}/inputs", **total_kwargs)
 
     # Create the similarity matrices.
     strict, loose = db_mol.build_matrices()
@@ -896,36 +902,27 @@ def matchAtoms(
     # Use RDKkit to find the maximum common substructure.
 
     try:
-        # Run inside a temporary directory.
-        with _Utils.cd(work_dir):
-            # Write both molecules to PDB files.
-            _IO.saveMolecules("tmp0", molecule0, "PDB", property_map=property_map0)
-            _IO.saveMolecules("tmp1", molecule1, "PDB", property_map=property_map1)
+        # Convert the molecules to RDKit format.
+        mols = [
+            _Convert.toRDKit(mol0, property_map=property_map0),
+            _Convert.toRDKit(mol1, property_map=property_map1),
+        ]
 
-            # Load the molecules with RDKit.
-            # Note that the C++ function overloading seems to be broken, so we
-            # need to pass all arguments by position, rather than keyword.
-            # The arguments are: "filename", "sanitize", "removeHs", "flavor"
-            mols = [
-                _Chem.MolFromPDBFile("tmp0.pdb", True, False, 0),
-                _Chem.MolFromPDBFile("tmp1.pdb", True, False, 0),
-            ]
+        # Generate the MCS match.
+        mcs = _rdFMCS.FindMCS(
+            mols,
+            atomCompare=_rdFMCS.AtomCompare.CompareAny,
+            bondCompare=_rdFMCS.BondCompare.CompareAny,
+            completeRingsOnly=complete_rings_only,
+            ringMatchesRingOnly=True,
+            matchChiralTag=False,
+            matchValences=False,
+            maximizeBonds=False,
+            timeout=timeout,
+        )
 
-            # Generate the MCS match.
-            mcs = _rdFMCS.FindMCS(
-                mols,
-                atomCompare=_rdFMCS.AtomCompare.CompareAny,
-                bondCompare=_rdFMCS.BondCompare.CompareAny,
-                completeRingsOnly=complete_rings_only,
-                ringMatchesRingOnly=True,
-                matchChiralTag=False,
-                matchValences=False,
-                maximizeBonds=False,
-                timeout=timeout,
-            )
-
-            # Get the common substructure as a SMARTS string.
-            mcs_smarts = _Chem.MolFromSmarts(mcs.smartsString)
+        # Get the common substructure as a SMARTS string.
+        mcs_smarts = _Chem.MolFromSmarts(mcs.smartsString)
 
     except:
         raise RuntimeError("RDKIT MCS mapping failed!")
@@ -1240,7 +1237,7 @@ def flexAlign(
     # Convert the mapping to AtomIdx key:value pairs.
     sire_mapping = _to_sire_mapping(mapping)
 
-    # Create the working directory.
+    # Create a temporary working directory.
     work_dir = _Utils.WorkDir()
 
     # Execute in the working directory.
@@ -1546,26 +1543,11 @@ def viewMapping(
         )
         molecule0 = rmsdAlign(molecule0, molecule1, mapping)
 
-    # Create the working directory.
-    work_dir = _Utils.WorkDir()
-
-    # Write the molecules to PDB format.
-    _IO.saveMolecules(
-        work_dir + "/molecule0", molecule0, "pdb", property_map=property_map0
-    )
-    _IO.saveMolecules(
-        work_dir + "/molecule1", molecule1, "pdb", property_map=property_map0
-    )
+    # Convert the molecules to RDKit format.
+    rdmol0 = _Convert.toRDKit(molecule0, property_map=property_map0)
+    rdmol1 = _Convert.toRDKit(molecule1, property_map=property_map1)
 
     import py3Dmol as _py3Dmol
-
-    # Load the molecules into RDKit.
-    rdmol0 = _Chem.MolFromPDBFile(
-        work_dir + "/molecule0.pdb", sanitize=False, removeHs=False
-    )
-    rdmol1 = _Chem.MolFromPDBFile(
-        work_dir + "/molecule1.pdb", sanitize=False, removeHs=False
-    )
 
     # Set grid view properties.
     viewer0 = (0, 0)
@@ -1765,7 +1747,6 @@ def _score_rdkit_mappings(
 
             # Initialise the mapping for this match.
             mapping = {}
-            sire_mapping = {}
 
             # Loop over all atoms in the match.
             for i, idx0 in enumerate(match0):
@@ -1774,10 +1755,14 @@ def _score_rdkit_mappings(
                 # Add to the mapping.
                 if is_swapped:
                     mapping[idx1] = idx0
-                    sire_mapping[_SireMol.AtomIdx(idx1)] = _SireMol.AtomIdx(idx0)
                 else:
                     mapping[idx0] = idx1
-                    sire_mapping[_SireMol.AtomIdx(idx0)] = _SireMol.AtomIdx(idx1)
+
+            mapping = dict(sorted(mapping.items()))
+            sire_mapping = {
+                _SireMol.AtomIdx(idx0): _SireMol.AtomIdx(idx1)
+                for idx0, idx1 in mapping.items()
+            }
 
             # This is a new mapping:
             if not mapping in mappings:
@@ -1994,7 +1979,9 @@ def _score_sire_mappings(
                 )._sire_object
 
             # Append the mapping to the list.
-            mappings.append(_from_sire_mapping(mapping))
+            mapping = _from_sire_mapping(mapping)
+            mapping = dict(sorted(mapping.items()))
+            mappings.append(mapping)
 
             # We now compute the RMSD between the coordinates of the matched atoms
             # in molecule0 and molecule1.

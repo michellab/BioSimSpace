@@ -173,8 +173,8 @@ class GeneralUnit(_Type):
 
         # The user has passed a value and a unit.
         if len(args) > 1:
-            value = args[0]
-            unit = args[1]
+            value = _args[0]
+            unit = _args[1]
 
             # Check that the value is valid.
             if type(value) is int:
@@ -185,7 +185,7 @@ class GeneralUnit(_Type):
                 raise TypeError("'value' must be of type 'int' or 'float'")
 
             # Delete the value so we can use the same logic below.
-            del args[0]
+            del _args[0]
 
         if len(_args) == 1:
             # The user has passed a Sire GeneralUnit.

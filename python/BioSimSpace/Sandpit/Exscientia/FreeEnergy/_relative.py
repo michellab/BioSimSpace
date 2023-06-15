@@ -55,7 +55,11 @@ if _have_imported(_alchemlyb):
     from alchemlyb.preprocessing.subsampling import (
         statistical_inefficiency as _statistical_inefficiency,
     )
-    from alchemlyb.estimators import MBAR as _AutoMBAR
+
+    try:
+        from alchemlyb.estimators import AutoMBAR as _AutoMBAR
+    except ImportError:
+        from alchemlyb.estimators import MBAR as _AutoMBAR
     from alchemlyb.estimators import TI as _TI
     from alchemlyb.postprocessors.units import to_kcalmol as _to_kcalmol
 
@@ -228,7 +232,7 @@ class Relative:
             # Check that the engine is supported.
             if engine not in self._engines:
                 raise ValueError(
-                    "Unsupported molecular dynamics engine '%s'. "
+                    f"Unsupported molecular dynamics engine {engine}. "
                     "Supported engines are: %r." % ", ".join(self._engines)
                 )
 
@@ -564,7 +568,7 @@ class Relative:
                 "'protocol' must be of type 'BioSimSpace.Protocol.Production'"
             )
         return Relative.analyse(
-            self._work_dir, self._estimator, temperature=temperature
+            str(self._work_dir), self._estimator, temperature=temperature
         )
 
     @staticmethod
@@ -1211,10 +1215,11 @@ class Relative:
         # Initialise list to store the processes
         processes = []
 
-        # Convert to an appropriate AMBER topology. (Required by SOMD for its
-        # FEP setup.)
-        if self._engine == "SOMD":
+        # Convert to an appropriate water topology.
+        if self._engine in ["AMBER", "SOMD"]:
             system._set_water_topology("AMBER", property_map=self._property_map)
+        elif self._engine == "GROMACS":
+            system._set_water_topology("GROMACS", property_map=self._property_map)
 
         # Setup all of the simulation processes for each leg.
 
@@ -1297,9 +1302,9 @@ class Relative:
             else:
                 new_dir = f"{self._work_dir}/lambda_{self._protocol.getLambdaIndex()}"
 
-            # Use the full path.
-            if new_dir[0] != "/":
-                new_dir = _os.getcwd() + "/" + new_dir
+            # Use absolute path.
+            if not _os.path.isabs(new_dir):
+                new_dir = _os.path.abspath(new_dir)
 
             # Delete any existing directories.
             if _os.path.isdir(new_dir):

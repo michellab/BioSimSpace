@@ -18,6 +18,11 @@ At a minimum, derived Process classes should override the base class
 ``start``, ``getSystem``, and ``getTrajectory`` methods to start the process,
 and to get the latest molecular system or trajectory from the running process.
 
+Processes write input and output to a working directory, which can be
+specified using the ``work_dir`` keyword argument. If nothing is specifed,
+then a temporary working directory will be used, which is bound to the lifetime
+of the process.
+
 .. automodule:: BioSimSpace.Process
 
 .. toctree::

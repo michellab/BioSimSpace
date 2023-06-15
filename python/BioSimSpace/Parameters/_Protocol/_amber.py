@@ -57,11 +57,13 @@ else:
 _sys.stderr = _sys.__stderr__
 del _sys
 
+from sire.legacy import IO as _SireIO
 from sire.legacy import Mol as _SireMol
 
 from ... import _amber_home, _gmx_exe, _isVerbose
 from ... import IO as _IO
 from ... import _Utils
+from ...Convert import smiles as _smiles
 from ..._Exceptions import IncompatibleError as _IncompatibleError
 from ..._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from ..._Exceptions import ParameterisationError as _ParameterisationError
@@ -383,9 +385,9 @@ class AmberProtein(_protocol.Protocol):
         # Convert SMILES to a molecule.
         if isinstance(molecule, str):
             try:
-                _molecule = _smiles_to_molecule(molecule, work_dir)
+                _molecule = _smiles(molecule)
             except Exception as e:
-                msg = "Unable to convert SMILES to Molecule using Open Force Field."
+                msg = "Unable to convert SMILES to Molecule using RDKit."
                 if _isVerbose():
                     msg += ": " + getattr(e, "message", repr(e))
                     raise _ThirdPartyError(msg) from e
@@ -399,8 +401,19 @@ class AmberProtein(_protocol.Protocol):
 
         # Write the system to a PDB file.
         try:
-            _IO.saveMolecules(prefix + "leap", _molecule, "pdb", self._property_map)
+            # LEaP expects residue numbering to be ascending and continuous.
+            renumbered_molecule = _SireIO.renumberConstituents(
+                _molecule.toSystem()._sire_object
+            )[0]
+            renumbered_molecule = _Molecule(renumbered_molecule)
+            _IO.saveMolecules(
+                prefix + "leap",
+                renumbered_molecule,
+                "pdb",
+                self._property_map,
+            )
         except Exception as e:
+            raise
             msg = "Failed to write system to 'PDB' format."
             if _isVerbose():
                 msg += ": " + getattr(e, "message", repr(e))
@@ -413,14 +426,14 @@ class AmberProtein(_protocol.Protocol):
 
         # Check to see if any disulphide bonds are present.
         disulphide_bonds = self._get_disulphide_bonds(
-            molecule._sire_object,
+            renumbered_molecule._sire_object,
             self._tolerance,
             self._max_distance,
             self._property_map,
         )
 
         # Get any additional bond records.
-        bond_records = self._generate_bond_records(molecule, self._bonds)
+        bond_records = self._generate_bond_records(renumbered_molecule, self._bonds)
 
         # Remove any duplicate bonds, e.g. if disulphides are specified twice.
         pruned_bond_records = []
@@ -528,9 +541,9 @@ class AmberProtein(_protocol.Protocol):
         # Convert SMILES to a molecule.
         if isinstance(molecule, str):
             try:
-                _molecule = _smiles_to_molecule(molecule, work_dir)
+                _molecule = _smiles(molecule)
             except Exception as e:
-                msg = "Unable to convert SMILES to Molecule using Open Force Field."
+                msg = "Unable to convert SMILES to Molecule using RDKit."
                 if _isVerbose():
                     msg += ": " + getattr(e, "message", repr(e))
                     raise _ThirdPartyError(msg) from e
@@ -660,6 +673,9 @@ class AmberProtein(_protocol.Protocol):
         # Create a list to store the LEaP bond record strings.
         bond_records = []
 
+        # Whether a warning has already been raised.
+        have_warned = False
+
         # Loop over the disulphide bonds and generate the records.
         for bond in disulphides:
             # Get the atoms in the bond.
@@ -667,15 +683,30 @@ class AmberProtein(_protocol.Protocol):
             atom1 = bond.atom1()
 
             # Extract the residue numbers associated with the atoms.
-            res0 = atom0.residue().number().value()
-            res1 = atom1.residue().number().value()
+            num0 = atom0.residue().number().value()
+            num1 = atom1.residue().number().value()
+
+            # Extract the residue indices associated with the atoms.
+            # (Make sure these are one-indexed.)
+            idx0 = atom0.residue().index().value() + 1
+            idx1 = atom1.residue().index().value() + 1
+
+            # If the residue numbers don't match the indices, then warn the user
+            # since the molecule will require renumbering before passing to LEaP.
+            if not have_warned:
+                if idx0 != num0 or idx1 != num1:
+                    _warnings.warn(
+                        "Residue numbers are out of order. Use "
+                        "'sire.legacy.IO.renumberConstituents' correct numbering."
+                    )
+                    have_warned = True
 
             # Extract the atom names.
             name0 = atom0.name().value()
             name1 = atom1.name().value()
 
             # Create the record.
-            record = f"bond mol.{res0}.{name0} mol.{res1}.{name1}"
+            record = f"bond mol.{idx0}.{name0} mol.{idx1}.{name1}"
 
             # Append to the list.
             bond_records.append(record)
@@ -690,7 +721,7 @@ class AmberProtein(_protocol.Protocol):
         Parameters
         ----------
 
-        molecule : Sire.Mol.Molecule
+        molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, str
             The molecule of interest.
 
         bonds : ((class:`Atom <BioSimSpace._SireWrappers.Atom>`, class:`Atom <BioSimSpace._SireWrappers.Atom>`))
@@ -745,6 +776,9 @@ class AmberProtein(_protocol.Protocol):
         # Create a list to store the LEaP bond record strings.
         bond_records = []
 
+        # Whether a warning has already been raised.
+        have_warned = False
+
         # Loop over the bonds and generate the records.
         for atom0, atom1 in bonds:
             # Extract the Sire objects.
@@ -752,15 +786,30 @@ class AmberProtein(_protocol.Protocol):
             atom1 = atom1._sire_object
 
             # Extract the residue numbers associated with the atoms.
-            res0 = atom0.residue().number().value()
-            res1 = atom1.residue().number().value()
+            num0 = atom0.residue().number().value()
+            num1 = atom1.residue().number().value()
+
+            # Extract the residue indices associated with the atoms.
+            # (Make sure these are one-indexed.)
+            idx0 = atom0.residue().index().value() + 1
+            idx1 = atom1.residue().index().value() + 1
+
+            # If the residue numbers don't match the indices, then warn the user
+            # since the molecule will require renumbering before passing to LEaP.
+            if not have_warned:
+                if idx0 != num0 or idx1 != num1:
+                    _warnings.warn(
+                        "Residue numbers are out of order. Use "
+                        "'sire.legacy.IO.renumberConstituents' correct numbering."
+                    )
+                    have_warned = True
 
             # Extract the atom names.
             name0 = atom0.name().value()
             name1 = atom1.name().value()
 
             # Create the record.
-            record = f"bond mol.{res0}.{name0} mol.{res1}.{name1}"
+            record = f"bond mol.{idx0}.{name0} mol.{idx1}.{name1}"
 
             # Append to the list.
             bond_records.append(record)
@@ -892,9 +941,9 @@ class GAFF(_protocol.Protocol):
         if isinstance(molecule, str):
             is_smiles = True
             try:
-                new_mol = _smiles_to_molecule(molecule, str(work_dir))
+                new_mol = _smiles(molecule)
             except Exception as e:
-                msg = "Unable to convert SMILES to Molecule using Open Force Field."
+                msg = "Unable to convert SMILES to Molecule using RDKit."
                 if _isVerbose():
                     msg += ": " + getattr(e, "message", repr(e))
                     raise _ThirdPartyError(msg) from e
@@ -1229,40 +1278,3 @@ def _has_missing_atoms(tleap_file):
                 return True
 
     return False
-
-
-def _smiles_to_molecule(smiles, work_dir):
-    """
-    Convert a SMILES string to a Molecule.
-
-    Parameters
-    ----------
-
-    smiles : str
-        A SMILES representation of a molecule.
-
-    work_dir : str
-        The working directory.
-
-    Returns
-    -------
-
-    molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
-        The BioSimSpace representation of the molecule.
-    """
-
-    # Create an OpenFF molecule from the smiles string.
-    off_molecule = _OpenFFMolecule.from_smiles(smiles)
-
-    # Generate a single conformer for the molecule.
-    off_molecule.generate_conformers(n_conformers=1)
-
-    # Write to file.
-    file = work_dir + "/off.pdb"
-    off_molecule.to_file(file, "pdb")
-
-    # Read PDB back into internal molecular representation.
-    molecule = _IO.readMolecules(file)
-
-    # Assume this is a single molecule.
-    return molecule[0]
