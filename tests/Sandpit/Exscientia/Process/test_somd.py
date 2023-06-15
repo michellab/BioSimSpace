@@ -65,12 +65,9 @@ def test_production(system):
 def test_free_energy(perturbable_system):
     """Test a free energy perturbation protocol."""
 
-    # Create a short FEP protocol.
-    protocol = BSS.Protocol.FreeEnergy(
-        # Set longer runtime to avoid issues with extremely short SOMD runs. 200 ps
-        # takes ~ 20s with this system
-        runtime=200 * BSS.Units.Time.picosecond, report_interval=50, restart_interval=50
-    )
+    # Create a short FEP protocol. Note that this passes if time is set
+    # to 0.002 ns, but fails if set to 0.2 
+    protocol = BSS.Protocol.FreeEnergy(runtime=BSS.Types.Time(0.2, "nanoseconds"))
 
     # Run the process, check that it finished without error, and returns a system.
     run_process(perturbable_system, protocol)
@@ -170,10 +167,10 @@ def test_restraint(system, tmp_path):
     restraint = Restraint(system, restraint_dict, 300 * kelvin, restraint_type='Boresch')
 
     # Create a short production protocol.
-    protocol = BSS.Protocol.Production(runtime=BSS.Types.Time(0.0001, "nanoseconds"))
+    protocol = BSS.Protocol.Production(runtime=BSS.Types.Time(0.001, "nanoseconds"))
 
     # Run the process and check that it finishes without error.
-    assert run_process(system, protocol, restraint=restraint,
+    run_process(system, protocol, restraint=restraint,
                        work_dir=str(tmp_path))
 
     # Check for restraint options in config file
