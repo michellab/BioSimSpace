@@ -28,6 +28,7 @@ Classes
 .. autosummary::
     :toctree: generated/
 
+    Absolute
     Relative
     Restraint
     RestraintSearch
@@ -42,6 +43,7 @@ Functions
     getData
 """
 
+from ._absolute import *
 from ._relative import *
 from ._utils import *
 from ._restraint import *

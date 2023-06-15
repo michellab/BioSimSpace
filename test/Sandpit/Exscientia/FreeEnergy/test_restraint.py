@@ -72,6 +72,14 @@ def restraint():
 
 def test_sanity(restraint):
     """Sanity check."""
+
+def test_numerical_correction(restraint):
+    dG = restraint.getCorrection(method="numerical") / kcal_per_mol
+    assert np.isclose(-7.2, dG, atol=0.1)
+
+def test_analytical_correction(restraint):
+    dG = restraint.getCorrection(method="analytical") / kcal_per_mol
+    assert np.isclose(-7.2, dG, atol=0.1)
     assert isinstance(restraint, Restraint)
 
 
@@ -126,6 +134,33 @@ class TestGromacsOutput:
         assert ak == "1497"
         assert al == "1498"
 
-    def test_correction(self, restraint):
-        dG = restraint.correction / kcal_per_mol
-        assert np.isclose(-7.2, dG, atol=0.1)
+class TestSomdOutput():
+    @staticmethod
+    @pytest.fixture(scope='class')
+    def getRestraintSomd(restraint):
+        boresch_str = restraint.toString(engine='SOMD').split('=')[1].strip()
+        boresch_dict = eval(boresch_str)
+        return boresch_dict
+
+    def test_sanity(self, getRestraintSomd):
+        'Sanity check'
+        boresch_dict = getRestraintSomd
+        assert type(boresch_dict) ==  dict
+
+    def test_indices(self, getRestraintSomd):
+        anchor_points = getRestraintSomd["anchor_points"]
+        assert anchor_points["r1"] == 0
+        assert anchor_points["r2"] == 1
+        assert anchor_points["r3"] == 2
+        assert anchor_points["l1"] == 1495
+        assert anchor_points["l2"] == 1496
+        assert anchor_points["l3"] == 1497
+
+    def test_equil_vals(self, getRestraintSomd):
+        equil_vals = getRestraintSomd["equilibrium_values"]
+        assert equil_vals["r0"] == 5.08
+        assert equil_vals["thetaA0"] == 1.12
+        assert equil_vals["thetaB0"] == 0.69
+        assert equil_vals["phiA0"] == 2.59
+        assert equil_vals["phiB0"] == -1.20
+        assert equil_vals["phiC0"] == 2.63

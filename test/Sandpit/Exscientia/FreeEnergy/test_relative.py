@@ -32,54 +32,6 @@ has_gromacs = BSS._gmx_exe is not None
 url = BSS.tutorialUrl()
 
 
-@pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
-@pytest.mark.skipif(is_alchemlyb is False, reason="Requires alchemlyb to be installed.")
-class Test_gmx_ABFE:
-    @staticmethod
-    @pytest.fixture(scope="class")
-    def freenrg():
-        m = BSS.IO.readMolecules(["test/input/ala.top", "test/input/ala.crd"])[0]
-        decouple_m = decouple(m)
-        solvated = BSS.Solvent.tip3p(
-            molecule=decouple_m, box=3 * [3 * BSS.Units.Length.nanometer]
-        )
-        protocol = FreeEnergyEquilibration(
-            lam=pd.Series(data={"coul": 0.5, "vdw": 0.0}),
-            lam_vals=pd.DataFrame(
-                data={
-                    "coul": [0.0, 0.5, 1.0, 1.0, 1.0],
-                    "vdw": [0.0, 0.0, 0.0, 0.5, 1.0],
-                }
-            ),
-            runtime=_Types.Time(0, "nanoseconds"),
-        )
-        freenrg = BSS.FreeEnergy.Relative(
-            solvated,
-            protocol,
-            engine="GROMACS",
-        )
-        freenrg.run()
-        freenrg.wait()
-        return freenrg
-
-    def test_file_exist(self, freenrg):
-        """Test if all the files are there."""
-        path = pathlib.Path(freenrg.workDir())
-        for i in range(5):
-            assert (path / f"lambda_{i}" / "gromacs.xvg").is_file()
-
-    def test_lambda(self, freenrg):
-        """Test if the xvg files contain the correct lambda."""
-        path = pathlib.Path(freenrg.workDir())
-        for i, (coul, vdw) in enumerate(
-            zip([0.0, 0.5, 1.0, 1.0, 1.0], [0.0, 0.0, 0.0, 0.5, 1.0])
-        ):
-            u_nk = extract_u_nk(path / f"lambda_{i}" / "gromacs.xvg", 300)
-            assert u_nk.index.names == ["time", "coul-lambda", "vdw-lambda"]
-            assert np.isclose(u_nk.index.values[0][1], coul)
-            assert np.isclose(u_nk.index.values[0][2], vdw)
-
-
 @pytest.mark.skipif(
     is_alchemtest is False, reason="Requires alchemtest and alchemlyb to be installed."
 )

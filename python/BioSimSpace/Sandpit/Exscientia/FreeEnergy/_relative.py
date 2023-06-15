@@ -26,16 +26,19 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Relative", "getData"]
 
-from collections import defaultdict as _defaultdict, OrderedDict as _OrderedDict
-import copy as _copy
+
 from glob import glob as _glob
+
+import copy as _copy
 import math as _math
-import shlex as _shlex
-import sys as _sys
+import numpy as _np
 import os as _os
-import re as _re
+import pandas as _pd 
+import shlex as _shlex
 import shutil as _shutil
 import subprocess as _subprocess
+import sys as _sys
+import tempfile as _tempfile
 import warnings as _warnings
 import zipfile as _zipfile
 
@@ -52,7 +55,7 @@ if _have_imported(_alchemlyb):
     from alchemlyb.preprocessing.subsampling import (
         statistical_inefficiency as _statistical_inefficiency,
     )
-    from alchemlyb.estimators import AutoMBAR as _AutoMBAR
+    from alchemlyb.estimators import MBAR as _AutoMBAR
     from alchemlyb.estimators import TI as _TI
     from alchemlyb.postprocessors.units import to_kcalmol as _to_kcalmol
 
@@ -61,18 +64,17 @@ import pandas as _pd
 from sire.legacy.Base import getBinDir as _getBinDir
 from sire.legacy.Base import getShareDir as _getShareDir
 
-from .. import _gmx_exe
-from .. import _is_notebook
 from .._Exceptions import AnalysisError as _AnalysisError
 from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from .._SireWrappers import System as _System
 from .._Utils import cd as _cd
+from .. import _gmx_exe
+from .. import _is_notebook
 from .. import Process as _Process
 from .. import Protocol as _Protocol
 from .. import Types as _Types
 from .. import Units as _Units
 from .. import _Utils
-from ._restraint import Restraint as _Restraint
 
 from ..MD._md import _find_md_engines
 
@@ -117,7 +119,6 @@ class Relative:
         extra_options=None,
         extra_lines=None,
         estimator="MBAR",
-        restraint=None,
         property_map={},
     ):
         """
@@ -171,10 +172,6 @@ class Relative:
 
         estimator : str
             Estimator used for the analysis - must be either 'MBAR' or 'TI'.
-
-        restraint : :class:`Restraint <BioSimSpace.FreeEnergy.Restraint>`
-            The Restraint object that contains information for the ABFE
-            calculations.
 
         property_map : dict
             A dictionary that maps system "properties" to their user defined
@@ -290,11 +287,13 @@ class Relative:
             engine = "SOMD"
 
             # The system must have a single perturbable molecule.
-            if system.nPerturbableMolecules() != 1:
-                raise ValueError(
-                    "The system must contain a single perturbable molecule! "
-                    "Use the 'BioSimSpace.Align' package to map and merge molecules."
-                )
+            if system.nPerturbableMolecules() != 1 and system.nDecoupledMolecules() != 1:
+                raise ValueError("The system must contain a single perturbable or decoupled molecule! "
+                                 "Use the 'BioSimSpace.Align' package to map and merge molecules, or "
+                                 "to mark them for decoupling.")
+            # The system must not have a decoupled and perturbable molecule.
+            if system.nPerturbableMolecules() == 1 and system.nDecoupledMolecules() == 1:
+                raise ValueError("The system must not contain a perturbable molecule and a decoupled molecule!")
 
         # Set the engine.
         self._engine = engine
@@ -319,22 +318,10 @@ class Relative:
             raise TypeError("'property_map' must be of type 'dict'.")
         self._property_map = property_map
 
-        # Check that the restraint is valid.
-        if not restraint is None:
-            if engine not in [
-                "GROMACS",
-            ]:
-                raise NotImplementedError(
-                    f"Restraint for MD Engine {engine} not implemented."
-                )
-            if not isinstance(restraint, _Restraint):
-                raise TypeError(
-                    "'restraint' must be of type 'BioSimSpace.FreeEnergy.Restraint'."
-                )
-            else:
-                # Ensure that the system is compatible with the restraint
-                restraint.system = self._system
-        self._restraint = restraint
+        # The restraint is only intended to be used with the derived class
+        # Absolute, but is set to None here to avoid having to duplicate
+        # _initialise_runner() in Absolute
+        self._restraint = None
 
         # Create fake instance methods for 'analyse' and 'difference'. These
         # pass instance data through to the staticmethod versions.
@@ -641,7 +628,7 @@ class Relative:
         workflow = ABFE(
             units="kcal/mol",
             software=engine,
-            dir=dir,
+            dir=work_dir,
             prefix=prefix,
             suffix=suffix,
             T=temperature / _Units.Temperature.kelvin,
@@ -712,6 +699,8 @@ class Relative:
             )
 
         files = sorted(_glob(work_dir + "/lambda_*/simfile.dat"))
+        if not files:
+            raise FileNotFoundError(f"No simfile.dat files found in lambda_* directories in {work_dir}")
         lambdas = [float(x.split("/")[-2].split("_")[-1]) for x in files]
 
         temperatures = []
@@ -1219,7 +1208,7 @@ class Relative:
             The molecular system.
         """
 
-        # Initialise list to store the processe
+        # Initialise list to store the processes
         processes = []
 
         # Convert to an appropriate AMBER topology. (Required by SOMD for its
@@ -1242,7 +1231,10 @@ class Relative:
         # Nest the working directories inside self._work_dir.
 
         # Name the first directory.
-        first_dir = f"{self._work_dir}/lambda_{self._protocol.getLambdaIndex()}"
+        if self._engine == "SOMD":
+            first_dir = f"{self._work_dir}/lambda_{lam.values[0]:5.4f}"
+        else:
+            first_dir = f"{self._work_dir}/lambda_{self._protocol.getLambdaIndex()}"
 
         # SOMD.
         if self._engine == "SOMD":
@@ -1252,16 +1244,14 @@ class Relative:
             else:
                 platform = "CPU"
 
-            # TODO: Make the restraint valid for Somd
-            first_process = _Process.Somd(
-                system,
-                self._protocol,
-                platform=platform,
-                work_dir=first_dir,
-                property_map=self._property_map,
-                extra_options=self._extra_options,
-                extra_lines=self._extra_lines,
-            )
+            # Check against passing multiple sets of lam vals to SOMD
+            if lam_vals.shape[1] != 1:
+                raise ValueError("SOMD can only handle a single set of lambda values for a given perturbation.")
+
+            first_process = _Process.Somd(system, self._protocol,
+                platform=platform, work_dir=first_dir,
+                property_map=self._property_map, extra_options=self._extra_options,
+                extra_lines=self._extra_lines, restraint=self._restraint)
 
         # GROMACS.
         elif self._engine == "GROMACS":
@@ -1300,7 +1290,12 @@ class Relative:
                 continue
             self._protocol.setLambda(lam)
             # Name the directory.
-            new_dir = f"{self._work_dir}/lambda_{self._protocol.getLambdaIndex()}"
+            if self._engine == "SOMD":
+                new_dir = f"{self._work_dir}/lambda_{lam.values[0]:5.4f}"
+            # If using GROMACS, doesn't make sense to use single value of lambda
+            # when using lambda array.
+            else:
+                new_dir = f"{self._work_dir}/lambda_{self._protocol.getLambdaIndex()}"
 
             # Use the full path.
             if new_dir[0] != "/":
@@ -1321,7 +1316,8 @@ class Relative:
                 with open(new_dir + "/somd.cfg", "r") as f:
                     for line in f:
                         if "lambda_val" in line:
-                            new_config.append("lambda_val = %s\n" % lam)
+                            # Get lam val from the Series
+                            new_config.append("lambda_val = %s\n" % lam.values[0])
                         else:
                             new_config.append(line)
                 with open(new_dir + "/somd.cfg", "w") as f:

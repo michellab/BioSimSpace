@@ -1,8 +1,11 @@
 import math as _math
 import warnings as _warnings
+
 from sire.legacy import Units as _SireUnits
+from ..Units.Time import nanosecond as _nanosecond
 
 from .. import Protocol as _Protocol
+from .. import _gmx_version
 from ..Align._squash import _amber_mask_from_indices, _squashed_atom_mapping
 from .._Exceptions import IncompatibleError as _IncompatibleError
 
@@ -289,6 +292,8 @@ class ConfigFactory:
                     _warnings.warn(
                         "Cannot use a barostat for a vacuum or non-periodic simulation"
                     )
+            else:
+                protocol_dict["ntb"] = 1  # constant volume.
 
         # Temperature control.
         if not isinstance(self.protocol, _Protocol.Minimisation):
@@ -321,12 +326,15 @@ class ConfigFactory:
             protocol_dict["icfe"] = 1  # Free energy mode.
             protocol_dict["ifsc"] = 1  # Use softcore potentials.
             protocol_dict["ntf"] = 1  # Remove SHAKE constraints.
-            protocol = [str(x) for x in self.protocol.getLambdaValues()]
+            lambda_values = self.protocol.getLambdaValues(type="dataframe")
+            protocol = [f"{lam:.5f}" for lam in lambda_values["fep"]]
             protocol_dict["mbar_states"] = len(protocol)  # Number of lambda values.
             protocol_dict["mbar_lambda"] = ", ".join(protocol)  # Lambda values.
-            protocol_dict[
-                "clambda"
-            ] = self.protocol.getLambda()  # Current lambda value.
+            Lambda = self.protocol.getLambda(type="series")
+            protocol_dict["clambda"] = "{:.5f}".format(
+                Lambda["fep"]
+            )  # Current lambda value.
+
             if isinstance(self.protocol, _Protocol.Production):
                 protocol_dict["ifmbar"] = 1  # Calculate MBAR energies.
                 protocol_dict["logdvdl"] = 1  # Output dVdl
@@ -426,7 +434,10 @@ class ConfigFactory:
             if self.protocol.getPressure() is not None:
                 # Don't use barostat for vacuum simulations.
                 if self._has_box and self._has_water:
-                    protocol_dict["pcoupl"] = "c-rescale"  # Barostat type.
+                    if _gmx_version >= 2021:
+                        protocol_dict["pcoupl"] =  "C-rescale"                  # C-rescale barostat.
+                    else:
+                        protocol_dict["pcoupl"] =  "Berendsen"                  # Berendsen barostat.
                     # Do the MC move every 100 steps to be the same as AMBER.
                     protocol_dict["nstpcouple"] = 100
                     # 4ps time constant for pressure coupling.
@@ -561,9 +572,8 @@ class ConfigFactory:
 
         return total_lines
 
-    def generateSomdConfig(self, extra_options=None, extra_lines=None):
-        """
-        Outputs the current protocol in a format compatible with SOMD.
+    def generateSomdConfig(self, extra_options=None, extra_lines=None, restraint=None, perturbation_type=None):
+        """Outputs the current protocol in a format compatible with SOMD.
 
         Parameters
         ----------
@@ -573,6 +583,21 @@ class ConfigFactory:
 
         extra_lines : list
             A list of extra lines to be put at the end of the script.
+
+        restraint : :class:`Restraint <BioSimSpace.FreeEnergy.Restraint>`
+            The Restraint object that contains information for the ABFE
+            calculations.
+
+        perturbation_type : str
+            The type of perturbation to perform. Options are:
+            "full" : A full perturbation of all terms (default option).
+            "discharge_soft" : Perturb all discharging soft atom charge terms (i.e. value->0.0).
+            "vanish_soft" : Perturb all vanishing soft atom LJ terms (i.e. value->0.0).
+            "flip" : Perturb all hard atom terms as well as bonds/angles.
+            "grow_soft" : Perturb all growing soft atom LJ terms (i.e. 0.0->value).
+            "charge_soft" : Perturb all charging soft atom LJ terms (i.e. 0.0->value).
+            "restraint" : Perturb the receptor-ligand restraint strength by linearly 
+                          scaling the force constants (0.0->value).
 
         Returns
         -------
@@ -585,52 +610,71 @@ class ConfigFactory:
         extra_lines = extra_lines if extra_lines is not None else []
 
         # Define some miscellaneous defaults.
-        protocol_dict = {"save coordinates": True}  # Save molecular coordinates.
+        # Save molecular coordinates.
+        protocol_dict = {"save coordinates": True}
 
         # Minimisation.
         if isinstance(self.protocol, _Protocol.Minimisation):
-            protocol_dict["minimise"] = True  # Minimisation simulation.
-            protocol_dict[
-                "minimise maximum iterations"
-            ] = self._steps  # Maximum number of steps.
-            protocol_dict["minimise tolerance"] = 1  # Convergence tolerance.
-            protocol_dict["ncycles"] = 1  # Perform a single SOMD cycle.
-            protocol_dict["nmoves"] = 1  # Perform a single MD move.
+            # Minimisation simulation.
+            protocol_dict["minimise"] = True
+            # Maximum number of steps.
+            protocol_dict["minimise maximum iterations"] = self._steps
+            # Convergence tolerance.
+            protocol_dict["minimise tolerance"] = 1
+            # Perform a single SOMD cycle.
+            protocol_dict["ncycles"] = 1
+            # Perform a single MD move.
+            protocol_dict["nmoves"] = 1
         else:
             # Get the report and restart intervals.
             report_interval = self._report_interval
             restart_interval = self._restart_interval
+            runtime = self.protocol.getRunTime()
 
             # The restart and report intervals must be a multiple of the energy frequency,
             # which is 200 steps.
             if isinstance(self.protocol, _Protocol._FreeEnergyMixin):
-                report_interval = int(200 * _math.ceil(report_interval / 200))
-                restart_interval = int(200 * _math.ceil(restart_interval / 200))
+                if report_interval % 200 != 0:
+                    report_interval = int(200 * _math.ceil(report_interval / 200))
+                    _warnings.warn(f"The report interval is not a multiple of 200. Changing it to {report_interval}.")
+                if restart_interval % 200 != 0:
+                    restart_interval = int(
+                        200 * _math.ceil(restart_interval / 200))
+                    _warnings.warn(f"The restart interval is not a multiple of 200. Changing it to {restart_interval}.")
+                    
+            # The number of moves per cycle - want about 1 cycle per 1 ns.
+            # if the run is less than 1 ns, want 1 cycle for this.
+            if runtime.nanoseconds().value() <= 1:
+                ncycles = int(1)       
+            else:
+                # calculate the number of cycles - rounds up to integer value
+                ncycles = _math.ceil((runtime)/(1 * _nanosecond))
 
-            # The number of moves per cycle.
-            nmoves = report_interval
+            # number of moves should be so that nmoves * ncycles is equal to self._steps.
+            nmoves = int(max(1, ((self._steps) // (ncycles))))
 
-            # The number of cycles, so that nmoves * ncycles is equal to self._steps.
-            ncycles = max(1, self._steps // nmoves)
+            if self._steps != (nmoves * ncycles):
+                _warnings.warn(f"The runtime is not resulting in a suitable cycle/moves/steps combination. Changing it to {(nmoves * ncycles)*self.protocol.getTimeStep().nanoseconds()}.")
 
-            # How many cycles need to pass before we write a trajectory frame.
+            # Work out how many cycles need to pass before we write a trajectory frame.
             cycles_per_frame = max(1, restart_interval // nmoves)
 
             # How many time steps need to pass before we write a trajectory frame.
+            # The buffer frequency must be an integer multiple of the frequency
+            # at which free energies are written, which is 200 steps.
             buffer_freq = int(nmoves * ((restart_interval / nmoves) % 1))
 
-            protocol_dict["ncycles"] = ncycles  # The number of SOMD cycles.
-            protocol_dict["nmoves"] = nmoves  # The number of moves per cycle.
-            protocol_dict[
-                "ncycles_per_snap"
-            ] = cycles_per_frame  # Cycles per trajectory write.
-            protocol_dict[
-                "buffered coordinates frequency"
-            ] = buffer_freq  # Buffering frequency.
+            # The number of SOMD cycles.
+            protocol_dict["ncycles"] = ncycles
+            # The number of moves per cycle.
+            protocol_dict["nmoves"] = nmoves
+            # Cycles per trajectory write.
+            protocol_dict["ncycles_per_snap"] = cycles_per_frame
+            # Buffering frequency.
+            protocol_dict["buffered coordinates frequency"] = buffer_freq
             timestep = self.protocol.getTimeStep().femtoseconds().value()
-            protocol_dict["timestep"] = (
-                "%.2f femtosecond" % timestep
-            )  # Integration time step.
+            # Integration time step.
+            protocol_dict["timestep"] = "%.2f femtosecond" % timestep
 
             # Use the Langevin Middle integrator if it is a 4 fs timestep
             if timestep >= 4.00:
@@ -646,8 +690,8 @@ class ConfigFactory:
         if not self._has_box or not self._has_water:
             protocol_dict["cutoff type"] = "cutoffnonperiodic"  # No periodic box.
         else:
-            protocol_dict["cutoff type"] = "cutoffperiodic"  # Periodic box.
-        protocol_dict["cutoff distance"] = "8 angstrom"  # Non-bonded cut-off.
+            protocol_dict["cutoff type"] = "cutoffperiodic"                     # Periodic box.
+        protocol_dict["cutoff distance"] = "12 angstrom"                        # Non-bonded cut-off.
 
         # Restraints.
         if (
@@ -704,23 +748,33 @@ class ConfigFactory:
 
             protocol = [str(x) for x in self.protocol.getLambdaValues()]
             protocol_dict["lambda array"] = ", ".join(protocol)
-            protocol_dict[
-                "lambda_val"
-            ] = self.protocol.getLambda()  # Current lambda value.
-            res_num = (
-                self.system.search("perturbable")
-                .residues()[0]
-                ._sire_object.number()
-                .value()
-            )
-            protocol_dict[
-                "perturbed residue number"
-            ] = res_num  # Perturbed residue number.
+            protocol_dict[ "lambda_val" ] = self.protocol.getLambda()  # Current lambda value.
+
+            try:  # RBFE
+                res_num = (
+                    self.system.search("perturbable")
+                    .residues()[0]
+                    ._sire_object.number()
+                    .value()
+                )
+            except ValueError:  # No perturbable molecule - try ABFE
+                res_num = self.system.getDecoupledMolecules()[0]._sire_object.number().value()
+
+            protocol_dict[ "perturbed residue number" ] = res_num  # Perturbed residue number.
+
 
         # Put everything together in a line-by-line format.
         total_dict = {**protocol_dict, **extra_options}
         total_lines = [
             f"{k} = {v}" for k, v in total_dict.items() if v is not None
         ] + extra_lines
+
+        # Restraint
+        if restraint:
+            total_lines.append("use boresch restraints = True")
+            total_lines.append(restraint.toString(engine='SOMD'))
+            # If we are turning on the restraint, need to specify this in the config file
+            if perturbation_type == "restraint":
+                total_lines.append("turn on receptor-ligand restraints mode = True")
 
         return total_lines
