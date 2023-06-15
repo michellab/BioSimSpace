@@ -163,7 +163,7 @@ class FreeEnergyEquilibration(_Equilibration, _FreeEnergyMixin, _HmrMixin):
         else:
             return ("<BioSimSpace.Protocol.FreeEnergyEquilibration: lam=%5.4f, lam_vals=%r, timestep=%s, "
                     "runtime=%s, temperature_start=%s, temperature_end=%s, pressure=%s, report_interval=%d, "
-                    "restart_interval=%d, restart_interval=%d, restraint=%r, "
+                    "restart_interval=%d, restraint=%r, "
                     "force_constant=%3.2f kcal_per_mol/angstrom**2, restart=%r>"
                     ) % (self._lambda, self._lambda_vals, self._timestep, self._runtime,
                          self._temperature_start, self._temperature_end, self._pressure, self._report_interval,
@@ -176,7 +176,7 @@ class FreeEnergyEquilibration(_Equilibration, _FreeEnergyMixin, _HmrMixin):
         else:
             return ("<BioSimSpace.Protocol.FreeEnergyEquilibration(lam=%5.4f, lam_vals=%r, timestep=%s, "
                     "runtime=%s, temperature_start=%s, temperature_end=%s, pressure=%s, report_interval=%d, "
-                    "restart_interval=%d, restart_interval=%d,restraint=%r, force_constant=%3.2f, restart=%r)"
+                    "restart_interval=%d, restraint=%r, force_constant=%3.2f, restart=%r)"
                     ) % (self._lambda, self._lambda_vals, self._timestep, self._runtime,
                          self._temperature_start, self._temperature_end, self._pressure, self._report_interval,
                          self._restart_interval, self._restraint, self._force_constant.value(), self._restart)
