@@ -580,8 +580,9 @@ def plotOverlapMatrix(overlap):
             color = "white" if overlap[i][j] > 0.3 else "black"
             ax.text(j, i, "{:.2f}".format(overlap[i][j]), ha="center", va="center", fontsize=10, color=color)
 
-    # Create a colorbar. Reduce the height of the colorbar to match the figure.
+    # Create a colorbar. Reduce the height of the colorbar to match the figure and remove the border.
     cbar = ax.figure.colorbar(im, ax=ax, cmap=cmap, norm=norm, boundaries=bounds, ticks=bounds, shrink=0.7)
+    cbar.outline.set_visible(False)
 
     # Set the axis labels.
     # Set the x axis at the top of the plot.
