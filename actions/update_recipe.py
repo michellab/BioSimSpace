@@ -35,6 +35,13 @@ def run_cmd(cmd):
 
 gitdir = os.path.join(srcdir, ".git")
 
+# Get the BSS remote.
+remote = run_cmd(
+    f"git --git-dir={gitdir} --work-tree={srcdir} config --get remote.origin.url"
+)
+remote += ".git"
+print(remote)
+
 # Get the BSS branch.
 branch = run_cmd(
     f"git --git-dir={gitdir} --work-tree={srcdir} rev-parse --abbrev-ref HEAD"
@@ -67,6 +74,7 @@ with open(recipe, "w") as FILE:
         elif line.find("BSS_RUN_REQUIREMENTS") != -1:
             line = run_reqs
         else:
+            line = line.replace("BSS_REMOTE", remote)
             line = line.replace("BSS_BRANCH", branch)
 
         FILE.write(line)
