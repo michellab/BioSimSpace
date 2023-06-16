@@ -565,8 +565,13 @@ def plotOverlapMatrix(overlap):
     else:
         fig, ax = _plt.subplots(figsize=(num_rows/2, num_rows/2), dpi=300)
 
-    # Create the heatmap.
+    # Create the heatmap. Separate the cells with white lines.
     im = ax.imshow(overlap, cmap=cmap, norm=norm)
+    for i in range(num_rows-1):
+        for j in range(num_rows-1):
+            # Make sure these are on the edges of the cells.
+            ax.axhline(i+0.5, color="white", linewidth=0.5)
+            ax.axvline(j+0.5, color="white", linewidth=0.5)
 
     # Label each cell with the overlap value.
     for i in range(num_rows):
@@ -575,18 +580,27 @@ def plotOverlapMatrix(overlap):
             color = "white" if overlap[i][j] > 0.3 else "black"
             ax.text(j, i, "{:.2f}".format(overlap[i][j]), ha="center", va="center", fontsize=10, color=color)
 
-    # Create a colorbar. We want the boundaries to be unevenly spaced, according to their values.
-    cbar = ax.figure.colorbar(im, ax=ax, cmap=cmap, norm=norm, boundaries=bounds, ticks=bounds)
+    # Create a colorbar. Reduce the height of the colorbar to match the figure.
+    cbar = ax.figure.colorbar(im, ax=ax, cmap=cmap, norm=norm, boundaries=bounds, ticks=bounds, shrink=0.7)
 
     # Set the axis labels.
+    # Set the x axis at the top of the plot.
     _plt.xlabel(r"$\lambda$ Index")
+    ax.xaxis.set_label_position("top")
     _plt.ylabel(r"$\lambda$ Index")
 
     ticks = [x for x in range(0, num_rows)]
 
     # Set ticks every lambda window.
     _plt.xticks(ticks)
+    ax.xaxis.tick_top()
     _plt.yticks(ticks)
+
+    # Remove the borders.
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.spines["bottom"].set_visible(False)
+    ax.spines["left"].set_visible(False)
 
     # Create a tight layout to trim whitespace.
     fig.tight_layout()
