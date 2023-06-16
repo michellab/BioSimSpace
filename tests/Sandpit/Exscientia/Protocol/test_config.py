@@ -290,7 +290,10 @@ class TestGromacsABFE:
             mdp_text = f.read()
             assert "sc-alpha = 0.5" in mdp_text
 
-
+@pytest.mark.skipif(
+    has_antechamber is False or has_openff is False,
+    reason="Requires ambertools/antechamber and openff to be installed",
+)
 class TestSomdABFE():
     @staticmethod
     @pytest.fixture(scope='class')

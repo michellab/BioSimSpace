@@ -100,6 +100,7 @@ class Test_gmx_ABFE():
             assert np.isclose(u_nk.index.values[0][1], coul)
             assert np.isclose(u_nk.index.values[0][2], vdw)
 
+@pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
 class Test_Somd_ABFE():
     @staticmethod
     @pytest.fixture(scope='class')
@@ -151,7 +152,6 @@ class Test_Somd_ABFE():
         time.sleep(25)
         return freenrg
 
-    #@pytest.mark.xfail(reason="freenrg.wait() doesn't work for SOMD, so files aren't created in time.")
     def test_files_exist(self, freenrg):
         '''Test if the files have been created. Note that e.g. gradients.dat
         are not created until later in the simulation, so their presence is 

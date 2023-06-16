@@ -140,6 +140,13 @@ class TestMDRestraintsGenerator_analysis:
             assert "intermolecular_interactions" in f.read()
 
 
+@pytest.mark.skipif(
+    (
+        has_gromacs is False
+        or has_mdanalysis is False
+    ),
+    reason="Requires MDAnalysis and Gromacs to be installed.",
+)
 class TestBSS_analysis():
     """Test selection of restraints using the inbuilt BSS method."""
     @staticmethod
