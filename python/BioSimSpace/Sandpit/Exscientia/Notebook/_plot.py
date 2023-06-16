@@ -26,6 +26,8 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["plot", "plotContour", "plotOverlapMatrix"]
 
+import numpy as _np
+
 from warnings import warn as _warn
 from os import environ as _environ
 
@@ -515,7 +517,7 @@ def plotOverlapMatrix(overlap):
     Parameters
     ----------
 
-    overlap : [ [ float, float, ... ] ]
+    overlap : List of List of float, or 2D numpy array of float
         The overlap matrix.
     """
 
@@ -531,41 +533,54 @@ def plotOverlapMatrix(overlap):
             "to load. Please check your matplotlib installation."
         )
         return None
-
-    # Validate the input.
-
-    if not isinstance(overlap, (list, tuple)):
-        raise TypeError("The 'overlap' matrix must be a list of list types!")
+    
+    # Validate the input
+    if not isinstance(overlap, (list, tuple, _np.ndarray)):
+        raise TypeError("The 'overlap' matrix must be a list of list types, or a numpy array!")
 
     # Store the number of rows.
     num_rows = len(overlap)
 
     # Check the data in each row.
     for row in overlap:
-        if not isinstance(row, (list, tuple)):
+        if not isinstance(row, (list, tuple, _np.ndarray)):
             raise TypeError("The 'overlap' matrix must be a list of list types!")
         if len(row) != num_rows:
             raise ValueError("The 'overlap' matrix must be square!")
         if not all(isinstance(x, float) for x in row):
             raise TypeError("The 'overlap' matrix must contain 'float' types!")
 
-    # Set the colour map.
+    # Convert to a numpy array - no issues if this is already an array.
+    overlap = _np.array(overlap)
+
+    # Set the colour map. We want the color boundaries at 0.025, 0.1, and 0.3.
     cmap = _colors.ListedColormap(["#FBE8EB", "#88CCEE", "#78C592", "#117733"])
+    bounds=[0, 0.025, 0.1, 0.3, 1.0]
+    norm = _colors.BoundaryNorm(bounds, cmap.N)
 
-    # Create the figure and axis.
-    fig, ax = _plt.subplots()
+    # Create the figure and axis. Use a default size for fewer than 16 windows,
+    # otherwise scale the figure size to the number of windows.
+    if num_rows < 16:
+        fig, ax = _plt.subplots(figsize=(8, 8), dpi=300)
+    else:
+        fig, ax = _plt.subplots(figsize=(num_rows/2, num_rows/2), dpi=300)
 
-    # Create the image.
-    im = ax.imshow(overlap, origin="lower", cmap=cmap)
+    # Create the heatmap.
+    im = ax.imshow(overlap, cmap=cmap, norm=norm)
 
-    # Annotate the cells with the value of the overlap.
-    for x in range(0, num_rows):
-        for y in range(0, num_rows):
-            text = ax.text(y, x, f"{overlap[x][y]:.2f}", ha="center", color="k")
+    # Label each cell with the overlap value.
+    for i in range(num_rows):
+        for j in range(num_rows):
+            # For numbers on the dark green background (> 0.3), use white text.
+            color = "white" if overlap[i][j] > 0.3 else "black"
+            ax.text(j, i, "{:.2f}".format(overlap[i][j]), ha="center", va="center", fontsize=10, color=color)
+
+    # Create a colorbar. We want the boundaries to be unevenly spaced, according to their values.
+    cbar = ax.figure.colorbar(im, ax=ax, cmap=cmap, norm=norm, boundaries=bounds, ticks=bounds)
 
     # Set the axis labels.
-    _plt.xlabel(r"$\lambda$ window")
-    _plt.ylabel(r"$\lambda$ window")
+    _plt.xlabel(r"$\lambda$ Index")
+    _plt.ylabel(r"$\lambda$ Index")
 
     ticks = [x for x in range(0, num_rows)]
 
