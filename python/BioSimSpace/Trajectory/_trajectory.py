@@ -908,7 +908,7 @@ def _split_molecules(frame, pdb, reference, work_dir, property_map={}):
             else:
                 raise IOError(msg) from None
 
-    elif "GroTop" in formats:
+    elif "GroTop" in formats or "GROTOP" in formats:
         try:
             top = _SireIO.GroTop(reference._sire_object)
             top.writeToFile(top_file)
