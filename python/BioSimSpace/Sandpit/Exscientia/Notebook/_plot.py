@@ -538,9 +538,9 @@ def plotContour(x, y, z, xlabel=None, ylabel=None, zlabel=None):
     return _plt.show()
 
 
-def plotOverlapMatrix(overlap,
-                      continuous_cbar=False,
-                      color_bar_cutoffs=[0.03, 0.1, 0.3]):
+def plotOverlapMatrix(
+    overlap, continuous_cbar=False, color_bar_cutoffs=[0.03, 0.1, 0.3]
+):
     """
     Plot the overlap matrix from a free-energy perturbation analysis.
 
@@ -574,7 +574,9 @@ def plotOverlapMatrix(overlap,
 
     # Validate the input
     if not isinstance(overlap, (list, tuple, _np.ndarray)):
-        raise TypeError("The 'overlap' matrix must be a list of list types, or a numpy array!")
+        raise TypeError(
+            "The 'overlap' matrix must be a list of list types, or a numpy array!"
+        )
 
     # Convert to a numpy array - no issues if this is already an array.
     overlap = _np.array(overlap)
@@ -595,12 +597,16 @@ def plotOverlapMatrix(overlap,
     if not isinstance(continuous_cbar, bool):
         raise TypeError("The 'continuous_cbar' option must be a boolean!")
     if not isinstance(color_bar_cutoffs, (list, tuple, _np.ndarray)):
-        raise TypeError("The 'color_bar_cutoffs' option must be a list of floats "
-                        " or a numpy array when 'continuous_cbar' is False!")
+        raise TypeError(
+            "The 'color_bar_cutoffs' option must be a list of floats "
+            " or a numpy array when 'continuous_cbar' is False!"
+        )
     if not all(isinstance(x, float) for x in color_bar_cutoffs):
         raise TypeError("The 'color_bar_cutoffs' option must be a list of floats!")
     if len(color_bar_cutoffs) > 3:
-        raise ValueError("The 'color_bar_cutoffs' option must contain no more than 3 elements!")
+        raise ValueError(
+            "The 'color_bar_cutoffs' option must contain no more than 3 elements!"
+        )
 
     # Add 0 and 1 to the colour bar cutoffs.
     if color_bar_cutoffs is not None:
@@ -609,42 +615,47 @@ def plotOverlapMatrix(overlap,
     # Tuple of colours and associated font colours.
     # The last and first colours are for the top and bottom of the scale
     # for the continuous colour bar, but are ignored for the discrete bar.
-    all_colors = (("#FBE8EB", "black"), # Lighter pink
-                  ("#FFD3E0", "black"),
-                  ("#88CCEE", "black"),
-                  ("#78C592", "black"),
-                  ("#117733", "white"),
-                  ("#004D00", "white")) # Darker green
+    all_colors = (
+        ("#FBE8EB", "black"),  # Lighter pink
+        ("#FFD3E0", "black"),
+        ("#88CCEE", "black"),
+        ("#78C592", "black"),
+        ("#117733", "white"),
+        ("#004D00", "white"),
+    )  # Darker green
 
     # Set the colour map.
     if continuous_cbar:
         # Create a color map using the extended palette and positions
-        box_colors = [all_colors[i][0] for i in range(len(color_bounds)+1)]
-        cmap = _colors.LinearSegmentedColormap.from_list("CustomMap", list(zip(color_bounds, box_colors)))
+        box_colors = [all_colors[i][0] for i in range(len(color_bounds) + 1)]
+        cmap = _colors.LinearSegmentedColormap.from_list(
+            "CustomMap", list(zip(color_bounds, box_colors))
+        )
 
         # Normalise the same way each time so that plots are always comparable.
         norm = _colors.Normalize(vmin=0, vmax=1)
     else:
         # Throw away the first and last colours.
         box_colors = [colors[0] for colors in all_colors[1:-1]]
-        cmap = _colors.ListedColormap([box_colors[i] for i in range(len(color_bounds)-1)])
+        cmap = _colors.ListedColormap(
+            [box_colors[i] for i in range(len(color_bounds) - 1)]
+        )
         norm = _colors.BoundaryNorm(color_bounds, cmap.N)
-
 
     # Create the figure and axis. Use a default size for fewer than 16 windows,
     # otherwise scale the figure size to the number of windows.
     if num_rows < 16:
         fig, ax = _plt.subplots(figsize=(8, 8), dpi=300)
     else:
-        fig, ax = _plt.subplots(figsize=(num_rows/2, num_rows/2), dpi=300)
+        fig, ax = _plt.subplots(figsize=(num_rows / 2, num_rows / 2), dpi=300)
 
     # Create the heatmap. Separate the cells with white lines.
     im = ax.imshow(overlap, cmap=cmap, norm=norm)
-    for i in range(num_rows-1):
-        for j in range(num_rows-1):
+    for i in range(num_rows - 1):
+        for j in range(num_rows - 1):
             # Make sure these are on the edges of the cells.
-            ax.axhline(i+0.5, color="white", linewidth=0.5)
-            ax.axvline(j+0.5, color="white", linewidth=0.5)
+            ax.axhline(i + 0.5, color="white", linewidth=0.5)
+            ax.axvline(j + 0.5, color="white", linewidth=0.5)
 
     # Label each cell with the overlap value.
     for i in range(num_rows):
@@ -656,23 +667,29 @@ def plotOverlapMatrix(overlap,
                 if bound > overlap_val:
                     break
             text_color = all_colors[1:-1][idx - 1][1]
-            ax.text(j, i, "{:.2f}".format(overlap[i][j]), ha="center", va="center", fontsize=10, color=text_color)
+            ax.text(
+                j,
+                i,
+                "{:.2f}".format(overlap[i][j]),
+                ha="center",
+                va="center",
+                fontsize=10,
+                color=text_color,
+            )
 
     # Create a colorbar. Reduce the height of the colorbar to match the figure and remove the border.
     if continuous_cbar:
-        cbar = ax.figure.colorbar(im,
-                                ax=ax,
-                                cmap=cmap,
-                                norm=norm,
-                                shrink=0.7)
+        cbar = ax.figure.colorbar(im, ax=ax, cmap=cmap, norm=norm, shrink=0.7)
     else:
-        cbar = ax.figure.colorbar(im,
-                                ax=ax,
-                                cmap=cmap,
-                                norm=norm,
-                                boundaries=color_bounds,
-                                ticks=color_bounds,
-                                shrink=0.7)
+        cbar = ax.figure.colorbar(
+            im,
+            ax=ax,
+            cmap=cmap,
+            norm=norm,
+            boundaries=color_bounds,
+            ticks=color_bounds,
+            shrink=0.7,
+        )
     cbar.outline.set_visible(False)
 
     # Set the axis labels.
