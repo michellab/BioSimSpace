@@ -2076,7 +2076,9 @@ class Gromacs(_process.Process):
         self._energy_keys = keys
         self._energy_dict["TIME"] = []
         for key in keys:
-            self._energy_dict[self._sanitise_energy_term(key)] = []
+            # Skip surface tension records, since there is no appropriate general unit.
+            if key != "#Surf*SurfTen":
+                self._energy_dict[self._sanitise_energy_term(key)] = []
 
     @staticmethod
     def _parse_energy_terms(text):
@@ -2170,7 +2172,7 @@ class Gromacs(_process.Process):
         ]
         for line in lines:
             terms = line.split()
-            if len(terms) > 1:
+            if len(terms) > 1 and terms[0] != "#Surf*SurfTen":
                 unit = terms[-1][1:-1]
                 if unit == "K":
                     units.append(_Units.Temperature.kelvin)
@@ -2188,12 +2190,12 @@ class Gromacs(_process.Process):
                     units.append(_Units.Pressure.bar * _Units.Length.nanometer)
                 elif unit == "nm/ps":
                     units.append(_Units.Length.nanometer / _Units.Time.picosecond)
+                elif unit == "kg/m^3":
+                    units.append(_Types._GeneralUnit("kg/m3"))
                 else:
-                    # TODO: set this to a unitless unit probabily from BSS.Types._GeneralUnit
-                    units.append(_Units.Length.nanometer)
-                    # kg/m^3 cannot be parsed as there is no mass unit.
+                    units.append(_Types.GeneralUnit("m/m"))
                     _warnings.warn(
-                        f"Unit {unit} cannot be parsed, record the unit as unitless."
+                        f"Unit {unit} cannot be parsed, recording the unit as unitless."
                     )
         return units
 
