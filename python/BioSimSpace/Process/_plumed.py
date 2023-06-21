@@ -328,7 +328,7 @@ class Plumed:
                             # Check the upper bound is greater than dim/2 for
                             # each dimension.
                             for dim in dimensions:
-                                if value >= 0.5 * dim:
+                                if value >= 0.5 * dim.value():
                                     message = (
                                         "The simulation box is too small for the funnel. "
                                         "Try reducing the upper bound of the collective "
