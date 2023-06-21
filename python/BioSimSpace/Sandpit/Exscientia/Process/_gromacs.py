@@ -1781,8 +1781,7 @@ class Gromacs(_process.Process):
         length : :class:`Length <BioSimSpace.Types.Length>`
             The constrained RMSD.
         """
-        # TODO: the constrained RMSD is a relative quantity and is unitless.
-        return self.getRecord("CONSTRRMSD", time_series, _Units.Length.nanometer, block)
+        return self.getRecord("CONSTRRMSD", time_series, None, block)
 
     def getCurrentConstraintRMSD(self, time_series=False):
         """
@@ -2245,7 +2244,7 @@ class Gromacs(_process.Process):
                 elif unit == "kg/m^3":
                     units.append(_Types._GeneralUnit("kg/m3"))
                 else:
-                    units.append(_Types.GeneralUnit("m/m"))
+                    units.append(1.0)
                     _warnings.warn(
                         f"Unit {unit} cannot be parsed, recording the unit as unitless."
                     )
