@@ -164,9 +164,13 @@ def plot(
         raise TypeError("'x' must be of type 'list'")
 
     else:
-        # Make sure all records are of the same type.
-        _type = type(x[0])
-        if not all(isinstance(xx, _type) for xx in x):
+        # Make sure all records are of the same type. Missing data will be
+        # None, so find the first unit type.
+        for idx, xx in enumerate(x):
+            if xx is not None:
+                _type = type(xx)
+                break
+        if not all(isinstance(xx, (_type, type(None))) for xx in x):
             raise TypeError("All 'x' data values must be of same type")
 
         # Convert int to float.
@@ -181,11 +185,11 @@ def plot(
 
         # Make sure any associated error has the same unit.
         if xerr is not None:
-            if not all(isinstance(xx, _type) for xx in xerr):
+            if not all(isinstance(xx, (_type, type(None))) for xx in xerr):
                 raise TypeError("All 'xerr' values must be of same type as x data")
 
         # Does this type have units?
-        if isinstance(x[0], _Type):
+        if isinstance(x[idx], _Type):
             is_unit_x = True
 
     # The y argument must be a list or tuple of data records.
@@ -193,9 +197,13 @@ def plot(
         raise TypeError("'y' must be of type 'list'")
 
     else:
-        # Make sure all records are of the same type.
-        _type = type(y[0])
-        if not all(isinstance(yy, _type) for yy in y):
+        # Make sure all records are of the same type. Missing data will be
+        # None, so find the first unit type.
+        for idx, yy in enumerate(y):
+            if yy is not None:
+                _type = type(yy)
+                break
+        if not all(isinstance(yy, (_type, type(None))) for yy in y):
             raise TypeError("All 'y' data values must be of same type")
 
         # Convert int to float.
@@ -210,12 +218,32 @@ def plot(
 
         # Make sure any associated error has the same unit.
         if yerr is not None:
-            if not all(isinstance(yy, _type) for yy in yerr):
+            if not all(isinstance(yy, (_type, type(None))) for yy in yerr):
                 raise TypeError("All 'yerr' values must be of same type as y data")
 
         # Does this type have units?
-        if isinstance(y[0], _Type):
+        if isinstance(y[idx], _Type):
             is_unit_y = True
+
+    # Strip any missing values.
+
+    # x-dimension
+    idx = [i for i, v in enumerate(x) if v is not None]
+    x = list(filter(lambda v: v is not None, x))
+    y = [y[i] for i in idx]
+    if xerr is not None:
+        xerr = [xerr[i] for i in idx]
+    if yerr is not None:
+        yerr = [xerr[i] for i in idx]
+
+    # y-dimension
+    idx = [i for i, v in enumerate(y) if v is not None]
+    y = list(filter(lambda v: v is not None, y))
+    x = [x[i] for i in idx]
+    if xerr is not None:
+        xerr = [xerr[i] for i in idx]
+    if yerr is not None:
+        yerr = [yerr[i] for i in idx]
 
     # Lists must contain the same number of records.
     # Truncate the longer list to the length of the shortest.
