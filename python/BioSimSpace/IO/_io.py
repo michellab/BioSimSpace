@@ -675,7 +675,7 @@ def saveMolecules(filebase, system, fileformat, property_map={}, **kwargs):
         # Warn the user if any molecules are parameterised with a force field
         # that uses geometric combining rules. While we can write this to file
         # the information is lost on read.
-        if format == "PRM7":
+        if format.upper() == "PRM7":
             # Get the name of the "forcefield" property.
             forcefield = _property_map.get("forcefield", "forcefield")
 
@@ -700,13 +700,13 @@ def saveMolecules(filebase, system, fileformat, property_map={}, **kwargs):
             # Make sure AMBER and GROMACS files have the expected water topology
             # and save GROMACS files with an extension such that they can be run
             # directly by GROMACS without needing to be renamed.
-            if format == "PRM7":
+            if format.upper() == "PRM7":
                 system_copy = system.copy()
                 system_copy._set_water_topology("AMBER", _property_map)
                 file = _SireIO.MoleculeParser.save(
                     system_copy._sire_object, filebase, _property_map
                 )
-            elif format == "GroTop":
+            elif format.upper() == "GROTOP":
                 system_copy = system.copy()
                 system_copy._set_water_topology("GROMACS", _property_map)
                 file = _SireIO.MoleculeParser.save(
@@ -715,7 +715,7 @@ def saveMolecules(filebase, system, fileformat, property_map={}, **kwargs):
                 new_file = file.replace("grotop", "top")
                 _os.rename(file, new_file)
                 file = [new_file]
-            elif format == "Gro87":
+            elif format.upper() == "GRO87":
                 # Write to 3dp by default, unless greater precision is
                 # requested by the user.
                 if "precision" not in _property_map:

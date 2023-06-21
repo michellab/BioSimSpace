@@ -34,6 +34,7 @@ import os as _os
 import re as _re
 import time as _time
 import shutil as _shutil
+import tempfile as _tempfile
 import timeit as _timeit
 import warnings as _warnings
 
@@ -599,12 +600,19 @@ class Amber(_process.Process):
             else:
                 is_lambda1 = False
 
-            # Create a new molecular system from the restart file.
-            new_system = _System(
-                _SireIO.MoleculeParser.read(
-                    [restart, self._top_file], self._property_map
+            # Copy the restart file to a temporary location. Sire streams from
+            # binary files with the same path, so we need to ensure that a new
+            # stream is created each time.
+            with _tempfile.TemporaryDirectory() as tmp_dir:
+                tmp_file = f"{tmp_dir}/{self._name}.crd"
+                _shutil.copyfile(restart, tmp_file)
+
+                # Create a new molecular system from the restart file.
+                new_system = _System(
+                    _SireIO.MoleculeParser.read(
+                        [tmp_file, self._top_file], self._property_map
+                    )
                 )
-            )
 
             # Create a copy of the existing system object.
             old_system = self._system.copy()
