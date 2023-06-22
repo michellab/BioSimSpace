@@ -341,3 +341,8 @@ class TestsaveMetric:
     def test_u_nk_parquet(self, setup):
         df = pd.read_parquet(f"{setup.workDir()}/u_nk.parquet")
         assert df.shape == (50, 16)
+
+    def test_no_output(self, system):
+        process = BSS.Process.Amber(system, BSS.Protocol.Production())
+        with pytest.warns(match="Simulation didn't produce any output."):
+            process.saveMetric()

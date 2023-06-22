@@ -1687,7 +1687,12 @@ class Process:
             length = min(length_dict.values())
             new_datadict = {key: value[:length] for key, value in datadict.items()}
             df = pd.DataFrame(data=new_datadict)
-        df = df.set_index("Time (ps)")
+        try:
+            df = df.set_index("Time (ps)")
+        except KeyError:
+            _warnings.warn(
+                "No 'Time (ps)' found. Simulation didn't produce any output."
+            )
         return df
 
 
