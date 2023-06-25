@@ -1056,6 +1056,7 @@ def viewFunnel(system, collective_variable, property_map={}):
         except:
             raise ValueError(f"Could not obtain coordinates for atom index '{atom}'!")
     com0 /= len(atoms0)
+    com0 = [x.value() for x in com0]
 
     for atom in atoms1:
         try:
@@ -1063,6 +1064,7 @@ def viewFunnel(system, collective_variable, property_map={}):
         except:
             raise ValueError(f"Could not obtain coordinates for atom index '{atom}'!")
     com1 /= len(atoms1)
+    com1 = [x.value() for x in com1]
 
     # Create a new molecule to hold the funnel.
     funnel_mol = _SireMol.Molecule("Funnel")
