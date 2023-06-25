@@ -94,9 +94,14 @@ class Plumed:
         )
 
         if process.returncode == 0:
-            self._plumed_version = float(process.stdout.decode("ascii").strip())
+            self._plumed_version = process.stdout.decode("ascii").strip()
 
-            if self._plumed_version < 2.5:
+            # Get the major minor version.
+            major, minor = self._plumed_version.split(".")
+            major = int(major)
+            minor = int(minor)
+
+            if major < 2 or (major < 3 and minor < 5):
                 raise _Exceptions.IncompatibleError(
                     "PLUMED version >= 2.5 is required."
                 )
@@ -328,7 +333,7 @@ class Plumed:
                             # Check the upper bound is greater than dim/2 for
                             # each dimension.
                             for dim in dimensions:
-                                if value >= 0.5 * dim:
+                                if value >= 0.5 * dim.value():
                                     message = (
                                         "The simulation box is too small for the funnel. "
                                         "Try reducing the upper bound of the collective "

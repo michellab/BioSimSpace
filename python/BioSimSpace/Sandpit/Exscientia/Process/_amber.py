@@ -2656,7 +2656,7 @@ class Amber(_process.Process):
 
                     # Use a regex search to split the line into record names and values.
                     records = _re.findall(
-                        r"([SC_]*[EEL_]*[RES_]*[VDW_]*\d*\-*\d*\s*[A-Z/]+\(*[A-Z]*\)*)\s*=\s*(\-*\d+\.?\d*)",
+                        r"([SC_]*[EEL_]*[RES_]*[VDW_]*\d*\-*\d*\s*[A-Z/]+\(*[A-Z]*\)*)\s*=\s*(\-*\d+\.?\d*|\**)",
                         line.upper(),
                     )
 
@@ -2674,6 +2674,13 @@ class Amber(_process.Process):
                             .replace("EELEC", "EEL")
                             .replace("VDWAALS", "VDW")
                         )
+
+                        # Handle missing values, which will appear as asterisks, e.g.
+                        # PRESS=********
+                        try:
+                            tmp = float(value)
+                        except:
+                            value = None
 
                         # Store the record using the original key.
                         stdout_dict[key] = value
@@ -2781,10 +2788,10 @@ class Amber(_process.Process):
                     return [int(x) for x in stdout_dict[key]]
                 else:
                     if unit is None:
-                        return [float(x) for x in stdout_dict[key]]
+                        return [float(x) if x else None for x in stdout_dict[key]]
                     else:
                         return [
-                            (float(x) * unit)._to_default_unit()
+                            (float(x) * unit)._to_default_unit() if x else None
                             for x in stdout_dict[key]
                         ]
 
@@ -2798,9 +2805,17 @@ class Amber(_process.Process):
                     return int(stdout_dict[key][-1])
                 else:
                     if unit is None:
-                        return float(stdout_dict[key][-1])
+                        try:
+                            return float(stdout_dict[key][-1])
+                        except:
+                            return None
                     else:
-                        return (float(stdout_dict[key][-1]) * unit)._to_default_unit()
+                        try:
+                            return (
+                                float(stdout_dict[key][-1]) * unit
+                            )._to_default_unit()
+                        except:
+                            return None
 
             except KeyError:
                 return None

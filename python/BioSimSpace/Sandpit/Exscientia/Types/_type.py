@@ -30,6 +30,8 @@ import re as _re
 
 from sire.legacy import Units as _SireUnits
 
+from .._Exceptions import IncompatibleError as _IncompatibleError
+
 
 class Type:
     """A base class for custom types."""
@@ -462,6 +464,33 @@ class Type:
             The unit of the type.
         """
         return self._unit
+
+    def to(self, unit):
+        """
+        Return the value of this general unit in the specified unit.
+
+        Parameters
+        ----------
+
+        unit : str
+            The unit to convert to.
+
+        Returns
+        -------
+
+        value : float
+            The value in the specified unit.
+        """
+
+        if not isinstance(unit, str):
+            raise TypeError("'unit' must be of type 'str'.")
+
+        try:
+            return self._value * self._supported_units[self._unit].to(unit)
+        except Exception as e:
+            raise _IncompatibleError(
+                str(e).split("incompatible_error:")[1].split("(call")[0].strip()
+            )
 
     @classmethod
     def dimensions(cls):
