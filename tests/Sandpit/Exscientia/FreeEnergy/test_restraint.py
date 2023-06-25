@@ -72,10 +72,13 @@ def restraint():
 
 def test_sanity(restraint):
     """Sanity check."""
+    assert isinstance(restraint, Restraint)
+
 
 def test_numerical_correction(restraint):
     dG = restraint.getCorrection(method="numerical") / kcal_per_mol
     assert np.isclose(-7.2, dG, atol=0.1)
+
 
 def test_analytical_correction(restraint):
     dG = restraint.getCorrection(method="analytical") / kcal_per_mol
@@ -134,18 +137,19 @@ class TestGromacsOutput:
         assert ak == "1497"
         assert al == "1498"
 
-class TestSomdOutput():
+
+class TestSomdOutput:
     @staticmethod
-    @pytest.fixture(scope='class')
+    @pytest.fixture(scope="class")
     def getRestraintSomd(restraint):
-        boresch_str = restraint.toString(engine='SOMD').split('=')[1].strip()
+        boresch_str = restraint.toString(engine="SOMD").split("=")[1].strip()
         boresch_dict = eval(boresch_str)
         return boresch_dict
 
     def test_sanity(self, getRestraintSomd):
-        'Sanity check'
+        "Sanity check"
         boresch_dict = getRestraintSomd
-        assert type(boresch_dict) ==  dict
+        assert type(boresch_dict) == dict
 
     def test_indices(self, getRestraintSomd):
         anchor_points = getRestraintSomd["anchor_points"]

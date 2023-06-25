@@ -33,7 +33,7 @@ import copy as _copy
 import math as _math
 import numpy as _np
 import os as _os
-import pandas as _pd 
+import pandas as _pd
 import shlex as _shlex
 import shutil as _shutil
 import subprocess as _subprocess
@@ -291,13 +291,23 @@ class Relative:
             engine = "SOMD"
 
             # The system must have a single perturbable molecule.
-            if system.nPerturbableMolecules() != 1 and system.nDecoupledMolecules() != 1:
-                raise ValueError("The system must contain a single perturbable or decoupled molecule! "
-                                 "Use the 'BioSimSpace.Align' package to map and merge molecules, or "
-                                 "to mark them for decoupling.")
+            if (
+                system.nPerturbableMolecules() != 1
+                and system.nDecoupledMolecules() != 1
+            ):
+                raise ValueError(
+                    "The system must contain a single perturbable or decoupled molecule! "
+                    "Use the 'BioSimSpace.Align' package to map and merge molecules, or "
+                    "to mark them for decoupling."
+                )
             # The system must not have a decoupled and perturbable molecule.
-            if system.nPerturbableMolecules() == 1 and system.nDecoupledMolecules() == 1:
-                raise ValueError("The system must not contain a perturbable molecule and a decoupled molecule!")
+            if (
+                system.nPerturbableMolecules() == 1
+                and system.nDecoupledMolecules() == 1
+            ):
+                raise ValueError(
+                    "The system must not contain a perturbable molecule and a decoupled molecule!"
+                )
 
         # Set the engine.
         self._engine = engine
@@ -704,7 +714,9 @@ class Relative:
 
         files = sorted(_glob(work_dir + "/lambda_*/simfile.dat"))
         if not files:
-            raise FileNotFoundError(f"No simfile.dat files found in lambda_* directories in {work_dir}")
+            raise FileNotFoundError(
+                f"No simfile.dat files found in lambda_* directories in {work_dir}"
+            )
         lambdas = [float(x.split("/")[-2].split("_")[-1]) for x in files]
 
         temperatures = []
@@ -1251,12 +1263,20 @@ class Relative:
 
             # Check against passing multiple sets of lam vals to SOMD
             if lam_vals.shape[1] != 1:
-                raise ValueError("SOMD can only handle a single set of lambda values for a given perturbation.")
+                raise ValueError(
+                    "SOMD can only handle a single set of lambda values for a given perturbation."
+                )
 
-            first_process = _Process.Somd(system, self._protocol,
-                platform=platform, work_dir=first_dir,
-                property_map=self._property_map, extra_options=self._extra_options,
-                extra_lines=self._extra_lines, restraint=self._restraint)
+            first_process = _Process.Somd(
+                system,
+                self._protocol,
+                platform=platform,
+                work_dir=first_dir,
+                property_map=self._property_map,
+                extra_options=self._extra_options,
+                extra_lines=self._extra_lines,
+                restraint=self._restraint,
+            )
 
         # GROMACS.
         elif self._engine == "GROMACS":
