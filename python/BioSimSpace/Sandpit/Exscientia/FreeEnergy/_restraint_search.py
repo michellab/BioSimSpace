@@ -1524,11 +1524,11 @@ class RestraintSearch:
             # The labels for each DOF to use on the plots
             dof_labels = {
                 "r": r"$r$ / $\mathrm{\AA}$",
-                "thetaA": r"$\theta_A$ / rad",
-                "thetaB": r"$\theta_B$ / rad",
-                "phiA": r"$\phi_A$ / rad",
-                "phiB": r"$\phi_B$ / rad",
-                "phiC": r"$\phi_C$ / rad",
+                "thetaA": r"$\theta_{\mathrm{A}}$ / rad",
+                "thetaB": r"$\theta_{\mathrm{B}}$ / rad",
+                "phiA": r"$\phi_{\mathrm{A}}$ / rad",
+                "phiB": r"$\phi_{\mathrm{B}}$ / rad",
+                "phiC": r"$\phi_{\mathrm{C}}$ / rad",
             }
 
             n_dof = len(dof_to_plot)
