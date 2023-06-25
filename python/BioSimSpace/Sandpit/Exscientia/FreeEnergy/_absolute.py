@@ -1,13 +1,13 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2022
+# Copyright: 2017-2023
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
 # BioSimSpace is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 2 of the License, or
+# the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
 # BioSimSpace is distributed in the hope that it will be useful,
@@ -40,11 +40,20 @@ from ._relative import Relative as _Relative
 if _sys.platform != "win32":
     _analyse_freenrg = _os.path.join(_getBinDir(), "analyse_freenrg")
 else:
-    _analyse_freenrg = _os.path.join(_os.path.normpath(_getShareDir()), "scripts", "analyse_freenrg.py")
+    _analyse_freenrg = _os.path.join(
+        _os.path.normpath(_getShareDir()), "scripts", "analyse_freenrg.py"
+    )
 if not _os.path.isfile(_analyse_freenrg):
-    raise _MissingSoftwareError("Cannot find free energy analysis script in expected location: '%s'" % _analyse_freenrg)
+    raise _MissingSoftwareError(
+        "Cannot find free energy analysis script in expected location: '%s'"
+        % _analyse_freenrg
+    )
 if _sys.platform == "win32":
-    _analyse_freenrg = "%s %s" % (_os.path.join(_os.path.normpath(_getBinDir()), "sire_python.exe"), _analyse_freenrg)
+    _analyse_freenrg = "%s %s" % (
+        _os.path.join(_os.path.normpath(_getBinDir()), "sire_python.exe"),
+        _analyse_freenrg,
+    )
+
 
 class Absolute(_Relative):
     """Class for configuring and running absolute free-energy perturbation simulations."""
@@ -52,10 +61,22 @@ class Absolute(_Relative):
     # Create a list of supported molecular dynamics engines.
     _engines = ["GROMACS", "SOMD"]
 
-    def __init__(self, system, protocol=None, work_dir=None, engine=None,
-            gpu_support=False, setup_only=False, ignore_warnings=False,
-            show_errors=True, extra_options=None, extra_lines=None,
-            estimator='MBAR', restraint=None, property_map={}):
+    def __init__(
+        self,
+        system,
+        protocol=None,
+        work_dir=None,
+        engine=None,
+        gpu_support=False,
+        setup_only=False,
+        ignore_warnings=False,
+        show_errors=True,
+        extra_options=None,
+        extra_lines=None,
+        estimator="MBAR",
+        restraint=None,
+        property_map={},
+    ):
         """Constructor.
 
            Parameters
@@ -117,21 +138,35 @@ class Absolute(_Relative):
                own naming scheme, e.g. { "charge" : "my-charge" }
         """
         # Call the base class constructor.
-        super().__init__(system, protocol, work_dir, engine,
-                         gpu_support, setup_only, ignore_warnings,
-                         show_errors, extra_options, extra_lines,
-                         estimator, property_map)
+        super().__init__(
+            system,
+            protocol,
+            work_dir,
+            engine,
+            gpu_support,
+            setup_only,
+            ignore_warnings,
+            show_errors,
+            extra_options,
+            extra_lines,
+            estimator,
+            property_map,
+        )
 
         # Strip whitespace from engine and convert to upper case.
         engine = engine.replace(" ", "").upper()
-        if engine not in ['GROMACS', 'SOMD']:
-            raise NotImplementedError(f'ABFE functionality for MD Engine {engine} not implemented.')
+        if engine not in ["GROMACS", "SOMD"]:
+            raise NotImplementedError(
+                f"ABFE functionality for MD Engine {engine} not implemented."
+            )
 
         # Check that if a restraint is passed (bound leg simulation) it is valid.
         # For free leg simulations, the restraint will be None.
         if restraint is not None:
             if not isinstance(restraint, _Restraint):
-                raise TypeError("'restraint' must be of type 'BioSimSpace.FreeEnergy.Restraint'.")
+                raise TypeError(
+                    "'restraint' must be of type 'BioSimSpace.FreeEnergy.Restraint'."
+                )
             else:
                 # Ensure that the system is compatible with the restraint
                 restraint.system = self._system
@@ -141,26 +176,27 @@ class Absolute(_Relative):
         # Re-initialise the process runner to overwrite self._restraint = None (set in Relative)
         self._initialise_runner(self._system)
 
+
 def getData(name="data", file_link=False, work_dir=None):
     """Return a link to a zip file containing the data files required for
-       post-simulation analysis.
+    post-simulation analysis.
 
-       Parameters
-       ----------
+    Parameters
+    ----------
 
-       name : str
-           The name of the zip file.
+    name : str
+        The name of the zip file.
 
-       file_link : bool
-           Whether to return a FileLink when working in Jupyter.
+    file_link : bool
+        Whether to return a FileLink when working in Jupyter.
 
-       work_dir : str
-           The working directory for the simulation.
+    work_dir : str
+        The working directory for the simulation.
 
-       Returns
-       -------
+    Returns
+    -------
 
-       output : str, IPython.display.FileLink
-           A path, or file link, to an archive of the process input.
+    output : str, IPython.display.FileLink
+        A path, or file link, to an archive of the process input.
     """
     return Absolute.getData(name=name, file_link=file_link, work_dir=work_dir)

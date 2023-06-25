@@ -290,17 +290,17 @@ class TestGromacsABFE:
             mdp_text = f.read()
             assert "sc-alpha = 0.5" in mdp_text
 
+
 @pytest.mark.skipif(
     has_antechamber is False or has_openff is False,
     reason="Requires ambertools/antechamber and openff to be installed",
 )
-class TestSomdABFE():
+class TestSomdABFE:
     @staticmethod
-    @pytest.fixture(scope='class')
+    @pytest.fixture(scope="class")
     def system_and_restraint():
         # Benzene.
-        m = BSS.Parameters.openff_unconstrained_2_0_0(
-                    "c1ccccc1").getMolecule()
+        m = BSS.Parameters.openff_unconstrained_2_0_0("c1ccccc1").getMolecule()
 
         # Assign atoms for restraint
         atom_1 = m.getAtoms()[0]
@@ -315,44 +315,59 @@ class TestSomdABFE():
 
         # Create random restraint dictionary
         restraint_dict = {
-                "anchor_points":{"r1":atom_1, "r2":atom_2, "r3":atom_3,
-                                "l1":atom_4, "l2":atom_5, "l3":atom_6},
-                "equilibrium_values":{"r0": 5.08 * angstrom,
-                                    "thetaA0": 64.051 * degree,
-                                    "thetaB0": 39.618 * degree,
-                                    "phiA0":2.59 * radian,
-                                    "phiB0":-1.20 * radian,
-                                    "phiC0":2.63 * radian},
-                "force_constants":{"kr":10 * kcal_per_mol / angstrom ** 2,
-                                "kthetaA":10 * kcal_per_mol / (radian * radian),
-                                "kthetaB":10 * kcal_per_mol / (radian * radian),
-                                "kphiA":10 * kcal_per_mol / (radian * radian),
-                                "kphiB":10 * kcal_per_mol / (radian * radian),
-                                "kphiC":10 * kcal_per_mol / (radian * radian)}}
+            "anchor_points": {
+                "r1": atom_1,
+                "r2": atom_2,
+                "r3": atom_3,
+                "l1": atom_4,
+                "l2": atom_5,
+                "l3": atom_6,
+            },
+            "equilibrium_values": {
+                "r0": 5.08 * angstrom,
+                "thetaA0": 64.051 * degree,
+                "thetaB0": 39.618 * degree,
+                "phiA0": 2.59 * radian,
+                "phiB0": -1.20 * radian,
+                "phiC0": 2.63 * radian,
+            },
+            "force_constants": {
+                "kr": 10 * kcal_per_mol / angstrom**2,
+                "kthetaA": 10 * kcal_per_mol / (radian * radian),
+                "kthetaB": 10 * kcal_per_mol / (radian * radian),
+                "kphiA": 10 * kcal_per_mol / (radian * radian),
+                "kphiB": 10 * kcal_per_mol / (radian * radian),
+                "kphiC": 10 * kcal_per_mol / (radian * radian),
+            },
+        }
 
-        restraint = Restraint(system, restraint_dict, 298 * kelvin, restraint_type='Boresch')
+        restraint = Restraint(
+            system, restraint_dict, 298 * kelvin, restraint_type="Boresch"
+        )
 
         return system, restraint
 
     def test_turn_on_restraint(self, system_and_restraint):
-        '''Test for turning on the restraint'''
+        """Test for turning on the restraint"""
         system, restraint = system_and_restraint
         protocol = FreeEnergy(perturbation_type="restraint")
-        freenrg = BSS.FreeEnergy.Absolute(system, protocol, engine='SOMD', restraint=restraint)
+        freenrg = BSS.FreeEnergy.Absolute(
+            system, protocol, engine="SOMD", restraint=restraint
+        )
 
         # Test .cfg file
-        with open(f"{freenrg._work_dir}/lambda_0.0000/somd.cfg", 'r') as f:
+        with open(f"{freenrg._work_dir}/lambda_0.0000/somd.cfg", "r") as f:
             cfg_text = f.read()
-            assert 'use boresch restraints = True' in cfg_text
+            assert "use boresch restraints = True" in cfg_text
             assert 'boresch restraints dictionary = {"anchor_points":{"r1":1,'
             ' "r2":2, "r3":3, "l1":4, "l2":5, "l3":6}, "equilibrium_values"'
             ':{"r0":5.08, "thetaA0":1.12, "thetaB0":0.69,"phiA0":2.59, "phiB0"'
             ':-1.20, "phiC0":2.63}, "force_constants":{"kr":5.00, "kthetaA":5.00,'
             ' "kthetaB":5.00, "kphiA":5.00, "kphiB":5.00, "kphiC":5.00}}' in cfg_text
-            assert 'turn on receptor-ligand restraints mode = True' in cfg_text
+            assert "turn on receptor-ligand restraints mode = True" in cfg_text
 
         # Test .pert file
-        with open(f"{freenrg._work_dir}/lambda_0.0000/somd.pert", 'r') as f:
+        with open(f"{freenrg._work_dir}/lambda_0.0000/somd.pert", "r") as f:
             pert_text = f.read()
             # Check all atoms present
             carbons = [f"C{i}" for i in range(1, 7)]
@@ -361,34 +376,38 @@ class TestSomdABFE():
             for atom in atoms:
                 assert atom in pert_text
             # Check perturbations are correct
-            lines = ["initial_type   C1",
-                    "final_type     C1",
-                    "initial_LJ     3.48065 0.08688",
-                    "final_LJ       3.48065 0.08688",
-                    "initial_charge -0.13000",
-                    "final_charge   -0.13000"]
+            lines = [
+                "initial_type   C1",
+                "final_type     C1",
+                "initial_LJ     3.48065 0.08688",
+                "final_LJ       3.48065 0.08688",
+                "initial_charge -0.13000",
+                "final_charge   -0.13000",
+            ]
             for line in lines:
                 assert line in pert_text
-            
+
     def test_discharge(self, system_and_restraint):
-        '''Test for discharging the ligand'''
+        """Test for discharging the ligand"""
         system, restraint = system_and_restraint
         protocol = FreeEnergy(perturbation_type="discharge_soft")
-        freenrg = BSS.FreeEnergy.Absolute(system, protocol, engine='SOMD', restraint=restraint)
+        freenrg = BSS.FreeEnergy.Absolute(
+            system, protocol, engine="SOMD", restraint=restraint
+        )
 
         # Test .cfg file
-        with open(f"{freenrg._work_dir}/lambda_0.0000/somd.cfg", 'r') as f:
+        with open(f"{freenrg._work_dir}/lambda_0.0000/somd.cfg", "r") as f:
             cfg_text = f.read()
-            assert 'use boresch restraints = True' in cfg_text
+            assert "use boresch restraints = True" in cfg_text
             assert 'boresch restraints dictionary = {"anchor_points":{"r1":1,'
             ' "r2":2, "r3":3, "l1":4, "l2":5, "l3":6}, "equilibrium_values"'
             ':{"r0":5.08, "thetaA0":1.12, "thetaB0":0.69,"phiA0":2.59, "phiB0"'
             ':-1.20, "phiC0":2.63}, "force_constants":{"kr":5.00, "kthetaA":5.00,'
             ' "kthetaB":5.00, "kphiA":5.00, "kphiB":5.00, "kphiC":5.00}}' in cfg_text
-            assert 'turn on receptor-ligand restraints mode = True' not in cfg_text
+            assert "turn on receptor-ligand restraints mode = True" not in cfg_text
 
         # Test .pert file
-        with open(f"{freenrg._work_dir}/lambda_0.0000/somd.pert", 'r') as f:
+        with open(f"{freenrg._work_dir}/lambda_0.0000/somd.pert", "r") as f:
             pert_text = f.read()
             # Check all atoms present
             carbons = [f"C{i}" for i in range(1, 7)]
@@ -397,34 +416,38 @@ class TestSomdABFE():
             for atom in atoms:
                 assert atom in pert_text
             # Check perturbations are correct
-            lines = ["initial_type   C1",
-                    "final_type     C1",
-                    "initial_LJ     3.48065 0.08688",
-                    "final_LJ       3.48065 0.08688",
-                    "initial_charge -0.13000",
-                    "final_charge   -0.00000"]
+            lines = [
+                "initial_type   C1",
+                "final_type     C1",
+                "initial_LJ     3.48065 0.08688",
+                "final_LJ       3.48065 0.08688",
+                "initial_charge -0.13000",
+                "final_charge   -0.00000",
+            ]
             for line in lines:
                 assert line in pert_text
 
     def test_vanish(self, system_and_restraint):
-        '''Test for vanishing the ligand'''
+        """Test for vanishing the ligand"""
         system, restraint = system_and_restraint
         protocol = FreeEnergy(perturbation_type="vanish_soft")
-        freenrg = BSS.FreeEnergy.Absolute(system, protocol, engine='SOMD', restraint=restraint)
+        freenrg = BSS.FreeEnergy.Absolute(
+            system, protocol, engine="SOMD", restraint=restraint
+        )
 
         # Test .cfg file
-        with open(f"{freenrg._work_dir}/lambda_0.0000/somd.cfg", 'r') as f:
+        with open(f"{freenrg._work_dir}/lambda_0.0000/somd.cfg", "r") as f:
             cfg_text = f.read()
-            assert 'use boresch restraints = True' in cfg_text
+            assert "use boresch restraints = True" in cfg_text
             assert 'boresch restraints dictionary = {"anchor_points":{"r1":1,'
             ' "r2":2, "r3":3, "l1":4, "l2":5, "l3":6}, "equilibrium_values"'
             ':{"r0":5.08, "thetaA0":1.12, "thetaB0":0.69,"phiA0":2.59, "phiB0"'
             ':-1.20, "phiC0":2.63}, "force_constants":{"kr":5.00, "kthetaA":5.00,'
             ' "kthetaB":5.00, "kphiA":5.00, "kphiB":5.00, "kphiC":5.00}}' in cfg_text
-            assert 'turn on receptor-ligand restraints mode = True' not in cfg_text
+            assert "turn on receptor-ligand restraints mode = True" not in cfg_text
 
         # Test .pert file
-        with open(f"{freenrg._work_dir}/lambda_0.0000/somd.pert", 'r') as f:
+        with open(f"{freenrg._work_dir}/lambda_0.0000/somd.pert", "r") as f:
             pert_text = f.read()
             # Check all atoms present
             carbons = [f"C{i}" for i in range(1, 7)]
@@ -433,34 +456,38 @@ class TestSomdABFE():
             for atom in atoms:
                 assert atom in pert_text
             # Check perturbations are correct
-            lines = ["initial_type   C1",
-                    "final_type     du",
-                    "initial_LJ     3.48065 0.08688",
-                    "final_LJ       0.00000 0.00000",
-                    "initial_charge -0.00000",
-                    "final_charge   -0.00000"]
+            lines = [
+                "initial_type   C1",
+                "final_type     du",
+                "initial_LJ     3.48065 0.08688",
+                "final_LJ       0.00000 0.00000",
+                "initial_charge -0.00000",
+                "final_charge   -0.00000",
+            ]
             for line in lines:
                 assert line in pert_text
 
     def test_discharge_and_vanish(self, system_and_restraint):
-        '''Test for simultaneously discharging and vanishing the ligand'''
+        """Test for simultaneously discharging and vanishing the ligand"""
         system, restraint = system_and_restraint
         protocol = FreeEnergy(perturbation_type="full")
-        freenrg = BSS.FreeEnergy.Absolute(system, protocol, engine='SOMD', restraint=restraint)
+        freenrg = BSS.FreeEnergy.Absolute(
+            system, protocol, engine="SOMD", restraint=restraint
+        )
 
         # Test .cfg file
-        with open(f"{freenrg._work_dir}/lambda_0.0000/somd.cfg", 'r') as f:
+        with open(f"{freenrg._work_dir}/lambda_0.0000/somd.cfg", "r") as f:
             cfg_text = f.read()
-            assert 'use boresch restraints = True' in cfg_text
+            assert "use boresch restraints = True" in cfg_text
             assert 'boresch restraints dictionary = {"anchor_points":{"r1":1,'
             ' "r2":2, "r3":3, "l1":4, "l2":5, "l3":6}, "equilibrium_values"'
             ':{"r0":5.08, "thetaA0":1.12, "thetaB0":0.69,"phiA0":2.59, "phiB0"'
             ':-1.20, "phiC0":2.63}, "force_constants":{"kr":5.00, "kthetaA":5.00,'
             ' "kthetaB":5.00, "kphiA":5.00, "kphiB":5.00, "kphiC":5.00}}' in cfg_text
-            assert 'turn on receptor-ligand restraints mode = True' not in cfg_text
+            assert "turn on receptor-ligand restraints mode = True" not in cfg_text
 
         # Test .pert file
-        with open(f"{freenrg._work_dir}/lambda_0.0000/somd.pert", 'r') as f:
+        with open(f"{freenrg._work_dir}/lambda_0.0000/somd.pert", "r") as f:
             pert_text = f.read()
             # Check all atoms present
             carbons = [f"C{i}" for i in range(1, 7)]
@@ -469,14 +496,18 @@ class TestSomdABFE():
             for atom in atoms:
                 assert atom in pert_text
             # Check perturbations are correct
-            lines = ["initial_type   C1",
-                    "final_type     du",
-                    "initial_LJ     3.48065 0.08688",
-                    "final_LJ       0.00000 0.00000",
-                    "initial_charge -0.13000",
-                    "final_charge   0.00000"]
+            lines = [
+                "initial_type   C1",
+                "final_type     du",
+                "initial_LJ     3.48065 0.08688",
+                "final_LJ       0.00000 0.00000",
+                "initial_charge -0.13000",
+                "final_charge   0.00000",
+            ]
             for line in lines:
                 assert line in pert_text
+
+
 class TestAmberASFE:
     @staticmethod
     @pytest.fixture(scope="class")
