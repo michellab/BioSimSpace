@@ -603,8 +603,7 @@ class Relative:
                 start_t = ' and '
                 end_t = ' ps'
                 if start_w in line:
-                    lambda_win = float(
-                        line.replace(start_w, '').strip())
+                    lambda_win = line.replace(start_w, '').strip()
                     if lambda_win is not None:
                         found_lambda = True
                 if start_a in line:
@@ -654,7 +653,7 @@ class Relative:
         # append the kt to the data list of values for all lambda windows.
         for t in time_rows:
             row = file_df.loc[t][lambda_array].to_numpy()
-            E_ref = row[lambda_array.index(str(lambda_win))]
+            E_ref = row[lambda_array.index(lambda_win)]
             energies = []
             for lam in lambda_array:
                 E_ = row[lambda_array.index(lam)]
@@ -663,7 +662,7 @@ class Relative:
 
         # Turn into a dataframe that can be processed by alchemlyb.
         df = (_pd.DataFrame(mbar_energies, columns=_np.array(lambda_array, dtype=_np.float64),
-                            index=_pd.MultiIndex.from_arrays([time, _np.repeat(lambda_win, len(time))],
+                            index=_pd.MultiIndex.from_arrays([time, _np.repeat(float(lambda_win), len(time))],
                                                              names=['time', 'lambdas']))
               )
         df.attrs['temperature'] = T
@@ -708,8 +707,7 @@ class Relative:
                 start_t = ' and '
                 end_t = ' ps'
                 if start_w in line:
-                    lambda_win = float(
-                        line.replace(start_w, '').strip())
+                    lambda_win = line.replace(start_w, '').strip()
                     if lambda_win is not None:
                         found_lambda = True
                 if start_a in line:
@@ -762,7 +760,7 @@ class Relative:
 
         # Turn into a dataframe that can be processed by alchemlyb.
         df = (_pd.DataFrame(gradient_energies, columns=['fep'],
-                            index=_pd.MultiIndex.from_arrays([time, _np.repeat(lambda_win, len(time))],
+                            index=_pd.MultiIndex.from_arrays([time, _np.repeat(float(lambda_win), len(time))],
                                                              names=['time', 'fep-lambda']))
               )
 
@@ -992,7 +990,8 @@ class Relative:
         func = function_glob_dict[engine]
         try:
             u_nk = [func(x, T=t) for x, t in zip(files, temperatures)]
-        except:
+        except Exception as e:
+            print(e)
             raise _AnalysisError(
                 "Could not extract the data from the provided files!")
 
@@ -1016,12 +1015,14 @@ class Relative:
             try:
                 mbar = _MBAR(method=mbar_method)
                 mbar.fit(processed_u_nk)
-            except:
+            except Exception as e:
+                print(e)
                 raise _AnalysisError(f"MBAR free-energy analysis failed with {mbar_method} as mbar_method!")
         else:
             try:
                 mbar = _MBAR().fit(processed_u_nk)
-            except:
+            except Exception as e:
+                print(e)
                 raise _AnalysisError("MBAR free-energy analysis failed!")
 
         # Extract the data from the mbar results.
