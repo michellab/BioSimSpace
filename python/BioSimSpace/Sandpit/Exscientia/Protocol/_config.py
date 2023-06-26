@@ -407,7 +407,7 @@ class ConfigFactory:
             timestep = (
                 self.protocol.getTimeStep().picoseconds().value()
             )  # Define the timestep in picoseconds
-            protocol_dict["dt"] = f"{timestep:.3f}"  # Integration time step.
+            protocol_dict["dt"] = f"{timestep:.4f}"  # Integration time step.
         protocol_dict["nsteps"] = self._steps  # Number of integration steps.
 
         # Constraints.
