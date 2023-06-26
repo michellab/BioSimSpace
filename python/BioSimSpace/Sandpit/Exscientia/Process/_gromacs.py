@@ -49,7 +49,15 @@ from sire.legacy import IO as _SireIO
 from sire.legacy import Maths as _SireMaths
 from sire.legacy import Units as _SireUnits
 from sire.legacy import Vol as _SireVol
-from alchemlyb.parsing.gmx import extract
+
+from .._Utils import _assert_imported, _have_imported, _try_import
+
+# alchemlyb isn't available on all variants of Python that we support, so we
+# need to try_import it.
+_alchemlyb = _try_import("alchemlyb")
+
+if _have_imported(_alchemlyb):
+    from alchemlyb.parsing.amber import extract as _extract
 
 from .. import _gmx_exe
 from .. import _isVerbose
@@ -2630,6 +2638,9 @@ class Gromacs(_process.Process):
         is Free Energy protocol, the dHdl and the u_nk data will be saved in the
         same parquet format as well.
         """
+
+        _assert_imported(_alchemlyb)
+
         self._update_energy_dict(initialise=True)
         datadict_keys = [
             ("Time (ps)", _Units.Time.picosecond, "getTime"),
@@ -2654,7 +2665,7 @@ class Gromacs(_process.Process):
         df = self._convert_datadict_keys(datadict_keys)
         df.to_parquet(path=f"{self.workDir()}/{filename}", index=True)
         if isinstance(self._protocol, _Protocol.FreeEnergy):
-            energy = extract(
+            energy = _extract(
                 f"{self.workDir()}/{self._name}.xvg",
                 T=self._protocol.getTemperature() / _Units.Temperature.kelvin,
             )

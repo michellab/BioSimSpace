@@ -44,7 +44,15 @@ from sire.legacy import Base as _SireBase
 from sire.legacy import IO as _SireIO
 from sire.legacy import Mol as _SireMol
 import pandas as pd
-from alchemlyb.parsing.amber import extract
+
+from .._Utils import _assert_imported, _have_imported, _try_import
+
+# alchemlyb isn't available on all variants of Python that we support, so we
+# need to try_import it.
+_alchemlyb = _try_import("alchemlyb")
+
+if _have_imported(_alchemlyb):
+    from alchemlyb.parsing.amber import extract as _extract
 
 from .. import _amber_home, _isVerbose
 from ..Align._squash import _squash, _unsquash
@@ -2880,6 +2888,9 @@ class Amber(_process.Process):
         is Free Energy protocol, the dHdl and the u_nk data will be saved in the
         same parquet format as well.
         """
+
+        _assert_imported(_alchemlyb)
+
         self._init_stdout_dict()
         datadict = dict()
         if isinstance(self._protocol, _Protocol.Minimisation):
@@ -2907,7 +2918,7 @@ class Amber(_process.Process):
         df = self._convert_datadict_keys(datadict_keys)
         df.to_parquet(path=f"{self.workDir()}/{filename}", index=True)
         if isinstance(self._protocol, _Protocol.FreeEnergy):
-            energy = extract(
+            energy = _extract(
                 f"{self.workDir()}/{self._name}.out",
                 T=self._protocol.getTemperature() / _Units.Temperature.kelvin,
             )
