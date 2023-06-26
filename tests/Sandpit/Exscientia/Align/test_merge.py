@@ -25,10 +25,17 @@ has_gromacs = BSS._gmx_exe is not None
 _openff = _try_import("openff")
 has_openff = _have_imported(_openff)
 
+try:
+    import alchemlyb
+
+    has_alchemlyb = True
+except ModuleNotFoundError:
+    has_alchemlyb = False
+
 
 @pytest.mark.skipif(
-    has_amber is False or has_gromacs is False or has_openff is False,
-    reason="Requires that AMBER, GROMACS, and OpenFF are installed.",
+    has_amber is False or has_gromacs is False or has_openff is False or has_alchemlyb,
+    reason="Requires that AMBER, GROMACS, OpenFF, and alchemlyb are installed.",
 )
 def test__removeDummies(
     benzene, pyrrole, mapping_benzene_pyrrole, merged_benzene_pyrrole
