@@ -2,16 +2,16 @@ import pandas as pd
 import pytest
 
 import BioSimSpace.Sandpit.Exscientia as BSS
+from BioSimSpace.Sandpit.Exscientia._Utils import _have_imported, _try_import
 from BioSimSpace.Sandpit.Exscientia.Align._decouple import decouple
 from BioSimSpace.Sandpit.Exscientia.Protocol import (
     ConfigFactory,
     Equilibration,
-    Production,
-    FreeEnergyMinimisation,
-    FreeEnergyEquilibration,
     FreeEnergy,
+    FreeEnergyEquilibration,
+    FreeEnergyMinimisation,
+    Production,
 )
-from BioSimSpace.Sandpit.Exscientia._Utils import _try_import, _have_imported
 
 # Make sure GROMACS is installed.
 has_gromacs = BSS._gmx_exe is not None
@@ -297,7 +297,7 @@ class TestAmberASFE:
 
     def test_generate_fep_masks(self, system):
         config = ConfigFactory(system, FreeEnergyMinimisation())
-        res = config._generate_amber_fep_masks(0.002)
+        res = config._generate_amber_fep_masks(0.001)
         expected_res = {
             "noshakemask": '"@1-45"',
             "scmask1": '"@1-45"',

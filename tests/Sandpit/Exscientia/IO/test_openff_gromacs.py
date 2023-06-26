@@ -2,6 +2,7 @@ import BioSimSpace.Sandpit.Exscientia as BSS
 from BioSimSpace.Sandpit.Exscientia._Utils import _try_import, _have_imported
 
 import os
+import pandas
 import pytest
 
 # Check whether AMBER is installed.
@@ -21,10 +22,21 @@ has_gromacs = BSS._gmx_exe is not None
 _openff = _try_import("openff")
 has_openff = _have_imported(_openff)
 
+# Make sure pyarrow is available as the pandas parquet engine. The parquet
+# code does not work with fastparquet.
+try:
+    pandas.io.parquet.get_engine("pyarrow")
+    has_pyarrow = True
+except:
+    has_pyarrow = False
+
 
 @pytest.mark.skipif(
-    has_amber is False or has_gromacs is False or has_openff is False,
-    reason="Requires that AMBER, GROMACS, and OpenFF are installed.",
+    has_amber is False
+    or has_gromacs is False
+    or has_openff is False
+    or has_pyarrow is False,
+    reason="Requires that AMBER, GROMACS, OpenFF, and pyarrow are installed.",
 )
 def test_molecule_combine():
     """Single point energy comparison to make sure that GROMACS

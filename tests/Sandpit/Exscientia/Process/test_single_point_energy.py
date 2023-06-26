@@ -1,6 +1,7 @@
 import BioSimSpace.Sandpit.Exscientia as BSS
 
 import os
+import pandas
 import pytest
 
 # Check whether AMBER is installed.
@@ -16,6 +17,14 @@ else:
 # Check whether GROMACS is installed.
 has_gromacs = BSS._gmx_exe is not None
 
+# Make sure pyarrow is available as the pandas parquet engine. The parquet
+# code does not work with fastparquet.
+try:
+    pandas.io.parquet.get_engine("pyarrow")
+    has_pyarrow = True
+except:
+    has_pyarrow = False
+
 # Store the tutorial URL.
 url = BSS.tutorialUrl()
 
@@ -29,8 +38,8 @@ def system():
 
 
 @pytest.mark.skipif(
-    has_amber is False or has_gromacs is False,
-    reason="Requires that both AMBER and GROMACS are installed.",
+    has_amber is False or has_gromacs is False or has_pyarrow is False,
+    reason="Requires that AMBER, GROMACS, and pyarrow are installed.",
 )
 def test_amber_gromacs(system):
     """Single point energy comparison between AMBER and GROMACS."""
@@ -69,8 +78,8 @@ def test_amber_gromacs(system):
 
 
 @pytest.mark.skipif(
-    has_amber is False or has_gromacs is False,
-    reason="Requires that both AMBER and GROMACS are installed.",
+    has_amber is False or has_gromacs is False or has_pyarrow is False,
+    reason="Requires that AMBER, GROMACS, and pyarrow are installed.",
 )
 def test_amber_gromacs_triclinic(system):
     """Single point energy comparison between AMBER and GROMACS in a triclinic box."""

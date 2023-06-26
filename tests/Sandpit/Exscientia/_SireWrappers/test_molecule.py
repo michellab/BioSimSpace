@@ -1,6 +1,7 @@
 import BioSimSpace.Sandpit.Exscientia as BSS
 
 import os
+import pandas
 import pytest
 
 # Store the tutorial URL.
@@ -16,13 +17,24 @@ if BSS._amber_home is not None:
 else:
     has_amber = False
 
+# Make sure pyarrow is available as the pandas parquet engine. The parquet
+# code does not work with fastparquet.
+try:
+    pandas.io.parquet.get_engine("pyarrow")
+    has_pyarrow = True
+except:
+    has_pyarrow = False
+
 
 @pytest.fixture(scope="session")
 def system():
     return BSS.IO.readMolecules(["tests/input/ala.top", "tests/input/ala.crd"])
 
 
-@pytest.mark.skipif(has_amber is False, reason="Requires AMBER to be installed.")
+@pytest.mark.skipif(
+    has_amber is False or has_pyarrow is False,
+    reason="Requires AMBER and pyarrow to be installed.",
+)
 def test_makeCompatibleWith():
     # Load the original PDB file. In this representation the system contains
     # a single molecule with two chains. We parse with pdb4amber to ensure
