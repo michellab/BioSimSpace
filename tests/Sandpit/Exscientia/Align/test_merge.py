@@ -34,7 +34,10 @@ except ModuleNotFoundError:
 
 
 @pytest.mark.skipif(
-    has_amber is False or has_gromacs is False or has_openff is False or has_alchemlyb,
+    has_amber is False
+    or has_gromacs is False
+    or has_openff is False
+    or has_alchemlyb is False,
     reason="Requires that AMBER, GROMACS, OpenFF, and alchemlyb are installed.",
 )
 def test__removeDummies(
