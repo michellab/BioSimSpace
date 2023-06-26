@@ -29,6 +29,7 @@ __email__ = "finlay.clark@ed.ac.uk"
 
 __all__ = ["RestraintSearch"]
 
+from networkx import density
 from numpy.linalg import norm as _norm
 import matplotlib.pyplot as _plt
 import MDAnalysis as _mda
@@ -1537,7 +1538,7 @@ class RestraintSearch:
             # Plot histograms
             fig, axs = _plt.subplots(1, n_dof, figsize=(16, 4), dpi=500)
             for i, dof in enumerate(dof_to_plot):
-                axs[i].hist(dof_data[label][dof]["values"], bins=10)
+                axs[i].hist(dof_data[label][dof]["values"], bins=10, density=True)
                 axs[i].axvline(
                     x=dof_data[label][dof]["avg"],
                     color="r",
@@ -1546,7 +1547,7 @@ class RestraintSearch:
                     label="mean",
                 )
                 axs[i].set_xlabel(dof_labels[dof])
-                axs[i].set_ylabel("Num Vals")
+                axs[i].set_ylabel("Probability")
                 if i == n_dof - 1:  # Only add legend to last plot
                     axs[i].legend()
             fig.tight_layout()
