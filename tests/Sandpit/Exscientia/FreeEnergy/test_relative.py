@@ -21,6 +21,7 @@ try:
 
 except ModuleNotFoundError:
     is_alchemlyb = False
+    is_alchemlyb_parquet = False
 
 try:
     from alchemtest.gmx import load_ABFE
