@@ -14,10 +14,12 @@ try:
 
     # Check for parquet support.
     major, minor, _ = alchemlyb.__version__.split(".")
-    if int(major) >= 2 and str(minor) >= 1:
-        is_alchemlyb_parquet = True
-    else:
+    major = int(major)
+    minor = int(minor)
+    if major < 2 or (major < 3 and minor < 1):
         is_alchemlyb_parquet = False
+    else:
+        is_alchemlyb_parquet = True
 
 except ModuleNotFoundError:
     is_alchemlyb = False
