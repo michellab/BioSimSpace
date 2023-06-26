@@ -29,8 +29,6 @@ __email__ = "finlay.clark@ed.ac.uk"
 
 __all__ = ["RestraintSearch"]
 
-from networkx import density
-from numpy.linalg import norm as _norm
 import matplotlib.pyplot as _plt
 import MDAnalysis as _mda
 import numpy as _np
@@ -87,7 +85,6 @@ _mda = _try_import("MDAnalysis")
 if _have_imported(_mda):
     from MDAnalysis.analysis.distances import dist as _dist
     from MDAnalysis.lib.distances import calc_angles as _calc_angles
-    from MDAnalysis.analysis.distances import dist as _dist
     from MDAnalysis.lib.distances import calc_dihedrals as _calc_dihedrals
 
 
@@ -345,7 +342,7 @@ class RestraintSearch:
         append_to_ligand_selection="",
         receptor_selection_str="protein and name CA C N",
         force_constant=None,
-        cutoff=8 * _angstrom,
+        cutoff=10 * _angstrom,
         restraint_idx=0,
         block="AUTO",
     ):
@@ -510,7 +507,7 @@ class RestraintSearch:
         append_to_ligand_selection="",
         receptor_selection_str="protein and name CA C N",
         force_constant=None,
-        cutoff=8 * _angstrom,
+        cutoff=10 * _angstrom,
         restraint_idx=0,
     ):
         """
@@ -564,7 +561,7 @@ class RestraintSearch:
                method == "MDRestraintsGenerator", or fit to fluctuations observed during
                the simulation is method == "BSS".
 
-           cutoff: BioSimSpace.Types.Length
+           cutoff: BioSimSpace.Types.Length,
                The greatest distance between ligand and receptor anchor atoms.
                Only affects behaviour when method == "BSS" Receptor anchors
                further than cutoff Angstroms from the closest ligand anchors will not
@@ -694,8 +691,8 @@ class RestraintSearch:
         u,
         system,
         temperature,
-        lig_selection_str,
-        recept_selection_str,
+        ligand_selection_str,
+        receptor_selection_str,
         method,
         work_dir,
         force_constant,
@@ -778,8 +775,8 @@ class RestraintSearch:
                     u,
                     system,
                     temperature,
-                    lig_selection_str,
-                    recept_selection_str,
+                    ligand_selection_str,
+                    receptor_selection_str,
                     force_constant,
                     work_dir,
                 )
@@ -789,8 +786,8 @@ class RestraintSearch:
                 u,
                 system,
                 temperature,
-                lig_selection_str,
-                recept_selection_str,
+                ligand_selection_str,
+                receptor_selection_str,
                 work_dir,
                 force_constant,
                 cutoff,
@@ -971,8 +968,8 @@ class RestraintSearch:
         u,
         system,
         temperature,
-        lig_selection_str,
-        recept_selection_str,
+        ligand_selection_str,
+        receptor_selection_str,
         work_dir,
         force_constant,
         cutoff,
@@ -1008,11 +1005,11 @@ class RestraintSearch:
         temperature : :class:`System <BioSimSpace.Types.Temperature>`
             The temperature of the system
 
-        lig_selection_str: str
+        ligand_selection_str: str
             The selection string for the atoms in the ligand to consider
             as potential anchor points.
 
-        recept_selection_str: str
+        receptor_selection_str: str
             The selection string for the protein in the ligand to consider
             as potential anchor points.
 
@@ -1044,7 +1041,7 @@ class RestraintSearch:
             interactions.
         """
 
-        def _findOrderedPairs(u, lig_selection_str, recept_selection_str, cutoff):
+        def _findOrderedPairs(u, ligand_selection_str, receptor_selection_str, cutoff):
             """
             Return a list of receptor-ligand anchor atoms pairs in the form
             (lig atom index, receptor atom index), where the pairs are ordered
@@ -1057,11 +1054,11 @@ class RestraintSearch:
                 The trajectory for the ABFE restraint calculation as a
                 MDAnalysis.Universe object.
 
-            lig_selection_str: str
+            ligand_selection_str: str
                 The selection string for the atoms in the ligand to consider
                 as potential anchor points.
 
-            recept_selection_str: str
+            receptor_selection_str: str
                 The selection string for the protein in the ligand to consider
                 as potential anchor points.
 
@@ -1079,13 +1076,13 @@ class RestraintSearch:
                 the trajectory.
             """
 
-            lig_selection = u.select_atoms(lig_selection_str)
+            lig_selection = u.select_atoms(ligand_selection_str)
             pair_variance_dict = {}
 
             # Get all receptor atoms within specified distance of cutoff
             for lig_atom in lig_selection:
                 for prot_atom in u.select_atoms(
-                    f"{recept_selection_str} and (around {cutoff / _angstrom} index {lig_atom.index})"
+                    f"{receptor_selection_str} and (around {cutoff / _angstrom} index {lig_atom.index})"
                 ):
                     pair_variance_dict[(lig_atom.index, prot_atom.index)] = {}
                     pair_variance_dict[(lig_atom.index, prot_atom.index)]["dists"] = []
@@ -1182,7 +1179,24 @@ class RestraintSearch:
             return a1_idx, a2_idx, a3_idx
 
         def _getDistance(idx1, idx2, u):
-            """Distance in Angstrom."""
+            """
+            Get the distance between two atoms in a universe.
+
+            Parameters
+            ----------
+            idx1 : int
+                Index of the first atom
+            idx2 : int
+                Index of the second atom
+            u : MDAnalysis.Universe
+                The MDA universe containing the atoms and
+                trajectory.
+
+            Returns
+            -------
+            distance : float
+                The distance between the two atoms in Angstroms.
+            """
             distance = _dist(
                 _mda.AtomGroup([u.atoms[idx1]]),
                 _mda.AtomGroup([u.atoms[idx2]]),
@@ -1191,19 +1205,59 @@ class RestraintSearch:
             return distance
 
         def _getAngle(idx1, idx2, idx3, u):
-            """Angle in radians."""
-            C = u.atoms[idx1].position
-            B = u.atoms[idx2].position
-            A = u.atoms[idx3].position
-            angle = _calc_angles(C, B, A, box=u.dimensions)
+            """
+            Get the angle between three atoms in a universe.
+
+            Parameters
+            ----------
+            idx1 : int
+                Index of the first atom
+            idx2 : int
+                Index of the second atom
+            idx3 : int
+                Index of the third atom
+            u : MDAnalysis.Universe
+                The MDA universe containing the atoms and
+                trajectory.
+
+            Returns
+            -------
+            angle : float
+                The angle between the three atoms in radians.
+            """
+            angle = sum(
+                u.atoms[idx] for idx in [idx1, idx2, idx3]
+            ).angle.value()  # Degrees
+            angle = _np.deg2rad(angle)  # Radians
             return angle
 
         def _getDihedral(idx1, idx2, idx3, idx4, u):
-            """Dihedral in rad"""
-            positions = [u.atoms[idx].position for idx in [idx1, idx2, idx3, idx4]]
-            dihedral = _calc_dihedrals(
-                positions[0], positions[1], positions[2], positions[3], box=u.dimensions
-            )
+            """
+            Get the dihedral angle between four atoms in a universe.
+
+            Parameters
+            ----------
+            idx1 : int
+                Index of the first atom
+            idx2 : int
+                Index of the second atom
+            idx3 : int
+                Index of the third atom
+            idx4 : int
+                Index of the fourth atom
+            u : MDAnalysis.Universe
+                The MDA universe containing the atoms and
+                trajectory.
+
+            Returns
+            -------
+            dihedral : float
+                The dihedral angle between the four atoms in radians.
+            """
+            dihedral = sum(
+                u.atoms[idx] for idx in [idx1, idx2, idx3, idx4]
+            ).dihedral.value()  # Degrees
+            dihedral = _np.deg2rad(dihedral)  # Radians
             return dihedral
 
         def _getBoreschDOF(l1, l2, l3, r1, r2, r3, u):
@@ -1265,8 +1319,8 @@ class RestraintSearch:
 
         def _findOrderedBoresch(
             u,
-            lig_selection_str,
-            recept_selection_str,
+            ligand_selection_str,
+            receptor_selection_str,
             pair_list,
             temp,
             force_constant,
@@ -1283,11 +1337,11 @@ class RestraintSearch:
                 The trajectory for the ABFE restraint calculation as a
                 MDAnalysis.Universe object.
 
-            lig_selection_str: str
+            ligand_selection_str: str
                 The selection string for the atoms in the ligand to consider
                 as potential anchor points.
 
-            recept_selection_str: str
+            receptor_selection_str: str
                 The selection string for the protein in the ligand to consider
                 as potential anchor points.
 
@@ -1343,8 +1397,8 @@ class RestraintSearch:
                 boresch_dof_data[pair] = {}
                 l1_idx, r1_idx = pair
                 try:
-                    _, l2_idx, l3_idx = _getAnchorAts(l1_idx, lig_selection_str, u)
-                    _, r2_idx, r3_idx = _getAnchorAts(r1_idx, recept_selection_str, u)
+                    _, l2_idx, l3_idx = _getAnchorAts(l1_idx, ligand_selection_str, u)
+                    _, r2_idx, r3_idx = _getAnchorAts(r1_idx, receptor_selection_str, u)
                 except (
                     _AnalysisError
                 ):  # Failed to find full set of anchor points for this pair
@@ -1555,6 +1609,7 @@ class RestraintSearch:
                 f"{work_dir}/restraint_idx{restraint_idx}_dof_hist.png",
                 facecolor="white",
             )
+            _plt.close(fig)
 
             # Plot variation with time to see if there are slow DOF
             fig, axs = _plt.subplots(1, n_dof, figsize=(16, 4), dpi=500)
@@ -1578,6 +1633,7 @@ class RestraintSearch:
                 f"{work_dir}/restraint_idx{restraint_idx}_dof_time.png",
                 facecolor="white",
             )
+            _plt.close(fig)
 
         def _getBoreschRestraint(pair, boresch_dof_data):
             """
@@ -1661,14 +1717,14 @@ class RestraintSearch:
 
         # Find pairs with lowest SD
         pairs_ordered_sd = _findOrderedPairs(
-            u, lig_selection_str, recept_selection_str, cutoff
+            u, ligand_selection_str, receptor_selection_str, cutoff
         )
 
         # Convert to Boresch anchors, order by correction, and filter
         pairs_ordered_boresch, boresch_dof_data = _findOrderedBoresch(
             u,
-            lig_selection_str,
-            recept_selection_str,
+            ligand_selection_str,
+            receptor_selection_str,
             pairs_ordered_sd,
             temperature.value(),
             force_constant,

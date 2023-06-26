@@ -1342,7 +1342,7 @@ class Relative:
                     for line in f:
                         if "lambda_val" in line:
                             # Get lam val from the Series
-                            new_config.append("lambda_val = %s\n" % lam.values[0])
+                            new_config.append(f"lambda_val = {lam.values[0]}\n")
                         else:
                             new_config.append(line)
                 with open(new_dir + "/somd.cfg", "w") as f:

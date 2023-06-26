@@ -4,13 +4,16 @@ import numpy as np
 
 import BioSimSpace.Sandpit.Exscientia as BSS
 from BioSimSpace.Sandpit.Exscientia.Align import decouple
+from BioSimSpace.Sandpit.Exscientia._Exceptions import AnalysisError
 from BioSimSpace.Sandpit.Exscientia.FreeEnergy import (
     RestraintSearch,
     Restraint,
 )
 from BioSimSpace.Sandpit.Exscientia.Trajectory import Trajectory
-from BioSimSpace.Sandpit.Exscientia.Units.Length import nanometer
 from BioSimSpace.Sandpit.Exscientia.Units.Angle import degree
+from BioSimSpace.Sandpit.Exscientia.Units.Energy import kcal_per_mol
+from BioSimSpace.Sandpit.Exscientia.Units.Length import angstrom
+from BioSimSpace.Sandpit.Exscientia.Units.Length import nanometer
 
 from BioSimSpace.Sandpit.Exscientia._Utils import _try_import, _have_imported
 
@@ -154,7 +157,7 @@ class TestBSS_analysis:
 
     @staticmethod
     @pytest.fixture(scope="class")
-    def restraint_search(tmp_path_factory):
+    def _restraint_search(tmp_path_factory):
         outdir = tmp_path_factory.mktemp("out")
         system = BSS.IO.readMolecules(
             [
@@ -175,63 +178,96 @@ class TestBSS_analysis:
         restraint_search._process.getTrajectory = lambda: Trajectory(
             trajectory=traj, topology=top
         )
+        return restraint_search, outdir
+
+    @staticmethod
+    @pytest.fixture(scope="class")
+    def restraint(_restraint_search):
+        restraint_search, outdir = _restraint_search
         restraint = restraint_search.analyse(
             method="BSS", restraint_type="Boresch", block=False
         )
         return restraint, outdir
 
-    def test_sanity(self, restraint_search):
-        restraint, outdir = restraint_search
+    @staticmethod
+    @pytest.fixture(scope="class")
+    def restraint_k20(_restraint_search):
+        restraint_search, outdir = _restraint_search
+        restraint = restraint_search.analyse(
+            method="BSS",
+            restraint_type="Boresch",
+            block=False,
+            force_constant=20 * kcal_per_mol / angstrom**2,
+        )
+        return restraint, outdir
+
+    def test_sanity(self, restraint):
+        restraint, _ = restraint
         assert isinstance(restraint, Restraint)
 
-    def test_plots(self, restraint_search):
+    def test_plots(self, restraint):
         """Test if all the plots have been generated correctly"""
-        restraint, outdir = restraint_search
+        restraint, outdir = restraint
         assert (outdir / "restraint_idx0_dof_time.png").is_file()
         assert (outdir / "restraint_idx0_dof_hist.png").is_file()
 
-    def test_dG_off(self, restraint_search):
+    def test_dG_off(self, restraint):
         """Test if the restraint generated has the same energy"""
-        restraint, outdir = restraint_search
-        assert np.isclose(-10.1074, restraint.correction.value(), atol=0.01)
+        restraint, _ = restraint
+        assert np.isclose(-9.8955, restraint.correction.value(), atol=0.01)
 
-    def test_bond(self, restraint_search):
-        restraint, outdir = restraint_search
+    def test_bond(self, restraint):
+        restraint, _ = restraint
         equilibrium_values_r0 = (
             restraint._restraint_dict["equilibrium_values"]["r0"] / nanometer
         )
-        assert np.isclose(0.5420, equilibrium_values_r0, atol=0.001)
+        assert np.isclose(0.6057, equilibrium_values_r0, atol=0.001)
 
-    def test_angles(self, restraint_search):
-        restraint, outdir = restraint_search
+    def test_angles(self, restraint):
+        restraint, _ = restraint
         equilibrium_values_thetaA0 = (
             restraint._restraint_dict["equilibrium_values"]["thetaA0"] / degree
         )
-        assert np.isclose(129.1723, equilibrium_values_thetaA0, atol=0.001)
+        assert np.isclose(140.6085, equilibrium_values_thetaA0, atol=0.001)
         equilibrium_values_thetaB0 = (
             restraint._restraint_dict["equilibrium_values"]["thetaB0"] / degree
         )
-        assert np.isclose(64.6300, equilibrium_values_thetaB0, atol=0.001)
+        assert np.isclose(56.4496, equilibrium_values_thetaB0, atol=0.001)
 
-    def test_dihedrals(self, restraint_search):
-        restraint, outdir = restraint_search
+    def test_dihedrals(self, restraint):
+        restraint, _ = restraint
         equilibrium_values_phiA0 = (
             restraint._restraint_dict["equilibrium_values"]["phiA0"] / degree
         )
-        assert np.isclose(16.43557, equilibrium_values_phiA0, atol=0.001)
+        assert np.isclose(21.6173, equilibrium_values_phiA0, atol=0.001)
         equilibrium_values_phiB0 = (
             restraint._restraint_dict["equilibrium_values"]["phiB0"] / degree
         )
-        assert np.isclose(50.3718, equilibrium_values_phiB0, atol=0.001)
+        assert np.isclose(-19.4394, equilibrium_values_phiB0, atol=0.001)
         equilibrium_values_phiC0 = (
             restraint._restraint_dict["equilibrium_values"]["phiC0"] / degree
         )
-        assert np.isclose(101.1527, equilibrium_values_phiC0, atol=0.001)
+        assert np.isclose(71.3148, equilibrium_values_phiC0, atol=0.001)
 
-    def test_index(self, restraint_search):
-        restraint, outdir = restraint_search
+    def test_index(self, restraint):
+        restraint, _ = restraint
         idxs = {
             k: restraint._restraint_dict["anchor_points"][k].index()
             for k in restraint._restraint_dict["anchor_points"]
         }
-        assert idxs == {"r1": 1560, "r2": 1558, "r3": 1562, "l1": 9, "l2": 8, "l3": 10}
+        assert idxs == {"r1": 1560, "r2": 1558, "r3": 1562, "l1": 10, "l2": 9, "l3": 11}
+
+    def test_force_constant(self, restraint_k20):
+        restraint, _ = restraint_k20
+        for force_constant in restraint._restraint_dict["force_constants"].values():
+            assert np.isclose(20, force_constant.value(), atol=0.01)
+
+    def test_analysis_failure(self, _restraint_search):
+        restraint_search, _ = _restraint_search
+        with pytest.raises(AnalysisError):
+            restraint = restraint_search.analyse(
+                method="BSS",
+                restraint_type="Boresch",
+                block=False,
+                cutoff=0.1 * angstrom,
+            )

@@ -5,7 +5,6 @@ try:
 except ModuleNotFoundError:
     is_alchemlyb = False
 
-from matplotlib import cm
 import numpy as np
 import os
 import pandas as pd

@@ -138,30 +138,20 @@ class Restraint:
                         f"of type 'BioSimSpace.Types.Angle'"
                     )
 
-            # Test if the force constant of the bond r1-l1 is the correct unit
-            # Such as kcal/mol/angstrom^2
-            dim = restraint_dict["force_constants"]["kr"].dimensions()
-            if dim != (0, 0, 0, 1, -1, 0, -2):
-                raise ValueError(
-                    "restraint_dict['force_constants']['kr'] must be of type "
-                    "'BioSimSpace.Types.Energy'/'BioSimSpace.Types.Length^2'"
-                )
-
             # Test if the force constant of the angle and dihedral is the correct unit
             # Such as kcal/mol/rad^2
             for key in ["kthetaA", "kthetaB", "kphiA", "kphiB", "kphiC"]:
-                dim = restraint_dict["force_constants"][key].dimensions()
-                if dim != (-2, 0, 2, 1, -1, 0, -2):
-                    raise ValueError(
-                        f"restraint_dict['force_constants']['{key}'] must be of type "
-                        f"'BioSimSpace.Types.Energy'/'BioSimSpace.Types.Angle^2'"
-                    )
+                if restraint_dict["force_constants"][key] != 0:
+                    dim = restraint_dict["force_constants"][key].dimensions()
+                    if dim != (-2, 0, 2, 1, -1, 0, -2):
+                        raise ValueError(
+                            f"restraint_dict['force_constants']['{key}'] must be of type "
+                            f"'BioSimSpace.Types.Energy'/'BioSimSpace.Types.Angle^2'"
+                        )
 
             # Test for unstable combinations of force constants
             non_zero_force_const = [
-                i[0]
-                for i in restraint_dict["force_constants"].items()
-                if i[1].value() != 0
+                i[0] for i in restraint_dict["force_constants"].items() if i[1] != 0
             ]
             if "kr" not in non_zero_force_const:
                 raise ValueError('"kr" cannot be zero')
@@ -178,7 +168,16 @@ class Restraint:
                         "will produce unstable Boresch restraints."
                     )
 
-            # Ensure angles are >= 10 kT from collinear
+            # Test if the force constant of the bond r1-l1 is the correct unit
+            # Such as kcal/mol/angstrom^2
+            dim = restraint_dict["force_constants"]["kr"].dimensions()
+            if dim != (0, 0, 0, 1, -1, 0, -2):
+                raise ValueError(
+                    "restraint_dict['force_constants']['kr'] must be of type "
+                    "'BioSimSpace.Types.Energy'/'BioSimSpace.Types.Length^2'"
+                )
+
+            # Ensure restrained angles are >= 10 kT from collinear
             R = (
                 _k_boltz.value() * _kcal_per_mol / _kelvin
             ).value()  # molar gas constant in kcal mol-1 K-1
@@ -188,23 +187,26 @@ class Restraint:
                 force_const = restraint_dict["force_constants"][f"k{angle}"] / (
                     _kcal_per_mol / (_radian * _radian)
                 )
-                equil_val = restraint_dict["equilibrium_values"][f"{angle}0"] / _radian
-
-                # Convert 10 kT to angle
-                R = (
-                    _k_boltz.value() * _kcal_per_mol / _kelvin
-                ).value()  # molar gas constant in kcal mol-1 K-1
-                T = self.T / _kelvin  # Temperature in Kelvin
-                min_stable_dist = _np.sqrt((20 * R * T) / force_const)
-                min_dist = min([abs(equil_val - 0), abs(equil_val - _np.pi)])
-
-                if min_dist < min_stable_dist:
-                    _warnings.warn(
-                        f"The equilibrium value of {angle} is within 10 kT of"
-                        "collinearity, which may result in unstable Boresch restraints."
-                        " Consider increasing the force constants or selecting equilibrium"
-                        " values further from 0 or pi radians."
+                if force_const != 0:
+                    equil_val = (
+                        restraint_dict["equilibrium_values"][f"{angle}0"] / _radian
                     )
+
+                    # Convert 10 kT to angle
+                    R = (
+                        _k_boltz.value() * _kcal_per_mol / _kelvin
+                    ).value()  # molar gas constant in kcal mol-1 K-1
+                    T = self.T / _kelvin  # Temperature in Kelvin
+                    min_stable_dist = _np.sqrt((20 * R * T) / force_const)
+                    min_dist = min([abs(equil_val - 0), abs(equil_val - _np.pi)])
+
+                    if min_dist < min_stable_dist:
+                        _warnings.warn(
+                            f"The equilibrium value of {angle} is within 10 kT of"
+                            "collinearity, which may result in unstable Boresch restraints."
+                            " Consider increasing the force constants or selecting equilibrium"
+                            " values further from 0 or pi radians."
+                        )
 
         else:
             raise NotImplementedError(
@@ -449,7 +451,7 @@ class Restraint:
                 f"yet. Only Gromacs and SOMD are supported."
             )
 
-    def getCorrection(self, method="numerical"):
+    def getCorrection(self, method="analytical"):
         """
         Calculate the free energy of releasing the restraint
         to the standard state volume.'''
@@ -460,10 +462,10 @@ class Restraint:
         method : str
             The integration method to use for calculating the correction for
             releasing the restraint to the standard state concentration.
-            "numerical" or "analytical". "numerical" is recommended as the
-            analytical correction can introduce errors when the restraints are
-            weak, restrained angles are close to 0 or pi radians, or the restrained
-            distance is close to 0.
+            "numerical" or "analytical". Note that the analytical correction
+            can introduce errors when the restraints are weak, restrained
+            angles are close to 0 or pi radians, or the restrained distance
+            is close to 0.
 
         Returns
         ----------

@@ -15,8 +15,8 @@ url = BSS.tutorialUrl()
 
 
 @pytest.fixture(scope="session")
-def restraint():
-    """Generate the Boresch restaint object."""
+def restraint_components():
+    """Generate a the components required to create a restraint."""
     ligand = BSS.IO.readMolecules(
         [f"{url}/ligand01.prm7.bz2", f"{url}/ligand01.rst7.bz2"]
     ).getMolecule(0)
@@ -64,6 +64,15 @@ def restraint():
             "kphiC": 10 * kcal_per_mol / (radian * radian),
         },
     }
+
+    return system, restraint_dict
+
+
+@pytest.fixture(scope="session")
+def restraint(restraint_components):
+    """Generate the Boresch restraint object."""
+    system, restraint_dict = restraint_components
+
     restraint = Restraint(
         system, restraint_dict, 300 * kelvin, restraint_type="Boresch"
     )
@@ -84,6 +93,36 @@ def test_analytical_correction(restraint):
     dG = restraint.getCorrection(method="analytical") / kcal_per_mol
     assert np.isclose(-7.2, dG, atol=0.1)
     assert isinstance(restraint, Restraint)
+
+
+test_force_constants = [
+    ({"kr": 0}, ValueError),
+    ({"kthetaA": 0}, ValueError),
+    ({"kthetaB": 0}, ValueError),
+    (
+        {
+            "kthetaA": 0,
+            "kphiA": 0,
+            "kphiB": 0,
+        },
+        None,
+    ),
+]
+
+
+@pytest.mark.parametrize("force_constants, expected", test_force_constants)
+def test_input_force_constants(restraint_components, force_constants, expected):
+    print(force_constants)
+    system, restraint_dict = restraint_components
+    dict_copy = restraint_dict.copy()
+    force_constants_copy = restraint_dict["force_constants"].copy()
+    force_constants_copy.update(force_constants)
+    dict_copy["force_constants"] = force_constants_copy
+    if expected is None:
+        Restraint(system, dict_copy, 300 * kelvin, restraint_type="Boresch")
+    else:
+        with pytest.raises(expected):
+            Restraint(system, dict_copy, 300 * kelvin, restraint_type="Boresch")
 
 
 class TestGromacsOutput:
