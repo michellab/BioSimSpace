@@ -741,12 +741,22 @@ class Relative:
             found_temperature = False
             with open(file, "r") as f:
                 for line in f.readlines():
-                    t = None
+                    temp = None
                     start = "#Generating temperature is"
                     if start in line:
-                        t = int(((line.split(start)[1]).strip()).split(" ")[0])
-                        temperatures.append(t)
-                        if t is not None:
+                        split_line = line.split()
+                        temp = split_line[3]
+                        try:
+                            unit = split_line[4]
+                        except IndexError:
+                            # Must be °C
+                            temp, unit = temp.split("°")
+                        if unit == "C":
+                            temp = float(temp) + 273.15  # Convert to K
+                        else:
+                            temp = float(temp)
+                        temperatures.append(temp)
+                        if temp is not None:
                             found_temperature = True
                             break
 
@@ -1041,7 +1051,7 @@ class Relative:
             for lambda_, t in zip(lambdas, temperatures):
                 x = lambdas.index(lambda_)
                 mbar_value = delta_f_.iloc[0, x]
-                mbar_error = d_delta_f_.iloc[1, x]
+                mbar_error = d_delta_f_.iloc[0, x]
 
                 # Append the data.
                 data.append(

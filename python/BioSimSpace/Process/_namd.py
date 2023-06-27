@@ -288,11 +288,17 @@ class Namd(_process.Process):
 
         prop = self._property_map.get("space", "space")
 
-        # Check whether the system contains periodic box information.
         if prop in self._system._sire_object.propertyKeys():
-            # Flag that we have found a box.
-            has_box = True
+            try:
+                box = self._system._sire_object.property(prop)
 
+                # Flag that we have found a periodic box.
+                has_box = box.isPeriodic()
+            except Exception:
+                box = None
+
+        # Check whether the system contains periodic box information.
+        if has_box:
             # Periodic box.
             try:
                 box_size = self._system._sire_object.property(prop).dimensions()
