@@ -451,9 +451,9 @@ class ConfigFactory:
                 # Don't use barostat for vacuum simulations.
                 if self._has_box and self._has_water:
                     if _gmx_version >= 2021:
-                        protocol_dict["pcoupl"] =  "C-rescale"                  # C-rescale barostat.
+                        protocol_dict["pcoupl"] = "C-rescale"  # C-rescale barostat.
                     else:
-                        protocol_dict["pcoupl"] =  "Berendsen"                  # Berendsen barostat.
+                        protocol_dict["pcoupl"] = "Berendsen"  # Berendsen barostat.
                     # Do the MC move every 100 steps to be the same as AMBER.
                     protocol_dict["nstpcouple"] = 100
                     # 4ps time constant for pressure coupling.
@@ -588,7 +588,13 @@ class ConfigFactory:
 
         return total_lines
 
-    def generateSomdConfig(self, extra_options=None, extra_lines=None, restraint=None, perturbation_type=None):
+    def generateSomdConfig(
+        self,
+        extra_options=None,
+        extra_lines=None,
+        restraint=None,
+        perturbation_type=None,
+    ):
         """Outputs the current protocol in a format compatible with SOMD.
 
         Parameters
@@ -612,7 +618,7 @@ class ConfigFactory:
             "flip" : Perturb all hard atom terms as well as bonds/angles.
             "grow_soft" : Perturb all growing soft atom LJ terms (i.e. 0.0->value).
             "charge_soft" : Perturb all charging soft atom LJ terms (i.e. 0.0->value).
-            "restraint" : Perturb the receptor-ligand restraint strength by linearly 
+            "restraint" : Perturb the receptor-ligand restraint strength by linearly
                           scaling the force constants (0.0->value).
 
         Returns
@@ -651,7 +657,7 @@ class ConfigFactory:
             timestep = self.protocol._timestep
 
             # Work out the number of cycles.
-            ncycles = ( runtime / timestep) / report_interval
+            ncycles = (runtime / timestep) / report_interval
 
             # If the number of cycles isn't integer valued, adjust the report
             # interval so that we match specified the run time.
@@ -659,7 +665,7 @@ class ConfigFactory:
                 ncycles = _math.floor(ncycles)
                 if ncycles == 0:
                     ncycles = 1
-                report_interval = _math.ceil( (runtime / timestep) / ncycles)
+                report_interval = _math.ceil((runtime / timestep) / ncycles)
 
             # For free energy simulations, the report interval must be a multiple
             # of the energy frequency which is 250 steps.
@@ -769,7 +775,9 @@ class ConfigFactory:
 
             protocol = [str(x) for x in self.protocol.getLambdaValues()]
             protocol_dict["lambda array"] = ", ".join(protocol)
-            protocol_dict[ "lambda_val" ] = self.protocol.getLambda()  # Current lambda value.
+            protocol_dict[
+                "lambda_val"
+            ] = self.protocol.getLambda()  # Current lambda value.
 
             try:  # RBFE
                 res_num = (
@@ -779,10 +787,13 @@ class ConfigFactory:
                     .value()
                 )
             except ValueError:  # No perturbable molecule - try ABFE
-                res_num = self.system.getDecoupledMolecules()[0]._sire_object.number().value()
+                res_num = (
+                    self.system.getDecoupledMolecules()[0]._sire_object.number().value()
+                )
 
-            protocol_dict[ "perturbed residue number" ] = res_num  # Perturbed residue number.
-
+            protocol_dict[
+                "perturbed residue number"
+            ] = res_num  # Perturbed residue number.
 
         # Put everything together in a line-by-line format.
         total_dict = {**protocol_dict, **extra_options}
@@ -793,7 +804,7 @@ class ConfigFactory:
         # Restraint
         if restraint:
             total_lines.append("use boresch restraints = True")
-            total_lines.append(restraint.toString(engine='SOMD'))
+            total_lines.append(restraint.toString(engine="SOMD"))
             # If we are turning on the restraint, need to specify this in the config file
             if perturbation_type == "restraint":
                 total_lines.append("turn on receptor-ligand restraints mode = True")
