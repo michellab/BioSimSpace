@@ -72,7 +72,7 @@ class Atom(_SireWrapper):
 
     def __str__(self):
         """Return a human readable string representation of the object."""
-        return "<BioSimSpace.Atom: name=%r, molecule=%d index=%d>" % (
+        return "<BioSimSpace.Atom: name=%r, molecule=%d, index=%d>" % (
             self.name(),
             self.moleculeNumber(),
             self.index(),
@@ -80,7 +80,7 @@ class Atom(_SireWrapper):
 
     def __repr__(self):
         """Return a string showing how to instantiate the object."""
-        return "<BioSimSpace.Atom: name=%r, molecule=%d index=%d>" % (
+        return "<BioSimSpace.Atom: name=%r, molecule=%d, index=%d>" % (
             self.name(),
             self.moleculeNumber(),
             self.index(),
