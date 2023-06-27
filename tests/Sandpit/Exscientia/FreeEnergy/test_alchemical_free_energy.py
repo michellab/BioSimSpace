@@ -4,47 +4,37 @@ import pathlib
 import pytest
 import numpy as np
 import os
+import shutil
 import time
 
-try:
-    from alchemlyb.parsing.gmx import extract_u_nk
-
-    is_alchemlyb = True
-except ModuleNotFoundError:
-    is_alchemlyb = False
-
-try:
-    from alchemtest.gmx import load_ABFE
-    from alchemtest.amber import load_bace_example
-
-    is_alchemtest = True
-except ModuleNotFoundError:
-    is_alchemtest = False
+from tests.Sandpit.Exscientia.conftest import (
+    has_alchemlyb,
+    has_alchemlyb_parquet,
+    has_alchemtest,
+    has_gromacs,
+    url,
+)
 
 import BioSimSpace.Sandpit.Exscientia as BSS
-from BioSimSpace.Sandpit.Exscientia import Types as _Types
-from BioSimSpace.Sandpit.Exscientia.Align._decouple import decouple
-from BioSimSpace.Sandpit.Exscientia.FreeEnergy import Restraint
 from BioSimSpace.Sandpit.Exscientia.Protocol import FreeEnergyEquilibration
+from BioSimSpace.Sandpit.Exscientia.Align._decouple import decouple
+from BioSimSpace.Sandpit.Exscientia import Types as _Types
+from BioSimSpace.Sandpit.Exscientia.FreeEnergy import Restraint
 from BioSimSpace.Sandpit.Exscientia.Units.Angle import radian, degree
 from BioSimSpace.Sandpit.Exscientia.Units.Energy import kcal_per_mol
 from BioSimSpace.Sandpit.Exscientia.Units.Length import angstrom
 from BioSimSpace.Sandpit.Exscientia.Units.Temperature import kelvin
 
-# Make sure GROMACS is installed.
-has_gromacs = BSS._gmx_exe is not None
-
-# Store the tutorial URL.
-url = BSS.tutorialUrl()
-
 
 @pytest.mark.skipif(
-    is_alchemtest is False, reason="Requires alchemtest and alchemlyb to be installed."
+    has_alchemtest is False, reason="Requires alchemtest and alchemlyb to be installed."
 )
 class TestRelativeAnalysis:
     @staticmethod
     @pytest.fixture(scope="class")
     def gmx_data(tmp_path_factory):
+        from alchemtest.gmx import load_ABFE
+
         outdir = tmp_path_factory.mktemp("gromacs")
         for leg in ["complex", "ligand"]:
             for index, filename in enumerate(load_ABFE().data[leg]):
@@ -57,6 +47,8 @@ class TestRelativeAnalysis:
     @staticmethod
     @pytest.fixture(scope="class")
     def amber_data(tmp_path_factory):
+        from alchemtest.amber import load_bace_example
+
         outdir = tmp_path_factory.mktemp("amber")
         for leg, stage in [("complex", "decharge"), ("solvated", "vdw")]:
             for index, filename in enumerate(load_bace_example().data[leg][stage]):
@@ -71,7 +63,7 @@ class TestRelativeAnalysis:
     @pytest.fixture(scope="class")
     def gmx_complex(gmx_data):
         outdir = gmx_data
-        complex, _ = BSS.FreeEnergy.AlchemicalFreeEnergy.analyse(
+        complex, _ = BSS.FreeEnergy.Relative.analyse(
             work_dir=str(outdir / "complex"),
             temperature=310 * BSS.Units.Temperature.kelvin,
         )
@@ -81,7 +73,7 @@ class TestRelativeAnalysis:
     @pytest.fixture(scope="class")
     def gmx_ligand(gmx_data):
         outdir = gmx_data
-        ligand, _ = BSS.FreeEnergy.AlchemicalFreeEnergy.analyse(
+        ligand, _ = BSS.FreeEnergy.Relative.analyse(
             work_dir=str(outdir / "ligand"),
             temperature=310 * BSS.Units.Temperature.kelvin,
         )
@@ -91,7 +83,7 @@ class TestRelativeAnalysis:
     @pytest.fixture(scope="class")
     def amber_complex_decharge(amber_data):
         outdir = amber_data
-        complex, _ = BSS.FreeEnergy.AlchemicalFreeEnergy.analyse(
+        complex, _ = BSS.FreeEnergy.Relative.analyse(
             work_dir=str(outdir / "complex_decharge"),
             temperature=298 * BSS.Units.Temperature.kelvin,
         )
@@ -101,7 +93,7 @@ class TestRelativeAnalysis:
     @pytest.fixture(scope="class")
     def amber_solvated_vdw(amber_data):
         outdir = amber_data
-        complex, _ = BSS.FreeEnergy.AlchemicalFreeEnergy.analyse(
+        complex, _ = BSS.FreeEnergy.Relative.analyse(
             work_dir=str(outdir / "solvated_vdw"),
             temperature=298 * BSS.Units.Temperature.kelvin,
         )
@@ -125,72 +117,44 @@ class TestRelativeAnalysis:
         )
 
     def test_difference(self, gmx_complex, gmx_ligand):
-        dG, error = BSS.FreeEnergy.AlchemicalFreeEnergy.difference(
-            gmx_complex, gmx_ligand
-        )
+        dG, error = BSS.FreeEnergy.Relative.difference(gmx_complex, gmx_ligand)
         np.testing.assert_allclose(
             dG / BSS.Units.Energy.kcal_per_mol, 14.216101, atol=0.1
         )
 
 
+@pytest.mark.skipif(
+    has_alchemlyb_parquet is False, reason="Requires alchemlyb > 2.1.0."
+)
+class TestAnalysePARQUET:
+    @staticmethod
+    @pytest.fixture(scope="class")
+    def data(tmp_path_factory):
+        outdir = tmp_path_factory.mktemp("out")
+        shutil.copytree("tests/Sandpit/Exscientia/input/parquet", outdir / "parquet")
+        return str(outdir / "parquet")
+
+    def test_analyse(self, data):
+        result = BSS.FreeEnergy.Relative.analyse(
+            data, temperature=300 * BSS.Units.Temperature.kelvin, estimator="MBAR"
+        )
+        assert np.isclose(
+            result[0][-1][-1] / BSS.Units.Energy.kcal_per_mol, 20.87341050030068, atol=1
+        )
+
+
 @pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
-@pytest.mark.skipif(is_alchemlyb is False, reason="Requires alchemlyb to be installed.")
+@pytest.mark.skipif(
+    has_alchemlyb is False, reason="Requires alchemlyb to be installed."
+)
 class Test_gmx_ABFE:
     @staticmethod
     @pytest.fixture(scope="class")
     def freenrg():
-        m = BSS.IO.readMolecules(
-            [
-                f"{url}/crd.gro.bz2",
-                f"{url}/complex.top.bz2",
-            ]
-        ).getMolecule(
-            1
-        )  # Molecule 1 is the ligand
-
-        # Assign atoms for restraint
-        atom_1 = m.getAtoms()[0]
-        atom_2 = m.getAtoms()[1]
-        atom_3 = m.getAtoms()[2]
-        atom_4 = m.getAtoms()[3]
-        atom_5 = m.getAtoms()[4]
-        atom_6 = m.getAtoms()[5]
-
-        decoupled_m = decouple(m)
+        m = BSS.IO.readMolecules(["tests/input/ala.top", "tests/input/ala.crd"])[0]
+        decouple_m = decouple(m)
         solvated = BSS.Solvent.tip3p(
-            molecule=decoupled_m, box=3 * [3 * BSS.Units.Length.nanometer]
-        )
-
-        # Create random restraint dictionary
-        restraint_dict = {
-            "anchor_points": {
-                "r1": atom_1,
-                "r2": atom_2,
-                "r3": atom_3,
-                "l1": atom_4,
-                "l2": atom_5,
-                "l3": atom_6,
-            },
-            "equilibrium_values": {
-                "r0": 5.08 * angstrom,
-                "thetaA0": 64.051 * degree,
-                "thetaB0": 39.618 * degree,
-                "phiA0": 2.59 * radian,
-                "phiB0": -1.20 * radian,
-                "phiC0": 2.63 * radian,
-            },
-            "force_constants": {
-                "kr": 10 * kcal_per_mol / angstrom**2,
-                "kthetaA": 10 * kcal_per_mol / (radian * radian),
-                "kthetaB": 10 * kcal_per_mol / (radian * radian),
-                "kphiA": 10 * kcal_per_mol / (radian * radian),
-                "kphiB": 10 * kcal_per_mol / (radian * radian),
-                "kphiC": 10 * kcal_per_mol / (radian * radian),
-            },
-        }
-
-        restraint = Restraint(
-            solvated, restraint_dict, 298 * kelvin, restraint_type="Boresch"
+            molecule=decouple_m, box=3 * [3 * BSS.Units.Length.nanometer]
         )
         protocol = FreeEnergyEquilibration(
             lam=pd.Series(data={"coul": 0.5, "vdw": 0.0}),
@@ -202,8 +166,10 @@ class Test_gmx_ABFE:
             ),
             runtime=_Types.Time(0, "nanoseconds"),
         )
-        freenrg = BSS.FreeEnergy.AlchemicalFreeEnergy(
-            solvated, protocol, engine="GROMACS", restraint=restraint
+        freenrg = BSS.FreeEnergy.Relative(
+            solvated,
+            protocol,
+            engine="GROMACS",
         )
         freenrg.run()
         freenrg.wait()
@@ -215,13 +181,14 @@ class Test_gmx_ABFE:
         for i in range(5):
             assert (path / f"lambda_{i}" / "gromacs.xvg").is_file()
 
-    @pytest.mark.skipif(is_alchemlyb is False, reason="Need alchemlyb.")
     def test_lambda(self, freenrg):
         """Test if the xvg files contain the correct lambda."""
         path = pathlib.Path(freenrg.workDir())
         for i, (coul, vdw) in enumerate(
             zip([0.0, 0.5, 1.0, 1.0, 1.0], [0.0, 0.0, 0.0, 0.5, 1.0])
         ):
+            from alchemlyb.parsing.gmx import extract_u_nk
+
             u_nk = extract_u_nk(path / f"lambda_{i}" / "gromacs.xvg", 300)
             assert u_nk.index.names == ["time", "coul-lambda", "vdw-lambda"]
             assert np.isclose(u_nk.index.values[0][1], coul)

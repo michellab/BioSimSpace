@@ -7,9 +7,11 @@ from BioSimSpace.Sandpit.Exscientia.FreeEnergy import Restraint
 from BioSimSpace.Sandpit.Exscientia.Units.Temperature import kelvin
 
 import filecmp
-import pytest
 import os
-import warnings as _warnings
+import pytest
+import warnings
+
+import BioSimSpace.Sandpit.Exscientia as BSS
 
 # Store the tutorial URL.
 url = BSS.tutorialUrl()
@@ -209,7 +211,7 @@ def run_process(system, protocol, **kwargs):
     if res:
         with open(os.path.join(process.workDir(), "test.out"), "r") as hnd:
             if "RuntimeError: Particle coordinate is nan" in hnd.read():
-                _warnings.warn(
+                warnings.warn(
                     "Test raised RuntimeError: Particle coordinate is nan",
                     RuntimeWarning,
                 )

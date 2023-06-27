@@ -1,7 +1,7 @@
-import BioSimSpace.Sandpit.Exscientia as BSS
-
 import os
 import pytest
+
+import BioSimSpace.Sandpit.Exscientia as BSS
 
 
 @pytest.fixture

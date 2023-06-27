@@ -1,8 +1,6 @@
-from BioSimSpace.Sandpit.Exscientia.Gateway import Integer
-
 import pytest
 
-# Tests for Integer requirements.
+from BioSimSpace.Sandpit.Exscientia.Gateway import Integer
 
 
 def test_no_arguments():

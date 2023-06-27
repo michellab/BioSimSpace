@@ -1,20 +1,8 @@
-import BioSimSpace.Sandpit.Exscientia as BSS
-
-import os
 import pytest
 
-# Store the tutorial URL.
-url = BSS.tutorialUrl()
+import BioSimSpace.Sandpit.Exscientia as BSS
 
-# Make sure AMBER is installed.
-if BSS._amber_home is not None:
-    exe = "%s/bin/sander" % BSS._amber_home
-    if os.path.isfile(exe):
-        has_amber = True
-    else:
-        has_amber = False
-else:
-    has_amber = False
+from tests.Sandpit.Exscientia.conftest import url, has_amber, has_pyarrow
 
 
 @pytest.fixture(scope="session")
@@ -22,7 +10,10 @@ def system():
     return BSS.IO.readMolecules(["tests/input/ala.top", "tests/input/ala.crd"])
 
 
-@pytest.mark.skipif(has_amber is False, reason="Requires AMBER to be installed.")
+@pytest.mark.skipif(
+    has_amber is False or has_pyarrow is False,
+    reason="Requires AMBER and pyarrow to be installed.",
+)
 def test_makeCompatibleWith():
     # Load the original PDB file. In this representation the system contains
     # a single molecule with two chains. We parse with pdb4amber to ensure

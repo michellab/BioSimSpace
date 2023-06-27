@@ -1,9 +1,6 @@
-import BioSimSpace.Sandpit.Exscientia as BSS
-
 import pytest
 
-# Store the tutorial URL.
-url = BSS.tutorialUrl()
+import BioSimSpace.Sandpit.Exscientia as BSS
 
 
 def test_bonds():

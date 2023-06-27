@@ -1,18 +1,8 @@
-import BioSimSpace.Sandpit.Exscientia as BSS
-
-from sire.legacy.Base import findExe
-
 import pytest
 
-# Make sure NAMD is installed.
-try:
-    findExe("namd2")
-    has_namd = True
-except:
-    has_namd = False
+import BioSimSpace.Sandpit.Exscientia as BSS
 
-# Store the tutorial URL.
-url = BSS.tutorialUrl()
+from tests.Sandpit.Exscientia.conftest import url, has_namd
 
 
 @pytest.fixture(scope="session")

@@ -1,28 +1,13 @@
-import BioSimSpace.Sandpit.Exscientia as BSS
-from BioSimSpace.Sandpit.Exscientia._Utils import _try_import, _have_imported
-
-import os
 import pytest
 
-# Make sure openff is installed.
-_openff = _try_import("openff")
-has_openff = _have_imported(_openff)
+import BioSimSpace.Sandpit.Exscientia as BSS
 
-# Store the tutorial URL.
-url = BSS.tutorialUrl()
-
-# Make sure required AMBER executables are present.
-if BSS._amber_home is not None:
-    tleap = "%s/bin/tleap" % BSS._amber_home
-    if os.path.isfile(tleap):
-        has_tleap = True
-    else:
-        has_tleap = False
-else:
-    has_tleap = False
-
-# Make sure antechamber is installed.
-has_antechamber = BSS.Parameters._Protocol._amber._antechamber_exe is not None
+from tests.Sandpit.Exscientia.conftest import (
+    url,
+    has_openff,
+    has_tleap,
+    has_antechamber,
+)
 
 
 @pytest.fixture(scope="session")

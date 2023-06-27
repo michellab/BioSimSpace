@@ -1,21 +1,20 @@
-import math as _math
-import time
 import warnings as _warnings
 
+import math as _math
 from sire.legacy import Units as _SireUnits
 from ..Units.Time import nanosecond as _nanosecond
 
 from .. import Protocol as _Protocol
 from .. import _gmx_version
-from ..Align._squash import _amber_mask_from_indices, _squashed_atom_mapping
 from .._Exceptions import IncompatibleError as _IncompatibleError
+from ..Align._squash import _amber_mask_from_indices, _squashed_atom_mapping
 
 
 class ConfigFactory:
     # TODO: Integrate this class better into the other Protocols.
     """A class for generating a config based on a template protocol."""
 
-    def __init__(self, system, protocol):
+    def __init__(self, system, protocol, explicit_dummies=False):
         """
         Constructor.
 
@@ -25,10 +24,16 @@ class ConfigFactory:
         system : :class:`System <BioSimSpace._SireWrappers.System>`
             The molecular system.
 
-           protocol : :class:`Protocol <BioSimSpace.Protocol>`
+        protocol : :class:`Protocol <BioSimSpace.Protocol>`
+            The input protocol.
+
+        explicit_dummies : bool
+            Whether to keep the dummy atoms explicit at the endstates or remove them.
+            This option is only used for AMBER.
         """
         self.system = system
         self.protocol = protocol
+        self.explicit_dummies = explicit_dummies
 
     @property
     def _has_box(self):
@@ -104,17 +109,18 @@ class ConfigFactory:
             A dictionary of AMBER-compatible options.
         """
         # Get the merged to squashed atom mapping of the whole system for both endpoints.
+        kwargs = dict(environment=False, explicit_dummies=self.explicit_dummies)
         mcs_mapping0 = _squashed_atom_mapping(
-            self.system, is_lambda1=False, environment=False, common=True, dummies=False
+            self.system, is_lambda1=False, common=True, dummies=False, **kwargs
         )
         mcs_mapping1 = _squashed_atom_mapping(
-            self.system, is_lambda1=True, environment=False, common=True, dummies=False
+            self.system, is_lambda1=True, common=True, dummies=False, **kwargs
         )
         dummy_mapping0 = _squashed_atom_mapping(
-            self.system, is_lambda1=False, environment=False, common=False, dummies=True
+            self.system, is_lambda1=False, common=False, dummies=True, **kwargs
         )
         dummy_mapping1 = _squashed_atom_mapping(
-            self.system, is_lambda1=True, environment=False, common=False, dummies=True
+            self.system, is_lambda1=True, common=False, dummies=True, **kwargs
         )
 
         # Generate the TI and dummy masks.
@@ -131,14 +137,8 @@ class ConfigFactory:
         ti0_indices = mcs0_indices + dummy0_indices
         ti1_indices = mcs1_indices + dummy1_indices
 
-        # AMBER doesn't seem to work well with the same atom being defined as a scmask in both endstates
-        common_dummies = set(dummy0_indices) & set(dummy1_indices)
-        dummy0_indices = sorted(set(dummy0_indices) - common_dummies)
-        dummy1_indices = sorted(set(dummy1_indices) - common_dummies)
-
-        # Define whether HMR is used based on the timestep.
-        # When HMR is used, there can be no SHAKE.
-        if timestep >= 0.004:
+        # SHAKE should be used for timestep > 1 fs.
+        if timestep >= 0.002:
             no_shake_mask = ""
         else:
             no_shake_mask = _amber_mask_from_indices(ti0_indices + ti1_indices)
@@ -409,7 +409,7 @@ class ConfigFactory:
             timestep = (
                 self.protocol.getTimeStep().picoseconds().value()
             )  # Define the timestep in picoseconds
-            protocol_dict["dt"] = f"{timestep:.3f}"  # Integration time step.
+            protocol_dict["dt"] = f"{timestep:.4f}"  # Integration time step.
         protocol_dict["nsteps"] = self._steps  # Number of integration steps.
 
         # Constraints.

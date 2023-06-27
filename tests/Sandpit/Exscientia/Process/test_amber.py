@@ -1,23 +1,15 @@
-import BioSimSpace.Sandpit.Exscientia as BSS
-
+import shutil
 from collections import OrderedDict
+from pathlib import Path
 
-import os
+import numpy as np
+import pandas as pd
 import pytest
 import shutil
 
-# Make sure AMBER is installed.
-if BSS._amber_home is not None:
-    exe = "%s/bin/sander" % BSS._amber_home
-    if os.path.isfile(exe):
-        has_amber = True
-    else:
-        has_amber = False
-else:
-    has_amber = False
+import BioSimSpace.Sandpit.Exscientia as BSS
 
-# Store the tutorial URL.
-url = BSS.tutorialUrl()
+from tests.Sandpit.Exscientia.conftest import url, has_amber, has_pyarrow
 
 
 @pytest.fixture(scope="session")
@@ -26,7 +18,10 @@ def system():
     return BSS.IO.readMolecules(["tests/input/ala.top", "tests/input/ala.crd"])
 
 
-@pytest.mark.skipif(has_amber is False, reason="Requires AMBER to be installed.")
+@pytest.mark.skipif(
+    has_amber is False or has_pyarrow is False,
+    reason="Requires AMBER and pyarrow to be installed.",
+)
 def test_minimise(system):
     """Test a minimisation protocol."""
 
@@ -37,7 +32,10 @@ def test_minimise(system):
     run_process(system, protocol)
 
 
-@pytest.mark.skipif(has_amber is False, reason="Requires AMBER to be installed.")
+@pytest.mark.skipif(
+    has_amber is False or has_pyarrow is False,
+    reason="Requires AMBER and pyarrow to be installed.",
+)
 @pytest.mark.parametrize("restraint", ["backbone", "heavy", "all", "none"])
 def test_equilibrate(system, restraint):
     """Test an equilibration protocol."""
@@ -51,7 +49,10 @@ def test_equilibrate(system, restraint):
     run_process(system, protocol)
 
 
-@pytest.mark.skipif(has_amber is False, reason="Requires AMBER to be installed.")
+@pytest.mark.skipif(
+    has_amber is False or has_pyarrow is False,
+    reason="Requires AMBER and pyarrow to be installed.",
+)
 def test_heat(system):
     """Test a heating protocol."""
 
@@ -66,7 +67,10 @@ def test_heat(system):
     run_process(system, protocol)
 
 
-@pytest.mark.skipif(has_amber is False, reason="Requires AMBER to be installed.")
+@pytest.mark.skipif(
+    has_amber is False or has_pyarrow is False,
+    reason="Requires AMBER and pyarrow to be installed.",
+)
 def test_cool(system):
     """Test a cooling protocol."""
 
@@ -81,7 +85,10 @@ def test_cool(system):
     run_process(system, protocol)
 
 
-@pytest.mark.skipif(has_amber is False, reason="Requires AMBER to be installed.")
+@pytest.mark.skipif(
+    has_amber is False or has_pyarrow is False,
+    reason="Requires AMBER and pyarrow to be installed.",
+)
 def test_production(system):
     """Test a production protocol."""
 
@@ -92,7 +99,10 @@ def test_production(system):
     run_process(system, protocol, check_data=True)
 
 
-@pytest.mark.skipif(has_amber is False, reason="Requires AMBER to be installed.")
+@pytest.mark.skipif(
+    has_amber is False or has_pyarrow is False,
+    reason="Requires AMBER and pyarrow to be installed.",
+)
 def test_args(system):
     """Test setting an manipulation of command-line args."""
 
@@ -243,9 +253,16 @@ def run_process(system, protocol, check_data=False):
                 assert len(v) == nrec
 
 
-@pytest.mark.skipif(has_amber is False, reason="Requires AMBER to be installed.")
+@pytest.mark.skipif(
+    has_amber is False or has_pyarrow is False,
+    reason="Requires AMBER and pyarrow to be installed.",
+)
 @pytest.mark.parametrize(
-    "protocol", [BSS.Protocol.FreeEnergy(), BSS.Protocol.FreeEnergyMinimisation()]
+    "protocol",
+    [
+        BSS.Protocol.FreeEnergy(temperature=298 * BSS.Units.Temperature.kelvin),
+        BSS.Protocol.FreeEnergyMinimisation(),
+    ],
 )
 def test_parse_fep_output(system, protocol):
     """Make sure that we can correctly parse AMBER FEP output."""
@@ -301,3 +318,54 @@ def test_parse_fep_output(system, protocol):
     else:
         assert len(records_sc0) == 0
         assert len(records_sc1) != 0
+
+
+@pytest.mark.skipif(
+    has_amber is False or has_pyarrow is False,
+    reason="Requires AMBER and pyarrow to be installed.",
+)
+class TestsaveMetric:
+    @staticmethod
+    @pytest.fixture()
+    def setup(system):
+        # Copy the system.
+        system_copy = system.copy()
+
+        # Decouple a single molecule in the system.
+        mol = system_copy[0]
+        mol = BSS.Align.decouple(mol)
+        system_copy.updateMolecule(0, mol)
+
+        # Create a process using any system and the protocol.
+        process = BSS.Process.Amber(
+            system_copy,
+            BSS.Protocol.FreeEnergy(temperature=298 * BSS.Units.Temperature.kelvin),
+        )
+        shutil.copyfile(
+            "tests/Sandpit/Exscientia/output/amber_fep.out",
+            process.workDir() + "/amber.out",
+        )
+        process.saveMetric()
+        return process
+
+    def test_metric_parquet_exist(self, setup):
+        assert Path(f"{setup.workDir()}/metric.parquet").exists()
+
+    def test_metric_parquet(self, setup):
+        df = pd.read_parquet(f"{setup.workDir()}/metric.parquet")
+        assert np.isclose(df["PotentialEnergy (kJ/mol)"][20.0], -90086.461304)
+        assert np.isclose(df["Volume (nm^3)"][20.0], 65.7242169)
+        assert np.isclose(df["Pressure (bar)"][20.0], 0.0)
+        assert np.isclose(df["Temperature (kelvin)"][20.0], 303.01)
+
+    def test_u_nk_parquet_exist(self, setup):
+        assert Path(f"{setup.workDir()}/u_nk.parquet").exists()
+
+    def test_u_nk_parquet(self, setup):
+        df = pd.read_parquet(f"{setup.workDir()}/u_nk.parquet")
+        assert df.shape == (50, 16)
+
+    def test_no_output(self, system):
+        process = BSS.Process.Amber(system, BSS.Protocol.Production())
+        with pytest.warns(match="Simulation didn't produce any output."):
+            process.saveMetric()

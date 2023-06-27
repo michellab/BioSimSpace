@@ -1,9 +1,9 @@
-import BioSimSpace.Sandpit.Exscientia as BSS
-
 import pytest
 import subprocess
 import shlex
 import sys
+
+import BioSimSpace.Sandpit.Exscientia as BSS
 
 # Store the name of the test script.
 script_name = "tests/Gateway/node.py"

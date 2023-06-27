@@ -1,12 +1,8 @@
-import BioSimSpace as BSS
-
 import pytest
 
-# Store the tutorial URL.
-url = BSS.tutorialUrl()
+import BioSimSpace as BSS
 
-# Make sure GROMACS is installed.
-has_gromacs = BSS._gmx_exe is not None
+from tests.conftest import url, has_gromacs
 
 
 @pytest.fixture(scope="session")

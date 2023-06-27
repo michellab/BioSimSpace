@@ -1,7 +1,7 @@
+import pytest
+
 import BioSimSpace.Sandpit.Exscientia.Types as Types
 import BioSimSpace.Sandpit.Exscientia.Units as Units
-
-import pytest
 
 
 @pytest.mark.parametrize(
