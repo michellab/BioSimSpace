@@ -19,12 +19,12 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-"""Functionality for relative free-energy simulations."""
+"""Functionality for relative and absolute alchemical free-energy simulations."""
 
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
 
-__all__ = ["Relative", "getData"]
+__all__ = ["AlchemicalFreeEnergy", "getData"]
 
 
 from glob import glob as _glob
@@ -106,8 +106,11 @@ if _sys.platform == "win32":
     )
 
 
-class Relative:
-    """Class for configuring and running relative free-energy perturbation simulations."""
+class AlchemicalFreeEnergy:
+    """
+    Class for configuring and running relative and absolute 
+    free-energy perturbation simulations.
+    """
 
     # Create a list of supported molecular dynamics engines.
     _engines = ["AMBER", "GROMACS", "SOMD"]
@@ -181,9 +184,8 @@ class Relative:
             Estimator used for the analysis - must be either 'MBAR' or 'TI'.
 
         restraint : :class:`Restraint <BioSimSpace.FreeEnergy.Restraint>`
-            A Restraint object specifying a receptor-ligand restraint. This
-            is mainly used for ABFE calculations but may also be helpful to 
-            maintain binding poses during RBFE simulations.
+            A Restraint object specifying a receptor-ligand restraint for
+            ABFE calculations.
 
         property_map : dict
             A dictionary that maps system "properties" to their user defined
@@ -558,13 +560,13 @@ class Relative:
             data = _glob(work_dir + mask)
             if data:
                 if engine == "SOMD":
-                    return Relative._analyse_somd(work_dir, estimator)
+                    return AlchemicalFreeEnergy._analyse_somd(work_dir, estimator)
                 else:
                     if not isinstance(temperature, _Types.Temperature):
                         raise TypeError(
                             "'temperature' must be of type 'BioSimSpace.Types.Temperature'"
                         )
-                    return Relative._analyse_noSOMD(
+                    return AlchemicalFreeEnergy._analyse_noSOMD(
                         engine=engine,
                         work_dir=work_dir,
                         estimator=estimator,
@@ -599,7 +601,7 @@ class Relative:
             raise TypeError(
                 "'protocol' must be of type 'BioSimSpace.Protocol.Production'"
             )
-        return Relative.analyse(
+        return AlchemicalFreeEnergy.analyse(
             str(self._work_dir), self._estimator, temperature=temperature
         )
 
@@ -1233,7 +1235,7 @@ class Relative:
         pmf, _ = self.analyse()
 
         # Now call the staticmethod passing in both PMFs.
-        return Relative.difference(pmf, pmf_ref)
+        return AlchemicalFreeEnergy.difference(pmf, pmf_ref)
 
     def _initialise_runner(self, system):
         """
@@ -1543,4 +1545,4 @@ def getData(name="data", file_link=False, work_dir=None):
     output : str, IPython.display.FileLink
         A path, or file link, to an archive of the process input.
     """
-    return Relative.getData(name=name, file_link=file_link, work_dir=work_dir)
+    return AlchemicalFreeEnergy.getData(name=name, file_link=file_link, work_dir=work_dir)
