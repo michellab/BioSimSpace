@@ -63,6 +63,7 @@ try:
     import sire as _sr
 
     _sr.use_mixed_api(support_old_module_names=False)
+    _sr.convert.supported_formats()
 except ImportError:
     pass
 
