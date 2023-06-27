@@ -128,7 +128,7 @@ class TestGromacsRBFE:
             steps=10000,
             perturbation_type="full",
         )
-        freenrg = BSS.FreeEnergy.Relative(
+        freenrg = BSS.FreeEnergy.AlchemicalFreeEnergy(
             system,
             protocol,
             engine="GROMACS",
@@ -157,7 +157,7 @@ class TestGromacsRBFE:
             steps=10000,
             perturbation_type="full",
         )
-        freenrg = BSS.FreeEnergy.Relative(
+        freenrg = BSS.FreeEnergy.AlchemicalFreeEnergy(
             system,
             protocol,
             engine="GROMACS",
@@ -187,7 +187,7 @@ class TestGromacsRBFE:
             steps=10000,
             perturbation_type="full",
         )
-        freenrg = BSS.FreeEnergy.Relative(
+        freenrg = BSS.FreeEnergy.AlchemicalFreeEnergy(
             system,
             protocol,
             engine="GROMACS",
@@ -238,7 +238,7 @@ class TestGromacsABFE:
         m, protocol = system
         """Test the decoupling where lambda0 = vdw-q and lambda1=none."""
         mol = decouple(m)
-        freenrg = BSS.FreeEnergy.Relative(
+        freenrg = BSS.FreeEnergy.AlchemicalFreeEnergy(
             mol.toSystem(),
             protocol,
             engine="GROMACS",
@@ -257,7 +257,7 @@ class TestGromacsABFE:
         """Test the annihilation where lambda0 = vdw-q and lambda1=none."""
         m, protocol = system
         mol = decouple(m, charge=(False, True), LJ=(True, False), intramol=False)
-        freenrg = BSS.FreeEnergy.Relative(
+        freenrg = BSS.FreeEnergy.AlchemicalFreeEnergy(
             mol.toSystem(),
             protocol,
             engine="GROMACS",
@@ -280,7 +280,7 @@ class TestGromacsABFE:
         """
         m, protocol = system
         mol = decouple(m)
-        freenrg = BSS.FreeEnergy.Relative(
+        freenrg = BSS.FreeEnergy.AlchemicalFreeEnergy(
             mol.toSystem(),
             protocol,
             engine="GROMACS",
@@ -351,7 +351,7 @@ class TestSomdABFE:
         """Test for turning on the restraint"""
         system, restraint = system_and_restraint
         protocol = FreeEnergy(perturbation_type="restraint")
-        freenrg = BSS.FreeEnergy.Absolute(
+        freenrg = BSS.FreeEnergy.AlchemicalFreeEnergy(
             system, protocol, engine="SOMD", restraint=restraint
         )
 
@@ -391,7 +391,7 @@ class TestSomdABFE:
         """Test for discharging the ligand"""
         system, restraint = system_and_restraint
         protocol = FreeEnergy(perturbation_type="discharge_soft")
-        freenrg = BSS.FreeEnergy.Absolute(
+        freenrg = BSS.FreeEnergy.AlchemicalFreeEnergy(
             system, protocol, engine="SOMD", restraint=restraint
         )
 
@@ -431,7 +431,7 @@ class TestSomdABFE:
         """Test for vanishing the ligand"""
         system, restraint = system_and_restraint
         protocol = FreeEnergy(perturbation_type="vanish_soft")
-        freenrg = BSS.FreeEnergy.Absolute(
+        freenrg = BSS.FreeEnergy.AlchemicalFreeEnergy(
             system, protocol, engine="SOMD", restraint=restraint
         )
 
@@ -471,7 +471,7 @@ class TestSomdABFE:
         """Test for simultaneously discharging and vanishing the ligand"""
         system, restraint = system_and_restraint
         protocol = FreeEnergy(perturbation_type="full")
-        freenrg = BSS.FreeEnergy.Absolute(
+        freenrg = BSS.FreeEnergy.AlchemicalFreeEnergy(
             system, protocol, engine="SOMD", restraint=restraint
         )
 
