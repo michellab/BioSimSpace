@@ -108,7 +108,7 @@ if _sys.platform == "win32":
 
 class AlchemicalFreeEnergy:
     """
-    Class for configuring and running relative and absolute 
+    Class for configuring and running relative and absolute
     free-energy perturbation simulations.
     """
 
@@ -1555,4 +1555,6 @@ def getData(name="data", file_link=False, work_dir=None):
     output : str, IPython.display.FileLink
         A path, or file link, to an archive of the process input.
     """
-    return AlchemicalFreeEnergy.getData(name=name, file_link=file_link, work_dir=work_dir)
+    return AlchemicalFreeEnergy.getData(
+        name=name, file_link=file_link, work_dir=work_dir
+    )

@@ -125,10 +125,13 @@ class TestRelativeAnalysis:
         )
 
     def test_difference(self, gmx_complex, gmx_ligand):
-        dG, error = BSS.FreeEnergy.AlchemicalFreeEnergy.difference(gmx_complex, gmx_ligand)
+        dG, error = BSS.FreeEnergy.AlchemicalFreeEnergy.difference(
+            gmx_complex, gmx_ligand
+        )
         np.testing.assert_allclose(
             dG / BSS.Units.Energy.kcal_per_mol, 14.216101, atol=0.1
         )
+
 
 @pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
 @pytest.mark.skipif(is_alchemlyb is False, reason="Requires alchemlyb to be installed.")
