@@ -68,6 +68,8 @@ import pandas as _pd
 from sire.legacy.Base import getBinDir as _getBinDir
 from sire.legacy.Base import getShareDir as _getShareDir
 
+from ._restraint import Restraint as _Restraint
+
 from .._Exceptions import AnalysisError as _AnalysisError
 from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from .._SireWrappers import System as _System
@@ -123,6 +125,7 @@ class Relative:
         extra_options=None,
         extra_lines=None,
         estimator="MBAR",
+        restraint=None,
         property_map={},
     ):
         """
@@ -176,6 +179,11 @@ class Relative:
 
         estimator : str
             Estimator used for the analysis - must be either 'MBAR' or 'TI'.
+
+        restraint : :class:`Restraint <BioSimSpace.FreeEnergy.Restraint>`
+            A Restraint object specifying a receptor-ligand restraint. This
+            is mainly used for ABFE calculations but may also be helpful to 
+            maintain binding poses during RBFE simulations.
 
         property_map : dict
             A dictionary that maps system "properties" to their user defined
@@ -286,6 +294,12 @@ class Relative:
                         "type. Please use engine='SOMD' when running multistep "
                         "perturbation types."
                     )
+
+                # AMBER currently can not handle restraints
+                if restraint is not None:
+                    raise NotImplementedError(
+                        "AMBER currently does not support restraints within BSS"
+                    )
         else:
             # Use SOMD as a default.
             engine = "SOMD"
@@ -332,10 +346,18 @@ class Relative:
             raise TypeError("'property_map' must be of type 'dict'.")
         self._property_map = property_map
 
-        # The restraint is only intended to be used with the derived class
-        # Absolute, but is set to None here to avoid having to duplicate
-        # _initialise_runner() in Absolute
-        self._restraint = None
+        # Check that if a restraint is passed (bound leg simulation) it is valid.
+        # For free leg simulations, the restraint will be None.
+        if restraint is not None:
+            if not isinstance(restraint, _Restraint):
+                raise TypeError(
+                    "'restraint' must be of type 'BioSimSpace.FreeEnergy.Restraint'."
+                )
+            else:
+                # Ensure that the system is compatible with the restraint
+                restraint.system = self._system
+
+        self._restraint = restraint
 
         # Create fake instance methods for 'analyse' and 'difference'. These
         # pass instance data through to the staticmethod versions.
