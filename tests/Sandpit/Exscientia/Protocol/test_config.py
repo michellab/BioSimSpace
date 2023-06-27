@@ -2,7 +2,6 @@ import pandas as pd
 import pytest
 
 import BioSimSpace.Sandpit.Exscientia as BSS
-from BioSimSpace.Sandpit.Exscientia._Utils import _have_imported, _try_import
 from BioSimSpace.Sandpit.Exscientia.Align._decouple import decouple
 from BioSimSpace.Sandpit.Exscientia.Protocol import (
     ConfigFactory,
@@ -13,18 +12,12 @@ from BioSimSpace.Sandpit.Exscientia.Protocol import (
     Production,
 )
 
-# Make sure GROMACS is installed.
-has_gromacs = BSS._gmx_exe is not None
-
-# Make sure antechamber is installed.
-has_antechamber = BSS.Parameters._Protocol._amber._antechamber_exe is not None
-
-# Make sure openff is installed.
-_openff = _try_import("openff")
-has_openff = _have_imported(_openff)
-
-# Store the tutorial URL.
-url = BSS.tutorialUrl()
+from tests.Sandpit.Exscientia.conftest import (
+    url,
+    has_gromacs,
+    has_antechamber,
+    has_openff,
+)
 
 
 class TestAmber:

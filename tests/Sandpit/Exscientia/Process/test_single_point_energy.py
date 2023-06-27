@@ -1,32 +1,8 @@
-import BioSimSpace.Sandpit.Exscientia as BSS
-
-import os
-import pandas
 import pytest
 
-# Check whether AMBER is installed.
-if BSS._amber_home is not None:
-    exe = "%s/bin/sander" % BSS._amber_home
-    if os.path.isfile(exe):
-        has_amber = True
-    else:
-        has_amber = False
-else:
-    has_amber = False
+import BioSimSpace.Sandpit.Exscientia as BSS
 
-# Check whether GROMACS is installed.
-has_gromacs = BSS._gmx_exe is not None
-
-# Make sure pyarrow is available as the pandas parquet engine. The parquet
-# code does not work with fastparquet.
-try:
-    pandas.io.parquet.get_engine("pyarrow")
-    has_pyarrow = True
-except:
-    has_pyarrow = False
-
-# Store the tutorial URL.
-url = BSS.tutorialUrl()
+from tests.Sandpit.Exscientia.conftest import url, has_amber, has_gromacs, has_pyarrow
 
 
 @pytest.fixture(scope="session")

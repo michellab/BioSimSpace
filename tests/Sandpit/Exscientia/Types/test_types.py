@@ -1,7 +1,7 @@
-import BioSimSpace.Sandpit.Exscientia.Types as Types
-
 import pytest
 import random
+
+import BioSimSpace.Sandpit.Exscientia.Types as Types
 
 # Create a list of the Type classes.
 types = []

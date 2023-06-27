@@ -1,22 +1,12 @@
 import math
 import numpy as np
-import os
 import pytest
 import pandas as pd
 import shutil
 
 from pathlib import Path
 
-try:
-    from alchemtest.gmx import load_ABFE
-
-    is_alchemtest = True
-except ModuleNotFoundError:
-    is_alchemtest = False
-
 import BioSimSpace.Sandpit.Exscientia as BSS
-
-from BioSimSpace.Sandpit.Exscientia._Utils import _try_import, _have_imported
 
 from BioSimSpace.Sandpit.Exscientia.Align import decouple
 from BioSimSpace.Sandpit.Exscientia.FreeEnergy import Restraint
@@ -28,33 +18,15 @@ from BioSimSpace.Sandpit.Exscientia.Units.Temperature import kelvin
 from BioSimSpace.Sandpit.Exscientia.Units.Time import picosecond
 from BioSimSpace.Sandpit.Exscientia.Units.Volume import nanometer3
 
-# Check whether AMBER is installed.
-if BSS._amber_home is not None:
-    exe = "%s/bin/sander" % BSS._amber_home
-    if os.path.isfile(exe):
-        has_amber = True
-    else:
-        has_amber = False
-else:
-    has_amber = False
-
-# Check whether GROMACS is installed.
-has_gromacs = BSS._gmx_exe is not None
-
-# Make sure openff is installed.
-_openff = _try_import("openff")
-has_openff = _have_imported(_openff)
-
-# Make sure pyarrow is available as the pandas parquet engine. The parquet
-# code does not work with fastparquet.
-try:
-    pd.io.parquet.get_engine("pyarrow")
-    has_pyarrow = True
-except:
-    has_pyarrow = False
-
-# Store the tutorial URL.
-url = BSS.tutorialUrl()
+from tests.Sandpit.Exscientia.conftest import (
+    url,
+    has_alchemlyb,
+    has_alchemtest,
+    has_amber,
+    has_gromacs,
+    has_openff,
+    has_pyarrow,
+)
 
 
 @pytest.fixture(scope="session")
@@ -266,13 +238,15 @@ def run_process(system, protocol, **kwargs):
 
 
 @pytest.mark.skipif(
-    has_gromacs is False or has_pyarrow is False or is_alchemtest is False,
+    has_gromacs is False or has_pyarrow is False or has_alchemtest is False,
     reason="Requires GROMACS, alchemtest, and pyarrow to be installed.",
 )
 class TestGetRecord:
     @staticmethod
     @pytest.fixture()
     def setup(perturbable_system):
+        from alchemtest.gmx import load_ABFE
+
         protocol = BSS.Protocol.FreeEnergy(
             runtime=BSS.Types.Time(60, "picosecond"),
             timestep=BSS.Types.Time(4, "femtosecond"),

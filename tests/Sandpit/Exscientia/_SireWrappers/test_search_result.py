@@ -1,6 +1,6 @@
-import BioSimSpace.Sandpit.Exscientia as BSS
-
 import pytest
+
+import BioSimSpace.Sandpit.Exscientia as BSS
 
 # Store the tutorial URL.
 url = BSS.tutorialUrl()

@@ -1,8 +1,6 @@
-from BioSimSpace.Gateway import String
-
 import pytest
 
-# Tests for String requirements.
+from BioSimSpace.Gateway import String
 
 
 def test_no_arguments():

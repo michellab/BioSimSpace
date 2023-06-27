@@ -1,8 +1,8 @@
-import BioSimSpace.Sandpit.Exscientia as BSS
+import pytest
 
 from sire.legacy import Mol as SireMol
 
-import pytest
+import BioSimSpace.Sandpit.Exscientia as BSS
 
 
 @pytest.fixture(scope="session")

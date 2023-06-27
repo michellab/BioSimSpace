@@ -1,9 +1,9 @@
-import BioSimSpace as BSS
-
 import pytest
 import subprocess
 import shlex
 import sys
+
+import BioSimSpace as BSS
 
 # Store the name of the test script.
 script_name = "tests/Gateway/node.py"

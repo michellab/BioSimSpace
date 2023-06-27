@@ -1,3 +1,5 @@
+import pytest
+
 import BioSimSpace as BSS
 
 try:
@@ -8,19 +10,7 @@ except Exception:
         return arg
 
 
-import pytest
-
-from BioSimSpace.Sandpit.Exscientia._Utils import _try_import, _have_imported
-
-_mdanalysis = _try_import("MDAnalysis")
-have_mdanalysis = _have_imported(_mdanalysis)
-
-_mdtraj = _try_import("mdtraj")
-have_mdtraj = _have_imported(_mdtraj)
-
-
-# Store the tutorial URL.
-url = BSS.tutorialUrl()
+from tests.Sandpit.Exscientia.conftest import has_mdanalysis, has_mdtraj
 
 
 @pytest.fixture(scope="session")
@@ -62,7 +52,7 @@ def traj_mdanalysis_pdb(system):
 
 
 @pytest.mark.skipif(
-    have_mdanalysis is False or have_mdtraj is False,
+    has_mdanalysis is False or has_mdtraj is False,
     reason="Requires MDAnalysis and mdtraj to be installed.",
 )
 def test_frames(traj_mdtraj, traj_mdanalysis):
@@ -71,7 +61,7 @@ def test_frames(traj_mdtraj, traj_mdanalysis):
 
 
 @pytest.mark.skipif(
-    have_mdanalysis is False or have_mdtraj is False,
+    has_mdanalysis is False or has_mdtraj is False,
     reason="Requires MDAnalysis and mdtraj to be installed.",
 )
 def test_coords(traj_mdtraj, traj_mdanalysis):
@@ -91,7 +81,7 @@ def test_coords(traj_mdtraj, traj_mdanalysis):
 
 
 @pytest.mark.skipif(
-    have_mdanalysis is False or have_mdtraj is False,
+    has_mdanalysis is False or has_mdtraj is False,
     reason="Requires MDAnalysis and mdtraj to be installed.",
 )
 def test_coords_pdb(traj_mdtraj, traj_mdanalysis_pdb):
@@ -113,7 +103,7 @@ def test_coords_pdb(traj_mdtraj, traj_mdanalysis_pdb):
 
 
 @pytest.mark.skipif(
-    have_mdanalysis is False, reason="Requires MDAnalysis to be installed."
+    has_mdanalysis is False, reason="Requires MDAnalysis to be installed."
 )
 def test_velocities(traj_mdanalysis):
     """Make sure that the MDAnalysis format trajectory contains velocities."""
@@ -128,7 +118,7 @@ def test_velocities(traj_mdanalysis):
 
 
 @pytest.mark.skipif(
-    have_mdanalysis is False or have_mdtraj is False,
+    has_mdanalysis is False or has_mdtraj is False,
     reason="Requires MDAnalysis and mdtraj to be installed.",
 )
 def test_rmsd(traj_mdtraj, traj_mdanalysis):

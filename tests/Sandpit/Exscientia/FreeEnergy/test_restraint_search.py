@@ -12,25 +12,12 @@ from BioSimSpace.Sandpit.Exscientia.Trajectory import Trajectory
 from BioSimSpace.Sandpit.Exscientia.Units.Length import nanometer
 from BioSimSpace.Sandpit.Exscientia.Units.Angle import degree
 
-from BioSimSpace.Sandpit.Exscientia._Utils import _try_import, _have_imported
-
-mda = _try_import("MDAnalysis")
-
-has_mdanalysis = _have_imported(mda)
-
-
-_MDRestraintsGenerator = _try_import(
-    "MDRestraintsGenerator",
-    install_command="pip install MDRestraintsGenerator",
+from tests.Sandpit.Exscientia.conftest import (
+    url,
+    has_gromacs,
+    has_mdanalysis,
+    has_mdrestraints_generator,
 )
-
-is_MDRestraintsGenerator = _have_imported(_MDRestraintsGenerator)
-
-# Make sure GROMACS is installed.
-has_gromacs = BSS._gmx_exe is not None
-
-# Store the tutorial URL.
-url = BSS.tutorialUrl()
 
 
 @pytest.mark.skipif(
@@ -57,7 +44,7 @@ def test_run_Gromacs():
 
 @pytest.mark.skipif(
     (
-        is_MDRestraintsGenerator is False
+        has_mdrestraints_generator is False
         or has_gromacs is False
         or has_mdanalysis is False
     ),

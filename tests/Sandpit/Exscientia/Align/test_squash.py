@@ -1,19 +1,9 @@
-import os
 import pickle
-
 import pytest
 
 import BioSimSpace.Sandpit.Exscientia as BSS
 
-# Make sure AMBER is installed.
-if BSS._amber_home is not None:
-    exe = "%s/bin/sander" % BSS._amber_home
-    if os.path.isfile(exe):
-        has_amber = True
-    else:
-        has_amber = False
-else:
-    has_amber = False
+from tests.Sandpit.Exscientia.conftest import has_amber
 
 
 @pytest.fixture(scope="session")

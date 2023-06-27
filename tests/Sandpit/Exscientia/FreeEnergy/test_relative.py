@@ -6,47 +6,24 @@ import pandas as pd
 import numpy as np
 import bz2
 
-try:
-    import alchemlyb
-    from alchemlyb.parsing.gmx import extract_u_nk
-
-    is_alchemlyb = True
-
-    # Check for parquet support.
-    major, minor, _ = alchemlyb.__version__.split(".")
-    major = int(major)
-    minor = int(minor)
-    if major < 2 or (major < 3 and minor < 1):
-        is_alchemlyb_parquet = False
-    else:
-        is_alchemlyb_parquet = True
-
-except ModuleNotFoundError:
-    is_alchemlyb = False
-    is_alchemlyb_parquet = False
-
-try:
-    from alchemtest.gmx import load_ABFE
-    from alchemtest.amber import load_bace_example
-
-    is_alchemtest = True
-except ModuleNotFoundError:
-    is_alchemtest = False
+from tests.Sandpit.Exscientia.conftest import (
+    has_alchemlyb,
+    has_alchemlyb_parquet,
+    has_alchemtest,
+    has_gromacs,
+    url,
+)
 
 import BioSimSpace.Sandpit.Exscientia as BSS
 from BioSimSpace.Sandpit.Exscientia.Protocol import FreeEnergyEquilibration
 from BioSimSpace.Sandpit.Exscientia.Align._decouple import decouple
 from BioSimSpace.Sandpit.Exscientia import Types as _Types
 
-# Make sure GROMACS is installed.
-has_gromacs = BSS._gmx_exe is not None
-
-# Store the tutorial URL.
-url = BSS.tutorialUrl()
-
 
 @pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
-@pytest.mark.skipif(is_alchemlyb is False, reason="Requires alchemlyb to be installed.")
+@pytest.mark.skipif(
+    has_alchemlyb is False, reason="Requires alchemlyb to be installed."
+)
 class Test_gmx_ABFE:
     @staticmethod
     @pytest.fixture(scope="class")
@@ -87,6 +64,8 @@ class Test_gmx_ABFE:
         for i, (coul, vdw) in enumerate(
             zip([0.0, 0.5, 1.0, 1.0, 1.0], [0.0, 0.0, 0.0, 0.5, 1.0])
         ):
+            from alchemlyb.parsing.gmx import extract_u_nk
+
             u_nk = extract_u_nk(path / f"lambda_{i}" / "gromacs.xvg", 300)
             assert u_nk.index.names == ["time", "coul-lambda", "vdw-lambda"]
             assert np.isclose(u_nk.index.values[0][1], coul)
@@ -94,12 +73,14 @@ class Test_gmx_ABFE:
 
 
 @pytest.mark.skipif(
-    is_alchemtest is False, reason="Requires alchemtest and alchemlyb to be installed."
+    has_alchemtest is False, reason="Requires alchemtest and alchemlyb to be installed."
 )
 class TestRelativeAnalysis:
     @staticmethod
     @pytest.fixture(scope="class")
     def gmx_data(tmp_path_factory):
+        from alchemtest.gmx import load_ABFE
+
         outdir = tmp_path_factory.mktemp("gromacs")
         for leg in ["complex", "ligand"]:
             for index, filename in enumerate(load_ABFE().data[leg]):
@@ -112,6 +93,8 @@ class TestRelativeAnalysis:
     @staticmethod
     @pytest.fixture(scope="class")
     def amber_data(tmp_path_factory):
+        from alchemtest.amber import load_bace_example
+
         outdir = tmp_path_factory.mktemp("amber")
         for leg, stage in [("complex", "decharge"), ("solvated", "vdw")]:
             for index, filename in enumerate(load_bace_example().data[leg][stage]):
@@ -186,7 +169,9 @@ class TestRelativeAnalysis:
         )
 
 
-@pytest.mark.skipif(is_alchemlyb_parquet is False, reason="Requires alchemlyb > 2.1.0.")
+@pytest.mark.skipif(
+    has_alchemlyb_parquet is False, reason="Requires alchemlyb > 2.1.0."
+)
 class TestAnalysePARQUET:
     @staticmethod
     @pytest.fixture(scope="class")
