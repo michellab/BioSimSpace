@@ -1,7 +1,7 @@
+import pytest
+
 import BioSimSpace.Types as Types
 import BioSimSpace.Units as Units
-
-import pytest
 
 
 @pytest.mark.parametrize(

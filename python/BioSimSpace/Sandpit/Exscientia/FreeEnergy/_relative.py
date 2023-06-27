@@ -26,20 +26,17 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Relative", "getData"]
 
-from collections import defaultdict as _defaultdict, OrderedDict as _OrderedDict
 import copy as _copy
-from glob import glob as _glob
 import math as _math
-import shlex as _shlex
-import sys as _sys
 import os as _os
-import re as _re
 import shutil as _shutil
 import subprocess as _subprocess
+import sys as _sys
 import warnings as _warnings
 import zipfile as _zipfile
+from glob import glob as _glob
 
-from .._Utils import _try_import, _have_imported, _assert_imported
+from .._Utils import _assert_imported, _have_imported, _try_import
 
 # alchemlyb isn't available on all variants of Python that we support, so we
 # need to try_import it.
@@ -533,6 +530,7 @@ class Relative:
             "SOMD": "/lambda_*/gradients.dat",
             "GROMACS": "/lambda_*/gromacs.xvg",
             "AMBER": "/lambda_*/amber.out",
+            "PARQUET": "/lambda_*/*.parquet",
         }
 
         for engine, mask in mask_dict.items():
@@ -553,7 +551,9 @@ class Relative:
                         **kwargs,
                     )
 
-        raise ValueError("Couldn't find any SOMD, GROMACS or AMBER free-energy output?")
+        raise ValueError(
+            "Couldn't find any SOMD, GROMACS, AMBER or PARQUET free-energy output?"
+        )
 
     def _analyse(self):
         """
@@ -629,30 +629,48 @@ class Relative:
         if not _os.path.isdir(work_dir):
             raise ValueError("'work_dir' doesn't exist!")
 
-        if estimator not in ["MBAR", "TI"]:
+        if estimator in ["MBAR", "BAR"]:
+            prefix = "u_nk"
+        elif estimator == "TI":
+            prefix = "dHdl"
+        else:
             raise ValueError("'estimator' must be either 'MBAR' or 'TI'.")
 
-        dir = work_dir + "/lambda_*/"
-        if engine == "AMBER":
-            prefix = "amber"
-            suffix = "out"
-        elif engine == "GROMACS":
-            prefix = "gromacs"
-            suffix = "xvg"
-        else:
-            raise ValueError(f"{engine} has to be either 'AMBER' or " f"'GROMACS'.")
+        try:
+            # Use the parquet files if they are available.
+            workflow = ABFE(
+                units="kcal/mol",
+                software="PARQUET",
+                dir=work_dir,
+                prefix="/lambda_*/" + prefix,
+                suffix="parquet",
+                T=temperature / _Units.Temperature.kelvin,
+                outdirectory=work_dir,
+                **kwargs,
+            )
+            workflow.run(estimators=estimator, breakdown=None, forwrev=None, **kwargs)
+        except ValueError:
+            if engine == "AMBER":
+                prefix = "amber"
+                suffix = "out"
+            elif engine == "GROMACS":
+                prefix = "gromacs"
+                suffix = "xvg"
+            else:
+                raise ValueError(f"{engine} has to be either 'AMBER' or " f"'GROMACS'.")
 
-        workflow = ABFE(
-            units="kcal/mol",
-            software=engine,
-            dir=dir,
-            prefix=prefix,
-            suffix=suffix,
-            T=temperature / _Units.Temperature.kelvin,
-            outdirectory=work_dir,
-            **kwargs,
-        )
-        workflow.run(estimators=estimator, **kwargs)
+            workflow = ABFE(
+                units="kcal/mol",
+                software=engine,
+                dir=work_dir,
+                prefix="lambda_*/" + prefix,
+                suffix=suffix,
+                T=temperature / _Units.Temperature.kelvin,
+                outdirectory=work_dir,
+                **kwargs,
+            )
+            workflow.run(estimators=estimator, breakdown=None, forwrev=None, **kwargs)
+
         # Extract the data from the mbar results.
         data = []
         # convert the data frames to kcal/mol

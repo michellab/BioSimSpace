@@ -1,12 +1,12 @@
 import math
-import os
 import numpy as np
-import shutil
 import pytest
+import pandas as pd
+import shutil
+
+from pathlib import Path
 
 import BioSimSpace.Sandpit.Exscientia as BSS
-
-from BioSimSpace.Sandpit.Exscientia._Utils import _try_import, _have_imported
 
 from BioSimSpace.Sandpit.Exscientia.Align import decouple
 from BioSimSpace.Sandpit.Exscientia.FreeEnergy import Restraint
@@ -18,25 +18,15 @@ from BioSimSpace.Sandpit.Exscientia.Units.Temperature import kelvin
 from BioSimSpace.Sandpit.Exscientia.Units.Time import picosecond
 from BioSimSpace.Sandpit.Exscientia.Units.Volume import nanometer3
 
-# Check whether AMBER is installed.
-if BSS._amber_home is not None:
-    exe = "%s/bin/sander" % BSS._amber_home
-    if os.path.isfile(exe):
-        has_amber = True
-    else:
-        has_amber = False
-else:
-    has_amber = False
-
-# Check whether GROMACS is installed.
-has_gromacs = BSS._gmx_exe is not None
-
-# Make sure openff is installed.
-_openff = _try_import("openff")
-has_openff = _have_imported(_openff)
-
-# Store the tutorial URL.
-url = BSS.tutorialUrl()
+from tests.Sandpit.Exscientia.conftest import (
+    url,
+    has_alchemlyb,
+    has_alchemtest,
+    has_amber,
+    has_gromacs,
+    has_openff,
+    has_pyarrow,
+)
 
 
 @pytest.fixture(scope="session")
@@ -56,7 +46,10 @@ def perturbable_system():
     )
 
 
-@pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
+@pytest.mark.skipif(
+    has_gromacs is False or has_pyarrow is False,
+    reason="Requires GROMACS and pyarrow to be installed.",
+)
 def test_minimise(system):
     """Test a minimisation protocol."""
 
@@ -67,7 +60,10 @@ def test_minimise(system):
     run_process(system, protocol)
 
 
-@pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
+@pytest.mark.skipif(
+    has_gromacs is False or has_pyarrow is False,
+    reason="Requires GROMACS and pyarrow to be installed.",
+)
 @pytest.mark.parametrize("restraint", ["backbone", "heavy", "all", "none"])
 def test_equilibrate(system, restraint):
     """Test an equilibration protocol."""
@@ -81,7 +77,10 @@ def test_equilibrate(system, restraint):
     run_process(system, protocol)
 
 
-@pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
+@pytest.mark.skipif(
+    has_gromacs is False or has_pyarrow is False,
+    reason="Requires GROMACS and pyarrow to be installed.",
+)
 def test_heat(system):
     """Test a heating protocol."""
 
@@ -96,7 +95,10 @@ def test_heat(system):
     run_process(system, protocol)
 
 
-@pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
+@pytest.mark.skipif(
+    has_gromacs is False or has_pyarrow is False,
+    reason="Requires GROMACS and pyarrow to be installed.",
+)
 def test_cool(system):
     """Test a cooling protocol."""
 
@@ -111,7 +113,10 @@ def test_cool(system):
     run_process(system, protocol, extra_options={"verlet-buffer-tolerance": "2e-07"})
 
 
-@pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
+@pytest.mark.skipif(
+    has_gromacs is False or has_pyarrow is False,
+    reason="Requires GROMACS and pyarrow to be installed.",
+)
 def test_production(system):
     """Test a production protocol."""
 
@@ -122,7 +127,10 @@ def test_production(system):
     run_process(system, protocol)
 
 
-@pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
+@pytest.mark.skipif(
+    has_gromacs is False or has_pyarrow is False,
+    reason="Requires GROMACS and pyarrow to be installed.",
+)
 def test_vacuum_water(system):
     """Regression test for ensuring the water topology is swapped for vacuum simulations."""
 
@@ -137,7 +145,10 @@ def test_vacuum_water(system):
     run_process(system, protocol)
 
 
-@pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
+@pytest.mark.skipif(
+    has_gromacs is False or has_pyarrow is False,
+    reason="Requires GROMACS and pyarrow to be installed.",
+)
 @pytest.mark.parametrize("restraint", ["backbone", "heavy"])
 def test_restraints(perturbable_system, restraint):
     """Regression test for correct injection of restraint file into GROMACS topology."""
@@ -149,7 +160,10 @@ def test_restraints(perturbable_system, restraint):
     process = BSS.Process.Gromacs(perturbable_system, protocol)
 
 
-@pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
+@pytest.mark.skipif(
+    has_gromacs is False or has_pyarrow is False,
+    reason="Requires GROMACS and pyarrow to be installed.",
+)
 def test_write_restraint(system, tmp_path):
     """Test if the restraint has been written in a way that could be processed
     correctly.
@@ -223,22 +237,31 @@ def run_process(system, protocol, **kwargs):
     assert process.getSystem() is not None
 
 
-@pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
+@pytest.mark.skipif(
+    has_gromacs is False or has_pyarrow is False or has_alchemtest is False,
+    reason="Requires GROMACS, alchemtest, and pyarrow to be installed.",
+)
 class TestGetRecord:
     @staticmethod
     @pytest.fixture()
-    def setup(system):
-        protocol = BSS.Protocol.Production(
+    def setup(perturbable_system):
+        from alchemtest.gmx import load_ABFE
+
+        protocol = BSS.Protocol.FreeEnergy(
             runtime=BSS.Types.Time(60, "picosecond"),
             timestep=BSS.Types.Time(4, "femtosecond"),
             report_interval=200,
         )
-        process = BSS.Process.Gromacs(system, protocol)
+        process = BSS.Process.Gromacs(perturbable_system, protocol)
         shutil.copyfile(
             "tests/Sandpit/Exscientia/output/gromacs.edr",
             process.workDir() + "/gromacs.edr",
         )
-        process._update_energy_dict()
+        shutil.copyfile(
+            load_ABFE().data["ligand"][0],
+            process.workDir() + "/gromacs.xvg",
+        )
+        process.saveMetric()
         return process
 
     @pytest.mark.parametrize(
@@ -294,10 +317,37 @@ class TestGetRecord:
         else:
             np.testing.assert_almost_equal(energy / unit, value, decimal=3)
 
+    def test_metric_parquet_exist(self, setup):
+        assert Path(f"{setup.workDir()}/metric.parquet").exists()
+
+    def test_metric_parquet(self, setup):
+        df = pd.read_parquet(f"{setup.workDir()}/metric.parquet")
+        assert np.isclose(df["PotentialEnergy (kJ/mol)"][0.0], -64480.589844)
+        assert np.isclose(df["Volume (nm^3)"][0.0], 44.679958)
+        assert np.isclose(df["Pressure (bar)"][0.0], 119.490417)
+        assert np.isclose(df["Temperature (kelvin)"][0.0], 306.766907)
+
+    def test_dhdl_parquet_exist(self, setup):
+        assert Path(f"{setup.workDir()}/dHdl.parquet").exists()
+
+    def test_dhdl_parquet(self, setup):
+        df = pd.read_parquet(f"{setup.workDir()}/dHdl.parquet")
+        assert df.shape == (1001, 2)
+
+    def test_u_nk_parquet_exist(self, setup):
+        assert Path(f"{setup.workDir()}/u_nk.parquet").exists()
+
+    def test_u_nk_parquet(self, setup):
+        df = pd.read_parquet(f"{setup.workDir()}/u_nk.parquet")
+        assert df.shape == (1001, 20)
+
 
 @pytest.mark.skipif(
-    has_amber is False or has_gromacs is False or has_openff is False,
-    reason="Requires AMBER, GROMACS, and OpenFF to be installed.",
+    has_amber is False
+    or has_gromacs is False
+    or has_openff is False
+    or has_pyarrow is False,
+    reason="Requires AMBER, GROMACS, OpenFF, and pyarrow to be installed.",
 )
 def test_vacuum_com():
     """

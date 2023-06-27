@@ -1,8 +1,6 @@
-from BioSimSpace.Gateway import Boolean
-
 import pytest
 
-# Tests for Boolean requirements.
+from BioSimSpace.Gateway import Boolean
 
 
 def test_no_arguments():

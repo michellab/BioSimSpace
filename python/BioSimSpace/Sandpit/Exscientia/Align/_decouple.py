@@ -83,10 +83,3 @@ def decouple(molecule, charge=(True, False), LJ=(True, False), intramol=True):
     mol._sire_object = mol_edit.commit()
 
     return mol
-
-    mol_edit = mol._sire_object.edit()
-
-    mol_edit.setProperty("decouple", {"charge": charge, "LJ": LJ, "intramol": intramol})
-
-    # Update the Sire molecule object of the new molecule.
-    mol._sire_object = mol_edit.commit()

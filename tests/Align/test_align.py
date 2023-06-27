@@ -1,9 +1,9 @@
+import pytest
+
 from sire.legacy.MM import InternalFF, IntraCLJFF, IntraFF
 from sire.legacy.Mol import AtomIdx, Element, PartialMolecule
 
 import BioSimSpace as BSS
-
-import pytest
 
 # Store the tutorial URL.
 url = BSS.tutorialUrl()

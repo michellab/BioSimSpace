@@ -1,7 +1,7 @@
-import BioSimSpace as BSS
-
 import os
 import pytest
+
+import BioSimSpace as BSS
 
 
 @pytest.fixture

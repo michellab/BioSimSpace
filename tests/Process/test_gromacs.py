@@ -1,12 +1,9 @@
 import math
-import os
 import numpy as np
 import shutil
 import pytest
 
 import BioSimSpace as BSS
-
-from BioSimSpace._Utils import _try_import, _have_imported
 
 from BioSimSpace.Units.Angle import radian
 from BioSimSpace.Units.Energy import kcal_per_mol, kj_per_mol
@@ -16,25 +13,7 @@ from BioSimSpace.Units.Temperature import kelvin
 from BioSimSpace.Units.Time import picosecond
 from BioSimSpace.Units.Volume import nanometer3
 
-# Check whether AMBER is installed.
-if BSS._amber_home is not None:
-    exe = "%s/bin/sander" % BSS._amber_home
-    if os.path.isfile(exe):
-        has_amber = True
-    else:
-        has_amber = False
-else:
-    has_amber = False
-
-# Check whether GROMACS is installed.
-has_gromacs = BSS._gmx_exe is not None
-
-# Make sure openff is installed.
-_openff = _try_import("openff")
-has_openff = _have_imported(_openff)
-
-# Store the tutorial URL.
-url = BSS.tutorialUrl()
+from tests.conftest import url, has_amber, has_gromacs, has_openff
 
 # Store the allowed restraints.
 restraints = BSS.Protocol._position_restraint_mixin._PositionRestraintMixin.restraints()

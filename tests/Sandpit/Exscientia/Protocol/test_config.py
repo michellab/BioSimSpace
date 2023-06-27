@@ -6,25 +6,18 @@ from BioSimSpace.Sandpit.Exscientia.Align._decouple import decouple
 from BioSimSpace.Sandpit.Exscientia.Protocol import (
     ConfigFactory,
     Equilibration,
-    Production,
-    FreeEnergyMinimisation,
-    FreeEnergyEquilibration,
     FreeEnergy,
+    FreeEnergyEquilibration,
+    FreeEnergyMinimisation,
+    Production,
 )
-from BioSimSpace.Sandpit.Exscientia._Utils import _try_import, _have_imported
 
-# Make sure GROMACS is installed.
-has_gromacs = BSS._gmx_exe is not None
-
-# Make sure antechamber is installed.
-has_antechamber = BSS.Parameters._Protocol._amber._antechamber_exe is not None
-
-# Make sure openff is installed.
-_openff = _try_import("openff")
-has_openff = _have_imported(_openff)
-
-# Store the tutorial URL.
-url = BSS.tutorialUrl()
+from tests.Sandpit.Exscientia.conftest import (
+    url,
+    has_gromacs,
+    has_antechamber,
+    has_openff,
+)
 
 
 class TestAmber:
@@ -297,7 +290,7 @@ class TestAmberASFE:
 
     def test_generate_fep_masks(self, system):
         config = ConfigFactory(system, FreeEnergyMinimisation())
-        res = config._generate_amber_fep_masks(0.002)
+        res = config._generate_amber_fep_masks(0.001)
         expected_res = {
             "noshakemask": '"@1-45"',
             "scmask1": '"@1-45"',

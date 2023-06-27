@@ -26,10 +26,13 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Gromacs"]
 
-from .._Utils import _try_import
-
 import glob as _glob
 import os as _os
+import warnings as _warnings
+
+import pandas as pd
+
+from .._Utils import _try_import
 
 _pygtail = _try_import("pygtail")
 import shutil as _shutil
@@ -46,6 +49,15 @@ from sire.legacy import IO as _SireIO
 from sire.legacy import Maths as _SireMaths
 from sire.legacy import Units as _SireUnits
 from sire.legacy import Vol as _SireVol
+
+from .._Utils import _assert_imported, _have_imported, _try_import
+
+# alchemlyb isn't available on all variants of Python that we support, so we
+# need to try_import it.
+_alchemlyb = _try_import("alchemlyb")
+
+if _have_imported(_alchemlyb):
+    from alchemlyb.parsing.amber import extract as _extract
 
 from .. import _gmx_exe
 from .. import _isVerbose
@@ -421,16 +433,17 @@ class Gromacs(_process.Process):
             setattr(self, "getTime", self._getTime)
 
         # Set the configuration.
-        config = _Protocol.ConfigFactory(self._system, self._protocol)
-        self.addToConfig(
-            config.generateGromacsConfig(
-                extra_options={**config_options, **self._extra_options},
-                extra_lines=self._extra_lines,
+        if not isinstance(self._protocol, _Protocol.Dummy):
+            config = _Protocol.ConfigFactory(self._system, self._protocol)
+            self.addToConfig(
+                config.generateGromacsConfig(
+                    extra_options={**config_options, **self._extra_options},
+                    extra_lines=self._extra_lines,
+                )
             )
-        )
 
-        # Flag that this isn't a custom protocol.
-        self._protocol._setCustomised(False)
+            # Flag that this isn't a custom protocol.
+            self._protocol._setCustomised(False)
 
     def _generate_args(self):
         """Generate the dictionary of command-line arguments."""
@@ -913,11 +926,7 @@ class Gromacs(_process.Process):
             The current simulation time in nanoseconds.
         """
 
-        if isinstance(self._protocol, _Protocol.Minimisation):
-            return None
-
-        else:
-            return self.getRecord("TIME", time_series, _Units.Time.picosecond, block)
+        return self.getRecord("TIME", time_series, _Units.Time.picosecond, block)
 
     def getCurrentTime(self, time_series=False):
         """
@@ -2288,8 +2297,8 @@ class Gromacs(_process.Process):
         key = key.replace("BAR", "")
         return key
 
-    def _update_energy_dict(self):
-        if len(self._energy_dict) == 0:
+    def _update_energy_dict(self, initialise=False):
+        if initialise or len(self._energy_dict) == 0:
             self._initialise_energy_dict()
 
         keys = self._energy_keys
@@ -2619,6 +2628,51 @@ class Gromacs(_process.Process):
                     return None
         else:
             return self._traj_file
+
+    def saveMetric(
+        self, filename="metric.parquet", u_nk="u_nk.parquet", dHdl="dHdl.parquet"
+    ):
+        """
+        Helper function to save the simulation metrics to `filename`, which is a
+        pandas dataframe that can be loaded with `pd.read_parquet`. if the protocol
+        is Free Energy protocol, the dHdl and the u_nk data will be saved in the
+        same parquet format as well.
+        """
+
+        _assert_imported(_alchemlyb)
+
+        self._update_energy_dict(initialise=True)
+        datadict_keys = [
+            ("Time (ps)", _Units.Time.picosecond, "getTime"),
+            (
+                "PotentialEnergy (kJ/mol)",
+                _Units.Energy.kj_per_mol,
+                "getPotentialEnergy",
+            ),
+        ]
+        if not isinstance(self._protocol, _Protocol.Minimisation):
+            datadict_keys.extend(
+                [
+                    ("Volume (nm^3)", _Units.Volume.nanometer3, "getVolume"),
+                    ("Pressure (bar)", _Units.Pressure.bar, "getPressure"),
+                    (
+                        "Temperature (kelvin)",
+                        _Units.Temperature.kelvin,
+                        "getTemperature",
+                    ),
+                ]
+            )
+        df = self._convert_datadict_keys(datadict_keys)
+        df.to_parquet(path=f"{self.workDir()}/{filename}", index=True)
+        if isinstance(self._protocol, _Protocol.FreeEnergy):
+            energy = _extract(
+                f"{self.workDir()}/{self._name}.xvg",
+                T=self._protocol.getTemperature() / _Units.Temperature.kelvin,
+            )
+            if "u_nk" in energy:
+                energy["u_nk"].to_parquet(path=f"{self.workDir()}/{u_nk}", index=True)
+            if "dHdl" in energy:
+                energy["dHdl"].to_parquet(path=f"{self.workDir()}/{dHdl}", index=True)
 
 
 def _is_minimisation(config):
