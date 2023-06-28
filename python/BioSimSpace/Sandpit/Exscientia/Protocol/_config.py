@@ -788,7 +788,10 @@ class ConfigFactory:
                 )
             except ValueError:  # No perturbable molecule - try ABFE
                 res_num = (
-                    self.system.getDecoupledMolecules()[0]._sire_object.number().value()
+                    self.system.getDecoupledMolecules()[0]
+                    .getResidues()[0]
+                    ._sire_object.number()
+                    .value()
                 )
 
             protocol_dict[

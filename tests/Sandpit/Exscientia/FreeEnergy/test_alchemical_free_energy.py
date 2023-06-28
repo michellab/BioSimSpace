@@ -286,3 +286,4 @@ class Test_Somd_ABFE:
                 lines = f.readlines()
                 assert "lambda array = 0.0, 0.5, 1.0\n" in lines
                 assert f"lambda_val = {float(lam):.1f}\n" in lines
+                assert f"perturbed residue number = 1\n" in lines
