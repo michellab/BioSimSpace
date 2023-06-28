@@ -15,8 +15,8 @@ url = BSS.tutorialUrl()
 
 
 @pytest.fixture(scope="session")
-def restraint():
-    """Generate the Boresch restaint object."""
+def restraint_components():
+    """Generate a the components required to create a restraint."""
     ligand = BSS.IO.readMolecules(
         [f"{url}/ligand01.prm7.bz2", f"{url}/ligand01.rst7.bz2"]
     ).getMolecule(0)
@@ -64,6 +64,15 @@ def restraint():
             "kphiC": 10 * kcal_per_mol / (radian * radian),
         },
     }
+
+    return system, restraint_dict
+
+
+@pytest.fixture(scope="session")
+def restraint(restraint_components):
+    """Generate the Boresch restraint object."""
+    system, restraint_dict = restraint_components
+
     restraint = Restraint(
         system, restraint_dict, 300 * kelvin, restraint_type="Boresch"
     )
@@ -73,6 +82,47 @@ def restraint():
 def test_sanity(restraint):
     """Sanity check."""
     assert isinstance(restraint, Restraint)
+
+
+def test_numerical_correction(restraint):
+    dG = restraint.getCorrection(method="numerical") / kcal_per_mol
+    assert np.isclose(-7.2, dG, atol=0.1)
+
+
+def test_analytical_correction(restraint):
+    dG = restraint.getCorrection(method="analytical") / kcal_per_mol
+    assert np.isclose(-7.2, dG, atol=0.1)
+    assert isinstance(restraint, Restraint)
+
+
+test_force_constants = [
+    ({"kr": 0}, ValueError),
+    ({"kthetaA": 0}, ValueError),
+    ({"kthetaB": 0}, ValueError),
+    (
+        {
+            "kthetaA": 0,
+            "kphiA": 0,
+            "kphiB": 0,
+        },
+        None,
+    ),
+]
+
+
+@pytest.mark.parametrize("force_constants, expected", test_force_constants)
+def test_input_force_constants(restraint_components, force_constants, expected):
+    print(force_constants)
+    system, restraint_dict = restraint_components
+    dict_copy = restraint_dict.copy()
+    force_constants_copy = restraint_dict["force_constants"].copy()
+    force_constants_copy.update(force_constants)
+    dict_copy["force_constants"] = force_constants_copy
+    if expected is None:
+        Restraint(system, dict_copy, 300 * kelvin, restraint_type="Boresch")
+    else:
+        with pytest.raises(expected):
+            Restraint(system, dict_copy, 300 * kelvin, restraint_type="Boresch")
 
 
 class TestGromacsOutput:
@@ -126,6 +176,34 @@ class TestGromacsOutput:
         assert ak == "1497"
         assert al == "1498"
 
-    def test_correction(self, restraint):
-        dG = restraint.correction / kcal_per_mol
-        assert np.isclose(-7.2, dG, atol=0.1)
+
+class TestSomdOutput:
+    @staticmethod
+    @pytest.fixture(scope="class")
+    def getRestraintSomd(restraint):
+        boresch_str = restraint.toString(engine="SOMD").split("=")[1].strip()
+        boresch_dict = eval(boresch_str)
+        return boresch_dict
+
+    def test_sanity(self, getRestraintSomd):
+        "Sanity check"
+        boresch_dict = getRestraintSomd
+        assert type(boresch_dict) == dict
+
+    def test_indices(self, getRestraintSomd):
+        anchor_points = getRestraintSomd["anchor_points"]
+        assert anchor_points["r1"] == 0
+        assert anchor_points["r2"] == 1
+        assert anchor_points["r3"] == 2
+        assert anchor_points["l1"] == 1495
+        assert anchor_points["l2"] == 1496
+        assert anchor_points["l3"] == 1497
+
+    def test_equil_vals(self, getRestraintSomd):
+        equil_vals = getRestraintSomd["equilibrium_values"]
+        assert equil_vals["r0"] == 5.08
+        assert equil_vals["thetaA0"] == 1.12
+        assert equil_vals["thetaB0"] == 0.69
+        assert equil_vals["phiA0"] == 2.59
+        assert equil_vals["phiB0"] == -1.20
+        assert equil_vals["phiC0"] == 2.63

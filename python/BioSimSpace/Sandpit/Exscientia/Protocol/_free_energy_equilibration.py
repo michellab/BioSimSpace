@@ -113,6 +113,8 @@ class FreeEnergyEquilibration(_Equilibration, _FreeEnergyMixin):
              "flip" : Perturb all hard atom terms as well as bonds/angles.
              "grow_soft" : Perturb all growing soft atom LJ terms (i.e. 0.0->value).
              "charge_soft" : Perturb all charging soft atom LJ terms (i.e. 0.0->value).
+             "restraint" : Perturb the receptor-ligand restraint strength by linearly
+                         scaling the force constants (0.0->value).
 
              Currently perturubation_type != "full" is only supported by
              BioSimSpace.Process.Somd.
