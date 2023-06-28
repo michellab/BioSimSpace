@@ -63,7 +63,7 @@ class TestRelativeAnalysis:
     @pytest.fixture(scope="class")
     def gmx_complex(gmx_data):
         outdir = gmx_data
-        complex, _ = BSS.FreeEnergy.Relative.analyse(
+        complex, _ = BSS.FreeEnergy.AlchemicalFreeEnergy.analyse(
             work_dir=str(outdir / "complex"),
             temperature=310 * BSS.Units.Temperature.kelvin,
         )
@@ -73,7 +73,7 @@ class TestRelativeAnalysis:
     @pytest.fixture(scope="class")
     def gmx_ligand(gmx_data):
         outdir = gmx_data
-        ligand, _ = BSS.FreeEnergy.Relative.analyse(
+        ligand, _ = BSS.FreeEnergy.AlchemicalFreeEnergy.analyse(
             work_dir=str(outdir / "ligand"),
             temperature=310 * BSS.Units.Temperature.kelvin,
         )
@@ -83,7 +83,7 @@ class TestRelativeAnalysis:
     @pytest.fixture(scope="class")
     def amber_complex_decharge(amber_data):
         outdir = amber_data
-        complex, _ = BSS.FreeEnergy.Relative.analyse(
+        complex, _ = BSS.FreeEnergy.AlchemicalFreeEnergy.analyse(
             work_dir=str(outdir / "complex_decharge"),
             temperature=298 * BSS.Units.Temperature.kelvin,
         )
@@ -93,7 +93,7 @@ class TestRelativeAnalysis:
     @pytest.fixture(scope="class")
     def amber_solvated_vdw(amber_data):
         outdir = amber_data
-        complex, _ = BSS.FreeEnergy.Relative.analyse(
+        complex, _ = BSS.FreeEnergy.AlchemicalFreeEnergy.analyse(
             work_dir=str(outdir / "solvated_vdw"),
             temperature=298 * BSS.Units.Temperature.kelvin,
         )
@@ -117,7 +117,9 @@ class TestRelativeAnalysis:
         )
 
     def test_difference(self, gmx_complex, gmx_ligand):
-        dG, error = BSS.FreeEnergy.Relative.difference(gmx_complex, gmx_ligand)
+        dG, error = BSS.FreeEnergy.AlchemicalFreeEnergy.difference(
+            gmx_complex, gmx_ligand
+        )
         np.testing.assert_allclose(
             dG / BSS.Units.Energy.kcal_per_mol, 14.216101, atol=0.1
         )
@@ -135,7 +137,7 @@ class TestAnalysePARQUET:
         return str(outdir / "parquet")
 
     def test_analyse(self, data):
-        result = BSS.FreeEnergy.Relative.analyse(
+        result = BSS.FreeEnergy.AlchemicalFreeEnergy.analyse(
             data, temperature=300 * BSS.Units.Temperature.kelvin, estimator="MBAR"
         )
         assert np.isclose(
@@ -166,7 +168,7 @@ class Test_gmx_ABFE:
             ),
             runtime=_Types.Time(0, "nanoseconds"),
         )
-        freenrg = BSS.FreeEnergy.Relative(
+        freenrg = BSS.FreeEnergy.AlchemicalFreeEnergy(
             solvated,
             protocol,
             engine="GROMACS",
