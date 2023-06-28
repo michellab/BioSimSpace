@@ -1,6 +1,7 @@
 from typing import Dict, Optional
 
 import os
+import pandas
 import pytest
 
 from BioSimSpace.Sandpit import Exscientia as BSS
@@ -49,7 +50,7 @@ has_openff = _have_imported(_openff)
 # Make sure pyarrow is available as the pandas parquet engine. The parquet
 # code does not work with fastparquet.
 try:
-    pd.io.parquet.get_engine("pyarrow")
+    pandas.io.parquet.get_engine("pyarrow")
     has_pyarrow = True
 except:
     has_pyarrow = False
