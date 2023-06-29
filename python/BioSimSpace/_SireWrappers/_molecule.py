@@ -1663,7 +1663,7 @@ class Molecule(_SireWrapper):
                 # Copy the property using the updated name.
                 mol = mol.setProperty(new_prop, mol.property(prop)).molecule()
 
-                # Store the amber types in the opposie end state.
+                # Store the amber types in the opposite end state.
                 if prop[:-1] == "ambertype":
                     if lam == "0":
                         amber_types = mol.property("ambertype1").toVector()

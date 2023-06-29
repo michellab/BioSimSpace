@@ -27,6 +27,7 @@ directory of the GitHub repository.
    index_Protocol
    index_Sandpit
    index_Solvent
+   index_Stream
    index_Trajectory
    index_Types
    index_Units

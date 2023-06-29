@@ -1,8 +1,6 @@
-from BioSimSpace.Sandpit.Exscientia.Gateway import Boolean
-
 import pytest
 
-# Tests for Boolean requirements.
+from BioSimSpace.Sandpit.Exscientia.Gateway import Boolean
 
 
 def test_no_arguments():

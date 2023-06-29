@@ -26,13 +26,15 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Amber"]
 
+import os
+from pathlib import Path as _Path
+
 from .._Utils import _try_import
 
 _pygtail = _try_import("pygtail")
 
 import os as _os
 import re as _re
-import time as _time
 import shutil as _shutil
 import tempfile as _tempfile
 import timeit as _timeit
@@ -41,6 +43,16 @@ import warnings as _warnings
 from sire.legacy import Base as _SireBase
 from sire.legacy import IO as _SireIO
 from sire.legacy import Mol as _SireMol
+import pandas as pd
+
+from .._Utils import _assert_imported, _have_imported, _try_import
+
+# alchemlyb isn't available on all variants of Python that we support, so we
+# need to try_import it.
+_alchemlyb = _try_import("alchemlyb")
+
+if _have_imported(_alchemlyb):
+    from alchemlyb.parsing.amber import extract as _extract
 
 from .. import _amber_home, _isVerbose
 from ..Align._squash import _squash, _unsquash
@@ -74,6 +86,7 @@ class Amber(_process.Process):
         extra_options=None,
         extra_lines=None,
         reference_system=None,
+        explicit_dummies=False,
         property_map={},
     ):
         """
@@ -107,14 +120,17 @@ class Amber(_process.Process):
             A list of extra lines to be put at the end of the script.
 
         reference_system : :class:`System <BioSimSpace._SireWrappers.System>` or None
-               An optional system to use as a source of reference coordinates, if applicable.
-               It is assumed that this system has the same topology as "system". If this is
-               None, then "system" is used as a reference.
+            An optional system to use as a source of reference coordinates, if applicable.
+            It is assumed that this system has the same topology as "system". If this is
+            None, then "system" is used as a reference.
 
-           property_map : dict
-               A dictionary that maps system "properties" to their user defined
-               values. This allows the user to refer to properties with their
-               own naming scheme, e.g. { "charge" : "my-charge" }
+        explicit_dummies : bool
+            Whether to keep the dummy atoms explicit at the endstates or remove them.
+
+        property_map : dict
+            A dictionary that maps system "properties" to their user defined
+            values. This allows the user to refer to properties with their
+            own naming scheme, e.g. { "charge" : "my-charge" }
         """
 
         # Call the base class constructor.
@@ -204,6 +220,9 @@ class Amber(_process.Process):
         # Create the list of input files.
         self._input_files = [self._config_file, self._rst_file, self._top_file]
 
+        # Set whether the dummies are explicit
+        self._explicit_dummies = explicit_dummies
+
         # Now set up the working directory for the process.
         self._setup()
 
@@ -272,7 +291,7 @@ class Amber(_process.Process):
         # Check for perturbable molecules and convert to the chosen end state.
         if isinstance(self._protocol, _Protocol._FreeEnergyMixin):
             # Represent the perturbed system in an AMBER-friendly format.
-            system, mapping = _squash(system)
+            system, mapping = _squash(system, explicit_dummies=self._explicit_dummies)
         else:
             system = self._checkPerturbable(system)
             mapping = {
@@ -333,6 +352,7 @@ class Amber(_process.Process):
                 _Protocol.Steering,
                 _Protocol.Metadynamics,
                 _Protocol.Production,
+                _Protocol.Dummy,
             ),
         ):
             raise _IncompatibleError(
@@ -479,16 +499,19 @@ class Amber(_process.Process):
             setattr(self, "getTime", self._getTime)
 
         # Set the configuration.
-        config = _Protocol.ConfigFactory(self._system, self._protocol)
-        self.addToConfig(
-            config.generateAmberConfig(
-                extra_options={**config_options, **self._extra_options},
-                extra_lines=self._extra_lines,
+        if not isinstance(self._protocol, _Protocol.Dummy):
+            config = _Protocol.ConfigFactory(
+                self._system, self._protocol, explicit_dummies=self._explicit_dummies
             )
-        )
+            self.addToConfig(
+                config.generateAmberConfig(
+                    extra_options={**config_options, **self._extra_options},
+                    extra_lines=self._extra_lines,
+                )
+            )
 
-        # Flag that this isn't a custom protocol.
-        self._protocol._setCustomised(False)
+            # Flag that this isn't a custom protocol.
+            self._protocol._setCustomised(False)
 
     def _generate_args(self):
         """Generate the dictionary of command-line arguments."""
@@ -637,7 +660,12 @@ class Amber(_process.Process):
                 )
 
                 # Update the unsquashed system based on the updated squashed system.
-                old_system = _unsquash(old_system, self._squashed_system, self._mapping)
+                old_system = _unsquash(
+                    old_system,
+                    self._squashed_system,
+                    self._mapping,
+                    explicit_dummies=self._explicit_dummies,
+                )
             else:
                 # Update the coordinates and velocities and return a mapping between
                 # the molecule indices in the two systems.
@@ -1181,11 +1209,6 @@ class Amber(_process.Process):
 
         time_series : bool
             Whether to return a list of time series records.
-
-        region : int
-            The region to which the record corresponds. There will only be more
-            than one region for FreeEnergy protocols, where 1 indicates the second
-            TI region.
 
         soft_core : bool
             Whether to get the record for the soft-core part of the system for the
@@ -1825,7 +1848,7 @@ class Amber(_process.Process):
         """
         return self.getRecord(
             "EPTOT",
-            times_series=time_series,
+            time_series=time_series,
             unit=_Units.Energy.kcal_per_mol,
             region=region,
             soft_core=soft_core,
@@ -2656,7 +2679,7 @@ class Amber(_process.Process):
 
                     # Use a regex search to split the line into record names and values.
                     records = _re.findall(
-                        r"([SC_]*[EEL_]*[RES_]*[VDW_]*\d*\-*\d*\s*[A-Z/]+\(*[A-Z]*\)*)\s*=\s*(\-*\d+\.?\d*)",
+                        r"([SC_]*[EEL_]*[RES_]*[VDW_]*\d*\-*\d*\s*[A-Z/]+\(*[A-Z]*\)*)\s*=\s*(\-*\d+\.?\d*|\**)",
                         line.upper(),
                     )
 
@@ -2674,6 +2697,13 @@ class Amber(_process.Process):
                             .replace("EELEC", "EEL")
                             .replace("VDWAALS", "VDW")
                         )
+
+                        # Handle missing values, which will appear as asterisks, e.g.
+                        # PRESS=********
+                        try:
+                            tmp = float(value)
+                        except:
+                            value = None
 
                         # Store the record using the original key.
                         stdout_dict[key] = value
@@ -2781,10 +2811,10 @@ class Amber(_process.Process):
                     return [int(x) for x in stdout_dict[key]]
                 else:
                     if unit is None:
-                        return [float(x) for x in stdout_dict[key]]
+                        return [float(x) if x else None for x in stdout_dict[key]]
                     else:
                         return [
-                            (float(x) * unit)._to_default_unit()
+                            (float(x) * unit)._to_default_unit() if x else None
                             for x in stdout_dict[key]
                         ]
 
@@ -2798,9 +2828,101 @@ class Amber(_process.Process):
                     return int(stdout_dict[key][-1])
                 else:
                     if unit is None:
-                        return float(stdout_dict[key][-1])
+                        try:
+                            return float(stdout_dict[key][-1])
+                        except:
+                            return None
                     else:
-                        return (float(stdout_dict[key][-1]) * unit)._to_default_unit()
+                        try:
+                            return (
+                                float(stdout_dict[key][-1]) * unit
+                            )._to_default_unit()
+                        except:
+                            return None
 
             except KeyError:
                 return None
+
+    def _init_stdout_dict(self):
+        """Initiate the _stdout_dict to parse from the output files from a fresh start.
+
+        This is needed when one reused the same process object. The use case is that one
+        generate a Process object, start and wait. Then swap in a new coordinate file
+        into the working directory, start and wait again. In this case, the result will
+        be a combination of both runs. This function ensures that the results are
+        regenerated from the new output file."""
+        # Initialise dictionaries to hold stdout records for all possible
+        # degrees of freedom. For regular simulations there will be one,
+        # for free-energy simulations there will be three, i.e. one for
+        # each of the TI regions and one for the soft-core part of the system.
+        self._stdout_dict = [
+            _process._MultiDict(),
+            _process._MultiDict(),
+            _process._MultiDict(),
+            _process._MultiDict(),
+        ]
+
+        # Initialise mappings between "universal" stdout keys, and the actual
+        # record key used for the different degrees of freedom in the AMBER
+        # output.
+        self._stdout_key = [{}, {}, {}, {}]
+
+        # Flag for the current record region in the AMBER output file.
+        self._current_region = 0
+
+        # Initialise log file parsing flags.
+        self._has_results = False
+        self._finished_results = False
+        self._is_header = False
+
+        # Initiate the pytails.
+        for file in _Path(self.workDir()).glob("*.out.offset"):
+            os.remove(file)
+
+    def saveMetric(
+        self, filename="metric.parquet", u_nk="u_nk.parquet", dHdl="dHdl.parquet"
+    ):
+        """
+        Helper function to save the simulation metrics to `filename`, which is a
+        pandas dataframe that can be loaded with `pd.read_parquet`. if the protocol
+        is Free Energy protocol, the dHdl and the u_nk data will be saved in the
+        same parquet format as well.
+        """
+
+        _assert_imported(_alchemlyb)
+
+        self._init_stdout_dict()
+        datadict = dict()
+        if isinstance(self._protocol, _Protocol.Minimisation):
+            datadict_keys = [
+                ("Time (ps)", None, "getStep"),
+                (
+                    "PotentialEnergy (kJ/mol)",
+                    _Units.Energy.kj_per_mol,
+                    "getTotalEnergy",
+                ),
+            ]
+        else:
+            datadict_keys = [
+                ("Time (ps)", _Units.Time.picosecond, "getTime"),
+                (
+                    "PotentialEnergy (kJ/mol)",
+                    _Units.Energy.kj_per_mol,
+                    "getPotentialEnergy",
+                ),
+                ("Volume (nm^3)", _Units.Volume.nanometer3, "getVolume"),
+                ("Pressure (bar)", _Units.Pressure.bar, "getPressure"),
+                ("Temperature (kelvin)", _Units.Temperature.kelvin, "getTemperature"),
+            ]
+        # # Disable this now
+        df = self._convert_datadict_keys(datadict_keys)
+        df.to_parquet(path=f"{self.workDir()}/{filename}", index=True)
+        if isinstance(self._protocol, _Protocol.FreeEnergy):
+            energy = _extract(
+                f"{self.workDir()}/{self._name}.out",
+                T=self._protocol.getTemperature() / _Units.Temperature.kelvin,
+            )
+            if "u_nk" in energy and energy["u_nk"] is not None:
+                energy["u_nk"].to_parquet(path=f"{self.workDir()}/{u_nk}", index=True)
+            if "dHdl" in energy and energy["dHdl"] is not None:
+                energy["dHdl"].to_parquet(path=f"{self.workDir()}/{dHdl}", index=True)

@@ -1,23 +1,8 @@
-import BioSimSpace.Sandpit.Exscientia as BSS
-
-import os
 import pytest
 
-# Check whether AMBER is installed.
-if BSS._amber_home is not None:
-    exe = "%s/bin/sander" % BSS._amber_home
-    if os.path.isfile(exe):
-        has_amber = True
-    else:
-        has_amber = False
-else:
-    has_amber = False
+import BioSimSpace.Sandpit.Exscientia as BSS
 
-# Check whether GROMACS is installed.
-has_gromacs = BSS._gmx_exe is not None
-
-# Store the tutorial URL.
-url = BSS.tutorialUrl()
+from tests.Sandpit.Exscientia.conftest import url, has_amber, has_gromacs, has_pyarrow
 
 
 @pytest.fixture(scope="session")
@@ -29,8 +14,8 @@ def system():
 
 
 @pytest.mark.skipif(
-    has_amber is False or has_gromacs is False,
-    reason="Requires that both AMBER and GROMACS are installed.",
+    has_amber is False or has_gromacs is False or has_pyarrow is False,
+    reason="Requires that AMBER, GROMACS, and pyarrow are installed.",
 )
 def test_amber_gromacs(system):
     """Single point energy comparison between AMBER and GROMACS."""
@@ -69,8 +54,8 @@ def test_amber_gromacs(system):
 
 
 @pytest.mark.skipif(
-    has_amber is False or has_gromacs is False,
-    reason="Requires that both AMBER and GROMACS are installed.",
+    has_amber is False or has_gromacs is False or has_pyarrow is False,
+    reason="Requires that AMBER, GROMACS, and pyarrow are installed.",
 )
 def test_amber_gromacs_triclinic(system):
     """Single point energy comparison between AMBER and GROMACS in a triclinic box."""

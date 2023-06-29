@@ -59,4 +59,4 @@ jobs:
         env:
           ANACONDA_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
           ANACONDA_LABEL: main
-        if: ${{ inputs.upload_packages }}
+        if: github.event.inputs.upload_packages == 'yes'

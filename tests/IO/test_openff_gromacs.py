@@ -1,25 +1,8 @@
-import BioSimSpace as BSS
-from BioSimSpace._Utils import _try_import, _have_imported
-
-import os
 import pytest
 
-# Check whether AMBER is installed.
-if BSS._amber_home is not None:
-    exe = "%s/bin/sander" % BSS._amber_home
-    if os.path.isfile(exe):
-        has_amber = True
-    else:
-        has_amber = False
-else:
-    has_amber = False
+import BioSimSpace as BSS
 
-# Check whether GROMACS is installed.
-has_gromacs = BSS._gmx_exe is not None
-
-# Make sure openff is installed.
-_openff = _try_import("openff")
-has_openff = _have_imported(_openff)
+from tests.conftest import has_amber, has_gromacs, has_openff
 
 
 @pytest.mark.skipif(

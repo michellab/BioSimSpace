@@ -206,10 +206,7 @@ class Gromacs(_Config):
                     )
 
         # Temperature control.
-        if not isinstance(
-            self._protocol,
-            (_Protocol.Metadynamics, _Protocol.Steering, _Protocol.Minimisation),
-        ):
+        if not isinstance(self._protocol, _Protocol.Minimisation):
             # Leap-frog molecular dynamics.
             protocol_dict["integrator"] = "md"
             # Temperature coupling using velocity rescaling with a stochastic term.

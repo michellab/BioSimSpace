@@ -1,25 +1,11 @@
-import BioSimSpace.Sandpit.Exscientia as BSS
-
-from BioSimSpace.Sandpit.Exscientia._Utils import _try_import, _have_imported
-
 import glob
 import os
 import pytest
 import tempfile
 
-# Make sure AMBER is installed.
-if BSS._amber_home is not None:
-    exe = "%s/bin/sander" % BSS._amber_home
-    if os.path.isfile(exe):
-        has_amber = True
-    else:
-        has_amber = False
-else:
-    has_amber = False
+import BioSimSpace.Sandpit.Exscientia as BSS
 
-# Make sure openff is installed.
-_openff = _try_import("openff")
-has_openff = _have_imported(_openff)
+from tests.Sandpit.Exscientia.conftest import has_amber, has_openff
 
 
 def test_file_cache():

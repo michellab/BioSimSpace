@@ -30,6 +30,8 @@ import collections as _collections
 import glob as _glob
 import os as _os
 
+import pandas as pd
+
 from .._Utils import _try_import
 
 _pygtail = _try_import("pygtail")
@@ -908,6 +910,7 @@ class Process:
 
         # The process isn't running.
         if not self.isRunning():
+            self.saveMetric()
             return
 
         if max_time is not None:
@@ -1636,6 +1639,63 @@ class Process:
     def _generate_args(self):
         """Generate the dictionary of command-line arguments."""
         self.clearArgs()
+
+    def saveMetric(
+        self, filename="metric.parquet", u_nk="u_nk.parquet", dHdl="dHdl.parquet"
+    ):
+        """The abstract function to save the metric and free energy data. Need to be
+        defined for each MD engine."""
+        pass
+
+    def _convert_datadict_keys(self, datadict_keys):
+        """This function is a helper function for saveMetric that converts a
+        `datadict_keys` into a dataframe.
+
+        Parameters
+        ----------
+
+        datadict_keys : List
+            The list that instructs how to generate the metric DataFrame. In
+            the format of "Volume (nm^3)", _Units.Volume.nanometer3, "getVolume",
+            where the first element is the key string, the second element being
+            the unit, the third element being the method to get the data.
+
+        Returns
+        -------
+
+        df : :class:`DataFrame <pandas.DataFrame>`
+            The DataFrame object containing the metric of the simulation.
+        """
+        datadict = {}
+        for key, unit, method in datadict_keys:
+            values = getattr(self, method)(time_series=True, block=False)
+            if values is not None:
+                if unit is not None:
+                    datadict[key] = [
+                        value / unit if value else None for value in values
+                    ]
+                else:
+                    datadict[key] = values
+            else:
+                _warnings.warn(f"No value has been extracted for the key ({key}).")
+        try:
+            df = pd.DataFrame(data=datadict)
+        except ValueError:
+            length_dict = {key: len(value) for key, value in datadict.items()}
+            _warnings.warn(
+                f"Not all metric has the same number of data points ({length_dict})."
+                f"All columns will be truncated the same length."
+            )
+            length = min(length_dict.values())
+            new_datadict = {key: value[:length] for key, value in datadict.items()}
+            df = pd.DataFrame(data=new_datadict)
+        try:
+            df = df.set_index("Time (ps)")
+        except KeyError:
+            _warnings.warn(
+                "No 'Time (ps)' found. Simulation didn't produce any output."
+            )
+        return df
 
 
 def _is_list_of_strings(lst):

@@ -2,14 +2,14 @@
 
 package:
   name: {{ name }}
-  version: {{ GIT_DESCRIBE_TAG if GIT_DESCRIBE_TAG is not none else 'PR' }}
+  version: {{ environ.get('GIT_DESCRIBE_TAG', 'PR') }}
 
 source:
-  git_url: https://github.com/openbiosim/biosimspace.git
+  git_url: BSS_REMOTE
   git_tag: BSS_BRANCH
 
 build:
-  number: {{ GIT_DESCRIBE_NUMBER if GIT_DESCRIBE_NUMBER is not none else 0 }}
+  number: {{ environ.get('GIT_DESCRIBE_NUMBER', 0) }}
 
 requirements:
   build:
@@ -27,17 +27,17 @@ test:
     - SIRE_SILENT_PHONEHOME
   requires:
     - pytest
-    - black 23      # [linux and x86_64 and py39]
-    - pytest-black  # [linux and x86_64 and py39]
+    - black 23      # [linux and x86_64 and py==39]
+    - pytest-black  # [linux and x86_64 and py==39]
     - ambertools    # [linux and x86_64]
     - gromacs       # [linux and x86_64]
   imports:
     - BioSimSpace
   source_files:
-    - python/BioSimSpace # [linux and x86_64 and py39]
+    - python/BioSimSpace # [linux and x86_64 and py==39]
     - tests
   commands:
-    - pytest -vvv --color=yes --black python/BioSimSpace # [linux and x86_64 and py39]
+    - pytest -vvv --color=yes --black python/BioSimSpace # [linux and x86_64 and py==39]
     - pytest -vvv --color=yes --import-mode=importlib tests
 
 about:

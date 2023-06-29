@@ -1,20 +1,8 @@
-import BioSimSpace as BSS
-
-import os
 import pytest
 
-# Store the tutorial URL.
-url = BSS.tutorialUrl()
+import BioSimSpace as BSS
 
-# Make sure AMBER is installed.
-if BSS._amber_home is not None:
-    exe = "%s/bin/sander" % BSS._amber_home
-    if os.path.isfile(exe):
-        has_amber = True
-    else:
-        has_amber = False
-else:
-    has_amber = False
+from tests.conftest import url, has_amber
 
 
 @pytest.fixture(scope="session")

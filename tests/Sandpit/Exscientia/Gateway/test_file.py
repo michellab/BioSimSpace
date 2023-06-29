@@ -1,8 +1,6 @@
-from BioSimSpace.Sandpit.Exscientia.Gateway import File
-
 import pytest
 
-# Tests for File requirements.
+from BioSimSpace.Sandpit.Exscientia.Gateway import File
 
 
 def test_no_arguments():

@@ -1106,6 +1106,32 @@ class System(_SireWrapper):
         """
         return len(self.getDecoupledMolecules())
 
+    def getMLMolecules(self):
+        """
+        Return a list containing all of the ML molecules in the system.
+
+        Returns
+        -------
+
+        molecules : [:class:`Molecule <BioSimSpace._SireWrappers.Molecule>`]
+            A list of ML molecules.
+        """
+        return _Molecules(
+            self._sire_object.search("molecules with property ML").toGroup()
+        )
+
+    def nMLMolecules(self):
+        """
+        Return the number of ML molecules in the system.
+
+        Returns
+        -------
+
+        num_ML : int
+            The number of ML molecules in the system.
+        """
+        return len(self.getMLMolecules())
+
     def repartitionHydrogenMass(
         self, factor=4, water="no", use_coordinates=False, property_map={}
     ):
@@ -1477,6 +1503,25 @@ class System(_SireWrapper):
             angles = None
 
         return box, angles
+
+    def makeWhole(self, property_map={}):
+        """
+        Make all molecules in the system "whole", i.e. unwrap any molecules that have
+        been split across the periodic boundary.
+
+        Parameters
+        ----------
+
+        property_map : dict
+            A dictionary that maps system "properties" to their user defined
+            values. This allows the user to refer to properties with their
+            own naming scheme, e.g. { "charge" : "my-charge" }
+        """
+
+        if not isinstance(property_map, dict):
+            raise TypeError("'property_map' must be of type 'dict'")
+
+        self._sire_object.makeWhole()
 
     def translate(self, vector, property_map={}):
         """

@@ -341,7 +341,9 @@ def readPDB(id, pdb4amber=False, work_dir=None, show_warnings=False, property_ma
     )
 
 
-def readMolecules(files, show_warnings=False, download_dir=None, property_map={}):
+def readMolecules(
+    files, make_whole=False, show_warnings=False, download_dir=None, property_map={}
+):
     """
     Read a molecular system from file.
 
@@ -352,6 +354,10 @@ def readMolecules(files, show_warnings=False, download_dir=None, property_map={}
         A file name, or a list of file names. Note that the file names can
         be URLs, in which case the files will be downloaded and (if necessary)
         extracted before reading.
+
+    make_whole : bool
+        Whether to make molecules whole, i.e. unwrap those that are split across
+        the periodic boundary.
 
     show_warnings : bool
         Whether to show any warnings raised during parsing of the input files.
@@ -425,6 +431,13 @@ def readMolecules(files, show_warnings=False, download_dir=None, property_map={}
             files = list(files)
     else:
         raise TypeError("'files' must be of type 'str', or a list of 'str' types.")
+
+    # Validate the molecule unwrapping flag.
+    if not isinstance(make_whole, bool):
+        raise TypeError("'make_whole' must be of type 'bool'.")
+    # Flag that we want' to unwrap molecules.
+    if make_whole:
+        property_map["make_whole"] = _SireBase.wrap(make_whole)
 
     # Validate the warning message flag.
     if not isinstance(show_warnings, bool):
@@ -675,7 +688,7 @@ def saveMolecules(filebase, system, fileformat, property_map={}, **kwargs):
         # Warn the user if any molecules are parameterised with a force field
         # that uses geometric combining rules. While we can write this to file
         # the information is lost on read.
-        if format == "PRM7":
+        if format.upper() == "PRM7":
             # Get the name of the "forcefield" property.
             forcefield = _property_map.get("forcefield", "forcefield")
 
@@ -700,13 +713,13 @@ def saveMolecules(filebase, system, fileformat, property_map={}, **kwargs):
             # Make sure AMBER and GROMACS files have the expected water topology
             # and save GROMACS files with an extension such that they can be run
             # directly by GROMACS without needing to be renamed.
-            if format == "PRM7":
+            if format.upper() == "PRM7":
                 system_copy = system.copy()
                 system_copy._set_water_topology("AMBER", _property_map)
                 file = _SireIO.MoleculeParser.save(
                     system_copy._sire_object, filebase, _property_map
                 )
-            elif format == "GroTop":
+            elif format.upper() == "GROTOP":
                 system_copy = system.copy()
                 system_copy._set_water_topology("GROMACS", _property_map)
                 file = _SireIO.MoleculeParser.save(
@@ -715,7 +728,7 @@ def saveMolecules(filebase, system, fileformat, property_map={}, **kwargs):
                 new_file = file.replace("grotop", "top")
                 _os.rename(file, new_file)
                 file = [new_file]
-            elif format == "Gro87":
+            elif format.upper() == "GRO87":
                 # Write to 3dp by default, unless greater precision is
                 # requested by the user.
                 if "precision" not in _property_map:
@@ -1038,6 +1051,11 @@ def _patch_sire_load(path, *args, show_warnings=True, property_map={}, **kwargs)
         Whether or not to print out any warnings that are encountered
         when loading your file(s). This is default True, and may lead
         to noisy output. Set `show_warnings=False` to silence this output.
+
+    property_map : dict
+        A dictionary that maps system "properties" to their user defined
+        values. This allows the user to refer to properties with their
+        own naming scheme, e.g. { "charge" : "my-charge" }
 
     directory : str
         Optional directory which will be used when creating any
