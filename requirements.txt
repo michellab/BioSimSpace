@@ -1,10 +1,10 @@
 # BioSimSpace runtime requirements.
 
 # main
-sire~=2023.3.0
+#sire~=2023.3.0
 
 # devel
-#sire==2023.4.0.dev
+sire==2023.4.0.dev
 
 configargparse
 ipywidgets
