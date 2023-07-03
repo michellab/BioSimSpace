@@ -286,10 +286,15 @@ class Gromacs(_process.Process):
         """Generate GROMACS configuration file strings."""
 
         # Check whether the system contains periodic box information.
-        # For now, well not attempt to generate a box if the system property
-        # is missing. If no box is present, we'll assume a non-periodic simulation.
-        if "space" in self._system._sire_object.propertyKeys():
-            has_box = True
+        space_prop = self._property_map.get("space", "space")
+        if space_prop in self._system._sire_object.propertyKeys():
+            try:
+                # Make sure that we have a periodic box. The system will now have
+                # a default cartesian space.
+                box = self._system._sire_object.property(space_prop)
+                has_box = box.isPeriodic()
+            except:
+                has_box = False
         else:
             _warnings.warn("No simulation box found. Assuming gas phase simulation.")
             has_box = False

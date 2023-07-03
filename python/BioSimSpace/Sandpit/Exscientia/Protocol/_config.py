@@ -39,7 +39,13 @@ class ConfigFactory:
     def _has_box(self):
         """Return whether the current system has a box."""
         if "space" in self.system._sire_object.propertyKeys():
-            has_box = True
+            try:
+                # Make sure that we have a periodic box. The system will now have
+                # a default cartesian space.
+                box = self.system._sire_object.property("space")
+                has_box = box.isPeriodic()
+            except:
+                has_box = False
         else:
             _warnings.warn("No simulation box found. Assuming gas phase simulation.")
             has_box = False
