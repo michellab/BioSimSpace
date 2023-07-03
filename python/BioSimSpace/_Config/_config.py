@@ -91,10 +91,18 @@ class Config:
         """
         space_prop = self._property_map.get("space", "space")
         if space_prop in self._system._sire_object.propertyKeys():
-            return True
+            try:
+                # Make sure that we have a periodic box. The system will now have
+                # a default cartesian space.
+                box = self._system._sire_object.property(space_prop)
+                has_box = box.isPeriodic()
+            except:
+                has_box = False
         else:
+            has_box = False
             _warnings.warn("No simulation box found. Assuming gas phase simulation.")
-            return False
+
+        return has_box
 
     def hasWater(self):
         """
