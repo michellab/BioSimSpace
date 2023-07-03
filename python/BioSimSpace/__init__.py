@@ -151,7 +151,10 @@ if _gmx_exe is None:
         try:
             _gmx_exe = _SireBase.findExe("gmx_mpi").absoluteFilePath()
         except:
-            pass
+            try:
+                _gmx_exe = _SireBase.findExe("gmx23").absoluteFilePath()
+            except:
+                pass
 
 del _environ
 del _SireBase
