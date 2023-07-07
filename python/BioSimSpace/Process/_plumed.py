@@ -106,6 +106,10 @@ class Plumed:
                     "PLUMED version >= 2.5 is required."
                 )
 
+            # Store the major and minor versions.
+            self._plumed_major = major
+            self._plumed_minor = minor
+
         else:
             raise _Exceptions.IncompatibleError("Could not determine PLUMED version!")
 
@@ -377,7 +381,9 @@ class Plumed:
 
                 # The funnel collective variable requires an auxiliary file for
                 # PLUMED versions < 2.7.
-                if self._plumed_version < 2.7:
+                if self._plumed_major < 2 or (
+                    self._plumed_major < 3 and self._plumed_minor < 7
+                ):
                     aux_file = "ProjectionOnAxis.cpp"
                     self._config.append(f"LOAD FILE={aux_file}")
                     aux_file = (
