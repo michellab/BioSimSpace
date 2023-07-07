@@ -1109,7 +1109,7 @@ class OpenMM(_process.Process):
 
             # Create a dummy PLUMED input file so that we can bind PLUMED
             # analysis functions to this process.
-            self._plumed = _Plumed(self._work_dir)
+            self._plumed = _Plumed(str(self._work_dir))
             plumed_config, auxillary_files = self._plumed.createConfig(
                 self._system, self._protocol, self._property_map
             )
