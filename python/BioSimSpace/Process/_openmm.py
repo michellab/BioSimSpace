@@ -1378,7 +1378,6 @@ class OpenMM(_process.Process):
         if not isinstance(block, (bool, str)):
             raise TypeError("'block' must be of type 'bool' or 'str'")
 
-
         # Wait for the process to finish.
         if block is True:
             self.wait()
