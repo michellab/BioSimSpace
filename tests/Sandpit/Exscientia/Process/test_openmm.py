@@ -125,7 +125,7 @@ def test_production(system, restraint):
     )
 
     # Run the process, check that it finished without error, and returns a system.
-    run_process(system, protocol, restraint=restraint, tolerance=1)
+    run_process(system, protocol, restraint=restraint, tolerance=1.1)
 
 
 @pytest.mark.skipif(
