@@ -346,7 +346,10 @@ class OpenMM(_process.Process):
                 self.addToConfig("simulation.context.setPositions(prm.positions)")
             self.addToConfig("if prm.box_vectors is not None:")
             self.addToConfig(
-                "    simulation.context.setPeriodicBoxVectors(*prm.box_vectors)"
+                "    box_vectors = reducePeriodicBoxVectors(prm.box_vectors)"
+            )
+            self.addToConfig(
+                "    simulation.context.setPeriodicBoxVectors(*box_vectors)"
             )
             self.addToConfig(
                 f"simulation.minimizeEnergy(maxIterations={self._protocol.getSteps()})"
@@ -448,7 +451,10 @@ class OpenMM(_process.Process):
                 self.addToConfig("simulation.context.setPositions(prm.positions)")
             self.addToConfig("if prm.box_vectors is not None:")
             self.addToConfig(
-                "    simulation.context.setPeriodicBoxVectors(*prm.box_vectors)"
+                "    box_vectors = reducePeriodicBoxVectors(prm.box_vectors)"
+            )
+            self.addToConfig(
+                "    simulation.context.setPeriodicBoxVectors(*box_vectors)"
             )
 
             # Set initial velocities from temperature distribution.
@@ -624,7 +630,10 @@ class OpenMM(_process.Process):
                 self.addToConfig("simulation.context.setPositions(prm.positions)")
             self.addToConfig("if prm.box_vectors is not None:")
             self.addToConfig(
-                "    simulation.context.setPeriodicBoxVectors(*prm.box_vectors)"
+                "    box_vectors = reducePeriodicBoxVectors(prm.box_vectors)"
+            )
+            self.addToConfig(
+                "    simulation.context.setPeriodicBoxVectors(*box_vectors)"
             )
 
             # Set initial velocities from temperature distribution.
@@ -1006,7 +1015,10 @@ class OpenMM(_process.Process):
                 self.addToConfig("simulation.context.setPositions(prm.positions)")
             self.addToConfig("if prm.box_vectors is not None:")
             self.addToConfig(
-                "    simulation.context.setPeriodicBoxVectors(*prm.box_vectors)"
+                "    box_vectors = reducePeriodicBoxVectors(prm.box_vectors)"
+            )
+            self.addToConfig(
+                "    simulation.context.setPeriodicBoxVectors(*box_vectors)"
             )
 
             # Set initial velocities from temperature distribution.
@@ -1922,6 +1934,9 @@ class OpenMM(_process.Process):
         self.addToConfig("from openmm import *")
         self.addToConfig("from openmm.app import *")
         self.addToConfig("from openmm.unit import *")
+        self.addToConfig(
+            "from openmm.app.internal.unitcell import reducePeriodicBoxVectors"
+        )
         self.addToConfig("import parmed")
 
     def _add_config_platform(self):
