@@ -57,7 +57,7 @@ from .._Utils import _assert_imported, _have_imported, _try_import
 _alchemlyb = _try_import("alchemlyb")
 
 if _have_imported(_alchemlyb):
-    from alchemlyb.parsing.amber import extract as _extract
+    from alchemlyb.parsing.gmx import extract as _extract
 
 from .. import _gmx_exe
 from .. import _isVerbose
