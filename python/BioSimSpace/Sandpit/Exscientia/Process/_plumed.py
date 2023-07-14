@@ -94,12 +94,21 @@ class Plumed:
         )
 
         if process.returncode == 0:
-            self._plumed_version = float(process.stdout.decode("ascii").strip())
+            self._plumed_version = process.stdout.decode("ascii").strip()
 
-            if self._plumed_version < 2.5:
+            # Get the major minor version.
+            major, minor = self._plumed_version.split(".")
+            major = int(major)
+            minor = int(minor)
+
+            if major < 2 or (major < 3 and minor < 5):
                 raise _Exceptions.IncompatibleError(
                     "PLUMED version >= 2.5 is required."
                 )
+
+            # Store the major and minor versions.
+            self._plumed_major = major
+            self._plumed_minor = minor
 
         else:
             raise _Exceptions.IncompatibleError("Could not determine PLUMED version!")
@@ -328,7 +337,7 @@ class Plumed:
                             # Check the upper bound is greater than dim/2 for
                             # each dimension.
                             for dim in dimensions:
-                                if value >= 0.5 * dim:
+                                if value >= 0.5 * dim.value():
                                     message = (
                                         "The simulation box is too small for the funnel. "
                                         "Try reducing the upper bound of the collective "
@@ -372,7 +381,9 @@ class Plumed:
 
                 # The funnel collective variable requires an auxiliary file for
                 # PLUMED versions < 2.7.
-                if self._plumed_version < 2.7:
+                if self._plumed_major < 2 or (
+                    self._plumed_major < 3 and self._plumed_minor < 7
+                ):
                     aux_file = "ProjectionOnAxis.cpp"
                     self._config.append(f"LOAD FILE={aux_file}")
                     aux_file = (

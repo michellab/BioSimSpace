@@ -9,6 +9,55 @@ company supporting open-source development of fostering academic/industrial coll
 within the biomolecular simulation community. Our software is hosted via the `OpenBioSim`
 `GitHub <https://github.com/OpenBioSim/biosimspace>`__ organisation.
 
+`2023.3.0 <https://github.com/openbiosim/biosimspace/compare/2023.2.2...2023.3.0>`_ - Jun 30 2023
+-------------------------------------------------------------------------------------------------
+
+* Reinstate :data:`BioSimSpace.Stream <BioSimSpace.Stream>` sub-package (`#36 <https://github.com/OpenBioSim/biosimspace/pull/36>`__).
+* Fixed ``setup.py`` file to work correctly on Windows (`#72 <https://github.com/OpenBioSim/biosimspace/pull/72>`__).
+* Fixed bug with missing working directory when using ``rmsd_flex_align`` scoring function (`#75 <https://github.com/OpenBioSim/biosimspace/pull/75>`__).
+* Use ``parmed`` to create ``openmm`` system to avoid issue parsing triclinic spaces with ``AmberPrmTopFile`` (`#77 <https://github.com/OpenBioSim/biosimspace/pull/77>`__).
+* Fix parsing of AMBER free-energy perturbation standard output (`#79 <https://github.com/OpenBioSim/biosimspace/pull/79>`__).
+* Fix bug in :data:`GeneralUnit <BioSimSpace.Types._GeneralUnit>` constructor (`#83 <https://github.com/OpenBioSim/biosimspace/pull/83>`__).
+* Check molecule numbers in system when caching files to avoid issue when the UID and number of molecules are the same, but the actual molecules are different, e.g. after being edited (`#89 <https://github.com/OpenBioSim/biosimspace/pull/89>`__).
+* Fix order of imports in ``prepareFEP`` node (`#90 <https://github.com/OpenBioSim/biosimspace/pull/90>`__).
+* Recenter molecules following vacuum simulation with GROMACS to avoid precision overflow with molecular coordinates on write (`#95 <https://github.com/OpenBioSim/biosimspace/pull/95>`__).
+* Fix expected angles used in unit test following updates to triclinic box code in Sire (`#99 <https://github.com/OpenBioSim/biosimspace/pull/99>`__).
+* Add absolute binding free-energy support for SOMD (`@fkclark <https://github.com/fjclark>`_) (`#104 <https://github.com/OpenBioSim/biosimspace/pull/104>`__).
+* Avoid streaming issues when reading binary AMBER restart files for a single frame (`#105 <https://github.com/OpenBioSim/biosimspace/pull/105>`__).
+* Improve overlap matrix plotting functionality (`@fkclark <https://github.com/fjclark>`_) (`#107 <https://github.com/OpenBioSim/biosimspace/pull/107>`__).
+* Handle updates to Sire parser format naming (`#108 <https://github.com/OpenBioSim/biosimspace/pull/108>`__).
+* Wrap new Sire units grammar to improve parsing of units from strings (`#109 <https://github.com/OpenBioSim/biosimspace/pull/109>`__).
+* Expose ``make_whole`` option in Sire to allow un-wrapping of molecular coordinates on read (`#110 <https://github.com/OpenBioSim/biosimspace/pull/110>`__).
+* Make sure to call ``.value()`` on objects that now have units (`#110 <https://github.com/OpenBioSim/biosimspace/pull/110>`__).
+* Handle missing values in AMBER standard output records (`#111 <https://github.com/OpenBioSim/biosimspace/pull/111>`__).
+* Fix bug in ``plumed`` version requirement check (`#113 <https://github.com/OpenBioSim/biosimspace/pull/113>`__).
+* Reinstate temperature control for all GROMACS simulation protocols (`#115 <https://github.com/OpenBioSim/biosimspace/pull/115>`__).
+* Fix pre-processing selector in test section of ``conda`` recipe (`#117 <https://github.com/OpenBioSim/biosimspace/pull/117>`__).
+* Fixed bug in SOMD free-energy perturbation analysis (`@fkclark <https://github.com/fjclark>`_) (`#119 <https://github.com/OpenBioSim/biosimspace/pull/119>`__).
+* Catch exception when vacuum system has a cartesian space (`#120 <https://github.com/OpenBioSim/biosimspace/pull/120>`__).
+* Add support for Sire as a trajectory backend (`#121 <https://github.com/OpenBioSim/biosimspace/pull/121>`__).
+
+`2023.2.2 <https://github.com/openbiosim/biosimspace/compare/2023.2.1...2023.2.2>`_ - May 15 2023
+-------------------------------------------------------------------------------------------------
+
+* Rename tests directory to ``tests`` for compliance with ``pytest`` standard (`#51 <https://github.com/OpenBioSim/biosimspace/pull/51>`__).
+* Fixed parsing of AMBER standard output records (`#56 <https://github.com/OpenBioSim/biosimspace/pull/56>`__).
+* Re-add pre-minimisation stage to SOMD FEP configuration (`#59 <https://github.com/OpenBioSim/biosimspace/pull/59>`__).
+* Fixed reference to ``plumed.dat`` file in AMBER configuration input for steered molecular dynamics (`#64 <https://github.com/OpenBioSim/biosimspace/pull/64>`__).
+* Fixed :meth:`getDensity <BioSimSpace.Process.Amber.getDensity>` method (`#64 <https://github.com/OpenBioSim/biosimspace/pull/64>`__).
+
+`2023.2.1 <https://github.com/openbiosim/biosimspace/compare/2023.2.0...2023.2.1>`_ - Apr 27 2023
+-------------------------------------------------------------------------------------------------
+
+* Update GitHub CI for our new release process (`#34 <https://github.com/OpenBioSim/biosimspace/pull/34>`__).
+* Fixed :func:`readMolecules <BioSimSpace.IO.readMolecules>` so that can handle a tuple of input files again (`#38 <https://github.com/OpenBioSim/biosimspace/pull/38>`__).
+* Fixed protocol mixin inheritance (`#41 <https://github.com/OpenBioSim/biosimspace/pull/41>`__).
+* Update documentation for new development and release process (`#43 <https://github.com/OpenBioSim/biosimspace/pull/43>`__).
+* Fixed SOMD inverse friction coefficient configuration parameter (`#49 <https://github.com/OpenBioSim/biosimspace/pull/49>`__).
+* Fixes to the hydration free energy tutorial (`#49 <https://github.com/OpenBioSim/biosimspace/pull/49>`__).
+* Fixed bug in SOMD test runner that caused it to return prior to assertions (`#49 <https://github.com/OpenBioSim/biosimspace/pull/49>`__).
+* Expose ``extra_options`` and ``extra_lines`` parameters in :class:`BioSimSpace.FreeEnergy.Relative <BioSimSpace.FreeEnergy.Relative>` (`#49 <https://github.com/OpenBioSim/biosimspace/pull/49>`__).
+
 `2023.2.0 <https://github.com/openbiosim/biosimspace/compare/2023.1.2...2023.2.0>`_ - Mar 30 2023
 -------------------------------------------------------------------------------------------------
 

@@ -414,7 +414,7 @@ Energy at 1.0000 =    -20527.018427
 | TI region  1
 
 
- NSTEP =      200   TIME(PS) =       0.400  TEMP(K) =   299.11  PRESS =     0.0
+ NSTEP =      200   TIME(PS) =       0.400  TEMP(K) =   299.11  PRESS =********
  Etot   =    -17729.5249  EKtot   =      3848.1375  EPtot      =    -21577.6625
  BOND   =         8.1288  ANGLE   =       104.5238  DIHED      =         4.3669
  1-4 NB =         4.9543  1-4 EEL =       -33.5151  VDWAALS    =      3094.9338

@@ -1,10 +1,9 @@
-import BioSimSpace.Sandpit.Exscientia as BSS
-
 import math
 import pytest
 
-# Store the tutorial URL.
-url = BSS.tutorialUrl()
+import BioSimSpace.Sandpit.Exscientia as BSS
+
+from tests.Sandpit.Exscientia.conftest import url, has_amber, has_openff
 
 
 @pytest.fixture(scope="session")
@@ -273,9 +272,7 @@ def test_set_box(system):
     # Get the updated box dimensions and angles.
     box, angles = system.getBox()
 
-    # Store the expected box dimensions and angles. These are different
-    # to the initial values (angles at least) due to the application
-    # of a lattice reduction.
+    # Store the expected box dimensions and angles.
     expected_box = [30, 30, 30] * BSS.Units.Length.angstrom
     expected_angles = [70.5288, 109.4712, 70.5288] * BSS.Units.Angle.degree
 
@@ -356,6 +353,30 @@ def test_isSame(system):
     # Assert that they are the same, apart from their coordinates and space.
     assert system.isSame(other, excluded_properties=["coordinates", "space"])
     assert other.isSame(system, excluded_properties=["coordinates", "space"])
+
+
+@pytest.mark.skipif(
+    has_amber is False or has_openff is False,
+    reason="Requires AMBER and OpenFF to be installed",
+)
+def test_isSame_mol_nums():
+    # Make sure that isSame works when two systems have the same UID,
+    # but contain different MolNums.
+
+    # Create an initial system.
+    system = BSS.Parameters.openff_unconstrained_2_0_0("CO").getMolecule().toSystem()
+
+    # Create two different 5 atom molecules.
+    mol0 = BSS.Parameters.openff_unconstrained_2_0_0("C").getMolecule()
+    mol1 = BSS.Parameters.openff_unconstrained_2_0_0("CF").getMolecule()
+
+    # Create two new systems by adding the different molecules to the original
+    # system. These will have the same UID, but different molecule numbers.
+    system0 = system + mol0
+    system1 = system + mol1
+
+    # Assert that the two systems are different.
+    assert not system0.isSame(system1)
 
 
 def test_velocity_removal():

@@ -1,9 +1,8 @@
-import BioSimSpace as BSS
-
 import pytest
 
-# Store the tutorial URL.
-url = BSS.tutorialUrl()
+import BioSimSpace as BSS
+
+from tests.conftest import url, has_amber, has_gromacs, has_openff
 
 # Store the allowed restraints.
 restraints = BSS.Protocol._position_restraint_mixin._PositionRestraintMixin.restraints()
@@ -78,6 +77,29 @@ def test_production(system, restraint):
 
     # Run the process, check that it finished without error, and returns a system.
     run_process(system, protocol)
+
+
+@pytest.mark.skipif(
+    has_amber is False or has_gromacs is False or has_openff is False,
+    reason="Requires AMBER, GROMACS, and OpenFF to be installed",
+)
+def test_rhombic_dodecahedron():
+    """Test that OpenMM can load and run rhombic dodecahedral triclinic spaces."""
+
+    # Create a methane molecule.
+    mol = BSS.Parameters.openff_unconstrained_2_0_0("C").getMolecule()
+
+    # Generate box dimensions and angles for a hexagonal rhombic dodecahedron.
+    box, angles = BSS.Box.rhombicDodecahedronHexagon(5 * BSS.Units.Length.nanometer)
+
+    # Create a solvated system.
+    solvated = BSS.Solvent.tip3p(mol, box=box, angles=angles)
+
+    # Create a short minimisation protocol.
+    protocol = BSS.Protocol.Minimisation(steps=100)
+
+    # Run the process, check that it finished without error, and returns a system.
+    run_process(solvated, protocol)
 
 
 def run_process(system, protocol):

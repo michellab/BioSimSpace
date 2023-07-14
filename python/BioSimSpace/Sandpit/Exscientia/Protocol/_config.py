@@ -2,8 +2,10 @@ import warnings as _warnings
 
 import math as _math
 from sire.legacy import Units as _SireUnits
+from ..Units.Time import nanosecond as _nanosecond
 
 from .. import Protocol as _Protocol
+from .. import _gmx_version
 from .._Exceptions import IncompatibleError as _IncompatibleError
 from ..Align._squash import _amber_mask_from_indices, _squashed_atom_mapping
 
@@ -37,7 +39,13 @@ class ConfigFactory:
     def _has_box(self):
         """Return whether the current system has a box."""
         if "space" in self.system._sire_object.propertyKeys():
-            has_box = True
+            try:
+                # Make sure that we have a periodic box. The system will now have
+                # a default cartesian space.
+                box = self.system._sire_object.property("space")
+                has_box = box.isPeriodic()
+            except:
+                has_box = False
         else:
             _warnings.warn("No simulation box found. Assuming gas phase simulation.")
             has_box = False
@@ -407,7 +415,7 @@ class ConfigFactory:
             timestep = (
                 self.protocol.getTimeStep().picoseconds().value()
             )  # Define the timestep in picoseconds
-            protocol_dict["dt"] = f"{timestep:.3f}"  # Integration time step.
+            protocol_dict["dt"] = f"{timestep:.4f}"  # Integration time step.
         protocol_dict["nsteps"] = self._steps  # Number of integration steps.
 
         # Constraints.
@@ -448,7 +456,10 @@ class ConfigFactory:
             if self.protocol.getPressure() is not None:
                 # Don't use barostat for vacuum simulations.
                 if self._has_box and self._has_water:
-                    protocol_dict["pcoupl"] = "c-rescale"  # Barostat type.
+                    if _gmx_version >= 2021:
+                        protocol_dict["pcoupl"] = "C-rescale"  # C-rescale barostat.
+                    else:
+                        protocol_dict["pcoupl"] = "Berendsen"  # Berendsen barostat.
                     # Do the MC move every 100 steps to be the same as AMBER.
                     protocol_dict["nstpcouple"] = 100
                     # 4ps time constant for pressure coupling.
@@ -583,9 +594,14 @@ class ConfigFactory:
 
         return total_lines
 
-    def generateSomdConfig(self, extra_options=None, extra_lines=None):
-        """
-        Outputs the current protocol in a format compatible with SOMD.
+    def generateSomdConfig(
+        self,
+        extra_options=None,
+        extra_lines=None,
+        restraint=None,
+        perturbation_type=None,
+    ):
+        """Outputs the current protocol in a format compatible with SOMD.
 
         Parameters
         ----------
@@ -595,6 +611,21 @@ class ConfigFactory:
 
         extra_lines : list
             A list of extra lines to be put at the end of the script.
+
+        restraint : :class:`Restraint <BioSimSpace.FreeEnergy.Restraint>`
+            The Restraint object that contains information for the ABFE
+            calculations.
+
+        perturbation_type : str
+            The type of perturbation to perform. Options are:
+            "full" : A full perturbation of all terms (default option).
+            "discharge_soft" : Perturb all discharging soft atom charge terms (i.e. value->0.0).
+            "vanish_soft" : Perturb all vanishing soft atom LJ terms (i.e. value->0.0).
+            "flip" : Perturb all hard atom terms as well as bonds/angles.
+            "grow_soft" : Perturb all growing soft atom LJ terms (i.e. 0.0->value).
+            "charge_soft" : Perturb all charging soft atom LJ terms (i.e. 0.0->value).
+            "restraint" : Perturb the receptor-ligand restraint strength by linearly
+                          scaling the force constants (0.0->value).
 
         Returns
         -------
@@ -607,58 +638,82 @@ class ConfigFactory:
         extra_lines = extra_lines if extra_lines is not None else []
 
         # Define some miscellaneous defaults.
-        protocol_dict = {"save coordinates": True}  # Save molecular coordinates.
+        # Save molecular coordinates.
+        protocol_dict = {"save coordinates": True}
 
         # Minimisation.
         if isinstance(self.protocol, _Protocol.Minimisation):
-            protocol_dict["minimise"] = True  # Minimisation simulation.
-            protocol_dict[
-                "minimise maximum iterations"
-            ] = self._steps  # Maximum number of steps.
-            protocol_dict["minimise tolerance"] = 1  # Convergence tolerance.
-            protocol_dict["ncycles"] = 1  # Perform a single SOMD cycle.
-            protocol_dict["nmoves"] = 1  # Perform a single MD move.
+            # Minimisation simulation.
+            protocol_dict["minimise"] = True
+            # Maximum number of steps.
+            protocol_dict["minimise maximum iterations"] = self._steps
+            # Convergence tolerance.
+            protocol_dict["minimise tolerance"] = 1
+            # Perform a single SOMD cycle.
+            protocol_dict["ncycles"] = 1
+            # Perform a single MD move.
+            protocol_dict["nmoves"] = 1
         else:
             # Get the report and restart intervals.
             report_interval = self._report_interval
             restart_interval = self._restart_interval
+            runtime = self.protocol.getRunTime()
 
-            # The restart and report intervals must be a multiple of the energy frequency,
-            # which is 200 steps.
+            # Get the timestep.
+            timestep = self.protocol._timestep
+
+            # Work out the number of cycles.
+            ncycles = (runtime / timestep) / report_interval
+
+            # If the number of cycles isn't integer valued, adjust the report
+            # interval so that we match specified the run time.
+            if ncycles - _math.floor(ncycles) != 0:
+                ncycles = _math.floor(ncycles)
+                if ncycles == 0:
+                    ncycles = 1
+                report_interval = _math.ceil((runtime / timestep) / ncycles)
+
+            # For free energy simulations, the report interval must be a multiple
+            # of the energy frequency which is 250 steps.
             if isinstance(self.protocol, _Protocol._FreeEnergyMixin):
-                report_interval = int(200 * _math.ceil(report_interval / 200))
-                restart_interval = int(200 * _math.ceil(restart_interval / 200))
+                if report_interval % 250 != 0:
+                    report_interval = 250 * _math.ceil(report_interval / 250)
 
+            # Work out the number of cycles per frame.
+            cycles_per_frame = restart_interval / report_interval
+
+            # Work out whether we need to adjust the buffer frequency.
+            buffer_freq = 0
+            if cycles_per_frame < 1:
+                buffer_freq = cycles_per_frame * restart_interval
+                cycles_per_frame = 1
+                self._buffer_freq = buffer_freq
+            else:
+                cycles_per_frame = _math.floor(cycles_per_frame)
+
+            # For free energy simulations, the buffer frequency must be an integer
+            # multiple of the frequency at which free energies are written, which
+            # is 250 steps. Round down to the closest multiple.
+            if isinstance(self.protocol, _Protocol._FreeEnergyMixin):
+                if buffer_freq > 0:
+                    buffer_freq = 250 * _math.floor(buffer_freq / 250)
+
+            # The number of SOMD cycles.
+            protocol_dict["ncycles"] = int(ncycles)
             # The number of moves per cycle.
-            nmoves = report_interval
-
-            # The number of cycles, so that nmoves * ncycles is equal to self._steps.
-            ncycles = max(1, self._steps // nmoves)
-
-            # How many cycles need to pass before we write a trajectory frame.
-            cycles_per_frame = max(1, restart_interval // nmoves)
-
-            # How many time steps need to pass before we write a trajectory frame.
-            buffer_freq = int(nmoves * ((restart_interval / nmoves) % 1))
-
-            protocol_dict["ncycles"] = ncycles  # The number of SOMD cycles.
-            protocol_dict["nmoves"] = nmoves  # The number of moves per cycle.
-            protocol_dict[
-                "ncycles_per_snap"
-            ] = cycles_per_frame  # Cycles per trajectory write.
-            protocol_dict[
-                "buffered coordinates frequency"
-            ] = buffer_freq  # Buffering frequency.
+            protocol_dict["nmoves"] = report_interval
+            # Cycles per trajectory write.
+            protocol_dict["ncycles_per_snap"] = cycles_per_frame
+            # Buffering frequency.
+            protocol_dict["buffered coordinates frequency"] = buffer_freq
             timestep = self.protocol.getTimeStep().femtoseconds().value()
-            protocol_dict["timestep"] = (
-                "%.2f femtosecond" % timestep
-            )  # Integration time step.
+            # Integration time step.
+            protocol_dict["timestep"] = "%.2f femtosecond" % timestep
 
             # Use the Langevin Middle integrator if it is a 4 fs timestep
             if timestep >= 4.00:
-                protocol_dict[
-                    "integrator_type"
-                ] = "langevinmiddle"  # Langevin middle integrator
+                # Langevin middle integrator
+                protocol_dict["integrator_type"] = "langevinmiddle"
             else:
                 pass
 
@@ -722,19 +777,29 @@ class ConfigFactory:
                 ] = "hbonds-notperturbed"  # Handle hydrogen perturbations.
                 protocol_dict[
                     "energy frequency"
-                ] = 200  # Write gradients every 200 steps.
+                ] = 250  # Write gradients every 250 steps.
 
             protocol = [str(x) for x in self.protocol.getLambdaValues()]
             protocol_dict["lambda array"] = ", ".join(protocol)
             protocol_dict[
                 "lambda_val"
             ] = self.protocol.getLambda()  # Current lambda value.
-            res_num = (
-                self.system.search("perturbable")
-                .residues()[0]
-                ._sire_object.number()
-                .value()
-            )
+
+            try:  # RBFE
+                res_num = (
+                    self.system.search("perturbable")
+                    .residues()[0]
+                    ._sire_object.number()
+                    .value()
+                )
+            except ValueError:  # No perturbable molecule - try ABFE
+                res_num = (
+                    self.system.getDecoupledMolecules()[0]
+                    .getResidues()[0]
+                    ._sire_object.number()
+                    .value()
+                )
+
             protocol_dict[
                 "perturbed residue number"
             ] = res_num  # Perturbed residue number.
@@ -744,5 +809,13 @@ class ConfigFactory:
         total_lines = [
             f"{k} = {v}" for k, v in total_dict.items() if v is not None
         ] + extra_lines
+
+        # Restraint
+        if restraint:
+            total_lines.append("use boresch restraints = True")
+            total_lines.append(restraint.toString(engine="SOMD"))
+            # If we are turning on the restraint, need to specify this in the config file
+            if perturbation_type == "restraint":
+                total_lines.append("turn on receptor-ligand restraints mode = True")
 
         return total_lines

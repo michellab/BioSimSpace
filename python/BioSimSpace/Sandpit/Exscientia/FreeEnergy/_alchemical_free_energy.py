@@ -19,12 +19,13 @@
 # along with BioSimSpace. If not, see <http://www.gnu.org/licenses/>.
 #####################################################################
 
-"""Functionality for relative free-energy simulations."""
+"""Functionality for relative and absolute alchemical free-energy simulations."""
 
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
 
-__all__ = ["Relative", "getData"]
+__all__ = ["AlchemicalFreeEnergy", "getData"]
+
 
 import copy as _copy
 import math as _math
@@ -62,18 +63,19 @@ import pandas as _pd
 from sire.legacy.Base import getBinDir as _getBinDir
 from sire.legacy.Base import getShareDir as _getShareDir
 
-from .. import _gmx_exe
-from .. import _is_notebook
+from ._restraint import Restraint as _Restraint
+
 from .._Exceptions import AnalysisError as _AnalysisError
 from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from .._SireWrappers import System as _System
 from .._Utils import cd as _cd
+from .. import _gmx_exe
+from .. import _is_notebook
 from .. import Process as _Process
 from .. import Protocol as _Protocol
 from .. import Types as _Types
 from .. import Units as _Units
 from .. import _Utils
-from ._restraint import Restraint as _Restraint
 
 from ..MD._md import _find_md_engines
 
@@ -99,8 +101,11 @@ if _sys.platform == "win32":
     )
 
 
-class Relative:
-    """Class for configuring and running relative free-energy perturbation simulations."""
+class AlchemicalFreeEnergy:
+    """
+    Class for configuring and running relative and absolute
+    free-energy perturbation simulations.
+    """
 
     # Create a list of supported molecular dynamics engines.
     _engines = ["AMBER", "GROMACS", "SOMD"]
@@ -174,8 +179,8 @@ class Relative:
             Estimator used for the analysis - must be either 'MBAR' or 'TI'.
 
         restraint : :class:`Restraint <BioSimSpace.FreeEnergy.Restraint>`
-            The Restraint object that contains information for the ABFE
-            calculations.
+            A Restraint object specifying a receptor-ligand restraint for
+            ABFE calculations.
 
         property_map : dict
             A dictionary that maps system "properties" to their user defined
@@ -286,15 +291,33 @@ class Relative:
                         "type. Please use engine='SOMD' when running multistep "
                         "perturbation types."
                     )
+
+                # AMBER currently can not handle restraints
+                if restraint is not None:
+                    raise NotImplementedError(
+                        "AMBER currently does not support restraints within BSS"
+                    )
         else:
             # Use SOMD as a default.
             engine = "SOMD"
 
             # The system must have a single perturbable molecule.
-            if system.nPerturbableMolecules() != 1:
+            if (
+                system.nPerturbableMolecules() != 1
+                and system.nDecoupledMolecules() != 1
+            ):
                 raise ValueError(
-                    "The system must contain a single perturbable molecule! "
-                    "Use the 'BioSimSpace.Align' package to map and merge molecules."
+                    "The system must contain a single perturbable or decoupled molecule! "
+                    "Use the 'BioSimSpace.Align' package to map and merge molecules, or "
+                    "to mark them for decoupling."
+                )
+            # The system must not have a decoupled and perturbable molecule.
+            if (
+                system.nPerturbableMolecules() == 1
+                and system.nDecoupledMolecules() == 1
+            ):
+                raise ValueError(
+                    "The system must not contain a perturbable molecule and a decoupled molecule!"
                 )
 
         # Set the engine.
@@ -320,14 +343,9 @@ class Relative:
             raise TypeError("'property_map' must be of type 'dict'.")
         self._property_map = property_map
 
-        # Check that the restraint is valid.
-        if not restraint is None:
-            if engine not in [
-                "GROMACS",
-            ]:
-                raise NotImplementedError(
-                    f"Restraint for MD Engine {engine} not implemented."
-                )
+        # Check that if a restraint is passed (bound leg simulation) it is valid.
+        # For free leg simulations, the restraint will be None.
+        if restraint is not None:
             if not isinstance(restraint, _Restraint):
                 raise TypeError(
                     "'restraint' must be of type 'BioSimSpace.FreeEnergy.Restraint'."
@@ -335,6 +353,7 @@ class Relative:
             else:
                 # Ensure that the system is compatible with the restraint
                 restraint.system = self._system
+
         self._restraint = restraint
 
         # Create fake instance methods for 'analyse' and 'difference'. These
@@ -537,13 +556,13 @@ class Relative:
             data = _glob(work_dir + mask)
             if data:
                 if engine == "SOMD":
-                    return Relative._analyse_somd(work_dir, estimator)
+                    return AlchemicalFreeEnergy._analyse_somd(work_dir, estimator)
                 else:
                     if not isinstance(temperature, _Types.Temperature):
                         raise TypeError(
                             "'temperature' must be of type 'BioSimSpace.Types.Temperature'"
                         )
-                    return Relative._analyse_noSOMD(
+                    return AlchemicalFreeEnergy._analyse_noSOMD(
                         engine=engine,
                         work_dir=work_dir,
                         estimator=estimator,
@@ -580,7 +599,7 @@ class Relative:
             raise TypeError(
                 "'protocol' must be of type 'BioSimSpace.Protocol.Production'"
             )
-        return Relative.analyse(
+        return AlchemicalFreeEnergy.analyse(
             str(self._work_dir), self._estimator, temperature=temperature
         )
 
@@ -734,6 +753,10 @@ class Relative:
             )
 
         files = sorted(_glob(work_dir + "/lambda_*/simfile.dat"))
+        if not files:
+            raise FileNotFoundError(
+                f"No simfile.dat files found in lambda_* directories in {work_dir}"
+            )
         lambdas = [float(x.split("/")[-2].split("_")[-1]) for x in files]
 
         temperatures = []
@@ -741,12 +764,22 @@ class Relative:
             found_temperature = False
             with open(file, "r") as f:
                 for line in f.readlines():
-                    t = None
+                    temp = None
                     start = "#Generating temperature is"
                     if start in line:
-                        t = int(((line.split(start)[1]).strip()).split(" ")[0])
-                        temperatures.append(t)
-                        if t is not None:
+                        split_line = line.split()
+                        temp = split_line[3]
+                        try:
+                            unit = split_line[4]
+                        except IndexError:
+                            # Must be °C
+                            temp, unit = temp.split("°")
+                        if unit == "C":
+                            temp = float(temp) + 273.15  # Convert to K
+                        else:
+                            temp = float(temp)
+                        temperatures.append(temp)
+                        if temp is not None:
                             found_temperature = True
                             break
 
@@ -1041,7 +1074,7 @@ class Relative:
             for lambda_, t in zip(lambdas, temperatures):
                 x = lambdas.index(lambda_)
                 mbar_value = delta_f_.iloc[0, x]
-                mbar_error = d_delta_f_.iloc[1, x]
+                mbar_error = d_delta_f_.iloc[0, x]
 
                 # Append the data.
                 data.append(
@@ -1228,7 +1261,7 @@ class Relative:
         pmf, _ = self.analyse()
 
         # Now call the staticmethod passing in both PMFs.
-        return Relative.difference(pmf, pmf_ref)
+        return AlchemicalFreeEnergy.difference(pmf, pmf_ref)
 
     def _initialise_runner(self, system):
         """
@@ -1241,7 +1274,7 @@ class Relative:
             The molecular system.
         """
 
-        # Initialise list to store the processe
+        # Initialise list to store the processes
         processes = []
 
         # Convert to an appropriate water topology.
@@ -1265,7 +1298,10 @@ class Relative:
         # Nest the working directories inside self._work_dir.
 
         # Name the first directory.
-        first_dir = f"{self._work_dir}/lambda_{self._protocol.getLambdaIndex()}"
+        if self._engine == "SOMD":
+            first_dir = f"{self._work_dir}/lambda_{lam.values[0]:5.4f}"
+        else:
+            first_dir = f"{self._work_dir}/lambda_{self._protocol.getLambdaIndex()}"
 
         # SOMD.
         if self._engine == "SOMD":
@@ -1275,7 +1311,12 @@ class Relative:
             else:
                 platform = "CPU"
 
-            # TODO: Make the restraint valid for Somd
+            # Check against passing multiple sets of lam vals to SOMD
+            if lam_vals.shape[1] != 1:
+                raise ValueError(
+                    "SOMD can only handle a single set of lambda values for a given perturbation."
+                )
+
             first_process = _Process.Somd(
                 system,
                 self._protocol,
@@ -1284,6 +1325,7 @@ class Relative:
                 property_map=self._property_map,
                 extra_options=self._extra_options,
                 extra_lines=self._extra_lines,
+                restraint=self._restraint,
             )
 
         # GROMACS.
@@ -1323,7 +1365,12 @@ class Relative:
                 continue
             self._protocol.setLambda(lam)
             # Name the directory.
-            new_dir = f"{self._work_dir}/lambda_{self._protocol.getLambdaIndex()}"
+            if self._engine == "SOMD":
+                new_dir = f"{self._work_dir}/lambda_{lam.values[0]:5.4f}"
+            # If using GROMACS, doesn't make sense to use single value of lambda
+            # when using lambda array.
+            else:
+                new_dir = f"{self._work_dir}/lambda_{self._protocol.getLambdaIndex()}"
 
             # Use absolute path.
             if not _os.path.isabs(new_dir):
@@ -1344,7 +1391,8 @@ class Relative:
                 with open(new_dir + "/somd.cfg", "r") as f:
                     for line in f:
                         if "lambda_val" in line:
-                            new_config.append("lambda_val = %s\n" % lam)
+                            # Get lam val from the Series
+                            new_config.append(f"lambda_val = {lam.values[0]}\n")
                         else:
                             new_config.append(line)
                 with open(new_dir + "/somd.cfg", "w") as f:
@@ -1523,4 +1571,6 @@ def getData(name="data", file_link=False, work_dir=None):
     output : str, IPython.display.FileLink
         A path, or file link, to an archive of the process input.
     """
-    return Relative.getData(name=name, file_link=file_link, work_dir=work_dir)
+    return AlchemicalFreeEnergy.getData(
+        name=name, file_link=file_link, work_dir=work_dir
+    )

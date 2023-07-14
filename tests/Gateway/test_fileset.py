@@ -1,8 +1,6 @@
-from BioSimSpace.Gateway import FileSet
-
 import pytest
 
-# Tests for FileSet requirements.
+from BioSimSpace.Gateway import FileSet
 
 
 def test_no_arguments():

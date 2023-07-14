@@ -1,12 +1,13 @@
+import math
+import numpy as np
+import pytest
+import pandas as pd
 import shutil
+
 from pathlib import Path
 
-import numpy as np
-import pandas as pd
-import pytest
-from alchemtest.gmx import load_ABFE
-
 import BioSimSpace.Sandpit.Exscientia as BSS
+
 from BioSimSpace.Sandpit.Exscientia.Align import decouple
 from BioSimSpace.Sandpit.Exscientia.FreeEnergy import Restraint
 from BioSimSpace.Sandpit.Exscientia.Units.Angle import radian
@@ -17,11 +18,15 @@ from BioSimSpace.Sandpit.Exscientia.Units.Temperature import kelvin
 from BioSimSpace.Sandpit.Exscientia.Units.Time import picosecond
 from BioSimSpace.Sandpit.Exscientia.Units.Volume import nanometer3
 
-# Make sure GROMACS is installed.
-has_gromacs = BSS._gmx_exe is not None
-
-# Store the tutorial URL.
-url = BSS.tutorialUrl()
+from tests.Sandpit.Exscientia.conftest import (
+    url,
+    has_alchemlyb,
+    has_alchemtest,
+    has_amber,
+    has_gromacs,
+    has_openff,
+    has_pyarrow,
+)
 
 
 @pytest.fixture(scope="session")
@@ -41,7 +46,10 @@ def perturbable_system():
     )
 
 
-@pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
+@pytest.mark.skipif(
+    has_gromacs is False or has_pyarrow is False,
+    reason="Requires GROMACS and pyarrow to be installed.",
+)
 def test_minimise(system):
     """Test a minimisation protocol."""
 
@@ -52,7 +60,10 @@ def test_minimise(system):
     run_process(system, protocol)
 
 
-@pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
+@pytest.mark.skipif(
+    has_gromacs is False or has_pyarrow is False,
+    reason="Requires GROMACS and pyarrow to be installed.",
+)
 @pytest.mark.parametrize("restraint", ["backbone", "heavy", "all", "none"])
 def test_equilibrate(system, restraint):
     """Test an equilibration protocol."""
@@ -66,7 +77,10 @@ def test_equilibrate(system, restraint):
     run_process(system, protocol)
 
 
-@pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
+@pytest.mark.skipif(
+    has_gromacs is False or has_pyarrow is False,
+    reason="Requires GROMACS and pyarrow to be installed.",
+)
 def test_heat(system):
     """Test a heating protocol."""
 
@@ -81,7 +95,10 @@ def test_heat(system):
     run_process(system, protocol)
 
 
-@pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
+@pytest.mark.skipif(
+    has_gromacs is False or has_pyarrow is False,
+    reason="Requires GROMACS and pyarrow to be installed.",
+)
 def test_cool(system):
     """Test a cooling protocol."""
 
@@ -96,7 +113,10 @@ def test_cool(system):
     run_process(system, protocol, extra_options={"verlet-buffer-tolerance": "2e-07"})
 
 
-@pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
+@pytest.mark.skipif(
+    has_gromacs is False or has_pyarrow is False,
+    reason="Requires GROMACS and pyarrow to be installed.",
+)
 def test_production(system):
     """Test a production protocol."""
 
@@ -107,7 +127,10 @@ def test_production(system):
     run_process(system, protocol)
 
 
-@pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
+@pytest.mark.skipif(
+    has_gromacs is False or has_pyarrow is False,
+    reason="Requires GROMACS and pyarrow to be installed.",
+)
 def test_vacuum_water(system):
     """Regression test for ensuring the water topology is swapped for vacuum simulations."""
 
@@ -122,7 +145,10 @@ def test_vacuum_water(system):
     run_process(system, protocol)
 
 
-@pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
+@pytest.mark.skipif(
+    has_gromacs is False or has_pyarrow is False,
+    reason="Requires GROMACS and pyarrow to be installed.",
+)
 @pytest.mark.parametrize("restraint", ["backbone", "heavy"])
 def test_restraints(perturbable_system, restraint):
     """Regression test for correct injection of restraint file into GROMACS topology."""
@@ -134,7 +160,10 @@ def test_restraints(perturbable_system, restraint):
     process = BSS.Process.Gromacs(perturbable_system, protocol)
 
 
-@pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
+@pytest.mark.skipif(
+    has_gromacs is False or has_pyarrow is False,
+    reason="Requires GROMACS and pyarrow to be installed.",
+)
 def test_write_restraint(system, tmp_path):
     """Test if the restraint has been written in a way that could be processed
     correctly.
@@ -208,11 +237,16 @@ def run_process(system, protocol, **kwargs):
     assert process.getSystem() is not None
 
 
-@pytest.mark.skipif(has_gromacs is False, reason="Requires GROMACS to be installed.")
+@pytest.mark.skipif(
+    has_gromacs is False or has_pyarrow is False or has_alchemtest is False,
+    reason="Requires GROMACS, alchemtest, and pyarrow to be installed.",
+)
 class TestGetRecord:
     @staticmethod
     @pytest.fixture()
     def setup(perturbable_system):
+        from alchemtest.gmx import load_ABFE
+
         protocol = BSS.Protocol.FreeEnergy(
             runtime=BSS.Types.Time(60, "picosecond"),
             timestep=BSS.Types.Time(4, "femtosecond"),
@@ -306,3 +340,49 @@ class TestGetRecord:
     def test_u_nk_parquet(self, setup):
         df = pd.read_parquet(f"{setup.workDir()}/u_nk.parquet")
         assert df.shape == (1001, 20)
+
+
+@pytest.mark.skipif(
+    has_amber is False
+    or has_gromacs is False
+    or has_openff is False
+    or has_pyarrow is False,
+    reason="Requires AMBER, GROMACS, OpenFF, and pyarrow to be installed.",
+)
+def test_vacuum_com():
+    """
+    Test to ensure that the center of mass is moved to the origin following
+    vacuum simulation. Because of the need to fake vacuum simulations by
+    using an extremeley large box, molecular coordinates can exceed the
+    format limit used by certain molecular file formats, e.g. AMBER RST7.
+    As such, we translate the center of mass of the system to the origin.
+    """
+
+    # Create a test molecule.
+    mol = BSS.Parameters.openff_unconstrained_2_0_0("CC").getMolecule()
+
+    # Create a short minimisation protocol.
+    protocol = BSS.Protocol.Minimisation(steps=100)
+
+    # Create a process object.
+    process = BSS.Process.Gromacs(mol.toSystem(), protocol)
+
+    # Start the process and wait for it to finish.
+    process.start()
+    process.wait()
+
+    # Make sure it worked.
+    assert not process.isError()
+
+    # Get the minimised system.
+    system = process.getSystem()
+
+    # Make sure it worked.
+    assert system is not None
+
+    # Get the center of mass.
+    com = system._getCenterOfMass()
+
+    # Make sure each component is close to zero.
+    for x in com:
+        assert math.isclose(x.value(), 0, abs_tol=1e-6)

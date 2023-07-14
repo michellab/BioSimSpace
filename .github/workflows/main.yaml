@@ -4,13 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       upload_packages:
-        description: "Upload packages to anaconda (yes/no)?"
         required: true
-        type: choice
-        default: 'no'
-        options:
-          - no
-          - yes
+        description: "Upload packages to anaconda?"
+        type: boolean
 
 jobs:
   build:
@@ -63,4 +59,4 @@ jobs:
         env:
           ANACONDA_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
           ANACONDA_LABEL: main
-        if: github.event.inputs.upload_packages == 'yes'
+        if: github.event.inputs.upload_packages == 'true'

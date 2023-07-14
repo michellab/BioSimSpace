@@ -46,6 +46,7 @@ __all__ = [
     "Process",
     "Protocol",
     "Solvent",
+    "Stream",
     "Trajectory",
     "Types",
     "Units",
@@ -238,14 +239,15 @@ from . import Parameters
 from . import Process
 from . import Protocol
 from . import Solvent
+from . import Stream
 from . import Trajectory
 from . import Types
 from . import Units
 
-from ._version import get_versions
+# Import Versioneer from the package root.
+from ... import _version
 
-__version__ = get_versions()["version"]
-del get_versions
+__version__ = _version.get_versions()["version"]
 
 import logging as _logging
 

@@ -1,7 +1,7 @@
+import pytest
+
 import BioSimSpace.Types as Types
 import BioSimSpace.Units as Units
-
-import pytest
 
 
 @pytest.mark.parametrize(
@@ -32,7 +32,7 @@ def test_supported_units(string, dimensions):
         ("radian * degree**2 / radian^2", Types.Angle),
         ("angstrom**3 / nanometer", Types.Area),
         ("coulombs * angstrom**-2 * nanometer**2", Types.Charge),
-        ("kcal_per_mol / angstrom**2 * nanometer**2", Types.Energy),
+        ("(kcal_per_mol / angstrom**2) * nanometer**2", Types.Energy),
         ("angstrom**3 * nanometer^-1 / picometer", Types.Length),
         ("bar * kJ_per_mol**2 / (kcal_per_mol * kJ_per_mol)", Types.Pressure),
         ("coulomb * kelvin^-3 * celsius**2 * kelvin^2 / e_charge", Types.Temperature),
@@ -176,3 +176,11 @@ def test_dimensionless_value():
     )
 
     assert value == pytest.approx(418.4)
+
+
+def test_value_and_unit():
+    """
+    Regression test to make sure that a general unit with a value and unit can
+    be parsed correctly.
+    """
+    general_unit = Types._GeneralUnit(2, "kcal per mol / angstrom**2")

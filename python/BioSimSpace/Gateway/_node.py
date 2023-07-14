@@ -923,7 +923,7 @@ class Node:
             widget._name = name
 
             # Bind the callback function.
-            widget.observe(_on_file_upload, names="data")
+            widget.observe(_on_file_upload, names="value")
 
             # Store the widget.
             self._widgets[name] = widget
@@ -1504,10 +1504,20 @@ def _on_file_upload(change):
     # Clear the list of files.
     change["owner"]._files = []
 
+    # Handle file upload widget API changes.
+    if isinstance(change["owner"].value, tuple):
+        is_tuple = True
+    else:
+        is_tuple = False
+
     # Loop over all uploaded files.
     for filename in change["owner"].value:
-        # Store the number of bytes.
-        num_bytes = len(change["owner"].value[filename]["content"])
+        if is_tuple:
+            name = filename["name"]
+            num_bytes = len(filename["content"])
+        else:
+            name = filename
+            num_bytes = len(change["owner"].value[filename]["content"])
 
         # Return if there is no data.
         if num_bytes == 0:
@@ -1518,14 +1528,17 @@ def _on_file_upload(change):
             label += ", "
 
         # Extract the file content.
-        content = change["owner"].value[filename]["content"]
+        if is_tuple:
+            content = filename["content"]
+        else:
+            content = change["owner"].value[filename]["content"]
 
         # Create the uploads directory if it doesn't already exist.
         if not _os.path.isdir("uploads"):
             _os.makedirs("uploads")
 
         # Append the upload directory to the file name.
-        new_filename = "uploads/%s" % filename
+        new_filename = "uploads/%s" % name
 
         # Has this file already been uploaded?
         if _os.path.isfile(new_filename):
@@ -1546,10 +1559,10 @@ def _on_file_upload(change):
             file.write(content)
 
         # Report that the file was uploaded.
-        print("Uploaded '{}' ({:.2f} kB)".format(filename, num_bytes / 2**10))
+        print("Uploaded '{}' ({:.2f} kB)".format(name, num_bytes / 2**10))
 
         # Truncate the filename string if it is more than 15 characters.
-        label += (filename[:15] + "...") if len(filename) > 15 else filename
+        label += (name[:15] + "...") if len(name) > 15 else name
 
         # Increment the number of files.
         num_files += 1

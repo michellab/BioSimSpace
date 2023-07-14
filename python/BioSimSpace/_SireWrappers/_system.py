@@ -471,6 +471,10 @@ class System(_SireWrapper):
         ):
             return False
 
+        # Make sure that the molecule numbers in the system match.
+        if self._mol_nums != other._mol_nums:
+            return False
+
         # Invert the property maps.
         inv_prop_map0 = {v: k for k, v in property_map0.items()}
         inv_prop_map1 = {v: k for k, v in property_map1.items()}
@@ -1447,6 +1451,25 @@ class System(_SireWrapper):
             angles = None
 
         return box, angles
+
+    def makeWhole(self, property_map={}):
+        """
+        Make all molecules in the system "whole", i.e. unwrap any molecules that have
+        been split across the periodic boundary.
+
+        Parameters
+        ----------
+
+        property_map : dict
+            A dictionary that maps system "properties" to their user defined
+            values. This allows the user to refer to properties with their
+            own naming scheme, e.g. { "charge" : "my-charge" }
+        """
+
+        if not isinstance(property_map, dict):
+            raise TypeError("'property_map' must be of type 'dict'")
+
+        self._sire_object.makeWhole()
 
     def translate(self, vector, property_map={}):
         """

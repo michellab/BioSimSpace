@@ -1,8 +1,6 @@
-from BioSimSpace.Sandpit.Exscientia.Gateway import Float
-
 import pytest
 
-# Tests for Float requirements.
+from BioSimSpace.Sandpit.Exscientia.Gateway import Float
 
 
 def test_no_arguments():

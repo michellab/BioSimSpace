@@ -284,9 +284,16 @@ class Namd(_process.Process):
 
         # Check whether the system contains periodic box information.
         if prop in self._system._sire_object.propertyKeys():
-            # Flag that we have found a box.
-            has_box = True
+            try:
+                box = self._system._sire_object.property(prop)
 
+                # Flag that we have found a periodic box.
+                has_box = box.isPeriodic()
+            except Exception:
+                box = None
+
+        # Check whether the system contains periodic box information.
+        if has_box:
             # Periodic box.
             try:
                 box_size = self._system._sire_object.property(prop).dimensions()
@@ -804,12 +811,17 @@ class Namd(_process.Process):
         """
         return self.getSystem(block=False)
 
-    def getTrajectory(self, block="AUTO"):
+    def getTrajectory(self, backend="AUTO", block="AUTO"):
         """
         Return a trajectory object.
 
         Parameters
         ----------
+
+        backend : str
+            The backend to use for trajectory parsing. To see supported backends,
+            run BioSimSpace.Trajectory.backends(). Using "AUTO" will try each in
+            sequence.
 
         block : bool
             Whether to block until the process has finished running.
@@ -820,6 +832,13 @@ class Namd(_process.Process):
         trajectory : :class:`Trajectory <BioSimSpace.Trajectory>`
             The latest trajectory object.
         """
+
+        if not isinstance(backend, str):
+            raise TypeError("'backend' must be of type 'str'")
+
+        if not isinstance(block, (bool, str)):
+            raise TypeError("'block' must be of type 'bool' or 'str'")
+
         # Wait for the process to finish.
         if block is True:
             self.wait()
@@ -831,7 +850,7 @@ class Namd(_process.Process):
             _warnings.warn("The process exited with an error!")
 
         try:
-            return _Trajectory.Trajectory(process=self)
+            return _Trajectory.Trajectory(process=self, backend=backend)
 
         except:
             return None

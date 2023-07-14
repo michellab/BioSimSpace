@@ -283,10 +283,14 @@ class OpenMM(_process.Process):
         prop = self._property_map.get("space", "space")
 
         # Check whether the system contains periodic box information.
-        # For now, we'll not attempt to generate a box if the system property
-        # is missing. If no box is present, we'll assume a non-periodic simulation.
         if prop in self._system._sire_object.propertyKeys():
-            has_box = True
+            try:
+                # Make sure that we have a periodic box. The system will now have
+                # a default cartesian space.
+                box = self._system._sire_object.property(prop)
+                has_box = box.isPeriodic()
+            except:
+                has_box = False
         else:
             _warnings.warn("No simulation box found. Assuming gas phase simulation.")
             has_box = False
@@ -298,22 +302,22 @@ class OpenMM(_process.Process):
 
             # Load the input files.
             self.addToConfig("\n# Load the topology and coordinate files.")
-            self.addToConfig(f"prmtop = AmberPrmtopFile('{self._name}.prm7')")
-            self.addToConfig(f"inpcrd = AmberInpcrdFile('{self._name}.rst7')")
+            self.addToConfig(
+                "\n# We use ParmEd due to issues with the built in AmberPrmtopFile for certain triclinic spaces."
+            )
+            self.addToConfig(
+                f"prm = parmed.load_file('{self._name}.prm7', '{self._name}.rst7')"
+            )
 
             # Don't use a cut-off if this is a vacuum simulation or if box information
             # is missing.
             self.addToConfig("\n# Initialise the molecular system.")
             if not has_box or not self._has_water:
-                self.addToConfig(
-                    "system = prmtop.createSystem(nonbondedMethod=NoCutoff,"
-                )
+                self.addToConfig("system = prm.createSystem(nonbondedMethod=NoCutoff,")
             else:
-                self.addToConfig("system = prmtop.createSystem(nonbondedMethod=PME,")
-            self.addToConfig(
-                "                             nonbondedCutoff=1*nanometer,"
-            )
-            self.addToConfig("                             constraints=HBonds)")
+                self.addToConfig("system = prm.createSystem(nonbondedMethod=PME,")
+            self.addToConfig("                          nonbondedCutoff=1*nanometer,")
+            self.addToConfig("                          constraints=HBonds)")
 
             # Set the integrator. (Use zero-temperature as this is just a dummy step.)
             self.addToConfig("\n# Define the integrator.")
@@ -325,19 +329,23 @@ class OpenMM(_process.Process):
             self._add_config_platform()
 
             # Add any position restraints.
-            self._add_config_restraints()
+            if self._protocol.getRestraint() is not None:
+                self._add_config_restraints()
 
             # Set up the simulation object.
             self.addToConfig("\n# Initialise and configure the simulation object.")
-            self.addToConfig("simulation = Simulation(prmtop.topology,")
+            self.addToConfig("simulation = Simulation(prm.topology,")
             self.addToConfig("                        system,")
             self.addToConfig("                        integrator,")
             self.addToConfig("                        platform,")
             self.addToConfig("                        properties)")
-            self.addToConfig("simulation.context.setPositions(inpcrd.positions)")
-            self.addToConfig("if inpcrd.boxVectors is not None:")
+            if self._protocol.getRestraint() is not None:
+                self.addToConfig("simulation.context.setPositions(positions)")
+            else:
+                self.addToConfig("simulation.context.setPositions(prm.positions)")
+            self.addToConfig("if prm.box_vectors is not None:")
             self.addToConfig(
-                "    simulation.context.setPeriodicBoxVectors(*inpcrd.boxVectors)"
+                "    simulation.context.setPeriodicBoxVectors(*prm.box_vectors)"
             )
             self.addToConfig(
                 f"simulation.minimizeEnergy(maxIterations={self._protocol.getSteps()})"
@@ -360,8 +368,12 @@ class OpenMM(_process.Process):
 
             # Load the input files.
             self.addToConfig("\n# Load the topology and coordinate files.")
-            self.addToConfig(f"prmtop = AmberPrmtopFile('{self._name}.prm7')")
-            self.addToConfig(f"inpcrd = AmberInpcrdFile('{self._name}.rst7')")
+            self.addToConfig(
+                "\n# We use ParmEd due to issues with the built in AmberPrmtopFile for certain triclinic spaces."
+            )
+            self.addToConfig(
+                f"prm = parmed.load_file('{self._name}.prm7', '{self._name}.rst7')"
+            )
 
             # Don't use a cut-off if this is a vacuum simulation or if box information
             # is missing.
@@ -369,15 +381,11 @@ class OpenMM(_process.Process):
             self.addToConfig("\n# Initialise the molecular system.")
             if not has_box or not self._has_water:
                 is_periodic = False
-                self.addToConfig(
-                    "system = prmtop.createSystem(nonbondedMethod=NoCutoff,"
-                )
+                self.addToConfig("system = prm.createSystem(nonbondedMethod=NoCutoff,")
             else:
-                self.addToConfig("system = prmtop.createSystem(nonbondedMethod=PME,")
-            self.addToConfig(
-                "                             nonbondedCutoff=1*nanometer,"
-            )
-            self.addToConfig("                             constraints=HBonds)")
+                self.addToConfig("system = prm.createSystem(nonbondedMethod=PME,")
+            self.addToConfig("                          nonbondedCutoff=1*nanometer,")
+            self.addToConfig("                          constraints=HBonds)")
 
             # Get the starting temperature and system pressure.
             temperature = self._protocol.getStartTemperature().kelvin().value()
@@ -407,7 +415,8 @@ class OpenMM(_process.Process):
                     self.addToConfig("system.addForce(barostat)")
 
             # Add any position restraints.
-            self._add_config_restraints()
+            if self._protocol.getRestraint() is not None:
+                self._add_config_restraints()
 
             # Get the integration time step from the protocol.
             timestep = self._protocol.getTimeStep().picoseconds().value()
@@ -432,7 +441,7 @@ class OpenMM(_process.Process):
 
             # Set up the simulation object.
             self.addToConfig("\n# Initialise and configure the simulation object.")
-            self.addToConfig("simulation = Simulation(prmtop.topology,")
+            self.addToConfig("simulation = Simulation(prm.topology,")
             self.addToConfig("                        system,")
             self.addToConfig("                        integrator,")
             self.addToConfig("                        platform,")
@@ -440,10 +449,10 @@ class OpenMM(_process.Process):
             if self._protocol.getRestraint() is not None:
                 self.addToConfig("simulation.context.setPositions(positions)")
             else:
-                self.addToConfig("simulation.context.setPositions(inpcrd.positions)")
-            self.addToConfig("if inpcrd.boxVectors is not None:")
+                self.addToConfig("simulation.context.setPositions(prm.positions)")
+            self.addToConfig("if prm.box_vectors is not None:")
             self.addToConfig(
-                "    simulation.context.setPeriodicBoxVectors(*inpcrd.boxVectors)"
+                "    simulation.context.setPeriodicBoxVectors(*prm.box_vectors)"
             )
 
             # Set initial velocities from temperature distribution.
@@ -540,8 +549,12 @@ class OpenMM(_process.Process):
 
             # Load the input files.
             self.addToConfig("\n# Load the topology and coordinate files.")
-            self.addToConfig(f"prmtop = AmberPrmtopFile('{self._name}.prm7')")
-            self.addToConfig(f"inpcrd = AmberInpcrdFile('{self._name}.rst7')")
+            self.addToConfig(
+                "\n# We use ParmEd due to issues with the built in AmberPrmtopFile for certain triclinic spaces."
+            )
+            self.addToConfig(
+                f"prm = parmed.load_file('{self._name}.prm7', '{self._name}.rst7')"
+            )
 
             # Don't use a cut-off if this is a vacuum simulation or if box information
             # is missing.
@@ -549,15 +562,11 @@ class OpenMM(_process.Process):
             self.addToConfig("\n# Initialise the molecular system.")
             if not has_box or not self._has_water:
                 is_periodic = False
-                self.addToConfig(
-                    "system = prmtop.createSystem(nonbondedMethod=NoCutoff,"
-                )
+                self.addToConfig("system = prm.createSystem(nonbondedMethod=NoCutoff,")
             else:
-                self.addToConfig("system = prmtop.createSystem(nonbondedMethod=PME,")
-            self.addToConfig(
-                "                             nonbondedCutoff=1*nanometer,"
-            )
-            self.addToConfig("                             constraints=HBonds)")
+                self.addToConfig("system = prm.createSystem(nonbondedMethod=PME,")
+            self.addToConfig("                          nonbondedCutoff=1*nanometer,")
+            self.addToConfig("                          constraints=HBonds)")
 
             # Get the starting temperature and system pressure.
             temperature = self._protocol.getTemperature().kelvin().value()
@@ -587,7 +596,8 @@ class OpenMM(_process.Process):
                     self.addToConfig("system.addForce(barostat)")
 
             # Add any position restraints.
-            self._add_config_restraints()
+            if self._protocol.getRestraint() is not None:
+                self._add_config_restraints()
 
             # Get the integration time step from the protocol.
             timestep = self._protocol.getTimeStep().picoseconds().value()
@@ -612,15 +622,18 @@ class OpenMM(_process.Process):
 
             # Set up the simulation object.
             self.addToConfig("\n# Initialise and configure the simulation object.")
-            self.addToConfig("simulation = Simulation(prmtop.topology,")
+            self.addToConfig("simulation = Simulation(prm.topology,")
             self.addToConfig("                        system,")
             self.addToConfig("                        integrator,")
             self.addToConfig("                        platform,")
             self.addToConfig("                        properties)")
-            self.addToConfig("simulation.context.setPositions(inpcrd.positions)")
-            self.addToConfig("if inpcrd.boxVectors is not None:")
+            if self._protocol.getRestraint() is not None:
+                self.addToConfig("simulation.context.setPositions(positions)")
+            else:
+                self.addToConfig("simulation.context.setPositions(prm.positions)")
+            self.addToConfig("if prm.box_vectors is not None:")
             self.addToConfig(
-                "    simulation.context.setPeriodicBoxVectors(*inpcrd.boxVectors)"
+                "    simulation.context.setPeriodicBoxVectors(*prm.box_vectors)"
             )
 
             # Set initial velocities from temperature distribution.
@@ -732,8 +745,12 @@ class OpenMM(_process.Process):
 
             # Load the input files.
             self.addToConfig("\n# Load the topology and coordinate files.")
-            self.addToConfig(f"prmtop = AmberPrmtopFile('{self._name}.prm7')")
-            self.addToConfig(f"inpcrd = AmberInpcrdFile('{self._name}.rst7')")
+            self.addToConfig(
+                "\n# We use ParmEd due to issues with the built in AmberPrmtopFile for certain triclinic spaces."
+            )
+            self.addToConfig(
+                f"prm = parmed.load_file('{self._name}.prm7', '{self._name}.rst7')"
+            )
 
             # Don't use a cut-off if this is a vacuum simulation or if box information
             # is missing.
@@ -741,15 +758,11 @@ class OpenMM(_process.Process):
             self.addToConfig("\n# Initialise the molecular system.")
             if not has_box or not self._has_water:
                 is_periodic = False
-                self.addToConfig(
-                    "system = prmtop.createSystem(nonbondedMethod=NoCutoff,"
-                )
+                self.addToConfig("system = prm.createSystem(nonbondedMethod=NoCutoff,")
             else:
-                self.addToConfig("system = prmtop.createSystem(nonbondedMethod=PME,")
-            self.addToConfig(
-                "                             nonbondedCutoff=1*nanometer,"
-            )
-            self.addToConfig("                             constraints=HBonds)")
+                self.addToConfig("system = prm.createSystem(nonbondedMethod=PME,")
+            self.addToConfig("                          nonbondedCutoff=1*nanometer,")
+            self.addToConfig("                          constraints=HBonds)")
 
             # Get the starting temperature and system pressure.
             temperature = self._protocol.getTemperature().kelvin().value()
@@ -985,15 +998,15 @@ class OpenMM(_process.Process):
 
             # Set up the simulation object.
             self.addToConfig("\n# Initialise and configure the simulation object.")
-            self.addToConfig("simulation = Simulation(prmtop.topology,")
+            self.addToConfig("simulation = Simulation(prm.topology,")
             self.addToConfig("                        system,")
             self.addToConfig("                        integrator,")
             self.addToConfig("                        platform,")
             self.addToConfig("                        properties)")
-            self.addToConfig("simulation.context.setPositions(inpcrd.positions)")
-            self.addToConfig("if inpcrd.boxVectors is not None:")
+            self.addToConfig("simulation.context.setPositions(prm.positions)")
+            self.addToConfig("if prm.box_vectors is not None:")
             self.addToConfig(
-                "    simulation.context.setPeriodicBoxVectors(*inpcrd.boxVectors)"
+                "    simulation.context.setPeriodicBoxVectors(*prm.box_vectors)"
             )
 
             # Set initial velocities from temperature distribution.
@@ -1096,7 +1109,7 @@ class OpenMM(_process.Process):
 
             # Create a dummy PLUMED input file so that we can bind PLUMED
             # analysis functions to this process.
-            self._plumed = _Plumed(self._work_dir)
+            self._plumed = _Plumed(str(self._work_dir))
             plumed_config, auxillary_files = self._plumed.createConfig(
                 self._system, self._protocol, self._property_map
             )
@@ -1337,12 +1350,17 @@ class OpenMM(_process.Process):
         """
         return self.getSystem(block=False)
 
-    def getTrajectory(self, block="AUTO"):
+    def getTrajectory(self, backend="AUTO", block="AUTO"):
         """
         Return a trajectory object.
 
         Parameters
         ----------
+
+        backend : str
+            The backend to use for trajectory parsing. To see supported backends,
+            run BioSimSpace.Trajectory.backends(). Using "AUTO" will try each in
+            sequence.
 
         block : bool
             Whether to block until the process has finished running.
@@ -1353,6 +1371,12 @@ class OpenMM(_process.Process):
         trajectory : :class:`System <BioSimSpace.Trajectory.Trajectory>`
             The latest trajectory object.
         """
+
+        if not isinstance(backend, str):
+            raise TypeError("'backend' must be of type 'str'")
+
+        if not isinstance(block, (bool, str)):
+            raise TypeError("'block' must be of type 'bool' or 'str'")
 
         # Wait for the process to finish.
         if block is True:
@@ -1367,7 +1391,7 @@ class OpenMM(_process.Process):
         if not _os.path.isfile(self._traj_file):
             return None
         else:
-            return _Trajectory.Trajectory(process=self)
+            return _Trajectory.Trajectory(process=self, backend=backend)
 
     def getFrame(self, index):
         """
@@ -1898,6 +1922,7 @@ class OpenMM(_process.Process):
         self.addToConfig("from openmm import *")
         self.addToConfig("from openmm.app import *")
         self.addToConfig("from openmm.unit import *")
+        self.addToConfig("import parmed")
 
     def _add_config_platform(self):
         """
@@ -2110,7 +2135,7 @@ class OpenMM(_process.Process):
                 "nonbonded = [f for f in system.getForces() if isinstance(f, NonbondedForce)][0]"
             )
             self.addToConfig("dummy_indices = []")
-            self.addToConfig("positions = inpcrd.positions")
+            self.addToConfig("positions = prm.positions")
             self.addToConfig(f"restrained_atoms = {restrained_atoms}")
             self.addToConfig("for i in restrained_atoms:")
             self.addToConfig("    j = system.addParticle(0)")

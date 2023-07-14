@@ -1671,7 +1671,9 @@ class Process:
             values = getattr(self, method)(time_series=True, block=False)
             if values is not None:
                 if unit is not None:
-                    datadict[key] = [value / unit for value in values]
+                    datadict[key] = [
+                        value / unit if value else None for value in values
+                    ]
                 else:
                     datadict[key] = values
             else:

@@ -104,12 +104,14 @@ class FreeEnergy(_Production, _FreeEnergyMixin):
 
         perturbation_type : str
             The type of perturbation to perform. Options are:
-             "full" : A full perturbation of all terms (default option).
-             "discharge_soft" : Perturb all discharging soft atom charge terms (i.e. value->0.0).
-             "vanish_soft" : Perturb all vanishing soft atom LJ terms (i.e. value->0.0).
-             "flip" : Perturb all hard atom terms as well as bonds/angles.
-             "grow_soft" : Perturb all growing soft atom LJ terms (i.e. 0.0->value).
-             "charge_soft" : Perturb all charging soft atom LJ terms (i.e. 0.0->value).
+            "full" : A full perturbation of all terms (default option).
+            "discharge_soft" : Perturb all discharging soft atom charge terms (i.e. value->0.0).
+            "vanish_soft" : Perturb all vanishing soft atom LJ terms (i.e. value->0.0).
+            "flip" : Perturb all hard atom terms as well as bonds/angles.
+            "grow_soft" : Perturb all growing soft atom LJ terms (i.e. 0.0->value).
+            "charge_soft" : Perturb all charging soft atom LJ terms (i.e. 0.0->value).
+            "restraint" : Perturb the receptor-ligand restraint strength by linearly
+                        scaling the force constants (0.0->value).
 
              Currently perturubation_type != "full" is only supported by
              BioSimSpace.Process.Somd.

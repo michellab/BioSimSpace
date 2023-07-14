@@ -61,6 +61,7 @@ _file_extensions = {
     "PRM7,RST7": ["AMBER", "GROMACS", "OPENMM", "SOMD"],
     "PRM7,RST": ["AMBER", "GROMACS", "OPENMM", "SOMD"],
     "GroTop,Gro87": ["GROMACS", "AMBER", "OPENMM", "SOMD"],
+    "GROTOP,GRO87": ["GROMACS", "AMBER", "OPENMM", "SOMD"],
     "PSF,PDB": ["NAMD"],
 }
 

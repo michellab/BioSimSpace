@@ -1,35 +1,8 @@
-import BioSimSpace.Sandpit.Exscientia as BSS
-
-from sire.legacy.Base import findExe
-
-import os
 import pytest
 
-# Make sure AMBER is installed.
-if BSS._amber_home is not None:
-    exe = "%s/bin/sander" % BSS._amber_home
-    if os.path.isfile(exe):
-        has_amber = True
-    else:
-        has_amber = False
-else:
-    has_amber = False
+import BioSimSpace.Sandpit.Exscientia as BSS
 
-# Make sure GROMACS is installed.
-if BSS._gmx_exe is None:
-    has_gromacs = False
-else:
-    has_gromacs = True
-
-# Make sure NAMD is installed.
-try:
-    findExe("namd2")
-    has_namd = True
-except:
-    has_namd = False
-
-# Store the tutorial URL.
-url = BSS.tutorialUrl()
+from tests.Sandpit.Exscientia.conftest import url, has_amber, has_gromacs, has_namd
 
 
 @pytest.mark.skipif(has_amber is False, reason="Requires AMBER to be installed.")

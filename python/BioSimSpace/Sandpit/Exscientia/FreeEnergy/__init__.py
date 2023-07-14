@@ -28,7 +28,7 @@ Classes
 .. autosummary::
     :toctree: generated/
 
-    Relative
+    AlchemicalFreeEnergy
     Restraint
     RestraintSearch
 
@@ -42,7 +42,7 @@ Functions
     getData
 """
 
-from ._relative import *
+from ._alchemical_free_energy import *
 from ._utils import *
 from ._restraint import *
 from ._restraint_search import *

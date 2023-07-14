@@ -42,8 +42,8 @@ class GeneralUnit(_Type):
         "M",  # Mass
         "Q",  # Quantity
         "t",  # Temperature
-        "T",
-    ]  # Time
+        "T",  # Tme
+    ]
 
     def __new__(cls, *args):
         """
@@ -173,8 +173,8 @@ class GeneralUnit(_Type):
 
         # The user has passed a value and a unit.
         if len(args) > 1:
-            value = args[0]
-            unit = args[1]
+            value = _args[0]
+            unit = _args[1]
 
             # Check that the value is valid.
             if type(value) is int:
@@ -185,7 +185,7 @@ class GeneralUnit(_Type):
                 raise TypeError("'value' must be of type 'int' or 'float'")
 
             # Delete the value so we can use the same logic below.
-            del args[0]
+            del _args[0]
 
         if len(_args) == 1:
             # The user has passed a Sire GeneralUnit.
@@ -242,10 +242,7 @@ class GeneralUnit(_Type):
 
     def __str__(self):
         """Return a human readable string representation of the object."""
-        if abs(self._value) > 1e4 or abs(self._value) < 1e-4:
-            return "%.4e %s" % (self._value, self._unit)
-        else:
-            return "%5.4f %s" % (self._value, self._unit)
+        return str(self._sire_unit)
 
     def __repr__(self):
         """Return a human readable string representation of the object."""
@@ -744,53 +741,61 @@ class GeneralUnit(_Type):
         string_copy = string
 
         if isinstance(string, str):
-            # Convert to lower case and strip whitespace.
-            string = string.lower().replace(" ", "")
-
-            # Convert powers to common format.
-            string = string.replace("squared", "2")
-            string = string.replace("**2", "2")
-            string = string.replace("^2", "2")
-            string = string.replace("cubed", "3")
-            string = string.replace("**3", "3")
-            string = string.replace("^3", "3")
-            string = string.replace("**-1", "-1")
-            string = string.replace("^-1", "-1")
-            string = string.replace("**-2", "-2")
-            string = string.replace("^-2", "-2")
-            string = string.replace("**-3", "-3")
-            string = string.replace("^-3", "-3")
-
-            for unit in _base_units:
-                string = unit._to_sire_format(string)
-
+            # Try to parse as a GeneralUnit using Sire's inbuilt unit grammar.
             try:
-                # Compile the eval expression to bytecode.
-                code = compile(string, "<string>", "eval")
+                from sire import u as _unit
 
-                # The bytecode must contain names.
-                if not code.co_names:
-                    raise ValueError(
-                        f"Could not infer GeneralUnit from string '{string}'"
-                    ) from None
+                return GeneralUnit(_unit(string))
 
-                # Make sure the co_names only contains names within the allowed
-                # sire_units_local dictionary.
-                for name in code.co_names:
-                    if name not in _sire_units_locals:
+            # Try manually parsing the string.
+            except:
+                # Convert to lower case and strip whitespace.
+                string = string.lower().replace(" ", "")
+
+                # Convert powers to common format.
+                string = string.replace("squared", "2")
+                string = string.replace("**2", "2")
+                string = string.replace("^2", "2")
+                string = string.replace("cubed", "3")
+                string = string.replace("**3", "3")
+                string = string.replace("^3", "3")
+                string = string.replace("**-1", "-1")
+                string = string.replace("^-1", "-1")
+                string = string.replace("**-2", "-2")
+                string = string.replace("^-2", "-2")
+                string = string.replace("**-3", "-3")
+                string = string.replace("^-3", "-3")
+
+                for unit in _base_units:
+                    string = unit._to_sire_format(string)
+
+                try:
+                    # Compile the eval expression to bytecode.
+                    code = compile(string, "<string>", "eval")
+
+                    # The bytecode must contain names.
+                    if not code.co_names:
                         raise ValueError(
                             f"Could not infer GeneralUnit from string '{string}'"
                         ) from None
 
-                general_unit = eval(string, {}, _sire_units_locals)
+                    # Make sure the co_names only contains names within the allowed
+                    # sire_units_local dictionary.
+                    for name in code.co_names:
+                        if name not in _sire_units_locals:
+                            raise ValueError(
+                                f"Could not infer GeneralUnit from string '{string}'"
+                            ) from None
 
-                # Create and return a new object.
-                return GeneralUnit(general_unit)
+                    general_unit = eval(string, {}, _sire_units_locals)
 
-            except Exception as e:
-                raise ValueError(
-                    f"Could not infer GeneralUnit from string '{string}'"
-                ) from None
+                    # Create and return a new object.
+                    return GeneralUnit(general_unit)
+
+                except Exception as e:
+                    raise ValueError(
+                        f"Could not infer GeneralUnit from string '{string}'"
+                    ) from None
 
         else:
             raise TypeError("'string' must be of type 'str'")

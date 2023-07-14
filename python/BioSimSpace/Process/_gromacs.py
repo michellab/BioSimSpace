@@ -286,10 +286,15 @@ class Gromacs(_process.Process):
         """Generate GROMACS configuration file strings."""
 
         # Check whether the system contains periodic box information.
-        # For now, well not attempt to generate a box if the system property
-        # is missing. If no box is present, we'll assume a non-periodic simulation.
-        if "space" in self._system._sire_object.propertyKeys():
-            has_box = True
+        space_prop = self._property_map.get("space", "space")
+        if space_prop in self._system._sire_object.propertyKeys():
+            try:
+                # Make sure that we have a periodic box. The system will now have
+                # a default cartesian space.
+                box = self._system._sire_object.property(space_prop)
+                has_box = box.isPeriodic()
+            except:
+                has_box = False
         else:
             _warnings.warn("No simulation box found. Assuming gas phase simulation.")
             has_box = False
@@ -654,12 +659,17 @@ class Gromacs(_process.Process):
         """
         return self.getSystem(block=False)
 
-    def getTrajectory(self, block="AUTO"):
+    def getTrajectory(self, backend="AUTO", block="AUTO"):
         """
         Return a trajectory object.
 
         Parameters
         ----------
+
+        backend : str
+            The backend to use for trajectory parsing. To see supported backends,
+            run BioSimSpace.Trajectory.backends(). Using "AUTO" will try each in
+            sequence.
 
         block : bool
             Whether to block until the process has finished running.
@@ -670,6 +680,12 @@ class Gromacs(_process.Process):
         trajectory : :class:`System <BioSimSpace.Trajectory.Trajectory>`
             The latest trajectory object.
         """
+
+        if not isinstance(backend, str):
+            raise TypeError("'backend' must be of type 'str'")
+
+        if not isinstance(block, (bool, str)):
+            raise TypeError("'block' must be of type 'bool' or 'str'")
 
         # Wait for the process to finish.
         if block is True:
@@ -690,7 +706,7 @@ class Gromacs(_process.Process):
             else:
                 self._traj_file = traj_file
 
-            return _Trajectory.Trajectory(process=self)
+            return _Trajectory.Trajectory(process=self, backend=backend)
 
         except:
             return None
@@ -1738,7 +1754,7 @@ class Gromacs(_process.Process):
         length : :class:`Length <BioSimSpace.Types.Length>`
             The constrained RMSD.
         """
-        return self.getRecord("CONSTRRMSD", time_series, _Units.Length.nanometer, block)
+        return self.getRecord("CONSTRRMSD", time_series, None, block)
 
     def getCurrentConstraintRMSD(self, time_series=False):
         """
@@ -2076,7 +2092,9 @@ class Gromacs(_process.Process):
         self._energy_keys = keys
         self._energy_dict["TIME"] = []
         for key in keys:
-            self._energy_dict[self._sanitise_energy_term(key)] = []
+            # Skip surface tension records, since there is no appropriate general unit.
+            if key != "#Surf*SurfTen":
+                self._energy_dict[self._sanitise_energy_term(key)] = []
 
     @staticmethod
     def _parse_energy_terms(text):
@@ -2170,7 +2188,7 @@ class Gromacs(_process.Process):
         ]
         for line in lines:
             terms = line.split()
-            if len(terms) > 1:
+            if len(terms) > 1 and terms[0] != "#Surf*SurfTen":
                 unit = terms[-1][1:-1]
                 if unit == "K":
                     units.append(_Units.Temperature.kelvin)
@@ -2188,12 +2206,12 @@ class Gromacs(_process.Process):
                     units.append(_Units.Pressure.bar * _Units.Length.nanometer)
                 elif unit == "nm/ps":
                     units.append(_Units.Length.nanometer / _Units.Time.picosecond)
+                elif unit == "kg/m^3":
+                    units.append(_Types._GeneralUnit("kg/m3"))
                 else:
-                    # TODO: set this to a unitless unit probabily from BSS.Types._GeneralUnit
-                    units.append(_Units.Length.nanometer)
-                    # kg/m^3 cannot be parsed as there is no mass unit.
+                    units.append(1.0)
                     _warnings.warn(
-                        "Unit {unit} cannot be parsed, record the unit as unitless."
+                        f"Unit {unit} cannot be parsed, recording the unit as unitless."
                     )
         return units
 
@@ -2392,12 +2410,26 @@ class Gromacs(_process.Process):
             # need to recompute it next time.
             self._mapping = mapping
 
-            # Update the box information in the original system.
-            if "space" in new_system._sire_object.propertyKeys():
+            # Get the "space" property name from the property map.
+            space_prop = self._property_map.get("space", "space")
+
+            # Update the box information in the original system. Only do this if
+            # the original system contains space information, since it will have
+            # been added in order to run vacuum simulations.
+            if (
+                space_prop in old_system._sire_object.propertyKeys()
+                and space_prop in new_system._sire_object.propertyKeys()
+            ):
                 box = new_system._sire_object.property("space")
                 old_system._sire_object.setProperty(
                     self._property_map.get("space", "space"), box
                 )
+
+            # If this is a vacuum simulation, then translate the centre of mass
+            # of the system back to the origin.
+            if not space_prop in old_system._sire_object.propertyKeys():
+                com = new_system._getCenterOfMass()
+                old_system.translate([-x for x in com])
 
             return old_system
 
@@ -2489,12 +2521,26 @@ class Gromacs(_process.Process):
                 # need to recompute it next time.
                 self._mapping = mapping
 
-                # Update the box information in the original system.
-                if "space" in new_system._sire_object.propertyKeys():
+                # Get the "space" property name from the property map.
+                space_prop = self._property_map.get("space", "space")
+
+                # Update the box information in the original system. Only do this if
+                # the original system contains space information, since it will have
+                # been added in order to run vacuum simulations.
+                if (
+                    space_prop in old_system._sire_object.propertyKeys()
+                    and space_prop in new_system._sire_object.propertyKeys()
+                ):
                     box = new_system._sire_object.property("space")
                     old_system._sire_object.setProperty(
                         self._property_map.get("space", "space"), box
                     )
+
+                # If this is a vacuum simulation, then translate the centre of mass
+                # of the system back to the origin.
+                if not space_prop in old_system._sire_object.propertyKeys():
+                    com = new_system._getCenterOfMass()
+                    old_system.translate([-x for x in com])
 
                 return old_system
 

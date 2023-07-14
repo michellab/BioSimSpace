@@ -34,6 +34,7 @@ import os as _os
 import re as _re
 import time as _time
 import shutil as _shutil
+import tempfile as _tempfile
 import timeit as _timeit
 import warnings as _warnings
 
@@ -254,7 +255,7 @@ class Amber(_process.Process):
         # Add configuration variables for a metadynamics simulation.
         if isinstance(self._protocol, (_Protocol.Metadynamics, _Protocol.Steering)):
             extra_options["plumed"] = 1
-            extra_options["plumedfile"] = "plumed.dat"
+            extra_options["plumedfile"] = "'plumed.dat'"
 
             # Create the PLUMED input file and copy auxiliary files to the working directory.
             self._plumed = _Plumed(str(self._work_dir))
@@ -401,12 +402,19 @@ class Amber(_process.Process):
             else:
                 is_lambda1 = False
 
-            # Create a new molecular system from the restart file.
-            new_system = _System(
-                _SireIO.MoleculeParser.read(
-                    [restart, self._top_file], self._property_map
+            # Copy the restart file to a temporary location. Sire streams from
+            # binary files with the same path, so we need to ensure that a new
+            # stream is created each time.
+            with _tempfile.TemporaryDirectory() as tmp_dir:
+                tmp_file = f"{tmp_dir}/{self._name}.crd"
+                _shutil.copyfile(restart, tmp_file)
+
+                # Create a new molecular system from the restart file.
+                new_system = _System(
+                    _SireIO.MoleculeParser.read(
+                        [tmp_file, self._top_file], self._property_map
+                    )
                 )
-            )
 
             # Create a copy of the existing system object.
             old_system = self._system.copy()
@@ -453,12 +461,17 @@ class Amber(_process.Process):
         """
         return self.getSystem(block=False)
 
-    def getTrajectory(self, block="AUTO"):
+    def getTrajectory(self, backend="AUTO", block="AUTO"):
         """
         Return a trajectory object.
 
         Parameters
         ----------
+
+        backend : str
+            The backend to use for trajectory parsing. To see supported backends,
+            run BioSimSpace.Trajectory.backends(). Using "AUTO" will try each in
+            sequence.
 
         block : bool
             Whether to block until the process has finished running.
@@ -469,6 +482,12 @@ class Amber(_process.Process):
         trajectory : :class:`Trajectory <BioSimSpace.Trajectory.Trajectory>`
             The latest trajectory object.
         """
+
+        if not isinstance(backend, str):
+            raise TypeError("'backend' must be of type 'str'")
+
+        if not isinstance(block, (bool, str)):
+            raise TypeError("'block' must be of type 'bool' or 'str'")
 
         # Wait for the process to finish.
         if block is True:
@@ -481,7 +500,7 @@ class Amber(_process.Process):
             _warnings.warn("The process exited with an error!")
 
         try:
-            return _Trajectory.Trajectory(process=self)
+            return _Trajectory.Trajectory(process=self, backend=backend)
 
         except:
             return None
@@ -557,14 +576,14 @@ class Amber(_process.Process):
         except:
             return None
 
-    def getRecord(self, record, time_series=False, unit=None, block="AUTO"):
+    def getRecord(self, key, time_series=False, unit=None, block="AUTO"):
         """
         Get a record from the stdout dictionary.
 
         Parameters
         ----------
 
-        record : str
+        key : str
             The record key.
 
         time_series : bool
@@ -593,16 +612,18 @@ class Amber(_process.Process):
         if self.isError():
             _warnings.warn("The process exited with an error!")
 
-        return self._get_stdout_record(record.strip().upper(), time_series, unit)
+        return self._get_stdout_record(
+            key.strip().upper(), time_series=time_series, unit=unit
+        )
 
-    def getCurrentRecord(self, record, time_series=False, unit=None):
+    def getCurrentRecord(self, key, time_series=False, unit=None):
         """
         Get a current record from the stdout dictionary.
 
         Parameters
         ----------
 
-        record : str
+        key : str
             The record key.
 
         time_series : bool
@@ -622,7 +643,9 @@ class Amber(_process.Process):
         if self.isError():
             _warnings.warn("The process exited with an error!")
 
-        return self._get_stdout_record(record.strip().upper(), time_series, unit)
+        return self._get_stdout_record(
+            key.strip().upper(), time_series=time_series, unit=unit
+        )
 
     def getRecords(self, block="AUTO"):
         """
@@ -691,7 +714,7 @@ class Amber(_process.Process):
             return None
 
         # Get the list of time steps.
-        time_steps = self.getRecord("TIME(PS)", time_series, None, block)
+        time_steps = self.getRecord("TIME(PS)", time_series=time_series, block=block)
 
         # Convert from picoseconds to nanoseconds.
         if time_steps is not None:
@@ -739,7 +762,7 @@ class Amber(_process.Process):
         step : int
             The current number of integration steps.
         """
-        return self.getRecord("NSTEP", time_series, None, block)
+        return self.getRecord("NSTEP", time_series=time_series, block=block)
 
     def getCurrentStep(self, time_series=False):
         """
@@ -778,7 +801,12 @@ class Amber(_process.Process):
         energy : :class:`Energy <BioSimSpace.Types.Energy>`
            The bond energy.
         """
-        return self.getRecord("BOND", time_series, _Units.Energy.kcal_per_mol, block)
+        return self.getRecord(
+            "BOND",
+            time_series=time_series,
+            unit=_Units.Energy.kcal_per_mol,
+            block=block,
+        )
 
     def getCurrentBondEnergy(self, time_series=False):
         """
@@ -817,7 +845,12 @@ class Amber(_process.Process):
         energy : :class:`Energy <BioSimSpace.Types.Energy>`
            The angle energy.
         """
-        return self.getRecord("ANGLE", time_series, _Units.Energy.kcal_per_mol, block)
+        return self.getRecord(
+            "ANGLE",
+            time_series=time_series,
+            unit=_Units.Energy.kcal_per_mol,
+            block=block,
+        )
 
     def getCurrentAngleEnergy(self, time_series=False):
         """
@@ -856,7 +889,12 @@ class Amber(_process.Process):
         energy : :class:`Energy <BioSimSpace.Types.Energy>`
            The total dihedral energy.
         """
-        return self.getRecord("DIHED", time_series, _Units.Energy.kcal_per_mol, block)
+        return self.getRecord(
+            "DIHED",
+            time_series=time_series,
+            unit=_Units.Energy.kcal_per_mol,
+            block=block,
+        )
 
     def getCurrentDihedralEnergy(self, time_series=False):
         """
@@ -895,7 +933,12 @@ class Amber(_process.Process):
         energy : :class:`Energy <BioSimSpace.Types.Energy>`
            The electrostatic energy.
         """
-        return self.getRecord("EELEC", time_series, _Units.Energy.kcal_per_mol, block)
+        return self.getRecord(
+            "EELEC",
+            time_series=time_series,
+            unit=_Units.Energy.kcal_per_mol,
+            block=block,
+        )
 
     def getCurrentElectrostaticEnergy(self, time_series=False):
         """
@@ -934,7 +977,12 @@ class Amber(_process.Process):
         energy : :class:`Energy <BioSimSpace.Types.Energy>`
            The electrostatic energy between atoms 1 and 4.
         """
-        return self.getRecord("1-4 EEL", time_series, _Units.Energy.kcal_per_mol, block)
+        return self.getRecord(
+            "1-4 EEL",
+            time_series=time_series,
+            unit=_Units.Energy.kcal_per_mol,
+            block=block,
+        )
 
     def getCurrentElectrostaticEnergy14(self, time_series=False):
         """
@@ -973,7 +1021,12 @@ class Amber(_process.Process):
         energy : :class:`Energy <BioSimSpace.Types.Energy>`
            The Van der Vaals energy.
         """
-        return self.getRecord("VDWAALS", time_series, _Units.Energy.kcal_per_mol, block)
+        return self.getRecord(
+            "VDWAALS",
+            time_series=time_series,
+            unit=_Units.Energy.kcal_per_mol,
+            block=block,
+        )
 
     def getCurrentVanDerWaalsEnergy(self, time_series=False):
         """
@@ -1012,7 +1065,12 @@ class Amber(_process.Process):
         energy : :class:`Energy <BioSimSpace.Types.Energy>`
            The hydrogen bond energy.
         """
-        return self.getRecord("EHBOND", time_series, _Units.Energy.kcal_per_mol, block)
+        return self.getRecord(
+            "EHBOND",
+            time_series=time_series,
+            unit=_Units.Energy.kcal_per_mol,
+            block=block,
+        )
 
     def getCurrentHydrogenBondEnergy(self, time_series=False):
         """
@@ -1052,7 +1110,10 @@ class Amber(_process.Process):
            The restraint energy.
         """
         return self.getRecord(
-            "RESTRAINT", time_series, _Units.Energy.kcal_per_mol, block
+            "RESTRAINT",
+            time_series=time_series,
+            unit=_Units.Energy.kcal_per_mol,
+            block=block,
         )
 
     def getCurrentRestraintEnergy(self, time_series=False):
@@ -1095,7 +1156,12 @@ class Amber(_process.Process):
         energy : :class:`Energy <BioSimSpace.Types.Energy>`
            The potential energy.
         """
-        return self.getRecord("EPTOT", time_series, _Units.Energy.kcal_per_mol, block)
+        return self.getRecord(
+            "EPTOT",
+            time_series=time_series,
+            unit=_Units.Energy.kcal_per_mol,
+            block=block,
+        )
 
     def getCurrentPotentialEnergy(self, time_series=False):
         """
@@ -1134,7 +1200,12 @@ class Amber(_process.Process):
         energy : :class:`Energy <BioSimSpace.Types.Energy>`
            The kinetic energy.
         """
-        return self.getRecord("EKTOT", time_series, _Units.Energy.kcal_per_mol, block)
+        return self.getRecord(
+            "EKTOT",
+            time_series=time_series,
+            unit=_Units.Energy.kcal_per_mol,
+            block=block,
+        )
 
     def getCurrentKineticEnergy(self, time_series=False):
         """
@@ -1173,7 +1244,12 @@ class Amber(_process.Process):
         energy : :class:`Energy <BioSimSpace.Types.Energy>`
            The non-bonded energy between atoms 1 and 4.
         """
-        return self.getRecord("1-4 NB", time_series, _Units.Energy.kcal_per_mol, block)
+        return self.getRecord(
+            "1-4 NB",
+            time_series=time_series,
+            unit=_Units.Energy.kcal_per_mol,
+            block=block,
+        )
 
     def getCurrentNonBondedEnergy14(self, time_series=False):
         """
@@ -1214,11 +1290,17 @@ class Amber(_process.Process):
         """
         if isinstance(self._protocol, _Protocol.Minimisation):
             return self.getRecord(
-                "ENERGY", time_series, _Units.Energy.kcal_per_mol, block
+                "ENERGY",
+                time_series=time_series,
+                unit=_Units.Energy.kcal_per_mol,
+                block=block,
             )
         else:
             return self.getRecord(
-                "ETOT", time_series, _Units.Energy.kcal_per_mol, block
+                "ETOT",
+                time_series=time_series,
+                unit=_Units.Energy.kcal_per_mol,
+                block=block,
             )
 
     def getCurrentTotalEnergy(self, time_series=False):
@@ -1258,7 +1340,12 @@ class Amber(_process.Process):
         energy : :class:`Energy <BioSimSpace.Types.Energy>`
            The centre of mass kinetic energy.
         """
-        return self.getRecord("EKCMT", time_series, _Units.Energy.kcal_per_mol, block)
+        return self.getRecord(
+            "EKCMT",
+            time_series=time_series,
+            unit=_Units.Energy.kcal_per_mol,
+            block=block,
+        )
 
     def getCurrentCentreOfMassKineticEnergy(self, time_series=False):
         """
@@ -1297,7 +1384,7 @@ class Amber(_process.Process):
         virial : float
            The virial.
         """
-        return self.getRecord("VIRIAL", time_series, block)
+        return self.getRecord("VIRIAL", time_series=time_series, block=block)
 
     def getCurrentVirial(self, time_series=False):
         """
@@ -1336,7 +1423,12 @@ class Amber(_process.Process):
         temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
            The temperature.
         """
-        return self.getRecord("TEMP(K)", time_series, _Units.Temperature.kelvin, block)
+        return self.getRecord(
+            "TEMP(K)",
+            time_series=time_series,
+            unit=_Units.Temperature.kelvin,
+            block=block,
+        )
 
     def getCurrentTemperature(self, time_series=False):
         """
@@ -1375,7 +1467,9 @@ class Amber(_process.Process):
         pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
            The pressure.
         """
-        return self.getRecord("PRESS", time_series, _Units.Pressure.bar, block)
+        return self.getRecord(
+            "PRESS", time_series=time_series, unit=_Units.Pressure.bar, block=block
+        )
 
     def getCurrentPressure(self, time_series=False):
         """
@@ -1414,7 +1508,9 @@ class Amber(_process.Process):
         volume : :class:`Volume <BioSimSpace.Types.Volume>`
            The volume.
         """
-        return self.getRecord("VOLUME", time_series, _Units.Volume.angstrom3, block)
+        return self.getRecord(
+            "VOLUME", time_series=time_series, unit=_Units.Volume.angstrom3, block=block
+        )
 
     def getCurrentVolume(self, time_series=False):
         """
@@ -1453,7 +1549,7 @@ class Amber(_process.Process):
         density : float
            The density.
         """
-        return self.getRecord("DENSITY", time_series, block)
+        return self.getRecord("DENSITY", time_series=time_series, block=block)
 
     def getCurrentDensity(self, time_series=False):
         """

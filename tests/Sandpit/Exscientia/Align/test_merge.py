@@ -1,9 +1,25 @@
 import pytest
+
+import BioSimSpace.Sandpit.Exscientia as BSS
+
 from BioSimSpace.Sandpit.Exscientia.Align._merge import _removeDummies
 
-from test.Sandpit.Exscientia.conftest import get_energy
+from tests.Sandpit.Exscientia.conftest import (
+    get_energy,
+    has_alchemlyb,
+    has_amber,
+    has_gromacs,
+    has_openff,
+)
 
 
+@pytest.mark.skipif(
+    has_amber is False
+    or has_gromacs is False
+    or has_openff is False
+    or has_alchemlyb is False,
+    reason="Requires that AMBER, GROMACS, OpenFF, and alchemlyb are installed.",
+)
 def test__removeDummies(
     benzene, pyrrole, mapping_benzene_pyrrole, merged_benzene_pyrrole
 ):

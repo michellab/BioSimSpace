@@ -846,51 +846,10 @@ def makeFunnel(
     # for solvent molecules directly, since it allows for dry binding sites.
 
     # If the ligand is a Molecule, then assume the binding site is the ligand
-    # center of mass. We do this manually since Sire's built-in evaluator doesn't
-    # take into consideration molecules spanning the periodic boundary.
+    # center of mass.
     if isinstance(ligand, _Molecule):
-        # Get the "mass" property from the user map.
-        mass_prop = property_map.get("mass", "mass")
-        if mass_prop not in ligand._sire_object.propertyKeys():
-            raise _IncompatibleError("The system contains no atomic mass information!")
-
-        # Get the "coordinate" property from the user map.
-        coord_prop = property_map.get("coordinates", "coordinates")
-        if coord_prop not in ligand._sire_object.propertyKeys():
-            raise _IncompatibleError("The system contains no atomic coordinates!")
-
-        # Get the first atom in the ligand.
-        atom = ligand.getAtoms()[0]
-
-        # The sum of the atom masses.
-        total_mass = atom._sire_object.property(mass_prop).value()
-
-        # Reference coordinate.
-        ref_coord = atom._sire_object.property(coord_prop)
-
-        # Initialise the center-of-mass.
-        com = total_mass * atom._sire_object.property(coord_prop)
-
-        # Sum over the rest of the atoms.
-        for atom in ligand.getAtoms()[1:]:
-            # Get the mass and update the total.
-            mass = atom._sire_object.property(mass_prop).value()
-            total_mass += mass
-
-            # Get the coordinate and add to the reference coord using the
-            # its distance from the reference in the minimum image convention.
-            coord = atom._sire_object.property(coord_prop)
-            coord = ref_coord + _SireVector(space.calcDistVector(ref_coord, coord))
-
-            # Update the center of mass.
-            com += mass * coord
-
-        # Normalise.
-        com /= total_mass
-
-        binding_site = _Coordinate(
-            _Length(com.x(), "A"), _Length(com.y(), "A"), _Length(com.z(), "A")
-        )
+        com = ligand._getCenterOfMass(space=space, property_map=property_map)
+        binding_site = _Coordinate(*com)
 
     # Set up the grid.
 
@@ -1097,6 +1056,7 @@ def viewFunnel(system, collective_variable, property_map={}):
         except:
             raise ValueError(f"Could not obtain coordinates for atom index '{atom}'!")
     com0 /= len(atoms0)
+    com0 = [x.value() for x in com0]
 
     for atom in atoms1:
         try:
@@ -1104,6 +1064,7 @@ def viewFunnel(system, collective_variable, property_map={}):
         except:
             raise ValueError(f"Could not obtain coordinates for atom index '{atom}'!")
     com1 /= len(atoms1)
+    com1 = [x.value() for x in com1]
 
     # Create a new molecule to hold the funnel.
     funnel_mol = _SireMol.Molecule("Funnel")

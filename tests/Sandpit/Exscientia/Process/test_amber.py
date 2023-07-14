@@ -1,4 +1,3 @@
-import os
 import shutil
 from collections import OrderedDict
 from pathlib import Path
@@ -6,21 +5,11 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import pytest
+import shutil
 
 import BioSimSpace.Sandpit.Exscientia as BSS
 
-# Make sure AMBER is installed.
-if BSS._amber_home is not None:
-    exe = "%s/bin/sander" % BSS._amber_home
-    if os.path.isfile(exe):
-        has_amber = True
-    else:
-        has_amber = False
-else:
-    has_amber = False
-
-# Store the tutorial URL.
-url = BSS.tutorialUrl()
+from tests.Sandpit.Exscientia.conftest import url, has_amber, has_pyarrow
 
 
 @pytest.fixture(scope="session")
@@ -29,7 +18,10 @@ def system():
     return BSS.IO.readMolecules(["tests/input/ala.top", "tests/input/ala.crd"])
 
 
-@pytest.mark.skipif(has_amber is False, reason="Requires AMBER to be installed.")
+@pytest.mark.skipif(
+    has_amber is False or has_pyarrow is False,
+    reason="Requires AMBER and pyarrow to be installed.",
+)
 def test_minimise(system):
     """Test a minimisation protocol."""
 
@@ -40,7 +32,10 @@ def test_minimise(system):
     run_process(system, protocol)
 
 
-@pytest.mark.skipif(has_amber is False, reason="Requires AMBER to be installed.")
+@pytest.mark.skipif(
+    has_amber is False or has_pyarrow is False,
+    reason="Requires AMBER and pyarrow to be installed.",
+)
 @pytest.mark.parametrize("restraint", ["backbone", "heavy", "all", "none"])
 def test_equilibrate(system, restraint):
     """Test an equilibration protocol."""
@@ -54,7 +49,10 @@ def test_equilibrate(system, restraint):
     run_process(system, protocol)
 
 
-@pytest.mark.skipif(has_amber is False, reason="Requires AMBER to be installed.")
+@pytest.mark.skipif(
+    has_amber is False or has_pyarrow is False,
+    reason="Requires AMBER and pyarrow to be installed.",
+)
 def test_heat(system):
     """Test a heating protocol."""
 
@@ -69,7 +67,10 @@ def test_heat(system):
     run_process(system, protocol)
 
 
-@pytest.mark.skipif(has_amber is False, reason="Requires AMBER to be installed.")
+@pytest.mark.skipif(
+    has_amber is False or has_pyarrow is False,
+    reason="Requires AMBER and pyarrow to be installed.",
+)
 def test_cool(system):
     """Test a cooling protocol."""
 
@@ -84,7 +85,10 @@ def test_cool(system):
     run_process(system, protocol)
 
 
-@pytest.mark.skipif(has_amber is False, reason="Requires AMBER to be installed.")
+@pytest.mark.skipif(
+    has_amber is False or has_pyarrow is False,
+    reason="Requires AMBER and pyarrow to be installed.",
+)
 def test_production(system):
     """Test a production protocol."""
 
@@ -95,7 +99,10 @@ def test_production(system):
     run_process(system, protocol, check_data=True)
 
 
-@pytest.mark.skipif(has_amber is False, reason="Requires AMBER to be installed.")
+@pytest.mark.skipif(
+    has_amber is False or has_pyarrow is False,
+    reason="Requires AMBER and pyarrow to be installed.",
+)
 def test_args(system):
     """Test setting an manipulation of command-line args."""
 
@@ -246,8 +253,9 @@ def run_process(system, protocol, check_data=False):
                 assert len(v) == nrec
 
 
-@pytest.mark.skip(
-    "Wait for the fix of https://github.com/OpenBioSim/biosimspace/issues/78."
+@pytest.mark.skipif(
+    has_amber is False or has_pyarrow is False,
+    reason="Requires AMBER and pyarrow to be installed.",
 )
 @pytest.mark.parametrize(
     "protocol",
@@ -270,37 +278,52 @@ def test_parse_fep_output(system, protocol):
     # Create a process using any system and the protocol.
     process = BSS.Process.Amber(system_copy, protocol)
 
+    # Assign the path to the output file.
+    if isinstance(protocol, BSS.Protocol.FreeEnergy):
+        out_file = "tests/Sandpit/Exscientia/output/amber_fep.out"
+    else:
+        out_file = "tests/Sandpit/Exscientia/output/amber_fep_min.out"
+
     # Copy the existing output file into the working directory.
-    shutil.copyfile(
-        "tests/Sandpit/Exscientia/output/amber_fep.out",
-        process.workDir() + "/amber.out",
-    )
+    shutil.copyfile(out_file, process.workDir() + "/amber.out")
 
     # Update the stdout record dictionaries.
     process.stdout(0)
 
-    # Get back the records for each degree of freedom.
-    records0 = process.getRecords(dof=0)
-    records1 = process.getRecords(dof=1)
-    records2 = process.getRecords(dof=2)
+    # Get back the records for each region and soft-core part.
+    records_ti0 = process.getRecords(region=0)
+    records_sc0 = process.getRecords(region=0, soft_core=True)
+    records_ti1 = process.getRecords(region=1)
+    records_sc1 = process.getRecords(region=1, soft_core=True)
 
     # Make sure NSTEP is present.
-    assert "NSTEP" in records0
+    assert "NSTEP" in records_ti0
 
     # Get the number of records.
-    num_records = len(records0["NSTEP"])
+    num_records = len(records_ti0["NSTEP"])
 
     # Now make sure that the records for the two TI regions contain the
     # same number of values.
-    for v0, v1 in zip(records0.values(), records1.values()):
+    for v0, v1 in zip(records_ti0.values(), records_ti1.values()):
         assert len(v0) == len(v1) == num_records
 
-    # Now check that are records for the softcore region contain the correct
+    # Now check that are records for the soft-core parts contain the correct
     # number of values.
-    for v in records2.values():
+    for v in records_sc0.values():
         assert len(v) == num_records
+    for k, v in records_sc1.items():
+        assert len(v) == num_records
+    if isinstance(protocol, BSS.Protocol.FreeEnergy):
+        assert len(records_sc0) == len(records_sc1)
+    else:
+        assert len(records_sc0) == 0
+        assert len(records_sc1) != 0
 
 
+@pytest.mark.skipif(
+    has_amber is False or has_pyarrow is False,
+    reason="Requires AMBER and pyarrow to be installed.",
+)
 class TestsaveMetric:
     @staticmethod
     @pytest.fixture()

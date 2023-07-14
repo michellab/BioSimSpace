@@ -46,6 +46,7 @@ __all__ = [
     "Process",
     "Protocol",
     "Solvent",
+    "Stream",
     "Trajectory",
     "Types",
     "Units",
@@ -62,6 +63,7 @@ try:
     import sire as _sr
 
     _sr.use_mixed_api(support_old_module_names=False)
+    _sr.convert.supported_formats()
 except ImportError:
     pass
 
@@ -246,6 +248,7 @@ from . import Parameters
 from . import Process
 from . import Protocol
 from . import Solvent
+from . import Stream
 from . import Trajectory
 from . import Types
 from . import Units

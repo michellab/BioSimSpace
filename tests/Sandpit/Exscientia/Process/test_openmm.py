@@ -1,10 +1,10 @@
 import math
-
-import BioSimSpace.Sandpit.Exscientia as BSS
 import pytest
 
-# Store the tutorial URL.
-url = BSS.tutorialUrl()
+import BioSimSpace.Sandpit.Exscientia as BSS
+
+from tests.Sandpit.Exscientia.conftest import url, has_amber, has_gromacs, has_openff
+
 
 @pytest.fixture(scope="session")
 def system():
@@ -13,18 +13,32 @@ def system():
 
 
 @pytest.mark.parametrize("restraint", ["backbone", "heavy", "all", "none"])
-@pytest.mark.parametrize("protocol", [
-    BSS.Protocol.Minimisation,
-    BSS.Protocol.Equilibration,
-    BSS.Protocol.Production,
-])
+@pytest.mark.parametrize(
+    "protocol",
+    [
+        BSS.Protocol.Minimisation,
+        BSS.Protocol.Equilibration,
+        BSS.Protocol.Production,
+    ],
+)
 def test_restrain_atoms(system, restraint, protocol):
-    process = BSS.Process.OpenMM(system, protocol(restraint=restraint, force_constant=1000))
+    process = BSS.Process.OpenMM(
+        system, protocol(restraint=restraint, force_constant=1000)
+    )
 
     expected_lines = [  # (with restraint, without restraint)
-        (f"restrained_atoms = {system.getRestraintAtoms(restraint) if restraint != 'none' else []}", None),
-        ("restraint.addBond(i, j, 0 * nanometers, 418400.0 * kilojoules_per_mole / nanometer**2)", None),
-        ("simulation.context.setPositions(positions)", "simulation.context.setPositions(inpcrd.positions)")
+        (
+            f"restrained_atoms = {system.getRestraintAtoms(restraint) if restraint != 'none' else []}",
+            None,
+        ),
+        (
+            "restraint.addBond(i, j, 0 * nanometers, 418400.0 * kilojoules_per_mole / nanometer**2)",
+            None,
+        ),
+        (
+            "simulation.context.setPositions(positions)",
+            "simulation.context.setPositions(prm.positions)",
+        ),
     ]
 
     with open(f"{process._work_dir}/{process._name}_script.py") as fp:
@@ -50,7 +64,7 @@ def test_minimise(system, restraint):
     # Create a short minimisation protocol.
     protocol = BSS.Protocol.Minimisation(
         steps=100, restraint=restraint, force_constant=1000
-        )
+    )
 
     # Run the process, check that it finished without error, and returns a system.
     run_process(system, protocol, restraint=restraint, tolerance=0.05)
@@ -64,7 +78,7 @@ def test_equilibrate(system, restraint):
     protocol = BSS.Protocol.Equilibration(
         runtime=BSS.Types.Time(0.001, "nanoseconds"),
         restraint=restraint,
-        force_constant=1000
+        force_constant=1000,
     )
 
     # Run the process, check that it finished without error, and returns a system.
@@ -107,11 +121,34 @@ def test_production(system, restraint):
     protocol = BSS.Protocol.Production(
         runtime=BSS.Types.Time(0.001, "nanoseconds"),
         restraint=restraint,
-        force_constant=1000
+        force_constant=1000,
     )
 
     # Run the process, check that it finished without error, and returns a system.
     run_process(system, protocol, restraint=restraint, tolerance=1)
+
+
+@pytest.mark.skipif(
+    has_amber is False or has_gromacs is False or has_openff is False,
+    reason="Requires AMBER, GROMACS, and OpenFF to be installed",
+)
+def test_rhombic_dodecahedron():
+    """Test that OpenMM can load and run rhombic dodecahedral triclinic spaces."""
+
+    # Create a methane molecule.
+    mol = BSS.Parameters.openff_unconstrained_2_0_0("C").getMolecule()
+
+    # Generate box dimensions and angles for a hexagonal rhombic dodecahedron.
+    box, angles = BSS.Box.rhombicDodecahedronHexagon(5 * BSS.Units.Length.nanometer)
+
+    # Create a solvated system.
+    solvated = BSS.Solvent.tip3p(mol, box=box, angles=angles)
+
+    # Create a short minimisation protocol.
+    protocol = BSS.Protocol.Minimisation(steps=100)
+
+    # Run the process, check that it finished without error, and returns a system.
+    run_process(solvated, protocol)
 
 
 def run_process(system, protocol, restraint="none", tolerance=0.05):
@@ -167,9 +204,11 @@ def get_dist_atoms(a, b):
     """Return the distance between two `BioSimSpace.Atom` instances"""
     v = a.coordinates() - b.coordinates()
     return math.sqrt(
-        sum([
-            v.x().angstroms().value()**2,
-            v.y().angstroms().value()**2,
-            v.z().angstroms().value()**2
-            ])
+        sum(
+            [
+                v.x().angstroms().value() ** 2,
+                v.y().angstroms().value() ** 2,
+                v.z().angstroms().value() ** 2,
+            ]
         )
+    )

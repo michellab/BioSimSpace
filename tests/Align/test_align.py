@@ -1,9 +1,9 @@
+import pytest
+
 from sire.legacy.MM import InternalFF, IntraCLJFF, IntraFF
 from sire.legacy.Mol import AtomIdx, Element, PartialMolecule
 
 import BioSimSpace as BSS
-
-import pytest
 
 # Store the tutorial URL.
 url = BSS.tutorialUrl()
@@ -23,10 +23,11 @@ def system1():
     )
 
 
-@pytest.mark.skip(
-    reason="Non-reproducibly giving different mappings on certain platforms."
-)
 def test_flex_align(system0, system1):
+    # This tests that the flex align functionality runs. We can't test
+    # for consistent output, since we have occasionally observed different
+    # mappings across platforms.
+
     # Extract the molecules.
     m0 = system0.getMolecules()[0]
     m1 = system1.getMolecules()[0]
@@ -35,29 +36,6 @@ def test_flex_align(system0, system1):
     mapping = BSS.Align.matchAtoms(
         m0, m1, timeout=BSS.Units.Time.second, scoring_function="rmsd_flex_align"
     )
-
-    # I don't know what the mapping should be. For the moment,
-    # I will assume that what came out is correct, i.e.
-    expect = {
-        28: 12,
-        0: 13,
-        29: 14,
-        1: 15,
-        3: 16,
-        4: 21,
-        5: 20,
-        6: 19,
-        26: 18,
-        27: 17,
-        49: 38,
-        48: 39,
-        31: 40,
-        30: 41,
-        2: 37,
-    }
-
-    for key, value in mapping.items():
-        assert value == expect[key]
 
 
 # Parameterise the function with a set of valid atom pre-matches.

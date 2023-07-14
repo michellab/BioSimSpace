@@ -34,6 +34,7 @@ Classes
     IncompatibleError
     MissingSoftwareError
     ParameterisationError
+    StreamError
     ThirdPartyError
 """
 

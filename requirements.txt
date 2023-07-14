@@ -1,13 +1,13 @@
 # BioSimSpace runtime requirements.
 
 # main
-sire~=2023.2.2
+sire~=2023.3.0
 
 # devel
-#sire==2023.3.0.dev
+#sire==2023.4.0.dev
 
 configargparse
-ipywidgets<8
+ipywidgets
 kcombu_bss
 lomap2
 networkx

@@ -1,6 +1,7 @@
+from difflib import unified_diff
+
 import itertools
 import os
-from difflib import unified_diff
 
 import pandas as pd
 import pytest
@@ -8,24 +9,8 @@ import pytest
 import BioSimSpace.Sandpit.Exscientia as BSS
 from BioSimSpace.Sandpit.Exscientia.Units.Energy import kj_per_mol
 from BioSimSpace.Sandpit.Exscientia.Units.Length import angstrom
-from BioSimSpace.Sandpit.Exscientia._Utils import _try_import, _have_imported
 
-# Check whether AMBER is installed.
-if BSS._amber_home is not None:
-    exe = "%s/bin/sander" % BSS._amber_home
-    if os.path.isfile(exe):
-        has_amber = True
-    else:
-        has_amber = False
-else:
-    has_amber = False
-
-# Make sure GROMACS is installed.
-has_gromacs = BSS._gmx_exe is not None
-
-# Make sure openff is installed.
-_openff = _try_import("openff")
-has_openff = _have_imported(_openff)
+from tests.Sandpit.Exscientia.conftest import has_amber, has_gromacs, has_openff
 
 
 @pytest.fixture

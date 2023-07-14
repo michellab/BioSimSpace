@@ -2,9 +2,6 @@ import BioSimSpace as BSS
 
 import pytest
 
-# Store the tutorial URL.
-url = BSS.tutorialUrl()
-
 
 def test_bonds():
     system = BSS.IO.readMolecules(["tests/input/ala.top", "tests/input/ala.crd"])

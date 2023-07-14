@@ -1,18 +1,8 @@
-import BioSimSpace as BSS
-
-from sire.legacy.Base import findExe
-
 import pytest
 
-# Make sure NAMD is installed.
-try:
-    findExe("namd2")
-    has_namd = True
-except:
-    has_namd = False
+import BioSimSpace as BSS
 
-# Store the tutorial URL.
-url = BSS.tutorialUrl()
+from tests.conftest import url, has_namd
 
 # Store the allowed restraints.
 restraints = BSS.Protocol._position_restraint_mixin._PositionRestraintMixin.restraints()
