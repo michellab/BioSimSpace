@@ -476,12 +476,8 @@ class ConfigFactory:
 
         # Constraints.
         if not isinstance(self.protocol, _Protocol.Minimisation):
-            if timestep >= 0.004:
-                # If HMR, all constraints
-                protocol_dict["constraints"] = "all-bonds"
-            else:
-                # Rigid bonded hydrogens.
-                protocol_dict["constraints"] = "h-bonds"
+            # Rigid bonded hydrogens.
+            protocol_dict["constraints"] = "h-bonds"
             # Linear constraint solver.
             protocol_dict["constraint-algorithm"] = "LINCS"
 
@@ -617,8 +613,10 @@ class ConfigFactory:
             protocol_dict["nstcalcenergy"] = self._report_interval
             # Write gradients every report interval steps.
             protocol_dict["nstdhdl"] = self._report_interval
-            # softcore alpha parameter - 0.5 
-            protocol_dict["sc-alpha"] = "0.5"
+            # softcore parameters
+            protocol_dict["sc-alpha"] = "0.30"
+            protocol_dict["sc-sigma"] = "0.25"
+            protocol_dict["sc-coul"] = "yes"
 
         # Put everything together in a line-by-line format.
         total_dict = {**protocol_dict, **extra_options}
