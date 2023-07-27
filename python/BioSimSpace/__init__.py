@@ -125,6 +125,42 @@ if "AMBERHOME" in _environ:
 else:
     _amber_home = None
 
+# check the amber version
+_amber_version = None
+
+if _amber_home is not None:
+
+    import shlex as _shlex
+    import subprocess as _subprocess
+
+    try:
+        # Generate the shell command. (Run gmx -version.)
+        _command = "%s/bin/pmemd.cuda --version" % _amber_home
+
+        # Run the command.
+        _proc = _subprocess.run(_shlex.split(_command), shell=False,
+            text=True, stdout=_subprocess.PIPE, stderr=_subprocess.PIPE)
+
+        del _command
+
+        # Get the data prefix.
+        if _proc.returncode == 0:
+
+            for _line in _proc.stdout.split("\n"):
+                # Extract the version from the output.
+                if "Version" in _line:
+                    _amber_version = float(_line.strip().split(" ")[-1])
+                    break
+            del _line
+
+        del _proc
+        del _shlex
+        del _subprocess
+    
+    except Exception as e:
+        print(e)
+        print("could not determine AMBER version.")
+
 # Check to see if GROMACS is installed.
 from Sire import Base as _SireBase
 from os import path as _path
