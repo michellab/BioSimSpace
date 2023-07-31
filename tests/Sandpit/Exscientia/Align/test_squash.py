@@ -1,9 +1,22 @@
+import os
 import pickle
+
+import numpy as np
 import pytest
+import sire
+from sire.maths import Vector
 
 import BioSimSpace.Sandpit.Exscientia as BSS
 
-from tests.Sandpit.Exscientia.conftest import has_amber
+# Make sure AMBER is installed.
+if BSS._amber_home is not None:
+    exe = "%s/bin/sander" % BSS._amber_home
+    if os.path.isfile(exe):
+        has_amber = True
+    else:
+        has_amber = False
+else:
+    has_amber = False
 
 
 @pytest.fixture(scope="session")
@@ -27,6 +40,20 @@ def perturbed_system():
         BSS.Align.merge(mols[5], mols[6]),
     ]
     system = BSS._SireWrappers.System(pert_mols)
+    return system
+
+
+@pytest.fixture(scope="session")
+def dual_topology_system():
+    mol_smiles = ["c1ccccc1", "c1ccccc1C"]
+    mols = [BSS.Parameters.gaff(smi).getMolecule() for smi in mol_smiles]
+    pertmol = BSS.Align.merge(mols[0], mols[1], mapping={0: 0})
+    c = pertmol._sire_object.cursor()
+    # Translate all atoms so that we have different coordinates between both endstates
+    for atom in c.atoms():
+        atom["coordinates1"] = atom["coordinates0"] + Vector(1, 1, 1)
+    pertmol = BSS._SireWrappers.Molecule(c.commit())
+    system = pertmol.toSystem()
     return system
 
 
@@ -118,21 +145,46 @@ def test_squashed_atom_mapping_explicit(perturbed_tripeptide, is_lambda1):
 
 @pytest.mark.skipif(has_amber is False, reason="Requires AMBER to be installed.")
 @pytest.mark.parametrize("explicit", [False, True])
-def test_unsquash(perturbed_system, explicit):
+def test_unsquash(dual_topology_system, explicit):
     squashed_system, mapping = BSS.Align._squash._squash(
-        perturbed_system, explicit_dummies=explicit
+        dual_topology_system, explicit_dummies=explicit
     )
     new_perturbed_system = BSS.Align._squash._unsquash(
-        perturbed_system, squashed_system, mapping, explicit_dummies=explicit
+        dual_topology_system, squashed_system, mapping, explicit_dummies=explicit
     )
     assert [
         mol0.nAtoms() == mol1.nAtoms()
-        for mol0, mol1 in zip(perturbed_system, new_perturbed_system)
+        for mol0, mol1 in zip(dual_topology_system, new_perturbed_system)
     ]
     assert [
         mol0.isPerturbable() == mol1.isPerturbable()
-        for mol0, mol1 in zip(perturbed_system, new_perturbed_system)
+        for mol0, mol1 in zip(dual_topology_system, new_perturbed_system)
     ]
+    if explicit:
+        # Check that we have loaded the correct coordinates
+        coords0_before = sire.io.get_coords_array(
+            dual_topology_system[0]._sire_object, map={"coordinates": "coordinates0"}
+        )
+        coords1_before = sire.io.get_coords_array(
+            dual_topology_system[0]._sire_object, map={"coordinates": "coordinates1"}
+        )
+        coords0_after = sire.io.get_coords_array(
+            new_perturbed_system[0]._sire_object, map={"coordinates": "coordinates0"}
+        )
+        coords1_after = sire.io.get_coords_array(
+            new_perturbed_system[0]._sire_object, map={"coordinates": "coordinates1"}
+        )
+
+        # The coordinates at the first endstate should be completely preserved
+        # Because in this case they are either common core, or separate dummies at lambda = 0
+        assert np.allclose(coords0_before, coords0_after)
+
+        # The coordinates at the first endstate should be partially preserved
+        # The common core must have the same coordinates as lambda = 0
+        # Here this is just a single atom in the beginning
+        # The extra atoms which are dummies at lambda = 0 have separate coordinates here
+        assert np.allclose(coords0_before[:1, :], coords1_after[:1, :])
+        assert np.allclose(coords1_before[1:, :], coords1_after[1:, :])
 
 
 @pytest.mark.parametrize("explicit", [False, True])
