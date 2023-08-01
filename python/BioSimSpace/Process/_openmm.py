@@ -2083,6 +2083,14 @@ class OpenMM(_process.Process):
             is_time = True
             is_temperature = True
 
+        # Work out the total number of steps.
+        if isinstance(self._protocol, _Protocol.Minimisation):
+            total_steps = 1
+        else:
+            total_steps = _math.ceil(
+                self._protocol.getRunTime() / self._protocol.getTimeStep()
+            )
+
         # Write state information to file every 100 steps.
         self.addToConfig(f"log_file = open('{self._name}.log', 'a')")
         self.addToConfig(f"simulation.reporters.append(StateDataReporter(log_file,")
@@ -2109,7 +2117,7 @@ class OpenMM(_process.Process):
         )
         self.addToConfig("                                              volume=True,")
         self.addToConfig(
-            "                                              totalSteps=True,"
+            f"                                              totalSteps={total_steps},"
         )
         self.addToConfig("                                              speed=True,")
         self.addToConfig(
