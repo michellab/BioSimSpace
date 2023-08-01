@@ -2084,9 +2084,12 @@ class OpenMM(_process.Process):
             is_temperature = True
 
         # Work out the total number of steps.
-        total_steps = _math.ceil(
-            self._protocol.getRunTime() / self._protocol.getTimeStep()
-        )
+        if isinstance(self._protocol, _Protocol.Minimisation):
+            total_steps = None
+        else:
+            total_steps = _math.ceil(
+                self._protocol.getRunTime() / self._protocol.getTimeStep()
+            )
 
         # Write state information to file every 100 steps.
         self.addToConfig(f"log_file = open('{self._name}.log', 'a')")
