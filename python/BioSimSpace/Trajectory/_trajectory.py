@@ -939,9 +939,64 @@ class Trajectory:
                 raise TypeError("'atom' indices must be of type 'int'")
 
         if self._backend == "SIRE":
-            raise _IncompatibleError(
-                "RMSD currently isn't supported using the Sire backend."
-            )
+            from sire.legacy.Maths import getRMSD
+
+            # Initialise the references coordinates list.
+            ref_coords = []
+
+            traj = self._trajectory.align("molidx 0")
+
+            # Get the reference frame.
+            # ref_frame = self._trajectory[frame].current()
+            ref_frame = traj[frame].current()
+
+            # Sort the atom indices.
+            if atoms is not None:
+                atoms = sorted(atoms)
+            else:
+                atoms = list(range(ref_frame.num_atoms()))
+
+            def get_coordinates(frame, atoms):
+                # Initialse a list to hold the coordinates.
+                coords = []
+
+                # Loop over all atoms.
+                for atom in atoms:
+                    # Initialise the total number of atoms.
+                    num_atoms = 0
+
+                    # Loop over all molecules in the reference frame.
+                    for mol in frame:
+                        # If this is the molecule that contains the atom then
+                        # extract the coordinates.
+                        if atom < num_atoms + mol.nAtoms():
+                            # Get the coordinates for the atom.
+                            coords.append(mol[atom - num_atoms].coords())
+                            break
+                        # Update the total number of atoms.
+                        num_atoms += mol.nAtoms()
+
+                return coords
+
+            # Get the reference coordinates.
+            ref_coords = get_coordinates(ref_frame, atoms)
+
+            # Initialise the RMSD list.
+            rmsd = []
+
+            # Loop over the frames.
+            for x in range(0, self.nFrames()):
+                # Extract the trajectory frame.
+                # frame = self._trajectory[x].current()
+                frame = traj[x].current()
+
+                # Extract the coordinates for the current frame.
+                coords = get_coordinates(frame, atoms)
+
+                # Compute the RMSD.
+                rmsd.append(
+                    (_Units.Length.angstrom * getRMSD(coords, ref_coords)).nanometers()
+                )
 
         elif self._backend == "MDTRAJ":
             try:
