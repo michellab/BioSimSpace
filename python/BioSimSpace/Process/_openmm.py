@@ -2085,7 +2085,7 @@ class OpenMM(_process.Process):
 
         # Work out the total number of steps.
         if isinstance(self._protocol, _Protocol.Minimisation):
-            total_steps = None
+            total_steps = 1
         else:
             total_steps = _math.ceil(
                 self._protocol.getRunTime() / self._protocol.getTimeStep()
