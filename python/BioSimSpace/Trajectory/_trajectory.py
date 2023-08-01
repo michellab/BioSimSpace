@@ -157,9 +157,11 @@ def getFrame(trajectory, topology, index, system=None, property_map={}):
     is_mdanalysis = False
     pdb_file = work_dir + f"/{str(_uuid.uuid4())}.pdb"
     try:
+        pmap = property_map.copy()
+        pmap["make_whole"] = _SireBase.wrap(True)
         frame = _sire_load(
             [trajectory, topology],
-            map=property_map,
+            map=pmap,
             ignore_topology_frame=True,
             silent=True,
         ).trajectory()[index]
@@ -547,9 +549,11 @@ class Trajectory:
         if format in ["SIRE", "AUTO"]:
             try:
                 # Load the molecules.
+                pmap = self._property_map.copy()
+                pmap["make_whole"] = _SireBase.wrap(True)
                 mols = _sire_load(
                     [self._traj_file, self._top_file],
-                    map=self._property_map,
+                    map=pmap,
                     ignore_topology_frame=True,
                     silent=True,
                 )
@@ -944,11 +948,14 @@ class Trajectory:
             # Initialise the references coordinates list.
             ref_coords = []
 
-            traj = self._trajectory.align("molidx 0")
+            # We now need to align the trajectory to the atom selection.
+            # Currently we can't do this for an atom based selection using
+            # absolute atom indices. Just align to the first molecule so that
+            # we can test.
+            aligned_traj = self._trajectory.align("molidx 0")
 
             # Get the reference frame.
-            # ref_frame = self._trajectory[frame].current()
-            ref_frame = traj[frame].current()
+            ref_frame = aligned_traj[frame].current()
 
             # Sort the atom indices.
             if atoms is not None:
@@ -987,8 +994,7 @@ class Trajectory:
             # Loop over the frames.
             for x in range(0, self.nFrames()):
                 # Extract the trajectory frame.
-                # frame = self._trajectory[x].current()
-                frame = traj[x].current()
+                frame = aligned_traj[x].current()
 
                 # Extract the coordinates for the current frame.
                 coords = get_coordinates(frame, atoms)
