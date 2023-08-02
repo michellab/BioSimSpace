@@ -347,17 +347,35 @@ class Gromacs(_process.Process):
         # GRO87 coordinate files.
         if coord_file is not None:
             file = _os.path.splitext(coord_file)[0]
-            _IO.saveMolecules(file, system, "gro87", property_map=self._property_map)
+            _IO.saveMolecules(
+                file,
+                system,
+                "gro87",
+                match_waters=False,
+                property_map=self._property_map,
+            )
 
         # GRO87 reference files.
         if ref_file is not None:
             file = _os.path.splitext(ref_file)[0]
-            _IO.saveMolecules(file, system, "gro87", property_map=self._property_map)
+            _IO.saveMolecules(
+                file,
+                system,
+                "gro87",
+                match_waters=False,
+                property_map=self._property_map,
+            )
 
         # TOP file.
         if topol_file is not None:
             file = _os.path.splitext(topol_file)[0]
-            _IO.saveMolecules(file, system, "grotop", property_map=self._property_map)
+            _IO.saveMolecules(
+                file,
+                system,
+                "grotop",
+                match_waters=False,
+                property_map=self._property_map,
+            )
 
             # Write the restraint to the topology file
             if self._restraint:
