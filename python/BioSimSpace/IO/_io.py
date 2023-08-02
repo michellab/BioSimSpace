@@ -729,12 +729,14 @@ def saveMolecules(filebase, system, fileformat, property_map={}, **kwargs):
                 _os.rename(file, new_file)
                 file = [new_file]
             elif format.upper() == "GRO87":
+                system_copy = system.copy()
+                system_copy._set_water_topology("GROMACS", _property_map)
                 # Write to 3dp by default, unless greater precision is
                 # requested by the user.
                 if "precision" not in _property_map:
                     _property_map["precision"] = _SireBase.wrap(3)
                 file = _SireIO.MoleculeParser.save(
-                    system._sire_object, filebase, _property_map
+                    system_copy._sire_object, filebase, _property_map
                 )[0]
                 new_file = file.replace("gro87", "gro")
                 _os.rename(file, new_file)
