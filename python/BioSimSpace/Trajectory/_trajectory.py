@@ -157,11 +157,9 @@ def getFrame(trajectory, topology, index, system=None, property_map={}):
     is_mdanalysis = False
     pdb_file = work_dir + f"/{str(_uuid.uuid4())}.pdb"
     try:
-        pmap = property_map.copy()
-        pmap["make_whole"] = _SireBase.wrap(True)
         frame = _sire_load(
             [trajectory, topology],
-            map=pmap,
+            map=property_map,
             ignore_topology_frame=True,
             silent=True,
         ).trajectory()[index]
@@ -549,11 +547,9 @@ class Trajectory:
         if format in ["SIRE", "AUTO"]:
             try:
                 # Load the molecules.
-                pmap = self._property_map.copy()
-                pmap["make_whole"] = _SireBase.wrap(True)
                 mols = _sire_load(
                     [self._traj_file, self._top_file],
-                    map=pmap,
+                    map=self._property_map,
                     ignore_topology_frame=True,
                     silent=True,
                 )
@@ -941,68 +937,26 @@ class Trajectory:
             # Check that all of the atom indices are integers.
             if not all(type(x) is int for x in atoms):
                 raise TypeError("'atom' indices must be of type 'int'")
+            # Make sure the atom index is within range.
+            num_atoms = self.getFrames()[0].nAtoms()
+            for atom in atoms:
+                if atom < 0 or atom >= num_atoms:
+                    raise ValueError(
+                        f"Atom index {atom} out of range [0, {num_atoms})."
+                    )
 
         if self._backend == "SIRE":
-            from sire.legacy.Maths import getRMSD
-
-            # Initialise the references coordinates list.
-            ref_coords = []
-
-            # We now need to align the trajectory to the atom selection.
-            # Currently we can't do this for an atom based selection using
-            # absolute atom indices. Just align to the first molecule so that
-            # we can test.
-            aligned_traj = self._trajectory.align("molidx 0")
-
-            # Get the reference frame.
-            ref_frame = aligned_traj[frame].current()
-
-            # Sort the atom indices.
+            # Get the reference.
             if atoms is not None:
-                atoms = sorted(atoms)
+                reference = self._trajectory.current().atoms()[atoms]
             else:
-                atoms = list(range(ref_frame.num_atoms()))
+                reference = None
 
-            def get_coordinates(frame, atoms):
-                # Initialse a list to hold the coordinates.
-                coords = []
+            # Compute the RMSD.
+            rmsd = self._trajectory.rmsd(reference=reference, frame=frame)
 
-                # Loop over all atoms.
-                for atom in atoms:
-                    # Initialise the total number of atoms.
-                    num_atoms = 0
-
-                    # Loop over all molecules in the reference frame.
-                    for mol in frame:
-                        # If this is the molecule that contains the atom then
-                        # extract the coordinates.
-                        if atom < num_atoms + mol.nAtoms():
-                            # Get the coordinates for the atom.
-                            coords.append(mol[atom - num_atoms].coords())
-                            break
-                        # Update the total number of atoms.
-                        num_atoms += mol.nAtoms()
-
-                return coords
-
-            # Get the reference coordinates.
-            ref_coords = get_coordinates(ref_frame, atoms)
-
-            # Initialise the RMSD list.
-            rmsd = []
-
-            # Loop over the frames.
-            for x in range(0, self.nFrames()):
-                # Extract the trajectory frame.
-                frame = aligned_traj[x].current()
-
-                # Extract the coordinates for the current frame.
-                coords = get_coordinates(frame, atoms)
-
-                # Compute the RMSD.
-                rmsd.append(
-                    (_Units.Length.angstrom * getRMSD(coords, ref_coords)).nanometers()
-                )
+            # Convert to BioSimSpace units.
+            rmsd = [(_Units.Length.angstrom * x.value()).nanometers() for x in rmsd]
 
         elif self._backend == "MDTRAJ":
             try:
