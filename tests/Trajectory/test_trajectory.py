@@ -24,7 +24,7 @@ def traj_sire(system):
     """A trajectory object using the Sire backend."""
     return BSS.Trajectory.Trajectory(
         trajectory="tests/input/ala.trr",
-        topology="tests/input/ala.top",
+        topology="tests/input/ala.gro",
         system=system,
         backend="SIRE",
     )
@@ -154,8 +154,8 @@ def test_velocities(traj_mdanalysis):
 def test_rmsd(traj_sire, traj_mdtraj, traj_mdanalysis):
     """Make sure that the RMSD computed by all backends are comparable."""
 
-    # List of reference atoms.
-    atoms = list(range(22))
+    # List of reference atoms spanning multiple molecules.
+    atoms = [0, 10, 20, 30, 40]
 
     # Compute the RMSD for a subset of atoms using the third frame
     # as a reference.
