@@ -410,7 +410,7 @@ class AmberProtein(_protocol.Protocol):
                 prefix + "leap",
                 renumbered_molecule,
                 "pdb",
-                self._property_map,
+                property_map=self._property_map,
             )
         except Exception as e:
             raise
@@ -557,7 +557,9 @@ class AmberProtein(_protocol.Protocol):
 
         # Write the system to a PDB file.
         try:
-            _IO.saveMolecules(prefix + "leap", _molecule, "pdb", self._property_map)
+            _IO.saveMolecules(
+                prefix + "leap", _molecule, "pdb", property_map=self._property_map
+            )
         except Exception as e:
             msg = "Failed to write system to 'PDB' format."
             if _isVerbose():
@@ -1016,7 +1018,7 @@ class GAFF(_protocol.Protocol):
         # Write the system to a PDB file.
         try:
             _IO.saveMolecules(
-                prefix + "antechamber", new_mol, "pdb", self._property_map
+                prefix + "antechamber", new_mol, "pdb", property_map=self._property_map
             )
         except Exception as e:
             msg = "Failed to write system to 'PDB' format."

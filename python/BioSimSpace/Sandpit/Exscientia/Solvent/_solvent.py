@@ -954,7 +954,13 @@ def _solvate(
         # First, generate a box file corresponding to the requested geometry.
         if molecule is not None:
             # Write the molecule/system to a GRO files.
-            _IO.saveMolecules("input", molecule, "gro87", property_map=_property_map)
+            _IO.saveMolecules(
+                "input",
+                molecule,
+                "gro87",
+                match_waters=False,
+                property_map=_property_map,
+            )
 
         # We need to create a dummy input file with no molecule in it.
         else:
@@ -1122,10 +1128,18 @@ def _solvate(
             try:
                 # Write the molecule + water system to file.
                 _IO.saveMolecules(
-                    "solvated", system, "gro87", property_map=_property_map
+                    "solvated",
+                    system,
+                    "gro87",
+                    match_waters=False,
+                    property_map=_property_map,
                 )
                 _IO.saveMolecules(
-                    "solvated", system, "grotop", property_map=_property_map
+                    "solvated",
+                    system,
+                    "grotop",
+                    match_waters=False,
+                    property_map=_property_map,
                 )
             except Exception as e:
                 msg = (

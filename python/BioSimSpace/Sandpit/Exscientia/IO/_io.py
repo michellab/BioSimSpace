@@ -526,7 +526,9 @@ def readMolecules(
     return _System(system)
 
 
-def saveMolecules(filebase, system, fileformat, property_map={}, **kwargs):
+def saveMolecules(
+    filebase, system, fileformat, match_water=True, property_map={}, **kwargs
+):
     """
     Save a molecular system to file.
 
@@ -543,6 +545,12 @@ def saveMolecules(filebase, system, fileformat, property_map={}, **kwargs):
 
     fileformat : str, [str]
         The file format (or formats) to save to.
+
+    match_water : bool
+        Whether to update the naming of water molecules to match the expected
+        convention for the chosen file format. This is useful when a system
+        is being saved to a different file format to that from which it was
+        loaded.
 
     property_map : dict
         A dictionary that maps system "properties" to their user
@@ -633,6 +641,10 @@ def saveMolecules(filebase, system, fileformat, property_map={}, **kwargs):
     if not all(isinstance(x, str) for x in fileformat):
         raise TypeError("'fileformat' must be a 'str' or a 'list' of 'str' types.")
 
+    # Validate the match_water flag.
+    if not isinstance(match_water, bool):
+        raise TypeError("'match_water' must be of type 'bool'.")
+
     # Make a list of the matched file formats.
     formats = []
 
@@ -714,14 +726,20 @@ def saveMolecules(filebase, system, fileformat, property_map={}, **kwargs):
             # and save GROMACS files with an extension such that they can be run
             # directly by GROMACS without needing to be renamed.
             if format.upper() == "PRM7":
-                system_copy = system.copy()
-                system_copy._set_water_topology("AMBER", _property_map)
+                if match_water:
+                    system_copy = system.copy()
+                    system_copy._set_water_topology("AMBER", _property_map)
+                else:
+                    system_copy = system
                 file = _SireIO.MoleculeParser.save(
                     system_copy._sire_object, filebase, _property_map
                 )
             elif format.upper() == "GROTOP":
-                system_copy = system.copy()
-                system_copy._set_water_topology("GROMACS", _property_map)
+                if match_water:
+                    system_copy = system.copy()
+                    system_copy._set_water_topology("GROMACS", _property_map)
+                else:
+                    system_copy = system
                 file = _SireIO.MoleculeParser.save(
                     system_copy._sire_object, filebase, _property_map
                 )[0]
@@ -729,12 +747,17 @@ def saveMolecules(filebase, system, fileformat, property_map={}, **kwargs):
                 _os.rename(file, new_file)
                 file = [new_file]
             elif format.upper() == "GRO87":
+                if match_water:
+                    system_copy = system.copy()
+                    system_copy._set_water_topology("GROMACS", _property_map)
+                else:
+                    system_copy = system
                 # Write to 3dp by default, unless greater precision is
                 # requested by the user.
                 if "precision" not in _property_map:
                     _property_map["precision"] = _SireBase.wrap(3)
                 file = _SireIO.MoleculeParser.save(
-                    system._sire_object, filebase, _property_map
+                    system_copy._sire_object, filebase, _property_map
                 )[0]
                 new_file = file.replace("gro87", "gro")
                 _os.rename(file, new_file)

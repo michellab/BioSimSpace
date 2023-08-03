@@ -212,7 +212,9 @@ class Amber(_process.Process):
         # PRM file (topology).
         try:
             file = _os.path.splitext(self._top_file)[0]
-            _IO.saveMolecules(file, system, "prm7", property_map=self._property_map)
+            _IO.saveMolecules(
+                file, system, "prm7", match_water=False, property_map=self._property_map
+            )
         except Exception as e:
             msg = "Failed to write system to 'PRM7' format."
             if _isVerbose():
