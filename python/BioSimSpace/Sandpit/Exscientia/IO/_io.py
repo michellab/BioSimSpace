@@ -687,6 +687,7 @@ def saveMolecules(
             system,
             format,
             filebase,
+            match_water=match_water,
             property_map=property_map,
             **kwargs,
         )
@@ -728,7 +729,7 @@ def saveMolecules(
             if format.upper() == "PRM7":
                 if match_water:
                     system_copy = system.copy()
-                    system_copy._set_water_topology("AMBER", _property_map)
+                    system_copy._set_water_topology("AMBER", property_map=_property_map)
                 else:
                     system_copy = system
                 file = _SireIO.MoleculeParser.save(
@@ -737,9 +738,14 @@ def saveMolecules(
             elif format.upper() == "GROTOP":
                 if match_water:
                     system_copy = system.copy()
-                    system_copy._set_water_topology("GROMACS", _property_map)
+                    system_copy._set_water_topology(
+                        "GROMACS", property_map=_property_map
+                    )
                 else:
-                    system_copy = system
+                    system_copy = system.copy()
+                    system_copy._sire_object.setProperty(
+                        "skip_water", _SireBase.wrap(True)
+                    )
                 file = _SireIO.MoleculeParser.save(
                     system_copy._sire_object, filebase, _property_map
                 )[0]
@@ -749,7 +755,9 @@ def saveMolecules(
             elif format.upper() == "GRO87":
                 if match_water:
                     system_copy = system.copy()
-                    system_copy._set_water_topology("GROMACS", _property_map)
+                    system_copy._set_water_topology(
+                        "GROMACS", property_map=_property_map
+                    )
                 else:
                     system_copy = system
                 # Write to 3dp by default, unless greater precision is
@@ -770,7 +778,7 @@ def saveMolecules(
             files += file
 
             # If this is a new file, then add it to the cache.
-            _update_cache(system, format, file[0], **kwargs)
+            _update_cache(system, format, file[0], match_water=match_water, **kwargs)
 
         except Exception as e:
             msg = "Failed to save system to format: '%s'" % format

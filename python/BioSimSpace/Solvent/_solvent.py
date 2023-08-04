@@ -987,15 +987,20 @@ def _solvate(
         original_waters = None
 
         if isinstance(molecule, _System):
+            # Store the existing water molecules.
+            original_waters = molecule.getWaterMolecules()
+
             # Reformat all of the water molecules so that they match the
-            # expected GROMACS topology template.
+            # expected GROMACS topology template, but flagged as crystal.
             molecule._set_water_topology("GROMACS", is_crystal=True)
+
+            # Extract the crystal waters.
+            crystal_waters = molecule.getWaterMolecules()
 
             # Make sure the water molecules are at the end of the topology
             # since gmx genion requires that they are contiguous.
-            original_waters = molecule.getWaterMolecules()
             molecule.removeWaterMolecules()
-            molecule = molecule + original_waters
+            molecule = molecule + crystal_waters
 
     # Create the working directory.
     work_dir = _Utils.WorkDir(work_dir)
@@ -1014,7 +1019,7 @@ def _solvate(
                 "input",
                 molecule,
                 "gro87",
-                match_waters=False,
+                match_water=False,
                 property_map=_property_map,
             )
 
@@ -1187,14 +1192,14 @@ def _solvate(
                     "solvated",
                     system,
                     "gro87",
-                    match_waters=False,
+                    match_water=False,
                     property_map=_property_map,
                 )
                 _IO.saveMolecules(
                     "solvated",
                     system,
                     "grotop",
-                    match_waters=False,
+                    match_water=False,
                     property_map=_property_map,
                 )
             except Exception as e:
@@ -1401,9 +1406,22 @@ def _solvate(
                     if molecule is not None:
                         if isinstance(molecule, _System):
                             # Preserve the original water naming.
-                            if match_waters is False:
+                            if match_water is False:
+                                # Flag each original water as non searchable.
+                                flagged_waters = []
+                                for water in original_waters:
+                                    water._sire_object = (
+                                        water._sire_object.edit()
+                                        .setProperty(
+                                            "is_non_searchable_water",
+                                            _SireBase.wrap(True),
+                                        )
+                                        .molecule()
+                                        .commit()
+                                    )
+                                    flagged_waters.append(water)
                                 molecule.removeWaterMolecules()
-                                system = molecule + original_waters + water_ions
+                                system = molecule + flagged_waters + water_ions
                             # Update crystal waters to match the standard water topology.
                             else:
                                 molecule._set_water_topology("GROMACS")

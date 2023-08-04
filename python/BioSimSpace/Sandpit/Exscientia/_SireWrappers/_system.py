@@ -2268,7 +2268,7 @@ class System(_SireWrapper):
         for idx in range(0, self.nMolecules()):
             self._molecule_index[self._sire_object[_SireMol.MolIdx(idx)].number()] = idx
 
-    def _set_water_topology(self, format, property_map={}):
+    def _set_water_topology(self, format, is_crystal=False, property_map={}):
         """
         Internal function to swap the water topology to AMBER or GROMACS format.
 
@@ -2277,6 +2277,9 @@ class System(_SireWrapper):
 
         format : string
             The format to convert to: either "AMBER" or "GROMACS".
+
+        is_crystal : bool
+            Whether to label as rystal waters.
 
         property_map : dict
            A dictionary that maps system "properties" to their user defined
@@ -2288,6 +2291,9 @@ class System(_SireWrapper):
 
         if not isinstance(format, str):
             raise TypeError("'format' must be of type 'str'")
+
+        if not isinstance(is_crystal, bool):
+            raise TypeError("'is_crystal' must be of type 'bool'")
 
         if not isinstance(property_map, dict):
             raise TypeError("'property_map' must be of type 'dict'")
@@ -2314,7 +2320,7 @@ class System(_SireWrapper):
                     return
 
             elif format == "GROMACS":
-                if waters[0].isGromacsWater():
+                if not is_crystal and waters[0].isGromacsWater():
                     return
 
             # There will be a "water_model" system property if this object was
@@ -2340,7 +2346,7 @@ class System(_SireWrapper):
                 )
             else:
                 self._sire_object = _SireIO.setGromacsWater(
-                    self._sire_object, water_model, property_map
+                    self._sire_object, water_model, property_map, is_crystal
                 )
 
     def _set_atom_index_tally(self):
