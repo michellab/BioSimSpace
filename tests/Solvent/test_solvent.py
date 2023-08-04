@@ -11,7 +11,9 @@ from tests.conftest import has_gromacs
 @pytest.fixture(scope="module")
 def system():
     return BSS.IO.readMolecules(
-        BSS.IO.expand(BSS.tutorialUrl(), ["ala_xtal_water.gro", "ala_xtal_water.top"])
+        BSS.IO.expand(
+            BSS.tutorialUrl(), ["kigaki_xtal_water.gro", "kigaki_xtal_water.top"]
+        )
     )
 
 
@@ -30,7 +32,7 @@ def test_crystal_water(system, match_water):
         num_matches = len(system.search("resname COF").molecules())
 
     # Create the box parameters.
-    box, angles = BSS.Box.cubic(3 * BSS.Units.Length.nanometer)
+    box, angles = BSS.Box.cubic(5.5 * BSS.Units.Length.nanometer)
 
     # Create the solvated system.
     solvated = BSS.Solvent.tip3p(system, box, angles, match_water=match_water)
