@@ -1015,6 +1015,7 @@ def _solvate(
         # First, generate a box file corresponding to the requested geometry.
         if molecule is not None:
             # Write the molecule/system to a GRO files.
+            _property_map["crystal_water"] = "XTL"
             _IO.saveMolecules(
                 "input",
                 molecule,

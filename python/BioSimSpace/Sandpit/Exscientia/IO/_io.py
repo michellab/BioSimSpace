@@ -742,10 +742,8 @@ def saveMolecules(
                         "GROMACS", property_map=_property_map
                     )
                 else:
-                    system_copy = system.copy()
-                    system_copy._sire_object.setProperty(
-                        "skip_water", _SireBase.wrap(True)
-                    )
+                    system_copy = system
+                    _property_map["skip_water"] = _SireBase.wrap(True)
                 file = _SireIO.MoleculeParser.save(
                     system_copy._sire_object, filebase, _property_map
                 )[0]
@@ -760,6 +758,7 @@ def saveMolecules(
                     )
                 else:
                     system_copy = system
+                    _property_map["skip_water"] = _SireBase.wrap(True)
                 # Write to 3dp by default, unless greater precision is
                 # requested by the user.
                 if "precision" not in _property_map:
