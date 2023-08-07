@@ -30,6 +30,7 @@ from .._Utils import _try_import, _have_imported
 
 _mdanalysis = _try_import("MDAnalysis")
 _mdtraj = _try_import("mdtraj")
+
 import copy as _copy
 import logging as _logging
 import os as _os
@@ -53,6 +54,9 @@ from ..Types import Time as _Time
 from .. import IO as _IO
 from .. import Units as _Units
 from .. import _Utils
+
+if _have_imported(_mdanalysis):
+    _mdanalysis.stop_logging()
 
 
 def backends():
