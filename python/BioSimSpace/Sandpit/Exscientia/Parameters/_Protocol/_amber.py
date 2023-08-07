@@ -124,6 +124,7 @@ class AmberProtein(_protocol.Protocol):
         water_model=None,
         leap_commands=None,
         bonds=None,
+        ensure_compatible=True,
         property_map={},
     ):
         """
@@ -164,6 +165,15 @@ class AmberProtein(_protocol.Protocol):
             should be bonded. This is useful when the PDB CONECT record is
             incomplete.
 
+        ensure_compatible : bool
+            Whether to ensure that the topology of the parameterised molecule is
+            compatible with that of the original molecule. An exception will be
+            raised if this isn't the case, e.g. if atoms have been added. Set
+            this to False is parameterising lone oxygen atoms corresponding to
+            structural (crystal) water molecules. When True, the parameterised
+            molecule will preserve the topology of the original molecule, e.g.
+            the original atom and residue names will be kept.
+
         property_map : dict
             A dictionary that maps system "properties" to their user defined
             values. This allows the user to refer to properties with their
@@ -171,7 +181,11 @@ class AmberProtein(_protocol.Protocol):
         """
 
         # Call the base class constructor.
-        super().__init__(forcefield=forcefield, property_map=property_map)
+        super().__init__(
+            forcefield=forcefield,
+            ensure_compatible=ensure_compatible,
+            property_map=property_map,
+        )
 
         # Validate the pdb2gmx compatibility flag.
         if not isinstance(pdb2gmx, bool):
@@ -356,9 +370,15 @@ class AmberProtein(_protocol.Protocol):
             new_mol._sire_object = edit_mol.commit()
 
         else:
-            new_mol.makeCompatibleWith(
-                par_mol, property_map=self._property_map, overwrite=True, verbose=False
-            )
+            if self._ensure_compatible:
+                new_mol.makeCompatibleWith(
+                    par_mol,
+                    property_map=self._property_map,
+                    overwrite=True,
+                    verbose=False,
+                )
+            else:
+                new_mol = par_mol
 
         # Record the forcefield used to parameterise the molecule.
         new_mol._forcefield = self._forcefield
@@ -503,13 +523,14 @@ class AmberProtein(_protocol.Protocol):
             prefix + "leap.crd"
         ):
             # Check the output of tLEaP for missing atoms.
-            if _has_missing_atoms(prefix + "leap.out"):
-                raise _ParameterisationError(
-                    "tLEaP added missing atoms. The topology is now "
-                    "inconsistent with the original molecule. Please "
-                    "make sure that your initial molecule has a "
-                    "complete topology."
-                )
+            if self._ensure_compatible:
+                if _has_missing_atoms(prefix + "leap.out"):
+                    raise _ParameterisationError(
+                        "tLEaP added missing atoms. The topology is now "
+                        "inconsistent with the original molecule. Please "
+                        "make sure that your initial molecule has a "
+                        "complete topology."
+                    )
             return ["leap.top", "leap.crd"]
         else:
             raise _ParameterisationError("tLEaP failed!")
@@ -825,7 +846,14 @@ class GAFF(_protocol.Protocol):
     # A list of supported charge methods.
     _charge_methods = ["RESP", "CM2", "MUL", "BCC", "ESP", "GAS"]
 
-    def __init__(self, version, charge_method="BCC", net_charge=None, property_map={}):
+    def __init__(
+        self,
+        version,
+        charge_method="BCC",
+        net_charge=None,
+        ensure_compatible=True,
+        property_map={},
+    ):
         """
         Constructor.
 
@@ -841,6 +869,17 @@ class GAFF(_protocol.Protocol):
 
         net_charge : int
             The net charge on the molecule.
+
+        ensure_compatible : bool
+            Whether to ensure that the topology of the parameterised molecule is
+            compatible with that of the original molecule. An exception will be
+            raised if this isn't the case, e.g. if atoms have been added. When
+            True, the parameterised molecule will preserve the topology of the
+            original molecule, e.g. the original atom and residue names will be
+            kept.
+
+            property_map : dict
+            A dictionary that maps system "properties" to their user defined
 
         property_map : dict
             A dictionary that maps system "properties" to their user defined
@@ -895,7 +934,11 @@ class GAFF(_protocol.Protocol):
         self._charge_method = charge_method
 
         # Call the base class constructor.
-        super().__init__(forcefield="gaff", property_map=property_map)
+        super().__init__(
+            forcefield="gaff",
+            ensure_compatible=ensure_compatible,
+            property_map=property_map,
+        )
 
     def run(self, molecule, work_dir=None, queue=None):
         """
@@ -1131,13 +1174,14 @@ class GAFF(_protocol.Protocol):
                     prefix + "leap.crd"
                 ):
                     # Check the output of tLEaP for missing atoms.
-                    if _has_missing_atoms(prefix + "leap.out"):
-                        raise _ParameterisationError(
-                            "tLEaP added missing atoms. The topology is now "
-                            "inconsistent with the original molecule. Please "
-                            "make sure that your initial molecule has a "
-                            "complete topology."
-                        )
+                    if self._ensure_compatible:
+                        if _has_missing_atoms(prefix + "leap.out"):
+                            raise _ParameterisationError(
+                                "tLEaP added missing atoms. The topology is now "
+                                "inconsistent with the original molecule. Please "
+                                "make sure that your initial molecule has a "
+                                "complete topology."
+                            )
 
                     # Load the parameterised molecule. (This could be a system of molecules.)
                     try:
@@ -1180,12 +1224,15 @@ class GAFF(_protocol.Protocol):
                         new_mol._sire_object = edit_mol.commit()
 
                     else:
-                        new_mol.makeCompatibleWith(
-                            par_mol,
-                            property_map=self._property_map,
-                            overwrite=True,
-                            verbose=False,
-                        )
+                        if self._ensure_compatible:
+                            new_mol.makeCompatibleWith(
+                                par_mol,
+                                property_map=self._property_map,
+                                overwrite=True,
+                                verbose=False,
+                            )
+                        else:
+                            new_mol = par_mol
 
                     # Record the forcefield used to parameterise the molecule.
                     new_mol._forcefield = ff
