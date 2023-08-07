@@ -165,6 +165,5 @@ def test_rmsd(traj_sire, traj_mdtraj, traj_mdanalysis):
 
     # Make sure the values are approximately the same.
     for v0, v1, v2 in zip(rmsd0, rmsd1, rmsd2):
-        print(v0, v1, v2)
         assert v0.value() == pytest.approx(v1.value(), abs=1e-2)
         assert v0.value() == pytest.approx(v2.value(), abs=1e-2)
