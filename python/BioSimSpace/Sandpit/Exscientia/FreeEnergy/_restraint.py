@@ -242,10 +242,10 @@ class Restraint:
         elif restraint_type.lower() == "multiple_distance":
             self._restraint_type = "multiple_distance"
 
-            if not restraint_dict.keys() == [
+            if not set(restraint_dict.keys()) == {
                 "distance_restraints",
                 "permanent_distance_restraint",
-            ]:
+            }:
                 raise ValueError(
                     "restraint_dict must have keys 'distance_restraints' and 'permanent_distance_restraint'"
                 )
@@ -262,11 +262,21 @@ class Restraint:
                 restraint_dict["permanent_distance_restraint"]
             ]
             for single_restraint_dict in all_restraints:
+                if not set(single_restraint_dict.keys()) == {
+                    "r1",
+                    "l1",
+                    "r0",
+                    "r_fb",
+                    "kr",
+                }:
+                    raise ValueError(
+                        "distance_restraint_dict must have keys 'r1', 'l1', 'r0', 'r_fb', 'kr' "
+                        f"but has keys {list(single_restraint_dict.keys())}"
+                    )
+
                 # Check that the atoms are of type BioSimSpace._SireWrappers.Atom
                 for key in ["r1", "l1"]:
-                    if not isinstance(
-                        single_restraint_dict["anchor_points"][key], _Atom
-                    ):
+                    if not isinstance(single_restraint_dict[key], _Atom):
                         raise ValueError(
                             f"distance_restraint_dict['{key}'] "
                             "must be of type 'BioSimSpace._SireWrappers.Atom'"
@@ -544,23 +554,28 @@ class Restraint:
             r_fb = restr["r_fb"] / _angstrom
 
             restr_string += f"({r1}, {l1}): ({r0}, {kr}, {r_fb}), "
+            return restr_string
 
         standard_restr_string = "distance restraints dictionary = {"
 
         for single_restraint in self._restraint_dict["distance_restraints"]:
-            _add_restr_to_str(single_restraint, standard_restr_string)
+            standard_restr_string = _add_restr_to_str(
+                single_restraint, standard_restr_string
+            )
 
         if perturbation_type == "restraint":
             # In this case, we want all restraints to be switched on, even "permanent" ones
-            _add_restr_to_str(
-                self._restraint_dict["permanent_restraint"], standard_restr_string
+            standard_restr_string = _add_restr_to_str(
+                self._restraint_dict["permanent_distance_restraint"],
+                standard_restr_string,
             )
             return standard_restr_string[:-2] + "}"
         else:  # Other perturbation types, we want the permanent restraints to be constantly on
             standard_restr_string = standard_restr_string[:-2] + "}\n"
             permanent_restr_string = "permanent distance restraints dictionary = {"
-            _add_restr_to_str(
-                self._restraint_dict["permanent_restraint"], permanent_restr_string
+            permanent_restr_string = _add_restr_to_str(
+                self._restraint_dict["permanent_distance_restraint"],
+                permanent_restr_string,
             )
             return standard_restr_string + permanent_restr_string[:-2] + "}"
 
@@ -591,12 +606,14 @@ class Restraint:
 
         engine = engine.strip().lower()
         try:
-            return to_str_functions[self._restraint_type][engine](perturbation_type)
+            str_fn = to_str_functions[self._restraint_type][engine]
         except KeyError:
             raise NotImplementedError(
                 f"Restraint type {self._restraint_type} not implemented "
                 f"yet for {engine}."
             )
+
+        return str_fn(perturbation_type)
 
     def getCorrection(self, method="analytical"):
         """
@@ -821,7 +838,7 @@ class Restraint:
 
         if self._restraint_type == "multiple_distance":
             if method == "analytical":
-                raise ValueError(
+                raise NotImplementedError(
                     "The analytical correction is not supported for multiple distance restraints."
                 )
 
@@ -885,9 +902,12 @@ class Restraint:
                     )  # Dist. which gives restraint energy = 8 RT
                     r_min = max(0, r0 - dist_at_8RT)
                     r_max = r0 + dist_at_8RT
-                    integrand = lambda r: numerical_distance_integrand(r, r0, r_fb, kr)
+                    integrand = lambda r: _numerical_distance_integrand(r, r0, r_fb, kr)
                     z_r = _integrate.quad(integrand, r_min, r_max)[0]
                     dg = -R * T * _np.log(v0 / (4 * _np.pi * z_r))
+
+                    # Attatch unit of kcal/mol
+                    dg *= _kcal_per_mol
 
                     return dg
 

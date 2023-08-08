@@ -2,6 +2,11 @@ import pytest
 
 import numpy as np
 
+from sire.legacy.Units import angstrom3 as _Sire_angstrom3
+from sire.legacy.Units import k_boltz as _k_boltz
+from sire.legacy.Units import meter3 as _Sire_meter3
+from sire.legacy.Units import mole as _Sire_mole
+
 import BioSimSpace.Sandpit.Exscientia as BSS
 from BioSimSpace.Sandpit.Exscientia.Align import decouple
 from BioSimSpace.Sandpit.Exscientia.FreeEnergy import Restraint
@@ -97,7 +102,7 @@ def test_analytical_correction_boresch(boresch_restraint):
     assert isinstance(boresch_restraint, Restraint)
 
 
-test_force_constants = [
+test_force_constants_boresch = [
     ({"kr": 0}, ValueError),
     ({"kthetaA": 0}, ValueError),
     ({"kthetaB": 0}, ValueError),
@@ -112,7 +117,7 @@ test_force_constants = [
 ]
 
 
-@pytest.mark.parametrize("force_constants, expected", test_force_constants)
+@pytest.mark.parametrize("force_constants, expected", test_force_constants_boresch)
 def test_input_force_constants_boresch(
     boresch_restraint_component, force_constants, expected
 ):
@@ -211,3 +216,248 @@ class TestSomdOutputBoresch:
         assert equil_vals["phiA0"] == 2.59
         assert equil_vals["phiB0"] == -1.20
         assert equil_vals["phiC0"] == 2.63
+
+
+################### Test Multiple Distance Restraint ###################
+
+
+@pytest.fixture(scope="session")
+def mdr_restraint_component():
+    """
+    Generate a the components required to create a
+    multiple distance restraints restraint object.
+    """
+    ligand = BSS.IO.readMolecules(
+        [f"{url}/ligand01.prm7.bz2", f"{url}/ligand01.rst7.bz2"]
+    ).getMolecule(0)
+    decoupled_ligand = decouple(ligand)
+
+    protein = BSS.IO.readMolecules(
+        [f"{url}/1jr5.crd.bz2", f"{url}/1jr5.top.bz2"]
+    ).getMolecule(0)
+
+    system = (protein + decoupled_ligand).toSystem()
+
+    # Create three distance restraints
+    restraint_dict = {
+        "distance_restraints": [
+            {
+                "l1": decoupled_ligand.getAtoms()[0],
+                "r1": protein.getAtoms()[0],
+                "r0": 3 * angstrom,
+                "kr": 10 * kcal_per_mol / angstrom**2,
+                "r_fb": 1 * angstrom,
+            },
+            {
+                "l1": decoupled_ligand.getAtoms()[1],
+                "r1": protein.getAtoms()[1],
+                "r0": 3 * angstrom,
+                "kr": 10 * kcal_per_mol / angstrom**2,
+                "r_fb": 1 * angstrom,
+            },
+        ],
+        "permanent_distance_restraint": {
+            "l1": decoupled_ligand.getAtoms()[2],
+            "r1": protein.getAtoms()[2],
+            "r0": 3 * angstrom,
+            "kr": 10 * kcal_per_mol / angstrom**2,
+            "r_fb": 1 * angstrom,
+        },
+    }
+
+    return system, restraint_dict
+
+
+@pytest.fixture(scope="session")
+def mdr_restraint(mdr_restraint_component):
+    """Generate the multiple distance restraints restraint object."""
+    system, restraint_dict = mdr_restraint_component
+
+    restraint = Restraint(
+        system, restraint_dict, 300 * kelvin, restraint_type="multiple_distance"
+    )
+    return restraint
+
+
+@pytest.fixture(scope="session")
+def mdr_restraint_component_fb_r0():
+    """
+    Generate a the components required to create a
+    multiple distance restraints restraint object with
+    the values for r0 and r_fb set to 0 for the permanent restraint.
+    """
+    ligand = BSS.IO.readMolecules(
+        [f"{url}/ligand01.prm7.bz2", f"{url}/ligand01.rst7.bz2"]
+    ).getMolecule(0)
+    decoupled_ligand = decouple(ligand)
+
+    protein = BSS.IO.readMolecules(
+        [f"{url}/1jr5.crd.bz2", f"{url}/1jr5.top.bz2"]
+    ).getMolecule(0)
+
+    system = (protein + decoupled_ligand).toSystem()
+
+    # Create three distance restraints
+    restraint_dict = {
+        "distance_restraints": [
+            {
+                "l1": decoupled_ligand.getAtoms()[0],
+                "r1": protein.getAtoms()[0],
+                "r0": 3 * angstrom,
+                "kr": 10 * kcal_per_mol / angstrom**2,
+                "r_fb": 1 * angstrom,
+            },
+            {
+                "l1": decoupled_ligand.getAtoms()[1],
+                "r1": protein.getAtoms()[1],
+                "r0": 3 * angstrom,
+                "kr": 10 * kcal_per_mol / angstrom**2,
+                "r_fb": 1 * angstrom,
+            },
+        ],
+        "permanent_distance_restraint": {
+            "l1": decoupled_ligand.getAtoms()[2],
+            "r1": protein.getAtoms()[2],
+            "r0": 0 * angstrom,
+            "kr": 10 * kcal_per_mol / angstrom**2,
+            "r_fb": 0 * angstrom,
+        },
+    }
+
+    return system, restraint_dict
+
+
+@pytest.fixture(scope="session")
+def mdr_restraint_fb_r0(mdr_restraint_component_fb_r0):
+    """Generate the multiple distance restraints restraint object with
+    the values for r0 and r_fb set to 0 for the permanent restraint."""
+    system, restraint_dict = mdr_restraint_component_fb_r0
+
+    restraint = Restraint(
+        system, restraint_dict, 300 * kelvin, restraint_type="multiple_distance"
+    )
+    return restraint
+
+
+def test_sanity_mdr(mdr_restraint):
+    """Sanity check."""
+    assert isinstance(mdr_restraint, Restraint)
+
+
+def test_numerical_correction_mdr(mdr_restraint):
+    dG = mdr_restraint.getCorrection(method="numerical") / kcal_per_mol
+    assert np.isclose(-0.991, dG, atol=0.001)
+
+
+def test_numerical_correction_mdr_fb0(mdr_restraint_fb_r0):
+    """
+    Check that the numerical multiple distance restraints correction is
+    consistent with the analytical result when the flat-bottom radius is 0
+    and r0 = 0.
+    """
+    # Get the numerical correction
+    dG_numerical = mdr_restraint_fb_r0.getCorrection(method="numerical") / kcal_per_mol
+
+    # Calculate the analytical correction
+    # Constants
+    v0 = (
+        ((_Sire_meter3 / 1000) / _Sire_mole) / _Sire_angstrom3
+    ).value()  # standard state volume in A^3
+    R = (
+        _k_boltz.value() * kcal_per_mol / kelvin
+    ).value()  # molar gas constant in kcal mol-1 K-1
+
+    T = mdr_restraint_fb_r0.T / kelvin  # Temperature in Kelvin
+
+    kr = mdr_restraint_fb_r0._restraint_dict["permanent_distance_restraint"]["kr"] / (
+        kcal_per_mol / angstrom**2
+    )
+    dG_analytical = (
+        R * T * np.log((2 * np.pi * R * T / kr) ** (3 / 2) / v0)
+    )  # kcal mol-1
+
+    assert np.isclose(dG_analytical, dG_numerical, atol=0.001)
+
+
+def test_analytical_correction_mdr(mdr_restraint):
+    with pytest.raises(NotImplementedError):
+        dG = mdr_restraint.getCorrection(method="analytical") / kcal_per_mol
+
+
+def test_gromacs_output_mdr(mdr_restraint):
+    """Test the Gromacs output."""
+    with pytest.raises(NotImplementedError):
+        gromacs_string = mdr_restraint.toString(engine="Gromacs")
+
+
+class TestSomdOutputMDR:
+    @staticmethod
+    @pytest.fixture(scope="class")
+    def getRestraintSomd(mdr_restraint):
+        """The standard form of the restraints for any perturbation type other than `restraint`."""
+        mdr_str = (
+            mdr_restraint.toString(engine="SOMD", perturbation_type="release_restraint")
+            .split("\n")[0]
+            .split("=")[1]
+            .strip()
+        )
+        permanent_mdr_str = (
+            mdr_restraint.toString(engine="SOMD", perturbation_type="release_restraint")
+            .split("\n")[1]
+            .split("=")[1]
+            .strip()
+        )
+
+        mdr_dict = eval(mdr_str)
+        permanent_mdr_str = eval(permanent_mdr_str)
+        return mdr_dict, permanent_mdr_str
+
+    @staticmethod
+    @pytest.fixture(scope="class")
+    def getRestraintSomdRestraintPert(mdr_restraint):
+        mdr_str = (
+            mdr_restraint.toString(engine="SOMD", perturbation_type="restraint")
+            .split("=")[1]
+            .strip()
+        )
+        mdr_dict = eval(mdr_str)
+        return mdr_dict
+
+    def test_sanity(self, getRestraintSomd):
+        "Sanity check"
+        mdr_dict_std = getRestraintSomd[0]
+        mdr_dict_permanent = getRestraintSomd[1]
+        assert isinstance(mdr_dict_std, dict)
+        assert isinstance(mdr_dict_permanent, dict)
+
+    def test_dict_vals(self, getRestraintSomd):
+        std_mdr_dict = getRestraintSomd[0]
+        expected_anchors_std = [{0, 1495}, {1, 1496}]
+        permanent_mdr_dict = getRestraintSomd[1]
+        expected_anchors_permanent = [{2, 1497}]
+
+        # Test std restraints
+        for i, restraint in enumerate(std_mdr_dict):
+            assert set(restraint) == expected_anchors_std[i]
+            assert std_mdr_dict[restraint][0] == 3.0  # r0
+            # kr is halved because of the definition of the force constant in SOMD
+            assert std_mdr_dict[restraint][1] == 5.0  # kr
+            assert std_mdr_dict[restraint][2] == 1.0  # r_fb
+
+        # Test permanent restraint
+        for i, restraint in enumerate(permanent_mdr_dict):
+            assert set(restraint) == expected_anchors_permanent[i]
+            assert permanent_mdr_dict[restraint][0] == 3.0  # r0
+            # kr is halved because of the definition of the force constant in SOMD
+            assert permanent_mdr_dict[restraint][1] == 5.0  # kr
+            assert permanent_mdr_dict[restraint][2] == 1.0  # r_fb
+
+    def test_dict_vals_restraint_pert(self, getRestraintSomdRestraintPert):
+        expected_anchors = [{0, 1495}, {1, 1496}, {2, 1497}]
+
+        for i, restraint in enumerate(getRestraintSomdRestraintPert):
+            assert set(restraint) == expected_anchors[i]
+            assert getRestraintSomdRestraintPert[restraint][0] == 3.0  # r0
+            # kr is halved because of the definition of the force constant in SOMD
+            assert getRestraintSomdRestraintPert[restraint][1] == 5.0  # kr
+            assert getRestraintSomdRestraintPert[restraint][2] == 1.0  # r_fb
