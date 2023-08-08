@@ -394,7 +394,15 @@ class OpenForceField(_protocol.Protocol):
                     verbose=False,
                 )
             else:
-                new_mol = par_mol
+                try:
+                    new_mol.makeCompatibleWith(
+                        par_mol,
+                        property_map=self._property_map,
+                        overwrite=True,
+                        verbose=False,
+                    )
+                except:
+                    new_mol = par_mol
 
         # Record the forcefield used to parameterise the molecule.
         new_mol._forcefield = self._forcefield
