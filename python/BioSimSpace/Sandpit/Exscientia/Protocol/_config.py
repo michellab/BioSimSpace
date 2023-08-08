@@ -626,6 +626,11 @@ class ConfigFactory:
             "charge_soft" : Perturb all charging soft atom LJ terms (i.e. 0.0->value).
             "restraint" : Perturb the receptor-ligand restraint strength by linearly
                           scaling the force constants (0.0->value).
+            "release_restraint" : Used with multiple distance restraints to release all
+                                  restraints other than the "permanent" one when the ligand
+                                  is fully decoupled. Note that lambda = 0.0 is the fully
+                                  released state, and lambda = 1.0 is the fully restrained
+                                  state (i.e. 0.0 -> value).
 
         Returns
         -------
@@ -812,10 +817,33 @@ class ConfigFactory:
 
         # Restraint
         if restraint:
-            total_lines.append("use boresch restraints = True")
-            total_lines.append(restraint.toString(engine="SOMD"))
-            # If we are turning on the restraint, need to specify this in the config file
-            if perturbation_type == "restraint":
+            # Handle Boresch restraints.
+            if restraint._restraint_type == "boresch":
+                if perturbation_type == "release_restraint":
+                    raise _IncompatibleError(
+                        "SOMD does not support releasing Boresch restraints, only "
+                        "multiple distance restraints."
+                    )
+                total_lines.append("use boresch restraints = True")
+                total_lines.append(restraint.toString(engine="SOMD"))
+
+            # Handle multiple distance restraints.
+            elif restraint._restraint_type == "multiple_distance":
+                total_lines.append("use distance restraints = True")
+                if perturbation_type != "restraint":
+                    # In this case, we want to ensure that the "permanent" distance restraint is active
+                    total_lines.append("use permanent distance restraints = True")
+                total_lines.append(
+                    restraint.toString(
+                        engine="SOMD", perturbation_type=perturbation_type
+                    )
+                )
+
+            # If we are turning on the restraint, need to specify this in the config file.
+            if (
+                perturbation_type == "restraint"
+                or perturbation_type == "release_restraint"
+            ):
                 total_lines.append("turn on receptor-ligand restraints mode = True")
 
         return total_lines

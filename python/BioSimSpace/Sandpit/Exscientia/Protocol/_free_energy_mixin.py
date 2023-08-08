@@ -50,6 +50,11 @@ class _FreeEnergyMixin(_Protocol):
             "charge_soft" : Perturb all charging soft atom LJ terms (i.e. 0.0->value).
             "restraint" : Perturb the receptor-ligand restraint strength by linearly
                         scaling the force constants (0.0->value).
+            "release_restraint" : Used with multiple distance restraints to release all
+                                  restraints other than the "permanent" one when the ligand
+                                  is fully decoupled. Note that lambda = 0.0 is the fully
+                                  released state, and lambda = 1.0 is the fully restrained
+                                  state (i.e. 0.0 -> value).
 
              Currently perturubation_type != "full" is only supported by
              BioSimSpace.Process.Somd.
@@ -114,6 +119,12 @@ class _FreeEnergyMixin(_Protocol):
             "charge_soft" : Perturb all charging soft atom LJ terms (i.e. 0.0->value).
             "restraint" : Perturb the receptor-ligand restraint strength by linearly
                         scaling the force constants (0.0->value).
+            "release_restraint" : Used with multiple distance restraints to release all
+                                  restraints other than the "permanent" one when the ligand
+                                  is fully decoupled. Note that lambda = 0.0 is the fully
+                                  released state, and lambda = 1.0 is the fully restrained
+                                  state (i.e. 0.0 -> value).
+
         """
         if type(perturbation_type) is not str:
             raise TypeError("'perturbation_type' must be of type 'str'")
@@ -129,6 +140,7 @@ class _FreeEnergyMixin(_Protocol):
             "grow_soft",
             "charge_soft",
             "restraint",
+            "release_restraint",
         ]
 
         if perturbation_type not in allowed_perturbation_types:
