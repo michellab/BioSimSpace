@@ -13,9 +13,11 @@ from BioSimSpace.Sandpit.Exscientia.Units.Temperature import kelvin
 # Store the tutorial URL.
 url = BSS.tutorialUrl()
 
+################### Test Borech Restraint ################
+
 
 @pytest.fixture(scope="session")
-def restraint_components():
+def boresch_restraint_component():
     """Generate a the components required to create a restraint."""
     ligand = BSS.IO.readMolecules(
         [f"{url}/ligand01.prm7.bz2", f"{url}/ligand01.rst7.bz2"]
@@ -69,9 +71,9 @@ def restraint_components():
 
 
 @pytest.fixture(scope="session")
-def restraint(restraint_components):
+def boresch_restraint(boresch_restraint_component):
     """Generate the Boresch restraint object."""
-    system, restraint_dict = restraint_components
+    system, restraint_dict = boresch_restraint_component
 
     restraint = Restraint(
         system, restraint_dict, 300 * kelvin, restraint_type="Boresch"
@@ -79,20 +81,20 @@ def restraint(restraint_components):
     return restraint
 
 
-def test_sanity(restraint):
+def test_sanity_boresch(boresch_restraint):
     """Sanity check."""
-    assert isinstance(restraint, Restraint)
+    assert isinstance(boresch_restraint, Restraint)
 
 
-def test_numerical_correction(restraint):
-    dG = restraint.getCorrection(method="numerical") / kcal_per_mol
+def test_numerical_correction_boresch(boresch_restraint):
+    dG = boresch_restraint.getCorrection(method="numerical") / kcal_per_mol
     assert np.isclose(-7.2, dG, atol=0.1)
 
 
-def test_analytical_correction(restraint):
-    dG = restraint.getCorrection(method="analytical") / kcal_per_mol
+def test_analytical_correction_boresch(boresch_restraint):
+    dG = boresch_restraint.getCorrection(method="analytical") / kcal_per_mol
     assert np.isclose(-7.2, dG, atol=0.1)
-    assert isinstance(restraint, Restraint)
+    assert isinstance(boresch_restraint, Restraint)
 
 
 test_force_constants = [
@@ -111,9 +113,11 @@ test_force_constants = [
 
 
 @pytest.mark.parametrize("force_constants, expected", test_force_constants)
-def test_input_force_constants(restraint_components, force_constants, expected):
+def test_input_force_constants_boresch(
+    boresch_restraint_component, force_constants, expected
+):
     print(force_constants)
-    system, restraint_dict = restraint_components
+    system, restraint_dict = boresch_restraint_component
     dict_copy = restraint_dict.copy()
     force_constants_copy = restraint_dict["force_constants"].copy()
     force_constants_copy.update(force_constants)
@@ -125,11 +129,11 @@ def test_input_force_constants(restraint_components, force_constants, expected):
             Restraint(system, dict_copy, 300 * kelvin, restraint_type="Boresch")
 
 
-class TestGromacsOutput:
+class TestGromacsOutputBoresch:
     @staticmethod
     @pytest.fixture(scope="class")
-    def Topology(restraint):
-        return restraint.toString(engine="Gromacs").split("\n")
+    def Topology(boresch_restraint):
+        return boresch_restraint.toString(engine="Gromacs").split("\n")
 
     def test_sanity(self, Topology):
         """Sanity check."""
@@ -177,11 +181,11 @@ class TestGromacsOutput:
         assert al == "1498"
 
 
-class TestSomdOutput:
+class TestSomdOutputBoresch:
     @staticmethod
     @pytest.fixture(scope="class")
-    def getRestraintSomd(restraint):
-        boresch_str = restraint.toString(engine="SOMD").split("=")[1].strip()
+    def getRestraintSomd(boresch_restraint):
+        boresch_str = boresch_restraint.toString(engine="SOMD").split("=")[1].strip()
         boresch_dict = eval(boresch_str)
         return boresch_dict
 
