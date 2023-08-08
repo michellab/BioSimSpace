@@ -241,6 +241,15 @@ class Restraint:
 
         elif restraint_type.lower() == "multiple_distance":
             self._restraint_type = "multiple_distance"
+
+            if not restraint_dict.keys() == [
+                "distance_restraints",
+                "permanent_distance_restraint",
+            ]:
+                raise ValueError(
+                    "restraint_dict must have keys 'distance_restraints' and 'permanent_distance_restraint'"
+                )
+
             # Warn the user if there are no distance restraints (although they may be deliberately supplying
             # only the permanent distance restraint)
             if len(restraint_dict["distance_restraints"]) == 0:
