@@ -197,7 +197,7 @@ class _FreeEnergyMixin(_Protocol):
         """
         if type.lower() == "float":
             if len(self._lambda) == 1:
-                return float(self._lambda)
+                return float(self._lambda.iloc[0])
             else:
                 warnings.warn(
                     f"The {self._lambda} has more than one value, return as pd.Series."
