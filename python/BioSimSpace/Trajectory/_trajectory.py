@@ -55,9 +55,6 @@ from .. import IO as _IO
 from .. import Units as _Units
 from .. import _Utils
 
-if _have_imported(_mdanalysis):
-    _mdanalysis.stop_logging()
-
 
 def backends():
     """
