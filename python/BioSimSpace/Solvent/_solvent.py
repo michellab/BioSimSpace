@@ -992,7 +992,9 @@ def _solvate(
 
             # Reformat all of the water molecules so that they match the
             # expected GROMACS topology template, but flagged as crystal.
-            molecule._set_water_topology("GROMACS", is_crystal=True)
+            molecule._set_water_topology(
+                "GROMACS", is_crystal=True, property_map=property_map
+            )
 
             # Extract the crystal waters.
             crystal_waters = molecule.getWaterMolecules()
@@ -1425,7 +1427,9 @@ def _solvate(
                                 system = molecule + flagged_waters + water_ions
                             # Update crystal waters to match the standard water topology.
                             else:
-                                molecule._set_water_topology("GROMACS")
+                                molecule._set_water_topology(
+                                    "GROMACS", property_map=property_map
+                                )
                                 system = molecule + water_ions
                         else:
                             system = molecule.toSystem() + water_ions

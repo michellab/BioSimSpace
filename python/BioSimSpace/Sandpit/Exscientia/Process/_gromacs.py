@@ -325,7 +325,7 @@ class Gromacs(_process.Process):
             system = self._checkPerturbable(system)
 
         # Convert the water model topology so that it matches the GROMACS naming convention.
-        system._set_water_topology("GROMACS")
+        system._set_water_topology("GROMACS", property_map=self._property_map)
 
         # Check whether the system contains periodic box information.
         # For now, we'll not attempt to generate a box if the system property
