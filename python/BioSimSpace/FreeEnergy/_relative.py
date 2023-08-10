@@ -1279,7 +1279,7 @@ class Relative:
         if not isinstance(method, str):
             raise TypeError("'method' must be of type 'str'.")
         method = method.replace(" ", "").upper()
-        if not method in ["ALCHEMLYB", "native"]:
+        if not method in ["ALCHEMLYB", "NATIVE"]:
             raise ValueError("'method' must be either 'alchemlyb' or 'native'.")
 
         if method == "ALCHEMLYB":
