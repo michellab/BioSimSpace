@@ -707,8 +707,6 @@ class Relative:
 
         # Turn into a dataframe that can be processed by alchemlyb.
         if is_mbar:
-            with open("poo.pkl", "wb") as f:
-                pickle.dump(poo, f)
             df = _pd.DataFrame(
                 results,
                 columns=_np.array(lambda_array, dtype=_np.float64),
