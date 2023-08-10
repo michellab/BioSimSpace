@@ -1445,7 +1445,6 @@ class Relative:
 
         if not isinstance(threshold, float):
             raise TypeError("'threshold' must be of type 'float'.")
-
         if threshold < 0.0 or threshold > 1.0:
             raise ValueError("'threshold' must be between 0 and 1.")
 
@@ -1469,7 +1468,7 @@ class Relative:
 
         return is_okay, num_low
 
-    def _checkOverlap(self, estimator="MBAR"):
+    def _checkOverlap(self, estimator="MBAR", threshold=0.03):
         """
         Check the overlap of an FEP simulation leg.
 
@@ -1479,19 +1478,25 @@ class Relative:
         estimator : str
             The estimator used for the free-energy analysis. ("MBAR" or "TI")
 
+        threshold : float
+            The threshold value used to check the off-diagonals.
+
         Returns
         -------
 
-        overlap_okay : boolean
-             True if the overlap is okay, False if any off-diagonals are less than 0.03.
+        is_okay : boolean
+             True if the overlap is okay, False if any off-diagonals are less
+             than the threshold value.
 
+        num_low : int
+            The number of off-diagonals that are less than the threshold value.
         """
 
         # Calculate the overlap for this object.
         _, overlap = self.analyse(estimator=estimator)
 
         if overlap:
-            return Relative.checkOverlap(overlap, estimator=self._estimator)
+            return Relative.checkOverlap(overlap, threshold=threshold)
         else:
             raise ValueError("Overlap matrix isn't supported for this estimator.")
 
