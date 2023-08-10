@@ -33,7 +33,6 @@ import math as _math
 import numpy as _np
 import os as _os
 import pandas as _pd
-import shlex as _shlex
 import shutil as _shutil
 import subprocess as _subprocess
 import sys as _sys
@@ -1355,7 +1354,7 @@ class Relative:
                             % (_analyse_freenrg, work_dir, work_dir)
                         )
                         proc = _subprocess.run(
-                            _shlex.split(command),
+                            _Util.command_split(command),
                             shell=False,
                             stdout=_subprocess.PIPE,
                             stderr=_subprocess.PIPE,
