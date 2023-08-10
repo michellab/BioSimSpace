@@ -607,7 +607,7 @@ class Relative:
 
         # For dhdl need to consider the temperature, as the gradient is in
         # kcal/mol in the simfile.dat .
-        if is_mbar:
+        if not is_mbar:
             k_b = _R_kJmol * _kJ2kcal
             beta = 1 / (k_b * T)
 
@@ -701,9 +701,10 @@ class Relative:
                     energies.append((E_ - E_ref))
                 results.append(energies)
         else:
-            gradient = file_df.loc[t]["gradient_kcal/mol"]
-            red_gradient = gradient * beta
-            results.append(red_gradient)
+            for t in time_rows:
+                gradient = file_df.loc[t]["gradient_kcal/mol"]
+                red_gradient = gradient * beta
+                results.append(red_gradient)
 
         # Turn into a dataframe that can be processed by alchemlyb.
         if is_mbar:
