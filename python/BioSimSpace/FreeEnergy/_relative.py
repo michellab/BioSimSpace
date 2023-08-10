@@ -700,10 +700,10 @@ class Relative:
                     E_ = row[lambda_array.index(lam)]
                     energies.append((E_ - E_ref))
                 results.append(energies)
-            else:
-                gradient = file_df.loc[t]["gradient_kcal/mol"]
-                red_gradient = gradient * beta
-                results.append(red_gradient)
+        else:
+            gradient = file_df.loc[t]["gradient_kcal/mol"]
+            red_gradient = gradient * beta
+            results.append(red_gradient)
 
         # Turn into a dataframe that can be processed by alchemlyb.
         if is_mbar:
