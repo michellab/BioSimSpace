@@ -41,7 +41,7 @@ import zipfile as _zipfile
 
 from .._Utils import _assert_imported, _have_imported, _try_import
 
-# alchemlyb isn't available on all variants of Python that we support, so we
+# alchemlyb isn't available for all variants of Python that we support, so we
 # need to try_import it.
 _alchemlyb = _try_import("alchemlyb")
 
