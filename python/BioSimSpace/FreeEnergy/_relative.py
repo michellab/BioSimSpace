@@ -751,10 +751,8 @@ class Relative:
             detection followed by statistical inefficiency.
         """
 
-        if not isinstance(data, list):
-            raise TypeError("'data' must be of type 'list'.")
-        if not all(isinstance(x, float) for x in data):
-            raise TypeError("'data' must be a list of 'float' types.")
+        if not isinstance(data, (list, _pd.DataFrame)):
+            raise TypeError("'data' must be of type 'list' or 'pandas.DataFrame'.")
 
         if not isinstance(estimator, str):
             raise TypeError("'estimator' must be of type 'str'.")
