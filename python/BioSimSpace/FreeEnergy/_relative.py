@@ -502,6 +502,9 @@ class Relative:
             raise TypeError("'method' must be of type 'str'.")
         method = method.replace("-", "").upper()
 
+        if method == "ALCHEMLYB":
+            _assert_imported("alchemlyb")
+
         function_glob_dict = {
             "SOMD": (Relative._analyse_somd, "/lambda_*/simfile.dat"),
             "GROMACS": (Relative._analyse_gromacs, "/lambda_*/gromacs.xvg"),
