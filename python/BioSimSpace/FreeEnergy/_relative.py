@@ -26,18 +26,49 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Relative", "getData"]
 
-from collections import OrderedDict as _OrderedDict
 from glob import glob as _glob
 
 import copy as _copy
 import math as _math
-import shlex as _shlex
-import sys as _sys
+import numpy as _np
 import os as _os
+import pandas as _pd
+import shlex as _shlex
 import shutil as _shutil
 import subprocess as _subprocess
+import sys as _sys
 import warnings as _warnings
 import zipfile as _zipfile
+
+from .._Utils import _assert_imported, _have_imported, _try_import
+
+# alchemlyb isn't available on all variants of Python that we support, so we
+# need to try_import it.
+_alchemlyb = _try_import("alchemlyb")
+
+if _have_imported(_alchemlyb):
+    # Handle alchemlyb MBAR API changes.
+    try:
+        from alchemlyb.estimators import AutoMBAR as _AutoMBAR
+    except ImportError:
+        from alchemlyb.estimators import MBAR as _AutoMBAR
+    from alchemlyb.estimators import TI as _TI
+    from alchemlyb.postprocessors.units import to_kcalmol as _to_kcalmol
+    from alchemlyb.parsing.amber import extract_dHdl as _amber_extract_dHdl
+    from alchemlyb.parsing.amber import extract_u_nk as _amber_extract_u_nk
+    from alchemlyb.parsing.gmx import extract_dHdl as _gmx_extract_dHdl
+    from alchemlyb.parsing.gmx import extract_u_nk as _gmx_extract_u_nk
+    from alchemlyb.preprocessing.subsampling import (
+        equilibrium_detection as _equilibrium_detection,
+    )
+    from alchemlyb.preprocessing.subsampling import (
+        statistical_inefficiency as _statistical_inefficiency,
+    )
+    from alchemlyb.preprocessing.subsampling import slicing as _slicing
+    from alchemlyb.preprocessing.subsampling import decorrelate_u_nk, decorrelate_dhdl
+    from alchemlyb.postprocessors.units import to_kcalmol as _to_kcalmol
+    from alchemlyb.postprocessors.units import kJ2kcal as _kJ2kcal
+    from alchemlyb.postprocessors.units import R_kJmol as _R_kJmol
 
 from sire.legacy.Base import getBinDir as _getBinDir
 from sire.legacy.Base import getShareDir as _getShareDir
@@ -46,7 +77,9 @@ from sire.legacy import IO as _SireIO
 from sire.legacy import Mol as _SireMol
 
 from .. import _gmx_exe
+from .. import _gmx_version
 from .. import _is_notebook
+from .. import _isVerbose
 from .._Exceptions import AnalysisError as _AnalysisError
 from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from .._SireWrappers import Molecules as _Molecules
@@ -280,9 +313,11 @@ class Relative:
             raise TypeError("'property_map' must be of type 'dict'")
         self._property_map = property_map
 
-        # Create fake instance methods for 'analyse' and 'difference'. These
-        # pass instance data through to the staticmethod versions.
+        # Create fake instance methods for 'analyse', 'checkOverlap',
+        # and 'difference'. These pass instance data through to the
+        # staticmethod versions.
         self.analyse = self._analyse
+        self.checkOverlap = self._checkOverlap
         self.difference = self._difference
 
         # Initialise the process runner.
@@ -425,7 +460,7 @@ class Relative:
             return zipname
 
     @staticmethod
-    def analyse(work_dir):
+    def analyse(work_dir, estimator="MBAR", method="alchemlyb", **kwargs):
         """
         Analyse existing free-energy data from a simulation working directory.
 
@@ -435,6 +470,12 @@ class Relative:
         work_dir : str
             The working directory for the simulation.
 
+        estimator : str
+            The estimator to use for the free-energy analysis. ("MBAR" or "TI")
+
+        method : str
+            The method to use for the free-energy analysis. ("alchemlyb" or "native")
+
         Returns
         -------
 
@@ -443,10 +484,10 @@ class Relative:
             where each tuple contains the lambda value, the PMF, and the
             standard error.
 
-        overlap : [ [ float, float, ... ] ]
+        overlap : np.matrix, None
             The overlap matrix. This gives the overlap between each lambda
-            window.  This parameter is only computed for the SOMD engine and
-            will be None when GROMACS is used.
+            window. This parameter is only computed when available for the
+            specified estimator and engine, otherwise None will be returned.
         """
 
         if not isinstance(work_dir, str):
@@ -454,26 +495,49 @@ class Relative:
         if not _os.path.isdir(work_dir):
             raise ValueError("'work_dir' doesn't exist!")
 
-        # First test for SOMD files.
-        data = _glob(work_dir + "/lambda_*/gradients.dat")
+        if not isinstance(estimator, str):
+            raise TypeError("'estimator' must be of type 'str'.")
 
-        # SOMD.
-        if len(data) > 0:
-            return Relative._analyse_somd(work_dir)
+        if not isinstance(method, str):
+            raise TypeError("'method' must be of type 'str'.")
+        method = method.replace("-", "").upper()
 
-        # Now check for GROMACS output.
-        else:
-            data = _glob(work_dir + "/lambda_*/gromacs.xvg")
-            if len(data) == 0:
-                raise ValueError(
-                    "Couldn't find any SOMD or GROMACS free-energy output?"
+        function_glob_dict = {
+            "SOMD": (Relative._analyse_somd, "/lambda_*/simfile.dat"),
+            "GROMACS": (Relative._analyse_gromacs, "/lambda_*/gromacs.xvg"),
+            "AMBER": (Relative._analyse_amber, "/lambda_*/amber.out"),
+        }
+
+        for engine, (func, mask) in function_glob_dict.items():
+            data = _glob(work_dir + mask)
+            if data and engine == "AMBER":
+                if method != "ALCHEMLYB":
+                    raise _AnalysisError(
+                        f"AMBER can only use the 'alchemlyb' analysis method."
+                    )
+            if data and engine == "SOMD" and estimator == "TI" and method == "native":
+                raise _AnalysisError(
+                    "SOMD cannot use 'TI' estimator with 'native' analysis method."
                 )
-            return Relative._analyse_gromacs(work_dir)
+            if data and engine == "GROMACS" and method == "native":
+                _warnings.warn(
+                    "Native GROMACS analysis cannot do MBAR/TI. BAR will be used."
+                )
+            if data:
+                return func(work_dir, estimator, method, **kwargs)
 
-    def _analyse(self):
+        raise ValueError("Couldn't find any SOMD, GROMACS or AMBER free-energy output?")
+
+    def _analyse(self, estimator="MBAR"):
         """
         Analyse free-energy data for this object.
 
+        Parameters
+        ----------
+
+        estimator : str
+            The estimator to use for the free-energy analysis. ("MBAR" or "TI")
+
         Returns
         -------
 
@@ -482,26 +546,322 @@ class Relative:
             where each tuple contains the lambda value, the PMF, and the
             standard error.
 
-        overlap : [ [ float, float, ... ] ]
+        overlap : np.matrix, None
             The overlap matrix. This gives the overlap between each lambda
-            window.  This parameter is only computed for the SOMD engine and
-            will be None when GROMACS is used.
+            window. This parameter is only computed when available for the
+            specified estimator and engine, otherwise None will be returned.
         """
 
         # Return the result of calling the staticmethod, passing in the working
-        # directory of this object.
-        return Relative.analyse(str(self._work_dir))
+        # directory of this object and the specified estimator.
+        return Relative.analyse(str(self._work_dir), estimator=estimator)
 
     @staticmethod
-    def _analyse_gromacs(work_dir=None):
+    def _somd_extract(simfile, T=None, estimator="MBAR"):
         """
-        Analyse the GROMACS free energy data.
+        Extract required data from a SOMD output file (simfile.dat).
 
         Parameters
         ----------
 
-        work_dir : str
-            The path to the working directory.
+        simfile : str
+            Path to the simfile.dat file.
+
+        T : float
+            Temperature in Kelvin at which the simulations were performed;
+            needed to generated the reduced potential (in units of kT).
+
+        estimator : str
+            The estimator that the returned data will be used with. This can
+            be either 'MBAR' or 'TI'.
+
+        Returns
+        -------
+
+        data : pandas.DataFrame
+            Either: Reduced potential for each alchemical state (k) for each
+            frame (n) for MBAR, or dH/dl as a function of time for this lambda
+            window for TI.
+        """
+
+        if not isinstance(simfile, str):
+            raise TypeError("'simfile' must be of type 'str'.")
+        if not _os.path.isfile(simfile):
+            raise ValueError("'simfile' doesn't exist!")
+
+        if not isinstance(T, float):
+            raise TypeError("'T' must be of type 'float'.")
+
+        if not isinstance(estimator, str):
+            raise TypeError("'estimator' must be of type 'str'.")
+        if estimator.replace(" ", "").upper() not in ["MBAR", "TI"]:
+            raise ValueError("'estimator' must be either 'MBAR' or 'TI'.")
+
+        # Flag that we're using MBAR.
+        if estimator == "MBAR":
+            is_mbar = True
+        else:
+            is_mbar = False
+
+        # For dhdl need to consider the temperature, as the gradient is in
+        # kcal/mol in the simfile.dat .
+        if is_mbar:
+            k_b = _R_kJmol * _kJ2kcal
+            beta = 1 / (k_b * T)
+
+        # Flags to check if we have found the required records.
+        found_lambda = False
+        found_array = False
+        found_time = False
+
+        # Process the file.
+        with open(simfile, "r") as f:
+            # Terms to search for in the record lines.
+            start_w = "#Generating lambda is"
+            start_a = "#Alchemical array is"
+            start_t = " and "
+            end_t = " ps"
+            # Read the file line-by-line.
+            for line in f.readlines():
+                if start_w in line:
+                    lambda_win = float(line.replace(start_w, "").strip())
+                    if lambda_win is not None:
+                        found_lambda = True
+                if start_a in line:
+                    lambda_array = (
+                        (line.replace(start_a, ""))
+                        .strip()
+                        .replace("(", "")
+                        .replace(")", "")
+                        .replace(" ", "")
+                    ).split(",")
+                    lambda_array = [float(lam) for lam in lambda_array]
+                    if lambda_array is not None:
+                        found_array = True
+                if start_t and end_t in line:
+                    sim_length = float(
+                        ((line.split(start_t)[1]).split(end_t)[0]).strip()
+                    )
+                    if sim_length is not None:
+                        found_time = True
+                # All records found, break the loop.
+                if found_lambda:
+                    if found_array:
+                        if found_time:
+                            break
+
+        if not found_lambda:
+            raise ValueError(
+                f"The lambda window was not detected in the SOMD output file: {file}"
+            )
+
+        if not found_array:
+            raise ValueError(
+                f"The lambda array was not detected in the SOMD output file: {file}"
+            )
+
+        if not found_time:
+            raise ValueError(
+                f"The simulation time was not detected in the SOMD output file: {file}"
+            )
+
+        # TODO: get header from the file instead of like this.
+        header = [
+            "step",
+            "potential_kcal/mol",
+            "gradient_kcal/mol",
+            "forward_Metropolis",
+            "backward_Metropolis",
+        ]
+        header.extend(lambda_array)
+
+        file_df = _pd.read_fwf(
+            simfile, skipinitialspace=True, skiprows=13, header=None, names=header
+        )
+
+        time_step = sim_length / len(file_df["step"])
+        time_rows = _np.arange(0, len(file_df["step"]), 1)
+        time = _np.arange(0, sim_length, time_step)
+
+        # For MBAR, results in list of lists where each list is the 0 to 1
+        # window values that lambda value. For TI, it is a list of gradients
+        # at that lambda.
+        results = []
+        if is_mbar:
+            # For the energies for each lambda window, append the kt to the
+            # data list of values for all lambda windows.
+            for t in time_rows:
+                row = file_df.loc[t][lambda_array].to_numpy()
+                E_ref = row[lambda_array.index(lambda_win)]
+                energies = []
+                for lam in lambda_array:
+                    E_ = row[lambda_array.index(lam)]
+                    energies.append((E_ - E_ref))
+                results.append(energies)
+            else:
+                gradient = file_df.loc[t]["gradient_kcal/mol"]
+                red_gradient = gradient * beta
+                results.append(red_gradient)
+
+        # Turn into a dataframe that can be processed by alchemlyb.
+        if is_mbar:
+            with open("poo.pkl", "wb") as f:
+                pickle.dump(poo, f)
+            df = _pd.DataFrame(
+                results,
+                columns=_np.array(lambda_array, dtype=_np.float64),
+                index=_pd.MultiIndex.from_arrays(
+                    [time, _np.repeat(lambda_win, len(time))], names=["time", "lambdas"]
+                ),
+            )
+        else:
+            df = _pd.DataFrame(
+                results,
+                columns=["fep"],
+                index=_pd.MultiIndex.from_arrays(
+                    [time, _np.repeat(lambda_win, len(time))],
+                    names=["time", "fep-lambdas"],
+                ),
+            )
+        df.attrs["temperature"] = T
+        df.attrs["energy_unit"] = "kT"
+
+        return df
+
+    @staticmethod
+    def _preprocess_data(data, estimator, **kwargs):
+        """
+        Preprocess FEP simulation data.
+
+        Parameters
+        ----------
+
+        data : list
+                List of extracted dHdl or u_nk data.
+
+        estimator : str
+               The estimator ('MBAR' or 'TI') used.
+
+        Returns
+        -------
+
+        processed_data : pandas.DataFrame
+            Dataframe of dHdl or u_nk data processed using automated equilibration
+            detection followed by statistical inefficiency.
+        """
+
+        if not isinstance(data, list):
+            raise TypeError("'data' must be of type 'list'.")
+        if not all(isinstance(x, float) for x in data):
+            raise TypeError("'data' must be a list of 'float' types.")
+
+        if not isinstance(estimator, str):
+            raise TypeError("'estimator' must be of type 'str'.")
+        if not estimator.replace(" ", "").upper() in ["MBAR", "TI"]:
+            raise ValueError("'estimator' must be either 'MBAR' or 'TI'.")
+
+        # Assign defaults in case not passed via kwargs.
+        auto_eq = False
+        stat_ineff = False
+        truncate = False
+        truncate_keep = "start"
+
+        # Parse kwargs.
+        for key, value in kwargs.items():
+            key = key.replace(" ", "").replace("_", "").upper()
+            if key == "AUTOEQUILIBRATION":
+                auto_eq = value
+            if key == "STATISTICALINEFFICIENCY":
+                stat_ineff = value
+            if key == "TRUNCATEPERCENTAGE":
+                truncate = value
+            if key == "TRUNCATEKEEP":
+                truncate_keep = value
+
+        # First truncate data.
+        raw_data = data
+        if truncate:
+            # Get the upper and lower bounds for truncate.
+            data_len = len(data[0])
+            data_step = round((data[0].index[-1][0] - data[0].index[-2][0]), 1)
+            data_kept = data_len * (truncate / 100)
+            data_time = data_kept * data_step
+            if truncate_keep == "start":
+                truncate_lower = 0
+                truncate_upper = data_time - data_step
+            if truncate_keep == "end":
+                truncate_lower = (data_len * data_step) - data_time
+                truncate_upper = (data_len * data_step) - data_step
+
+            try:
+                data = [
+                    _slicing(i, lower=truncate_lower, upper=truncate_upper)
+                    for i in raw_data
+                ]
+            except:
+                _warnings.warn("Could not truncate data.")
+                data = raw_data
+        else:
+            data = raw_data
+
+        # If using auto equilibration, do we want to remove burn in?
+        # Perform a statistical inefficiency check afterwards.
+        if stat_ineff:
+            if estimator == "MBAR":
+                decorrelated_data = [
+                    decorrelate_u_nk(i, method="dE", remove_burnin=auto_eq)
+                    for i in data
+                ]
+
+            elif estimator == "TI":
+                decorrelated_data = [
+                    decorrelate_dhdl(i, remove_burnin=auto_eq) for i in data
+                ]
+
+            sampled_data = decorrelated_data
+
+            for i in decorrelated_data:
+                if len(i.iloc[:, 0]) < 50:
+                    _warnings.warn(
+                        "Less than 50 samples as a result of preprocessing. No preprocessing will be performed."
+                    )
+                    sampled_data = data
+        else:
+            # Need stats ineff for auto eq to run as well.
+            if auto_eq:
+                _warnings.warn(
+                    "Auto equilibration can only be detected if statistical inefficiency is run as well."
+                )
+            sampled_data = data
+
+        # Concatanate in alchemlyb format.
+        processed_data = _alchemlyb.concat(sampled_data)
+
+        return processed_data
+
+    @staticmethod
+    def _analyse_internal(files, temperatures, lambdas, engine, estimator, **kwargs):
+        """
+        Analyse existing free-energy data using MBAR and the alchemlyb library.
+
+        Parameters
+        ----------
+
+        files : list
+            List of files for all lambda values to analyse. Should be sorted.
+
+        temperatures : list
+            List of temperatures at which the simulation was carried out at for each lambda window.
+            Index of the temperature value should match it's corresponding lambda window index in files.
+
+        lambdas : list
+            Sorted list of lambda values used for the simulation.
+
+        engine : str
+            Engine with which the simulation was run.
+
+        estimator : str
+            The estimator to use for the analysis. Options are "MBAR" or "TI".
 
         Returns
         -------
@@ -510,95 +870,147 @@ class Relative:
             The potential of mean force (PMF). The data is a list of tuples,
             where each tuple contains the lambda value, the PMF, and the
             standard error.
+
+        overlap : numpy.matrix, None
+            The overlap matrix. This gives the overlap between each lambda
+            window. Returns None if overlap isn't supported for the chosen
+            estimator or engine.
         """
 
-        if not isinstance(work_dir, str):
-            raise TypeError("'work_dir' must be of type 'str'.")
-        if not _os.path.isdir(work_dir):
-            raise ValueError("'work_dir' doesn't exist!")
+        if not isinstance(files, (tuple, list)):
+            raise TypeError("'files' must be of type 'list' or 'tuple'.")
+        if not all(isinstance(x, str) for x in files):
+            raise TypeError("'files' must be a list of 'str' types.")
 
-        # Create the command.
-        xvg_files = _glob(f"{work_dir}/lambda_*/*.xvg")
-        command = "%s bar -f %s -o %s/bar.xvg" % (
-            _gmx_exe,
-            " ".join(xvg_files),
-            work_dir,
-        )
+        if not isinstance(temperatures, (tuple, list)):
+            raise TypeError("'temperatures' must be of type 'list' or 'tuple'.")
+        if not all(isinstance(x, float) for x in temperatures):
+            raise TypeError("'temperatures' must be a list of 'float' types.")
 
-        # Run the first command.
-        proc = _subprocess.run(
-            _Utils.command_split(command),
-            shell=False,
-            stdout=_subprocess.PIPE,
-            stderr=_subprocess.PIPE,
-        )
-        if proc.returncode != 0:
-            raise _AnalysisError("GROMACS free-energy analysis failed!")
+        if not isinstance(lambdas, (tuple, list)):
+            raise TypeError("'lambdas' must be of type 'list' or 'tuple'.")
+        if not all(isinstance(x, float) for x in lambdas):
+            raise TypeError("'lambdas' must be a list of 'float' types.")
 
-        # Initialise list to hold the data.
+        if not isinstance(engine, str):
+            raise TypeError("'engine' must be of type 'str'.")
+        if not engine.replace(" ", "").upper() in Relative._engines:
+            raise ValueError(
+                f"Unsupported engine '{engine}'. Options are: {', '.join(Relative._engines)}"
+            )
+
+        if not isinstance(estimator, str):
+            raise TypeError("'estimator' must be of type 'str'.")
+        estimator = estimator.replace(" ", "").upper()
+        if not estimator in ["MBAR", "TI"]:
+            raise ValueError("'estimator' must be either 'MBAR' or 'TI'.")
+
+        if estimator == "MBAR":
+            is_mbar = True
+        else:
+            is_mbar = False
+
+        from functools import partial
+
+        function_glob_dict = {
+            "SOMD": (
+                staticmethod(partial(Relative._somd_extract, estimator=estimator))
+            ),
+            "GROMACS": (_gmx_extract_u_nk),
+            "AMBER": (_amber_extract_u_nk),
+        }
+
+        # Extract the data.
+        func = function_glob_dict[engine]
+        try:
+            data = [func(x, T=t) for x, t in zip(files, temperatures)]
+        except Exception as e:
+            msg = "Could not extract the data from the provided files!"
+            if _isVerbose():
+                raise _AnalysisError(msg) from e
+            else:
+                raise _AnalysisError(msg) from None
+
+        # Preprocess the data.
+        try:
+            processed_data = Relative._preprocess_data(data, estimator, **kwargs)
+        except:
+            _warnings.warn("Could not preprocess the data!")
+            processed_data = _alchemlyb.concat(data)
+
+        mbar_method = None
+        if is_mbar:
+            # Check kwargs incase there is an mbar_method and then use this
+            for key, value in kwargs.items():
+                key = key.replace(" ", "").replace("_", "").upper()
+                if key == "MBARMETHOD":
+                    mbar_method = value
+
+        # MBAR analysis using a specified method.
+        if mbar_method:
+            try:
+                alchem = _AutoMBAR(method=mbar_method)
+                alchem.fit(processed_data)
+            except Exception as e:
+                msg = f"MBAR free-energy analysis failed with {mbar_method} as mbar_method!"
+                if _isVerbose():
+                    raise _AnalysisError(msg) from e
+                else:
+                    raise _AnalysisError(msg) from None
+        # Standard analysis.
+        else:
+            try:
+                if is_mbar:
+                    alchem = _AutoMBAR().fit(processed_data)
+                else:
+                    alchem = _TI().fit(processed_data)
+            except Exception as e:
+                msg = f"{estimator} free-energy analysis failed!"
+                if _isVerbose():
+                    raise _AnalysisError(msg) from e
+                else:
+                    raise _AnalysisError(msg) from None
+
+        # Extract the data from the results.
         data = []
+        # Convert the data frames to kcal/mol.
+        delta_f_ = _to_kcalmol(alchem.delta_f_)
+        d_delta_f_ = _to_kcalmol(alchem.d_delta_f_)
+        for lambda_, t in zip(lambdas, temperatures):
+            x = lambdas.index(lambda_)
+            mbar_value = delta_f_.iloc[0, x]
+            mbar_error = d_delta_f_.iloc[0, x]
 
-        # Extract the data from the output files.
-
-        # First leg.
-        with open("%s/bar.xvg" % work_dir) as file:
-            # Read all of the lines into a list.
-            lines = []
-            for line in file:
-                # Ignore comments and xmgrace directives.
-                if line[0] != "#" and line[0] != "@":
-                    lines.append(line.rstrip())
-
-            # Store the initial free energy reading.
+            # Append the data.
             data.append(
                 (
-                    0.0,
-                    0.0 * _Units.Energy.kcal_per_mol,
-                    0.0 * _Units.Energy.kcal_per_mol,
+                    lambda_,
+                    (mbar_value) * _Units.Energy.kcal_per_mol,
+                    (mbar_error) * _Units.Energy.kcal_per_mol,
                 )
             )
 
-            # Zero the accumulated error.
-            total_error = 0
-
-            # Zero the accumulated free energy difference.
-            total_freenrg = 0
-
-            # Process the BAR data.
-            for x, line in enumerate(lines):
-                # Extract the data from the line.
-                records = line.split()
-
-                # Update the total free energy difference.
-                total_freenrg += float(records[1])
-
-                # Extract the error.
-                error = float(records[2])
-
-                # Update the accumulated error.
-                total_error = _math.sqrt(total_error * total_error + error * error)
-
-                # Append the data.
-                data.append(
-                    (
-                        (x + 1) / (len(lines)),
-                        (total_freenrg * _Units.Energy.kt).kcal_per_mol(),
-                        (total_error * _Units.Energy.kt).kcal_per_mol(),
-                    )
-                )
-
-        return (data, None)
+        if is_mbar:
+            return (data, alchem.overlap_matrix)
+        else:
+            return (data, None)
 
     @staticmethod
-    def _analyse_somd(work_dir=None):
+    def _analyse_amber(work_dir=None, estimator="MBAR", method="alchemlyb", **kwargs):
         """
-        Analyse the SOMD free energy data.
+        Analyse the AMBER free energy data.
 
         Parameters
         ----------
 
         work_dir : str
             The path to the working directory.
+
+        estimator : str
+            The estimator ('MBAR' or 'TI') used.
+
+        method : str
+            The method used to analyse the data. Options are "alchemlyb" or "native".
 
         Returns
         -------
@@ -608,10 +1020,85 @@ class Relative:
             where each tuple contains the lambda value, the PMF, and the
             standard error.
 
-        overlap : [ [ float, float, ... ] ]
-            The overlap matrix. This gives the overlap between each lambda
-            window.  This parameter is only computed for the SOMD engine and
-            will be None when GROMACS is used.
+        overlap or dHdl : numpy.matrix or alchemlyb.estimators.ti_.TI
+            For MBAR, this returns the overlap matrix for the overlap between
+            each lambda window. For TI, this returns None.
+        """
+
+        if type(work_dir) is not str:
+            raise TypeError("'work_dir' must be of type 'str'.")
+        if not _os.path.isdir(work_dir):
+            raise ValueError("'work_dir' doesn't exist!")
+
+        if not isinstance(estimator, str):
+            raise TypeError("'estimator' must be of type 'str'.")
+        if estimator.replace(" ", "").upper() not in ["MBAR", "TI"]:
+            raise ValueError("'estimator' must be either 'MBAR' or 'TI'.")
+
+        if not isinstance(method, str):
+            raise TypeError("'method' must be of type 'str'.")
+        if method.replace(" ", "").upper() != "ALCHEMLYB":
+            raise ValueError(
+                "Only 'alchemyb' is supported as an analysis method for AMBER."
+            )
+
+        # Find the output files and work out the lambda windows from the directory names.
+        files = sorted(_glob(work_dir + "/lambda_*/amber.out"))
+        lambdas = [float(x.split("/")[-2].split("_")[-1]) for x in files]
+
+        # Find the temperature for each lambda window.
+        temperatures = []
+        for file, lambda_ in zip(files, lambdas):
+            found_temperature = False
+            with open(file) as f:
+                for line in f.readlines():
+                    if not found_temperature:
+                        match = _re.search(r"temp0=([\d.]+)", line)
+                        if match is not None:
+                            temperatures += [float(match.group(1))]
+                            found_temperature = True
+                            break
+
+                if not found_temperature:
+                    raise ValueError(
+                        "The temperature was not detected in the AMBER output file."
+                    )
+
+        if temperatures[0] != temperatures[-1]:
+            raise ValueError("The temperatures at the endstates don't match!")
+
+        return Relative._analyse_internal(
+            files, temperatures, lambdas, "AMBER", estimator, **kwargs
+        )
+
+    @staticmethod
+    def _analyse_gromacs(work_dir=None, estimator="MBAR", method="alchemlyb", **kwargs):
+        """
+        Analyse GROMACS free energy data.
+
+        Parameters
+        ----------
+
+        work_dir : str
+            The path to the working directory.
+
+        estimator : str
+            The estimator ('MBAR' or 'TI') used.
+
+        method : str
+            The method used to analyse the data. Options are "alchemlyb" or "native".
+
+        Returns
+        -------
+
+        pmf : [(float, :class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)]
+            The potential of mean force (PMF). The data is a list of tuples,
+            where each tuple contains the lambda value, the PMF, and the
+            standard error.
+
+        overlap or dHdl : numpy.matrix or alchemlyb.estimators.ti_.TI
+            For MBAR, this returns the overlap matrix for the overlap between
+            each lambda window. For TI, this returns None.
         """
 
         if not isinstance(work_dir, str):
@@ -619,98 +1106,392 @@ class Relative:
         if not _os.path.isdir(work_dir):
             raise ValueError("'work_dir' doesn't exist!")
 
-        # Create the command.
-        command = (
-            "%s mbar -i %s/lambda_*/simfile.dat -o %s/mbar.txt --overlap --subsampling"
-            % (_analyse_freenrg, work_dir, work_dir)
-        )
+        if not isinstance(estimator, str):
+            raise TypeError("'estimator' must be of type 'str'.")
+        if not estimator.replace(" ", "").upper() in ["MBAR", "TI"]:
+            raise ValueError("'estimator' must be either 'MBAR' or 'TI'.")
 
-        # Run the first command.
-        proc = _subprocess.run(
-            _Utils.command_split(command),
-            shell=False,
-            stdout=_subprocess.PIPE,
-            stderr=_subprocess.PIPE,
-        )
-        if proc.returncode != 0:
-            raise _AnalysisError("SOMD free-energy analysis failed!")
+        if not isinstance(method, str):
+            raise TypeError("'method' must be of type 'str'.")
+        method = method.replace(" ", "").upper()
+        if method not in ["ALCHEMLYB", "NATIVE"]:
+            raise ValueError("'method' must be either 'alchemlyb' or 'native'.")
 
-        # Re-run without subsampling if the subsampling has resulted in less than 50 samples.
-        with open("%s/mbar.txt" % work_dir) as file:
-            for line in file:
-                if (
-                    "#WARNING SUBSAMPLING ENERGIES RESULTED IN LESS THAN 50 SAMPLES"
-                    in line
-                ):
-                    _warnings.warn(
-                        "Subsampling resulted in less than 50 samples, "
-                        f"re-running without subsampling for '{work_dir}'"
+        if _gmx_version <= 2020:
+            _warnings.warn(
+                "Analysing using 'native' gmx bar and BAR as the gromacs version is older..."
+            )
+            method = "NATIVE"
+
+        if method == "ALCHEMLYB":
+            # Find the output files and work out the lambda windows from the directory names.
+            files = sorted(_glob(work_dir + "/lambda_*/gromacs.xvg"))
+            lambdas = [float(x.split("/")[-2].split("_")[-1]) for x in files]
+
+            # Find the temperature at each lambda window
+            temperatures = []
+            for file in files:
+                found_temperature = False
+                with open(file, "r") as f:
+                    for line in f.readlines():
+                        t = None
+                        start = "T ="
+                        end = "(K)"
+                        if start and end in line:
+                            t = int(((line.split(start)[1]).split(end)[0]).strip())
+                            temperatures.append(float(t))
+                            if t is not None:
+                                found_temperature = True
+                                break
+
+                if not found_temperature:
+                    raise ValueError(
+                        f"The temperature was not detected in the GROMACS output file, {file}"
                     )
-                    command = (
-                        "%s mbar -i %s/lambda_*/simfile.dat -o %s/mbar.txt --overlap"
-                        % (_analyse_freenrg, work_dir, work_dir)
+
+            if temperatures[0] != temperatures[-1]:
+                raise ValueError("The temperatures at the endstates don't match!")
+
+            return Relative._analyse_internal(
+                files, temperatures, lambdas, "GROMACS", estimator, **kwargs
+            )
+
+        # For the older gromacs versions and native use the gmx bar analysis.
+        elif method == "NATIVE":
+            _warnings.warn(
+                "using 'native' for GROMACS does not return an overlap/dHdl."
+            )
+            _warnings.warn("using 'native' for GROMACS uses BAR.")
+
+            # Create the command.
+            xvg_files = _glob(f"{work_dir}/lambda_*/*.xvg")
+            command = "%s bar -f %s -o %s/bar.xvg" % (
+                _gmx_exe,
+                " ".join(xvg_files),
+                work_dir,
+            )
+
+            # Run the first command.
+            proc = _subprocess.run(
+                _Utils.command_split(command),
+                shell=False,
+                stdout=_subprocess.PIPE,
+                stderr=_subprocess.PIPE,
+            )
+            if proc.returncode != 0:
+                raise _AnalysisError("Native GROMACS free-energy analysis failed!")
+
+            # Initialise list to hold the data.
+            data = []
+
+            # Extract the data from the output files.
+
+            # First leg.
+            with open("%s/bar.xvg" % work_dir) as file:
+                # Read all of the lines into a list.
+                lines = []
+                for line in file:
+                    # Ignore comments and xmgrace directives.
+                    if line[0] != "#" and line[0] != "@":
+                        lines.append(line.rstrip())
+
+                # Store the initial free energy reading.
+                data.append(
+                    (
+                        0.0,
+                        0.0 * _Units.Energy.kcal_per_mol,
+                        0.0 * _Units.Energy.kcal_per_mol,
                     )
-                    proc = _subprocess.run(
-                        _Utils.command_split(command),
-                        shell=False,
-                        stdout=_subprocess.PIPE,
-                        stderr=_subprocess.PIPE,
-                    )
-                    if proc.returncode != 0:
-                        raise _AnalysisError("SOMD free-energy analysis failed!")
-                    break
+                )
 
-        # Initialise list to hold the data.
-        data = []
+                # Zero the accumulated error.
+                total_error = 0
 
-        # Initialise list to hold the overlap matrix.
-        overlap = []
+                # Zero the accumulated free energy difference.
+                total_freenrg = 0
 
-        # Extract the data from the output files.
+                # Process the BAR data.
+                for x, line in enumerate(lines):
+                    # Extract the data from the line.
+                    records = line.split()
 
-        # First leg.
-        with open("%s/mbar.txt" % work_dir) as file:
-            # Process the MBAR data.
-            for line in file:
-                # Process the overlap matrix.
-                if "#Overlap matrix" in line:
-                    # Get the next row.
-                    row = next(file)
+                    # Update the total free energy difference.
+                    total_freenrg += float(records[1])
 
-                    # Loop until we hit the next section.
-                    while not row.startswith("#DG"):
-                        # Extract the data for this row.
-                        records = [float(x) for x in row.split()]
+                    # Extract the error.
+                    error = float(records[2])
 
-                        # Append to the overlap matrix.
-                        overlap.append(records)
+                    # Update the accumulated error.
+                    total_error = _math.sqrt(total_error * total_error + error * error)
 
-                        # Get the next line.
-                        row = next(file)
-
-                # Process the PMF.
-                elif "PMF from MBAR" in line:
-                    # Get the next row.
-                    row = next(file)
-
-                    # Loop until we hit the next section.
-                    while not row.startswith("#TI"):
-                        # Split the line.
-                        records = row.split()
-
-                        # Append the data.
-                        data.append(
-                            (
-                                float(records[0]),
-                                float(records[1]) * _Units.Energy.kcal_per_mol,
-                                float(records[2]) * _Units.Energy.kcal_per_mol,
-                            )
+                    # Append the data.
+                    data.append(
+                        (
+                            (x + 1) / (len(lines)),
+                            (total_freenrg * _Units.Energy.kt).kcal_per_mol(),
+                            (total_error * _Units.Energy.kt).kcal_per_mol(),
                         )
+                    )
 
-                        # Get the next line.
+            return (data, None)
+
+    @staticmethod
+    def _analyse_somd(work_dir=None, estimator="MBAR", method="alchemlyb", **kwargs):
+        """
+        Analyse SOMD free energy data.
+
+        Parameters
+        ----------
+
+        work_dir : str
+            The path to the working directory.
+
+        estimator : str
+            The estimator ('MBAR' or 'TI') used.
+
+        method : str
+            The method used to analyse the data. Options are "alchemlyb" or "native".
+
+        Returns
+        -------
+
+        pmf : [(float, :class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)]
+            The potential of mean force (PMF). The data is a list of tuples,
+            where each tuple contains the lambda value, the PMF, and the
+            standard error.
+
+        overlap or dHdl : numpy.matrix or alchemlyb.estimators.ti_.TI
+            For MBAR, this returns the overlap matrix for the overlap between
+            each lambda window. For TI, this returns None.
+        """
+
+        if not isinstance(work_dir, str):
+            raise TypeError("'work_dir' must be of type 'str'.")
+        if not _os.path.isdir(work_dir):
+            raise ValueError("'work_dir' doesn't exist!")
+
+        if not isinstance(estimator, str):
+            raise TypeError("'estimator' must be of type 'str'.")
+        estimator = estimator.replace(" ", "").upper()
+        if estimator not in ["MBAR", "TI"]:
+            raise ValueError("'estimator' must be either 'MBAR' or 'TI'.")
+
+        if not isinstance(method, str):
+            raise TypeError("'method' must be of type 'str'.")
+        method = method.replace(" ", "").upper()
+        if not method in ["ALCHEMLYB", "native"]:
+            raise ValueError("'method' must be either 'alchemlyb' or 'native'.")
+
+        if method == "ALCHEMLYB":
+            # Glob the data files and work out the lambda values.
+            files = sorted(_glob(work_dir + "/lambda_*/simfile.dat"))
+            lambdas = [float(x.split("/")[-2].split("_")[-1]) for x in files]
+
+            temperatures = []
+            for file in files:
+                found_temperature = False
+                with open(file, "r") as f:
+                    for line in f.readlines():
+                        temp = None
+                        start = "#Generating temperature is"
+                        if start in line:
+                            split_line = (line.split(start)[1]).strip().split(" ")
+                            temp = split_line[0]
+                            unit = split_line[-1]
+                            if unit.upper() == "C":
+                                temp = float(temp) + 273.15
+                            else:
+                                temp = float(temp)
+                            temperatures.append(temp)
+                            if temp is not None:
+                                found_temperature = True
+                                break
+
+                if not found_temperature:
+                    raise ValueError(
+                        f"The temperature was not detected in the SOMD output file: {file}"
+                    )
+
+            if temperatures[0] != temperatures[-1]:
+                raise ValueError("The temperatures at the endstates don't match!")
+
+            return Relative._analyse_internal(
+                files, temperatures, lambdas, "SOMD", estimator, **kwargs
+            )
+
+        elif method == "NATIVE":
+            # Create the command.
+            command = (
+                "%s mbar -i %s/lambda_*/simfile.dat -o %s/mbar.txt --overlap --percent 5"
+                % (_analyse_freenrg, work_dir, work_dir)
+            )
+
+            # Run the first command.
+            proc = _subprocess.run(
+                _Utils.command_split(command),
+                shell=False,
+                stdout=_subprocess.PIPE,
+                stderr=_subprocess.PIPE,
+            )
+            if proc.returncode != 0:
+                raise _AnalysisError("Native SOMD free-energy analysis failed!")
+
+            # Re-run without subsampling if the subsampling has resulted in less than 50 samples.
+            with open("%s/mbar.txt" % work_dir) as file:
+                for line in file:
+                    if (
+                        "#WARNING SUBSAMPLING ENERGIES RESULTED IN LESS THAN 50 SAMPLES"
+                        in line
+                    ):
+                        _warnings.warn(
+                            "Subsampling resulted in less than 50 samples, "
+                            f"re-running without subsampling for '{work_dir}'"
+                        )
+                        command = (
+                            "%s mbar -i %s/lambda_*/simfile.dat -o %s/mbar.txt --overlap"
+                            % (_analyse_freenrg, work_dir, work_dir)
+                        )
+                        proc = _subprocess.run(
+                            _shlex.split(command),
+                            shell=False,
+                            stdout=_subprocess.PIPE,
+                            stderr=_subprocess.PIPE,
+                        )
+                        if proc.returncode != 0:
+                            raise _AnalysisError("SOMD free-energy analysis failed!")
+                        break
+
+            # Initialise list to hold the data.
+            data = []
+
+            # Initialise list to hold the overlap matrix.
+            overlap = []
+
+            # Extract the data from the output files.
+
+            # First leg.
+            with open("%s/mbar.txt" % work_dir) as file:
+                # Process the MBAR data.
+                for line in file:
+                    # Process the overlap matrix.
+                    if "#Overlap matrix" in line:
+                        # Get the next row.
                         row = next(file)
+
+                        # Loop until we hit the next section.
+                        while not row.startswith("#DG"):
+                            # Extract the data for this row.
+                            records = [float(x) for x in row.split()]
+
+                            # Append to the overlap matrix.
+                            overlap.append(records)
+
+                            # Get the next line.
+                            row = next(file)
+
+                    # Process the PMF.
+                    elif "PMF from MBAR" in line:
+                        # Get the next row.
+                        row = next(file)
+
+                        # Loop until we hit the next section.
+                        while not row.startswith("#TI"):
+                            # Split the line.
+                            records = row.split()
+
+                            # Append the data.
+                            data.append(
+                                (
+                                    float(records[0]),
+                                    float(records[1]) * _Units.Energy.kcal_per_mol,
+                                    float(records[2]) * _Units.Energy.kcal_per_mol,
+                                )
+                            )
+
+                            # Get the next line.
+                            row = next(file)
 
         return (data, overlap)
+
+    @staticmethod
+    def checkOverlap(overlap, threshold=0.03):
+        """
+        Check the overlap of an FEP leg.
+
+        Parameters
+        ----------
+
+        overlap : numpy.matrix
+            The overlap matrix. This gives the overlap between lambda windows.
+
+        threshold : float
+            The threshold value used to check the off-diagonals.
+
+        Returns
+        -------
+
+        is_okay : boolean
+             True if the overlap is okay, False if any off-diagonals are less
+             than the threshold value.
+
+        num_low : int
+            The number of off-diagonals that are less than the threshold value.
+
+        """
+        if not isinstance(overlap, _np.matrix):
+            raise TypeError("'overlap' must be of type 'numpy.matrix'.")
+
+        if not isinstance(threshold, float):
+            raise TypeError("'threshold' must be of type 'float'.")
+
+        if threshold < 0.0 or threshold > 1.0:
+            raise ValueError("'threshold' must be between 0 and 1.")
+
+        # Get all off diagonal elements.
+        off_diagonal = (_np.diagonal(overlap, 1)).tolist()
+        for x in (_np.diagonal(overlap, -1)).tolist():
+            off_diagonal.append(x)
+
+        # Check if any off diagonals are less than the threshold value.
+        num_low = 0
+        is_okay = False
+        for od in off_diagonal:
+            if od < threshold:
+                num_low += 1
+        if num_low > 0:
+            _warnings.warn(
+                f"Overlap is poor: {num_low} off-diagonals are less than {threshold}."
+            )
+        else:
+            is_okay = True
+
+        return is_okay, num_low
+
+    def _checkOverlap(self, estimator="MBAR"):
+        """
+        Check the overlap of an FEP simulation leg.
+
+        Parameters
+        ----------
+
+        estimator : str
+            The estimator used for the free-energy analysis. ("MBAR" or "TI")
+
+        Returns
+        -------
+
+        overlap_okay : boolean
+             True if the overlap is okay, False if any off-diagonals are less than 0.03.
+
+        """
+
+        # Calculate the overlap for this object.
+        _, overlap = self.analyse(estimator=estimator)
+
+        if overlap:
+            return Relative.checkOverlap(overlap, estimator=self._estimator)
+        else:
+            raise ValueError("Overlap matrix isn't supported for this estimator.")
 
     @staticmethod
     def difference(pmf, pmf_ref):
