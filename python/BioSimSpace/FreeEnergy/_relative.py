@@ -948,6 +948,48 @@ class Relative:
 
         return processed_data
 
+    @staticmethod
+    def _get_u_nk(files, temperatures, engine):
+        """Get the u_nk dataframes for MBAR analysis.
+
+           Parameters
+           ----------
+
+           files : list
+               List of files for all lambda values to analyse. Should be sorted.
+
+           temperatures : list
+               List of temperatures at which the simulation was carried out at for each lambda window.
+               Index of the temperature value should match it's corresponding lambda window index in files.
+
+           engine : str
+               Engine with which the simulation was run.
+
+           Returns
+           -------
+
+           u_nk : [dataframes] list of dataframes for each trajectory lambda window.
+               
+        """
+
+
+        function_glob_dict = {
+            "SOMD": (Relative._somd_extract_u_nk),
+            "GROMACS": (_gmx_extract_u_nk),
+            "AMBER": (_amber_extract_u_nk)
+        }
+
+        # Extract the data.
+        func = function_glob_dict[engine]
+        try:
+            u_nk = [func(x, T=t) for x, t in zip(files, temperatures)]
+        except Exception as e:
+            print(e)
+            raise _AnalysisError(
+                "Could not extract the data from the provided files!")
+        
+        return u_nk
+    
 
     @staticmethod
     def _analyse_mbar(files, temperatures, lambdas, engine, **kwargs):
@@ -982,27 +1024,15 @@ class Relative:
                window.
         """
 
-        function_glob_dict = {
-            "SOMD": (Relative._somd_extract_u_nk),
-            "GROMACS": (_gmx_extract_u_nk),
-            "AMBER": (_amber_extract_u_nk)
-        }
-
-        # Extract the data.
-        func = function_glob_dict[engine]
-        try:
-            u_nk = [func(x, T=t) for x, t in zip(files, temperatures)]
-        except Exception as e:
-            print(e)
-            raise _AnalysisError(
-                "Could not extract the data from the provided files!")
+        # get u_nk
+        u_nk = Relative._get_u_nk(files, temperatures, engine)
 
         # Preprocess the data.
         try:
             processed_u_nk = Relative._preprocessing_extracted_data(u_nk, "MBAR", **kwargs)
         except:
             _warnings.warn("Could not preprocess the data.")
-            processed_u_nk = u_nk
+            processed_u_nk = _alchemlyb.concat(u_nk)
 
         # defaults
         mbar_method = None
@@ -1048,6 +1078,48 @@ class Relative:
         return (data, overlap)
 
     @staticmethod
+    def _get_dhdl(files, temperatures, engine):
+        """Get the u_nk dataframes for TI analysis.
+
+           Parameters
+           ----------
+
+           files : list
+               List of files for all lambda values to analyse. Should be sorted.
+
+           temperatures : list
+               List of temperatures at which the simulation was carried out at for each lambda window.
+               Index of the temperature value should match it's corresponding lambda window index in files.
+
+           engine : str
+               Engine with which the simulation was run.
+
+           Returns
+           -------
+
+           dhdl : [dataframes] list of dataframes for each trajectory lambda window.
+               
+        """
+
+        function_glob_dict = {
+            "SOMD": (Relative._somd_extract_dHdl),
+            "GROMACS": (_gmx_extract_dHdl),
+            "AMBER": (_amber_extract_dHdl)
+        }
+
+        # Extract the data.
+        func = function_glob_dict[engine]
+
+        try:
+            dhdl = [func(x, T=t) for x, t in zip(files, temperatures)]
+        except:
+            raise _AnalysisError(
+                "Could not extract the data from the provided files!")
+
+        return dhdl
+    
+
+    @staticmethod
     def _analyse_ti(files, temperatures, lambdas, engine, **kwargs):
         """Analyse existing free-energy data using TI and the alchemlyb library.
 
@@ -1079,27 +1151,15 @@ class Relative:
                The TI gradients for plotting a graph.
         """
 
-        function_glob_dict = {
-            "SOMD": (Relative._somd_extract_dHdl),
-            "GROMACS": (_gmx_extract_dHdl),
-            "AMBER": (_amber_extract_dHdl)
-        }
-
-        # Extract the data.
-        func = function_glob_dict[engine]
-
-        try:
-            dhdl = [func(x, T=t) for x, t in zip(files, temperatures)]
-        except:
-            raise _AnalysisError(
-                "Could not extract the data from the provided files!")
+        # get dhdl
+        dhdl = Relative._get_dhdl(files, temperatures, engine)
 
         # Preprocess the data.
         try:
             processed_dhdl = Relative._preprocessing_extracted_data(dhdl, "TI", **kwargs)
         except:
             _warnings.warn("Could not preprocess the data.")
-            processed_dhdl = dhdl
+            processed_dhdl = _alchemlyb.concat(dhdl)
 
         # Analyse using the TI from the alchemlyb library.
         try:
