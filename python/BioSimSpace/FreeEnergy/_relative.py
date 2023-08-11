@@ -82,7 +82,6 @@ from sire.legacy import IO as _SireIO
 from sire.legacy import Mol as _SireMol
 
 from .. import _gmx_exe
-from .. import _gmx_version
 from .. import _is_notebook
 from .. import _isVerbose
 from .._Exceptions import AnalysisError as _AnalysisError
@@ -1268,12 +1267,6 @@ class Relative:
         method = method.replace(" ", "").upper()
         if method not in ["ALCHEMLYB", "NATIVE"]:
             raise ValueError("'method' must be either 'alchemlyb' or 'native'.")
-
-        if _gmx_version <= 2020:
-            _warnings.warn(
-                "Analysing using 'native' gmx bar and BAR as the gromacs version is older..."
-            )
-            method = "NATIVE"
 
         if method == "ALCHEMLYB":
             # Find the output files and work out the lambda windows from the directory names.
