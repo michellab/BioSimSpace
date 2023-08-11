@@ -1065,9 +1065,7 @@ class Relative:
         from functools import partial
 
         function_dict = {
-            "SOMD": (
-                partial(Relative._somd_extract, estimator=estimator)
-            ),
+            "SOMD": (partial(Relative._somd_extract, estimator=estimator)),
             "GROMACS": (_gmx_extract_u_nk if is_mbar else _gmx_extract_dHdl),
             "AMBER": (_amber_extract_u_nk if is_mbar else _amber_extract_dHdl),
         }
