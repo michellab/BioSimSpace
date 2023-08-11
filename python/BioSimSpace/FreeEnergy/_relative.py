@@ -1064,7 +1064,7 @@ class Relative:
 
         from functools import partial
 
-        function_glob_dict = {
+        function_dict = {
             "SOMD": (
                 staticmethod(partial(Relative._somd_extract, estimator=estimator))
             ),
@@ -1073,7 +1073,7 @@ class Relative:
         }
 
         # Extract the data.
-        func = function_glob_dict[engine]
+        func = function_dict[engine]
         try:
             data = [func(x, T=t) for x, t in zip(files, temperatures)]
         except Exception as e:
