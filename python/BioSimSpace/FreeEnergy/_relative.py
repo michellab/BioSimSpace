@@ -1309,11 +1309,11 @@ class Relative:
                 )
 
             _warnings.warn(
-                "using 'native' for gromacs does not return an overlap/dhdl."
+                "using 'native' for GROMACS does not return an overlap/dHdl."
             )
-            _warnings.warn("using 'native' for gromacs uses bar.")
+            _warnings.warn("using 'native' for GROMACS uses BAR.")
 
-            # create the command.
+            # Create the command.
             xvg_files = _glob(f"{work_dir}/lambda_*/*.xvg")
             command = "%s bar -f %s -o %s/bar.xvg" % (
                 _gmx_exe,
@@ -1321,27 +1321,25 @@ class Relative:
                 work_dir,
             )
 
-            # run the first command.
+            # Run the command.
             proc = _subprocess.run(
-                _utils.command_split(command),
-                shell=false,
-                stdout=_subprocess.pipe,
-                stderr=_subprocess.pipe,
+                _Utils.command_split(command),
+                shell=False,
+                stdout=_subprocess.PIPE,
+                stderr=_subprocess.PIPE,
             )
             if proc.returncode != 0:
-                raise _analysiserror("native gromacs free-energy analysis failed!")
+                raise _AnalysisError("native GROMACS free-energy analysis failed!")
 
-            # initialise list to hold the data.
+            # Initialise list to hold the data.
             data = []
 
-            # extract the data from the output files.
-
-            # first leg.
+            # Extract the data from the output files.
             with open("%s/bar.xvg" % work_dir) as file:
-                # read all of the lines into a list.
+                # Read all of the lines into a list.
                 lines = []
                 for line in file:
-                    # ignore comments and xmgrace directives.
+                    # Ignore comments and xmgrace directives.
                     if line[0] != "#" and line[0] != "@":
                         lines.append(line.rstrip())
 
@@ -1518,8 +1516,6 @@ class Relative:
             overlap = []
 
             # Extract the data from the output files.
-
-            # First leg.
             with open("%s/mbar.txt" % work_dir) as file:
                 # Process the MBAR data.
                 for line in file:
