@@ -86,7 +86,7 @@ def test_analysis(fep_output, engine, estimator, expected_results):
     free_nrg_free, _ = BSS.FreeEnergy.Relative.analyse(path_free, estimator=estimator)
     free_nrg_vac, _ = BSS.FreeEnergy.Relative.analyse(path_vac, estimator=estimator)
 
-    # Compute the free energy difference.
+    # Compute the free-energy difference.
     delta_g = BSS.FreeEnergy.Relative.difference(free_nrg_free, free_nrg_vac)
 
     # Make sure the result is close to the expected value.
