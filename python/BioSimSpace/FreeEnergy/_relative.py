@@ -530,6 +530,153 @@ class Relative:
 
         raise ValueError("Couldn't find any SOMD, GROMACS or AMBER free-energy output?")
 
+    @staticmethod
+    def checkOverlap(overlap, threshold=0.03):
+        """
+        Check the overlap of an FEP leg.
+
+        Parameters
+        ----------
+
+        overlap : numpy.matrix
+            The overlap matrix. This gives the overlap between lambda windows.
+
+        threshold : float
+            The threshold value used to check the off-diagonals.
+
+        Returns
+        -------
+
+        is_okay : boolean
+             True if the overlap is okay, False if any off-diagonals are less
+             than the threshold value.
+
+        num_low : int
+            The number of off-diagonals that are less than the threshold value.
+
+        """
+        if not isinstance(overlap, _np.matrix):
+            raise TypeError("'overlap' must be of type 'numpy.matrix'.")
+
+        if not isinstance(threshold, float):
+            raise TypeError("'threshold' must be of type 'float'.")
+        if threshold < 0.0 or threshold > 1.0:
+            raise ValueError("'threshold' must be between 0 and 1.")
+
+        # Get all off diagonal elements.
+        off_diagonal = (_np.diagonal(overlap, 1)).tolist()
+        for x in (_np.diagonal(overlap, -1)).tolist():
+            off_diagonal.append(x)
+
+        # Check if any off diagonals are less than the threshold value.
+        num_low = 0
+        is_okay = False
+        for od in off_diagonal:
+            if od < threshold:
+                num_low += 1
+        if num_low > 0:
+            _warnings.warn(
+                f"Overlap is poor: {num_low} off-diagonals are less than {threshold}."
+            )
+        else:
+            is_okay = True
+
+        return is_okay, num_low
+
+    @staticmethod
+    def difference(pmf, pmf_ref):
+        """
+        Compute the relative free-energy difference between two perturbation
+        legs.
+
+        Parameters
+        ----------
+
+        pmf : [(float, :class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)]
+            The potential of mean force (PMF) of interest. The data is a list
+            of tuples, where each tuple contains the lambda value, the PMF,
+            and the standard error.
+
+        pmf_ref : [(float, :class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)]
+            The reference potential of mean force (PMF). The data is a list
+            of tuples, where each tuple contains the lambda value, the PMF,
+            and the standard error.
+
+        Returns
+        -------
+
+        free_energy : (:class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)
+            The relative free-energy difference and its associated error.
+        """
+
+        if not isinstance(pmf, list):
+            raise TypeError("'pmf' must be of type 'list'.")
+        if not isinstance(pmf_ref, list):
+            raise TypeError("'pmf_ref' must be of type 'list'.")
+
+        for rec in pmf:
+            if not isinstance(rec, tuple):
+                raise TypeError(
+                    "'pmf1' must contain tuples containing lambda "
+                    "values and the associated free-energy and error."
+                )
+            else:
+                if len(rec) != 3:
+                    raise ValueError(
+                        "Each tuple in 'pmf1' must contain three items: "
+                        "a lambda value and the associated free energy "
+                        "and error."
+                    )
+                for val in rec[1:]:
+                    if not isinstance(val, _Types.Energy):
+                        raise TypeError(
+                            "'pmf' must contain 'BioSimSpace.Types.Energy' types."
+                        )
+
+        for rec in pmf_ref:
+            if not isinstance(rec, tuple):
+                raise TypeError(
+                    "'pmf_ref' must contain tuples containing lambda "
+                    "values and the associated free-energy and error."
+                )
+            else:
+                if len(rec) != 3:
+                    raise ValueError(
+                        "Each tuple in 'pmf_ref' must contain three items: "
+                        "a lambda value and the associated free energy "
+                        "and error."
+                    )
+                for val in rec[1:]:
+                    if not isinstance(val, _Types.Energy):
+                        raise TypeError(
+                            "'pmf_ref' must contain 'BioSimSpace.Types.Energy' types."
+                        )
+
+        # Work out the difference in free energy.
+        free_energy = (pmf[-1][1] - pmf[0][1]) - (pmf_ref[-1][1] - pmf_ref[0][1])
+
+        # Propagate the errors. (These add in quadrature.)
+
+        # Measure.
+        error0 = _math.sqrt(
+            (pmf[-1][2].value() * pmf[-1][2].value())
+            + (pmf[0][2].value() * pmf[0][2].value())
+        )
+
+        # Reference.
+        error1 = _math.sqrt(
+            (pmf_ref[-1][2].value() * pmf_ref[-1][2].value())
+            + (pmf_ref[0][2].value() * pmf_ref[0][2].value())
+        )
+
+        # Error for free-energy difference.
+        error = (
+            _math.sqrt((error0 * error0) + (error1 * error1))
+            * _Units.Energy.kcal_per_mol
+        )
+
+        return (free_energy, error)
+
     def _analyse(self, estimator="MBAR"):
         """
         Analyse free-energy data for this object.
@@ -1412,59 +1559,6 @@ class Relative:
 
         return (data, overlap)
 
-    @staticmethod
-    def checkOverlap(overlap, threshold=0.03):
-        """
-        Check the overlap of an FEP leg.
-
-        Parameters
-        ----------
-
-        overlap : numpy.matrix
-            The overlap matrix. This gives the overlap between lambda windows.
-
-        threshold : float
-            The threshold value used to check the off-diagonals.
-
-        Returns
-        -------
-
-        is_okay : boolean
-             True if the overlap is okay, False if any off-diagonals are less
-             than the threshold value.
-
-        num_low : int
-            The number of off-diagonals that are less than the threshold value.
-
-        """
-        if not isinstance(overlap, _np.matrix):
-            raise TypeError("'overlap' must be of type 'numpy.matrix'.")
-
-        if not isinstance(threshold, float):
-            raise TypeError("'threshold' must be of type 'float'.")
-        if threshold < 0.0 or threshold > 1.0:
-            raise ValueError("'threshold' must be between 0 and 1.")
-
-        # Get all off diagonal elements.
-        off_diagonal = (_np.diagonal(overlap, 1)).tolist()
-        for x in (_np.diagonal(overlap, -1)).tolist():
-            off_diagonal.append(x)
-
-        # Check if any off diagonals are less than the threshold value.
-        num_low = 0
-        is_okay = False
-        for od in off_diagonal:
-            if od < threshold:
-                num_low += 1
-        if num_low > 0:
-            _warnings.warn(
-                f"Overlap is poor: {num_low} off-diagonals are less than {threshold}."
-            )
-        else:
-            is_okay = True
-
-        return is_okay, num_low
-
     def _checkOverlap(self, estimator="MBAR", threshold=0.03):
         """
         Check the overlap of an FEP simulation leg.
@@ -1496,100 +1590,6 @@ class Relative:
             return Relative.checkOverlap(overlap, threshold=threshold)
         else:
             raise ValueError("Overlap matrix isn't supported for this estimator.")
-
-    @staticmethod
-    def difference(pmf, pmf_ref):
-        """
-        Compute the relative free-energy difference between two perturbation
-        legs.
-
-        Parameters
-        ----------
-
-        pmf : [(float, :class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)]
-            The potential of mean force (PMF) of interest. The data is a list
-            of tuples, where each tuple contains the lambda value, the PMF,
-            and the standard error.
-
-        pmf_ref : [(float, :class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)]
-            The reference potential of mean force (PMF). The data is a list
-            of tuples, where each tuple contains the lambda value, the PMF,
-            and the standard error.
-
-        Returns
-        -------
-
-        free_energy : (:class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)
-            The relative free-energy difference and its associated error.
-        """
-
-        if not isinstance(pmf, list):
-            raise TypeError("'pmf' must be of type 'list'.")
-        if not isinstance(pmf_ref, list):
-            raise TypeError("'pmf_ref' must be of type 'list'.")
-
-        for rec in pmf:
-            if not isinstance(rec, tuple):
-                raise TypeError(
-                    "'pmf1' must contain tuples containing lambda "
-                    "values and the associated free-energy and error."
-                )
-            else:
-                if len(rec) != 3:
-                    raise ValueError(
-                        "Each tuple in 'pmf1' must contain three items: "
-                        "a lambda value and the associated free energy "
-                        "and error."
-                    )
-                for val in rec[1:]:
-                    if not isinstance(val, _Types.Energy):
-                        raise TypeError(
-                            "'pmf' must contain 'BioSimSpace.Types.Energy' types."
-                        )
-
-        for rec in pmf_ref:
-            if not isinstance(rec, tuple):
-                raise TypeError(
-                    "'pmf_ref' must contain tuples containing lambda "
-                    "values and the associated free-energy and error."
-                )
-            else:
-                if len(rec) != 3:
-                    raise ValueError(
-                        "Each tuple in 'pmf_ref' must contain three items: "
-                        "a lambda value and the associated free energy "
-                        "and error."
-                    )
-                for val in rec[1:]:
-                    if not isinstance(val, _Types.Energy):
-                        raise TypeError(
-                            "'pmf_ref' must contain 'BioSimSpace.Types.Energy' types."
-                        )
-
-        # Work out the difference in free energy.
-        free_energy = (pmf[-1][1] - pmf[0][1]) - (pmf_ref[-1][1] - pmf_ref[0][1])
-
-        # Propagate the errors. (These add in quadrature.)
-
-        # Measure.
-        error0 = _math.sqrt(
-            (pmf[-1][2].value() * pmf[-1][2].value())
-            + (pmf[0][2].value() * pmf[0][2].value())
-        )
-
-        # Reference.
-        error1 = _math.sqrt(
-            (pmf_ref[-1][2].value() * pmf_ref[-1][2].value())
-            + (pmf_ref[0][2].value() * pmf_ref[0][2].value())
-        )
-
-        # Error for free-energy difference.
-        error = (
-            _math.sqrt((error0 * error0) + (error1 * error1))
-            * _Units.Energy.kcal_per_mol
-        )
-
-        return (free_energy, error)
 
     def _difference(self, pmf_ref):
         """
