@@ -26,13 +26,12 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Relative", "getData"]
 
-from glob import glob as _glob
-
 import copy as _copy
 import math as _math
 import numpy as _np
 import os as _os
 import pandas as _pd
+import pathlib as _pathlib
 import shutil as _shutil
 import subprocess as _subprocess
 import sys as _sys
@@ -426,13 +425,14 @@ class Relative:
 
         # Change into the working directory.
         with _cd(work_dir):
-            # Glob all of the analysis files.
+            # Specify the path to glob.
+            glob_path = _pathlib.Path(work_dir)
 
             # First try SOMD data.
-            files = _glob("*/*/gradients.dat")
+            files = glob_path.glob("**/gradients.dat")
 
             if len(files) == 0:
-                files = _glob("*/*/gromacs.xvg")
+                files = glob_path.glob("**/[!bar]*.xvg")
 
                 if len(files) == 0:
                     raise ValueError(
@@ -510,13 +510,14 @@ class Relative:
             _assert_imported("alchemlyb")
 
         function_glob_dict = {
-            "SOMD": (Relative._analyse_somd, "/lambda_*/simfile.dat"),
-            "GROMACS": (Relative._analyse_gromacs, "/lambda_*/gromacs.xvg"),
-            "AMBER": (Relative._analyse_amber, "/lambda_*/amber.out"),
+            "SOMD": (Relative._analyse_somd, "**/simfile.dat"),
+            "GROMACS": (Relative._analyse_gromacs, "**/[!bar]*.xvg"),
+            "AMBER": (Relative._analyse_amber, "**/*.out"),
         }
 
         for engine, (func, mask) in function_glob_dict.items():
-            data = _glob(work_dir + mask)
+            glob_path = _pathlib.Path(work_dir)
+            data = sorted(glob_path.glob(mask))
             if data and engine == "AMBER":
                 if method != "ALCHEMLYB":
                     raise _AnalysisError(
@@ -738,8 +739,8 @@ class Relative:
             window for TI.
         """
 
-        if not isinstance(simfile, str):
-            raise TypeError("'simfile' must be of type 'str'.")
+        if not isinstance(simfile, _pathlib.Path):
+            raise TypeError("'simfile' must be of type 'pathlib.Path'.")
         if not _os.path.isfile(simfile):
             raise ValueError("'simfile' doesn't exist!")
 
@@ -1030,8 +1031,8 @@ class Relative:
 
         if not isinstance(files, (tuple, list)):
             raise TypeError("'files' must be of type 'list' or 'tuple'.")
-        if not all(isinstance(x, str) for x in files):
-            raise TypeError("'files' must be a list of 'str' types.")
+        if not all(isinstance(x, _pathlib.Path) for x in files):
+            raise TypeError("'files' must be a list of 'pathlib.Path' types.")
 
         if not isinstance(temperatures, (tuple, list)):
             raise TypeError("'temperatures' must be of type 'list' or 'tuple'.")
@@ -1194,8 +1195,13 @@ class Relative:
             )
 
         # Find the output files and work out the lambda windows from the directory names.
-        files = sorted(_glob(work_dir + "/lambda_*/amber.out"))
-        lambdas = [float(x.split("/")[-2].split("_")[-1]) for x in files]
+        glob_path = _pathlib.Path(work_dir)
+        files = sorted(glob_path.glob("**/*.out"))
+        lambdas = []
+        for file in files:
+            for part in file.parts:
+                if "lambda" in part:
+                    lambdas.append(float(part.split("_")[-1]))
 
         # Find the temperature for each lambda window.
         temperatures = []
@@ -1270,8 +1276,13 @@ class Relative:
 
         if method == "ALCHEMLYB":
             # Find the output files and work out the lambda windows from the directory names.
-            files = sorted(_glob(work_dir + "/lambda_*/gromacs.xvg"))
-            lambdas = [float(x.split("/")[-2].split("_")[-1]) for x in files]
+            glob_path = _pathlib.Path(work_dir)
+            files = sorted(glob_path.glob("**/[!bar]*.xvg"))
+            lambdas = []
+            for file in files:
+                for part in file.parts:
+                    if "lambda" in part:
+                        lambdas.append(float(part.split("_")[-1]))
 
             # Find the temperature at each lambda window
             temperatures = []
@@ -1314,7 +1325,9 @@ class Relative:
             _warnings.warn("using 'native' for GROMACS uses BAR.")
 
             # Create the command.
-            xvg_files = _glob(f"{work_dir}/lambda_*/*.xvg")
+            glob_path = _pathlib.Path(work_dir)
+            xvg_files = sorted(glob_path.glob("**/[!bar]*.xvg"))
+            xvg_files = [str(file.absolute()) for file in xvg_files]
             command = "%s bar -f %s -o %s/bar.xvg" % (
                 _gmx_exe,
                 " ".join(xvg_files),
@@ -1432,8 +1445,13 @@ class Relative:
 
         if method == "ALCHEMLYB":
             # Glob the data files and work out the lambda values.
-            files = sorted(_glob(work_dir + "/lambda_*/simfile.dat"))
-            lambdas = [float(x.split("/")[-2].split("_")[-1]) for x in files]
+            glob_path = _pathlib.Path(work_dir)
+            files = sorted(glob_path.glob("**/simfile.dat"))
+            lambdas = []
+            for file in files:
+                for part in file.parts:
+                    if "lambda" in part:
+                        lambdas.append(float(part.split("_")[-1]))
 
             temperatures = []
             for file in files:
