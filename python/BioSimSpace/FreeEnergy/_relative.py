@@ -46,6 +46,12 @@ from .._Utils import _assert_imported, _have_imported, _try_import
 _alchemlyb = _try_import("alchemlyb")
 
 if _have_imported(_alchemlyb):
+    import logging as _logging
+
+    # Silence pymbar warnings on startup.
+    _logger = _logging.getLogger("pymbar")
+    _logger.setLevel(_logging.ERROR)
+
     # Handle alchemlyb MBAR API changes.
     try:
         from alchemlyb.estimators import AutoMBAR as _AutoMBAR
