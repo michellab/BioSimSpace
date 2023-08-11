@@ -108,7 +108,7 @@ finally:
 
         # Create a list of the conda dependencies.
         conda_deps = [
-            "alchemlyb<2",  # known not available on aarch64
+            "alchemlyb",  # known not available on aarch64
             "configargparse",
             "ipywidgets<8",
             "kcombu_bss",
