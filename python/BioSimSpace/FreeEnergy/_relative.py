@@ -1303,12 +1303,17 @@ class Relative:
 
         # For the older gromacs versions and native use the gmx bar analysis.
         elif method == "NATIVE":
-            _warnings.warn(
-                "using 'native' for GROMACS does not return an overlap/dHdl."
-            )
-            _warnings.warn("using 'native' for GROMACS uses BAR.")
+            if _gmx_exe is None:
+                raise _MissingSoftwareError(
+                    "Cannot use native gmx bar analysis as GROMACS is not installed!"
+                )
 
-            # Create the command.
+            _warnings.warn(
+                "using 'native' for gromacs does not return an overlap/dhdl."
+            )
+            _warnings.warn("using 'native' for gromacs uses bar.")
+
+            # create the command.
             xvg_files = _glob(f"{work_dir}/lambda_*/*.xvg")
             command = "%s bar -f %s -o %s/bar.xvg" % (
                 _gmx_exe,
@@ -1316,27 +1321,27 @@ class Relative:
                 work_dir,
             )
 
-            # Run the first command.
+            # run the first command.
             proc = _subprocess.run(
-                _Utils.command_split(command),
-                shell=False,
-                stdout=_subprocess.PIPE,
-                stderr=_subprocess.PIPE,
+                _utils.command_split(command),
+                shell=false,
+                stdout=_subprocess.pipe,
+                stderr=_subprocess.pipe,
             )
             if proc.returncode != 0:
-                raise _AnalysisError("Native GROMACS free-energy analysis failed!")
+                raise _analysiserror("native gromacs free-energy analysis failed!")
 
-            # Initialise list to hold the data.
+            # initialise list to hold the data.
             data = []
 
-            # Extract the data from the output files.
+            # extract the data from the output files.
 
-            # First leg.
+            # first leg.
             with open("%s/bar.xvg" % work_dir) as file:
-                # Read all of the lines into a list.
+                # read all of the lines into a list.
                 lines = []
                 for line in file:
-                    # Ignore comments and xmgrace directives.
+                    # ignore comments and xmgrace directives.
                     if line[0] != "#" and line[0] != "@":
                         lines.append(line.rstrip())
 
