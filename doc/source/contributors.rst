@@ -21,3 +21,4 @@ can be recognised.
 * `@msuruzon <https://github.com/msuruzhon>`__
 * `@xiki-tempula <https://github.com/xiki-tempula>`__
 * `@kexul <https://github.com/kexul>`__
+* `@mb2055 <https://github.com/mb2055>`__
