@@ -683,6 +683,132 @@ class Relative:
 
         return (free_energy, error)
 
+    @staticmethod
+    def _get_data(files, temperatures, engine, estimator):
+        """
+        files : list(pathlib.Path)
+            List of files for all lambda values to analyse. Should be sorted.
+
+        temperatures : list(float)
+            List of temperatures at which the simulation was carried out at for each lambda window.
+            Index of the temperature value should match it's corresponding lambda window index in files.
+
+        lambdas : list(float)
+            Sorted list of lambda values used for the simulation.
+
+        engine : str
+            Engine with which the simulation was run.
+
+        estimator : str
+            The estimator to use for the analysis. Options are "MBAR" or "TI".
+
+        Returns
+        -------
+
+        data : list(pandas.DataFrame)
+            A list of dataframes containing the data for each lambda window.
+        """
+
+        if not isinstance(files, (tuple, list)):
+            raise TypeError("'files' must be of type 'list' or 'tuple'.")
+        if not all(isinstance(x, _pathlib.Path) for x in files):
+            raise TypeError("'files' must be a list of 'pathlib.Path' types.")
+
+        if not isinstance(temperatures, (tuple, list)):
+            raise TypeError("'temperatures' must be of type 'list' or 'tuple'.")
+        if not all(isinstance(x, float) for x in temperatures):
+            raise TypeError("'temperatures' must be a list of 'float' types.")
+
+        if not isinstance(engine, str):
+            raise TypeError("'engine' must be of type 'str'.")
+        engine = engine.replace(" ", "").upper()
+        if not engine in Relative._engines:
+            raise ValueError(
+                f"Unsupported engine '{engine}'. Options are: {', '.join(Relative._engines)}"
+            )
+
+        if not isinstance(estimator, str):
+            raise TypeError("'estimator' must be of type 'str'.")
+        estimator = estimator.replace(" ", "").upper()
+        if not estimator in ["MBAR", "TI"]:
+            raise ValueError("'estimator' must be either 'MBAR' or 'TI'.")
+
+        if estimator == "MBAR":
+            is_mbar = True
+        else:
+            is_mbar = False
+
+        from functools import partial
+
+        function_dict = {
+            "SOMD": partial(Relative._somd_extract, estimator=estimator),
+            "GROMACS": _gmx_extract_u_nk if is_mbar else _gmx_extract_dHdl,
+            "AMBER": _amber_extract_u_nk if is_mbar else _amber_extract_dHdl,
+        }
+
+        # Extract the data.
+        func = function_dict[engine]
+        try:
+            data = [func(file, T=temp) for file, temp in zip(files, temperatures)]
+        except Exception as e:
+            msg = "Could not extract the data from the provided files!"
+            if _isVerbose():
+                raise _AnalysisError(msg) from e
+            else:
+                raise _AnalysisError(msg) from None
+
+        return data
+
+    @staticmethod
+    def _get_u_nk(files, temperatures, engine):
+        """
+        Get the u_nk dataframes for MBAR analysis.
+
+        Parameters
+        ----------
+
+        files : list(pathlib.Path)
+            A list of data files.
+
+        temperatures : list(float)
+            A list of temperatures.
+
+        engine : str
+            The simulation engine used to generate the data.
+
+        Returns
+        -------
+
+        u_nk : list(pandas.DataFrame)
+            A list of dataframes containing the u_nk data for each lambda window.
+        """
+        return _Relative._get_data(files, temperatures, engine, "MBAR")
+
+    @staticmethod
+    def _get_dh_dl(files, temperatures, engine):
+        """
+        Get the dh_dl dataframes for TI analysis.
+
+        Parameters
+        ----------
+
+        files : list(pathlib.Path)
+            A list of data files.
+
+        temperatures : list(float)
+            A list of temperatures.
+
+        engine : str
+            The simulation engine used to generate the data.
+
+        Returns
+        -------
+
+        dh_dl : list(pandas.DataFrame)
+            A list of dataframes containing the u_nk data for each lambda window.
+        """
+        return _Relative._get_data(files, temperatures, engine, "TI")
+
     def _analyse(self, estimator="MBAR"):
         """
         Analyse free-energy data for this object.
@@ -999,14 +1125,14 @@ class Relative:
         Parameters
         ----------
 
-        files : list
+        files : list(pathlib.Path)
             List of files for all lambda values to analyse. Should be sorted.
 
-        temperatures : list
+        temperatures : list(float)
             List of temperatures at which the simulation was carried out at for each lambda window.
             Index of the temperature value should match it's corresponding lambda window index in files.
 
-        lambdas : list
+        lambdas : list(float)
             Sorted list of lambda values used for the simulation.
 
         engine : str
@@ -1062,18 +1188,9 @@ class Relative:
         else:
             is_mbar = False
 
-        from functools import partial
-
-        function_dict = {
-            "SOMD": (partial(Relative._somd_extract, estimator=estimator)),
-            "GROMACS": (_gmx_extract_u_nk if is_mbar else _gmx_extract_dHdl),
-            "AMBER": (_amber_extract_u_nk if is_mbar else _amber_extract_dHdl),
-        }
-
         # Extract the data.
-        func = function_dict[engine]
         try:
-            data = [func(x, T=t) for x, t in zip(files, temperatures)]
+            data = Relative._get_data(files, temperatures, engine, estimator)
         except Exception as e:
             msg = "Could not extract the data from the provided files!"
             if _isVerbose():
@@ -1090,7 +1207,7 @@ class Relative:
 
         mbar_method = None
         if is_mbar:
-            # Check kwargs incase there is an mbar_method and then use this
+            # Check kwargs in case there is an mbar_method and then use this
             for key, value in kwargs.items():
                 key = key.replace(" ", "").replace("_", "").upper()
                 if key == "MBARMETHOD":
