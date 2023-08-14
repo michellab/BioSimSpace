@@ -9,6 +9,17 @@ company supporting open-source development of fostering academic/industrial coll
 within the biomolecular simulation community. Our software is hosted via the `OpenBioSim`
 `GitHub <https://github.com/OpenBioSim/biosimspace>`__ organisation.
 
+`2023.3.1 <https://github.com/openbiosim/biosimspace/compare/2023.3.0...2023.3.1>`_ - Aug 14 2023
+-------------------------------------------------------------------------------------------------
+
+* Check for non-periodic cartesian space when setting up vacuum simulations with all engines (`#125 <https://github.com/OpenBioSim/biosimspace/pull/125>`__).
+* Fixed several issues caught by BioSimSpace tutorials suite (`#128 <https://github.com/OpenBioSim/biosimspace/pull/128>`__).
+* Fixed import of incorrect ``alchemlyb`` extract function for GROMACS (`#132 <https://github.com/OpenBioSim/biosimspace/pull/132>`__).
+* Handle issues with using certain triclinic box vectors with OpenMM by performing a pre lattice reduction using the internal OpenMM functionality (`#135 <https://github.com/OpenBioSim/biosimspace/pull/135>`__).
+* Add support for OpenMM in example equilibration node (`@mb2055 <https://github.com/mb2055>`_) (`#138 <https://github.com/OpenBioSim/biosimspace/pull/138>`__).
+* Fix use of ``totalSteps`` when using the OpenMM ``StateDataReporter`` (`#146 <https://github.com/OpenBioSim/biosimspace/pull/146>`__).
+* Make sure ``alchemlyb`` is imported using ``try_import`` to avoid errors on platforms where it isn't available (`#151 <https://github.com/OpenBioSim/biosimspace/pull/151>`__).
+
 `2023.3.0 <https://github.com/openbiosim/biosimspace/compare/2023.2.2...2023.3.0>`_ - Jun 30 2023
 -------------------------------------------------------------------------------------------------
 
