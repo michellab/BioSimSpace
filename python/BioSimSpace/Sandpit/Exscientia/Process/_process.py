@@ -29,6 +29,7 @@ __all__ = ["Process"]
 import collections as _collections
 import glob as _glob
 import os as _os
+import traceback
 
 import pandas as pd
 
@@ -910,7 +911,16 @@ class Process:
 
         # The process isn't running.
         if not self.isRunning():
-            self.saveMetric()
+            try:
+                self.saveMetric()
+            except Exception:
+                exception_info = traceback.format_exc()
+                with open(f"{self.workDir()}/{self._name}.err", 'a+') as f:
+                    f.write("Exception Information during saveMetric():\n")
+                    f.write("======================\n")
+                    f.write(exception_info)
+                    f.write("\n\n")
+
             return
 
         if max_time is not None:
