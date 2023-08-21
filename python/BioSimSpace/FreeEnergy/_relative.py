@@ -32,6 +32,7 @@ import numpy as _np
 import os as _os
 import pandas as _pd
 import pathlib as _pathlib
+import re as _re
 import shutil as _shutil
 import subprocess as _subprocess
 import sys as _sys
