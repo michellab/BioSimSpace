@@ -783,7 +783,7 @@ class Relative:
         u_nk : list(pandas.DataFrame)
             A list of dataframes containing the u_nk data for each lambda window.
         """
-        return _Relative._get_data(files, temperatures, engine, "MBAR")
+        return Relative._get_data(files, temperatures, engine, "MBAR")
 
     @staticmethod
     def _get_dh_dl(files, temperatures, engine):
@@ -808,7 +808,7 @@ class Relative:
         dh_dl : list(pandas.DataFrame)
             A list of dataframes containing the u_nk data for each lambda window.
         """
-        return _Relative._get_data(files, temperatures, engine, "TI")
+        return Relative._get_data(files, temperatures, engine, "TI")
 
     def _analyse(self, estimator="MBAR"):
         """
