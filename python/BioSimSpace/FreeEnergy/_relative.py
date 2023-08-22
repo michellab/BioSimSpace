@@ -1262,7 +1262,7 @@ class Relative:
             )
 
         if is_mbar:
-            return (data, alchem.overlap_matrix)
+            return (data, _np.matrix(alchem.overlap_matrix))
         else:
             return (data, None)
 
@@ -1694,7 +1694,7 @@ class Relative:
                             # Get the next line.
                             row = next(file)
 
-        return (data, overlap)
+        return (data, _np.matrix(overlap))
 
     def _checkOverlap(self, estimator="MBAR", threshold=0.03):
         """
