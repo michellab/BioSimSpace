@@ -120,8 +120,11 @@ if _sys.platform == "win32":
 class Relative:
     """Class for configuring and running relative free-energy perturbation simulations."""
 
-    # Create a list of supported molecular dynamics engines.
+    # Create a list of supported molecular dynamics engines. (For running simulations.)
     _engines = ["GROMACS", "SOMD"]
+
+    # Create a list of supported molecular dynamics engines. (For analysis.)
+    _engines_analysis = ["AMBER", "GROMACS", "SOMD"]
 
     def __init__(
         self,
@@ -723,9 +726,9 @@ class Relative:
         if not isinstance(engine, str):
             raise TypeError("'engine' must be of type 'str'.")
         engine = engine.replace(" ", "").upper()
-        if not engine in Relative._engines:
+        if not engine in Relative._engines_analysis:
             raise ValueError(
-                f"Unsupported engine '{engine}'. Options are: {', '.join(Relative._engines)}"
+                f"Unsupported engine '{engine}'. Options are: {', '.join(Relative._engines_analysis)}"
             )
 
         if not isinstance(estimator, str):
@@ -1173,9 +1176,9 @@ class Relative:
 
         if not isinstance(engine, str):
             raise TypeError("'engine' must be of type 'str'.")
-        if not engine.replace(" ", "").upper() in Relative._engines:
+        if not engine.replace(" ", "").upper() in Relative._engines_analysis:
             raise ValueError(
-                f"Unsupported engine '{engine}'. Options are: {', '.join(Relative._engines)}"
+                f"Unsupported engine '{engine}'. Options are: {', '.join(Relative._engines_analysis)}"
             )
 
         if not isinstance(estimator, str):
