@@ -523,6 +523,10 @@ def readMolecules(
                 else:
                     raise IOError(msg) from None
 
+    # Add a file format shared property.
+    system.addSharedProperty("fileformat")
+    system.setSharedProperty("fileformat", system.property("fileformat"))
+
     return _System(system)
 
 
