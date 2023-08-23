@@ -225,8 +225,7 @@ def to(obj, format="biosimspace", property_map={}):
                 space = _SireVol.Cartesian()
 
             # Set a shared space property.
-            obj._sire_object.addSharedProperty(prop)
-            obj._sire_object.setSharedProperty(prop, space)
+            obj._sire_object.addSharedProperty(prop, space)
 
             # Now try to convert the object to OpenMM format.
             try:

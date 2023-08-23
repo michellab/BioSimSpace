@@ -525,8 +525,7 @@ def readMolecules(
 
     # Add a file format shared property.
     prop = property_map.get("fileformat", "fileformat")
-    system.addSharedProperty(prop)
-    system.setSharedProperty(prop, system.property(prop))
+    system.addSharedProperty(prop, system.property(prop))
 
     # Remove "space" and "time" shared properties since this causes incorrect
     # behaviour when extracting molecules and recombining them to make other
