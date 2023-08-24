@@ -523,6 +523,28 @@ def readMolecules(
                 else:
                     raise IOError(msg) from None
 
+    # Add a file format shared property.
+    prop = property_map.get("fileformat", "fileformat")
+    system.addSharedProperty(prop, system.property(prop))
+
+    # Remove "space" and "time" shared properties since this causes incorrect
+    # behaviour when extracting molecules and recombining them to make other
+    # systems.
+    try:
+        # Space.
+        prop = property_map.get("space", "space")
+        space = system.property(prop)
+        system.removeSharedProperty(prop)
+        system.setProperty(prop, space)
+
+        # Time.
+        prop = property_map.get("time", "time")
+        time = system.property(prop)
+        system.removeSharedProperty(prop)
+        system.setProperties(prop, time)
+    except:
+        pass
+
     return _System(system)
 
 
