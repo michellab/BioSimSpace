@@ -30,6 +30,7 @@ from .._Utils import _try_import, _have_imported
 
 _mdanalysis = _try_import("MDAnalysis")
 _mdtraj = _try_import("mdtraj")
+
 import copy as _copy
 import logging as _logging
 import os as _os
@@ -937,11 +938,26 @@ class Trajectory:
             # Check that all of the atom indices are integers.
             if not all(type(x) is int for x in atoms):
                 raise TypeError("'atom' indices must be of type 'int'")
+            # Make sure the atom index is within range.
+            num_atoms = self.getFrames()[0].nAtoms()
+            for atom in atoms:
+                if atom < 0 or atom >= num_atoms:
+                    raise ValueError(
+                        f"Atom index {atom} out of range [0, {num_atoms})."
+                    )
 
         if self._backend == "SIRE":
-            raise _IncompatibleError(
-                "RMSD currently isn't supported using the Sire backend."
-            )
+            # Get the reference.
+            if atoms is not None:
+                reference = self._trajectory.current().atoms()[atoms]
+            else:
+                reference = None
+
+            # Compute the RMSD.
+            rmsd = self._trajectory.rmsd(reference=reference, frame=frame)
+
+            # Convert to BioSimSpace units.
+            rmsd = [(_Units.Length.angstrom * x.value()).nanometers() for x in rmsd]
 
         elif self._backend == "MDTRAJ":
             try:

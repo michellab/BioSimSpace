@@ -151,14 +151,19 @@ def test_velocities(traj_mdanalysis):
     has_mdanalysis is False or has_mdtraj is False,
     reason="Requires MDAnalysis and mdtraj to be installed.",
 )
-def test_rmsd(traj_mdtraj, traj_mdanalysis):
-    """Make sure that the RMSD computed by both backends is comparable."""
+def test_rmsd(traj_sire, traj_mdtraj, traj_mdanalysis):
+    """Make sure that the RMSD computed by all backends are comparable."""
+
+    # List of reference atoms spanning multiple molecules.
+    atoms = [0, 10, 20, 30, 40]
 
     # Compute the RMSD for a subset of atoms using the third frame
     # as a reference.
-    rmsd0 = traj_mdtraj.rmsd(frame=3, atoms=[0, 10, 20, 30, 40])
-    rmsd1 = traj_mdanalysis.rmsd(frame=3, atoms=[0, 10, 20, 30, 40])
+    rmsd0 = traj_sire.rmsd(frame=0, atoms=atoms)
+    rmsd1 = traj_mdtraj.rmsd(frame=0, atoms=atoms)
+    rmsd2 = traj_mdanalysis.rmsd(frame=0, atoms=atoms)
 
     # Make sure the values are approximately the same.
-    for v0, v1 in zip(rmsd0, rmsd1):
+    for v0, v1, v2 in zip(rmsd0, rmsd1, rmsd2):
         assert v0.value() == pytest.approx(v1.value(), abs=1e-2)
+        assert v0.value() == pytest.approx(v2.value(), abs=1e-2)
