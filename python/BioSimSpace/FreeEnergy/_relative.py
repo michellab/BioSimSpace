@@ -27,11 +27,13 @@ __email__ = "lester.hedges@gmail.com"
 __all__ = ["Relative", "getData"]
 
 import copy as _copy
+import json as _json
 import math as _math
 import numpy as _np
 import os as _os
 import pandas as _pd
 import pathlib as _pathlib
+import pyarrow.parquet as _pq
 import re as _re
 import shutil as _shutil
 import subprocess as _subprocess
@@ -124,7 +126,7 @@ class Relative:
     _engines = ["GROMACS", "SOMD"]
 
     # Create a list of supported molecular dynamics engines. (For analysis.)
-    _engines_analysis = ["AMBER", "GROMACS", "SOMD"]
+    _engines_analysis = ["AMBER", "GROMACS", "SOMD", "SOMD2"]
 
     def __init__(
         self,
@@ -515,6 +517,7 @@ class Relative:
 
         function_glob_dict = {
             "SOMD": (Relative._analyse_somd, "**/simfile.dat"),
+            "SOMD2": (Relative._analyse_somd2, "**/*.parquet"),
             "GROMACS": (Relative._analyse_gromacs, "**/[!bar]*.xvg"),
             "AMBER": (Relative._analyse_amber, "**/*.out"),
         }
@@ -531,6 +534,11 @@ class Relative:
                 raise _AnalysisError(
                     "SOMD cannot use 'TI' estimator with 'native' analysis method."
                 )
+            if data and engine == "SOMD2":
+                if method != "ALCHEMLYB":
+                    raise _AnalysisError(
+                        f"SOMD2 can only use the 'alchemlyb' analysis method."
+                    )
             if data and engine == "GROMACS" and method == "native":
                 _warnings.warn(
                     "Native GROMACS analysis cannot do MBAR/TI. BAR will be used."
@@ -538,7 +546,9 @@ class Relative:
             if data:
                 return func(work_dir, estimator, method, **kwargs)
 
-        raise ValueError("Couldn't find any SOMD, GROMACS or AMBER free-energy output?")
+        raise ValueError(
+            "Couldn't find any SOMD, SOMD2, GROMACS or AMBER free-energy output?"
+        )
 
     @staticmethod
     def checkOverlap(overlap, threshold=0.03):
@@ -746,6 +756,7 @@ class Relative:
 
         function_dict = {
             "SOMD": partial(Relative._somd_extract, estimator=estimator),
+            "SOMD2": partial(Relative._somd2_extract, estimator=estimator),
             "GROMACS": _gmx_extract_u_nk if is_mbar else _gmx_extract_dHdl,
             "AMBER": _amber_extract_u_nk if is_mbar else _amber_extract_dHdl,
         }
@@ -1001,6 +1012,200 @@ class Relative:
         df.attrs["energy_unit"] = "kT"
 
         return df
+
+    @staticmethod
+    def _somd2_extract(parquet_file, T=None, estimator="MBAR"):
+        """
+        Extract required data from a SOMD2 output file (parquet file).
+
+        Parameters
+        ----------
+
+        parquet_file : str
+            Path to the parquet file.
+
+        T : float
+            Temperature in Kelvin at which the simulations were performed;
+            needed to generated the reduced potential (in units of kT).
+
+        estimator : str
+            The estimator that the returned data will be used with. This can
+            be either 'MBAR' or 'TI'.
+
+        Returns
+        -------
+
+        data : pandas.DataFrame
+            Either: Reduced potential for each alchemical state (k) for each
+            frame (n) for MBAR, or dH/dl as a function of time for this lambda
+            window for TI.
+        """
+
+        if not isinstance(parquet_file, _pathlib.Path):
+            raise TypeError("'parquet_file' must be of type 'pathlib.Path'.")
+        if not _os.path.isfile(parquet_file):
+            raise ValueError("'parquet_file' doesn't exist!")
+
+        if not isinstance(T, float):
+            raise TypeError("'T' must be of type 'float'.")
+
+        if not isinstance(estimator, str):
+            raise TypeError("'estimator' must be of type 'str'.")
+        if estimator.replace(" ", "").upper() not in ["MBAR", "TI"]:
+            raise ValueError("'estimator' must be either 'MBAR' or 'TI'.")
+
+        # Flag that we're using MBAR.
+        if estimator == "MBAR":
+            is_mbar = True
+        else:
+            is_mbar = False
+
+        # Beta factor for computing reduced potentials and gradients.
+        k_b = _R_kJmol * _kJ2kcal
+        beta = 1 / (k_b * T)
+
+        # Try to read the file.
+        try:
+            table = _pq.read_table(parquet_file)
+        except:
+            raise IOError(f"Could not read the SOMD2 parquet file: {parquet_file}")
+
+        # Try to extract the metadata.
+        try:
+            metadata = _json.loads(table.schema.metadata["somd2".encode()])
+            temperature = float(metadata["temperature"])
+        except:
+            raise IOError(
+                f"Could not read the SOMD2 metadta from parquet file: {parquet_file}"
+            )
+
+        # Validate metadata required by all analysis methods.
+        try:
+            lam = float(metadata["lambda"])
+        except:
+            raise ValueError("Parquet metadata does not contain lambda value.")
+        try:
+            lambda_array = metadata["lambda_array"]
+        except:
+            raise ValueError("Parquet metadata does not contain lambda array.")
+
+        # Make sure that the temperature is correct.
+        if not T == temperature:
+            raise ValueError(
+                f"The temperature in the parquet metadata '{temperature:%.3f}' "
+                f"does not match the specified temperature '{T:%.3f}'."
+            )
+
+        # Convert to a pandas dataframe.
+        df = table.to_pandas()
+
+        if is_mbar:
+            df = df[[str(i) for i in lambda_array]].copy()
+            lambdas = len(df.index) * [lam]
+            multiindex = _pd.MultiIndex.from_arrays(
+                [df.index, lambdas], names=["time", "lambdas"]
+            )
+            df = _pd.concat(
+                [df.iloc[:, :2], beta * df.iloc[:, 2:].subtract(df[str(lam)], axis=0)],
+                axis=1,
+            )
+            df.index = multiindex
+
+            # Set the temperature and energy unit.
+            df.attrs["temperature"] = T
+            df.attrs["energy_unit"] = "kT"
+
+            return df
+
+        else:
+            columns_lambdas = df.columns[
+                _pd.to_numeric(df.columns, errors="coerce").to_series().notnull()
+            ]
+
+            if len(columns_lambdas) > 3 and lambda_array is None:
+                raise ValueError(
+                    "More than 3 lambda values in the dataframe but no lambda array provided?"
+                )
+            try:
+                lam_below = max(
+                    [
+                        float(lambda_val)
+                        for lambda_val in columns_lambdas
+                        if float(lambda_val) < lam
+                    ]
+                )
+            except ValueError:
+                lam_below = None
+            try:
+                lam_above = min(
+                    [
+                        float(lambda_val)
+                        for lambda_val in columns_lambdas
+                        if float(lambda_val) > lam
+                    ]
+                )
+            except ValueError:
+                lam_above = None
+
+            # Compute gradient using finite differences.
+            if lam_below is None:
+                double_incr = (lam_above - lam) * 2
+                grad = (df[str(lam_above)] - df[str(lam)]) * 2 / double_incr
+                back_m = _np.exp(beta * (df[str(lam_above)] - df[str(lam)]))
+                forward_m = _np.exp(-1 * beta * (df[str(lam_above)] - df[str(lam)]))
+            elif lam_above is None:
+                double_incr = (lam - lam_below) * 2
+                grad = (df[str(lam)] - df[str(lam_below)]) * 2 / double_incr
+                back_m = _np.exp(-1 * beta * (df[str(lam_below)] - df[str(lam)]))
+                forward_m = _np.exp(beta * (df[str(lam_below)] - df[str(lam)]))
+            else:
+                double_incr = lam_above - lam_below
+                grad = (df[str(lam_above)] - df[str(lam_below)]) / double_incr
+                back_m = _np.exp(beta * (df[str(lam)] - df[str(lam_below)]))
+                forward_m = _np.exp(beta * (df[str(lam)] - df[str(lam_above)]))
+
+            grad.name = "gradient"
+            back_m.name = "backward_mc"
+            forward_m.name = "forward_mc"
+
+            if lambda_array is not None:
+                df[[str(i) for i in lambda_array]] = df[
+                    [str(i) for i in lambda_array]
+                ].apply(lambda x: x * -1 * beta)
+
+            df = _pd.concat(
+                [
+                    df,
+                    _pd.DataFrame(grad),
+                    _pd.DataFrame(back_m),
+                    _pd.DataFrame(forward_m),
+                ],
+                axis=1,
+            )
+
+            try:
+                time = list(df["time"])
+            except KeyError:
+                time = list(df.index)
+
+            lambdas = len(time) * [lam]
+
+            # Create a multi-index from the two lists
+            multi_index = _pd.MultiIndex.from_tuples(
+                zip(time, lambdas), names=["time", "fep-lambdas"]
+            )
+
+            # Get the gradients.
+            grads = list(df["gradient"])
+
+            # Create a DataFrame with the multi-index
+            df = _pd.DataFrame({"fep": grads}, index=multi_index)
+
+            # Set the temperature and energy unit.
+            df.attrs["temperature"] = T
+            df.attrs["energy_unit"] = "kT"
+
+            return df
 
     @staticmethod
     def _preprocess_data(data, estimator, **kwargs):
@@ -1685,6 +1890,87 @@ class Relative:
                             row = next(file)
 
         return (data, _np.matrix(overlap))
+
+    @staticmethod
+    def _analyse_somd2(work_dir=None, estimator="MBAR", method="alchemlyb", **kwargs):
+        """
+        Analyse SOMD2 free energy data.
+
+        Parameters
+        ----------
+
+        work_dir : str
+            The path to the working directory.
+
+        estimator : str
+            The estimator ('MBAR' or 'TI') used.
+
+        method : str
+            The method used to analyse the data. Options are "alchemlyb" or "native".
+
+        Returns
+        -------
+
+        pmf : [(float, :class:`Energy <BioSimSpace.Types.Energy>`, :class:`Energy <BioSimSpace.Types.Energy>`)]
+            The potential of mean force (PMF). The data is a list of tuples,
+            where each tuple contains the lambda value, the PMF, and the
+            standard error.
+
+        overlap or dHdl : numpy.matrix or alchemlyb.estimators.ti_.TI
+            For MBAR, this returns the overlap matrix for the overlap between
+            each lambda window. For TI, this returns None.
+        """
+
+        if not isinstance(work_dir, str):
+            raise TypeError("'work_dir' must be of type 'str'.")
+        if not _os.path.isdir(work_dir):
+            raise ValueError("'work_dir' doesn't exist!")
+
+        if not isinstance(estimator, str):
+            raise TypeError("'estimator' must be of type 'str'.")
+        estimator = estimator.replace(" ", "").upper()
+        if estimator not in ["MBAR", "TI"]:
+            raise ValueError("'estimator' must be either 'MBAR' or 'TI'.")
+
+        if not isinstance(method, str):
+            raise TypeError("'method' must be of type 'str'.")
+        method = method.replace(" ", "").upper()
+        if method != "ALCHEMLYB":
+            raise ValueError(
+                "Only 'alchemlyb' analysis 'method' is supported for SOMD2."
+            )
+
+        # Glob the data files.
+        glob_path = _pathlib.Path(work_dir)
+        files = sorted(glob_path.glob("**/*.parquet"))
+
+        # Loop over each file and try to extract the metadata to work out
+        # the lambda value and temperature for each window.
+
+        lambdas = []
+        temperatures = []
+
+        for file in files:
+            try:
+                metadata = _json.loads(
+                    _pq.read_metadata(file).metadata["somd2".encode()]
+                )
+                lambdas.append(float(metadata["lambda"]))
+                temperatures.append(float(metadata["temperature"]))
+            except:
+                raise IOError(f"Unable to parse metadata from SOMD2 file: {file}")
+
+        # Sort the lists based on the lambda values.
+        temperatures = [x for _, x in sorted(zip(lambdas, temperatures))]
+        lambdas = sorted(lambdas)
+
+        # Check that the temperatures at the end states match.
+        if temperatures[0] != temperatures[-1]:
+            raise ValueError("The temperatures at the endstates don't match!")
+
+        return Relative._analyse_internal(
+            files, temperatures, lambdas, "SOMD2", estimator, **kwargs
+        )
 
     def _checkOverlap(self, estimator="MBAR", threshold=0.03):
         """

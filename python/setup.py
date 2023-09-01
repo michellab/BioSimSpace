@@ -120,6 +120,7 @@ finally:
             "openff-interchange-base",
             "openff-toolkit-base",
             "parmed",
+            "pyarrow",
             "py3dmol",
             "pydot",
             "pygtail",
