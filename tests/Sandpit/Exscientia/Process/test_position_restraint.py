@@ -5,6 +5,7 @@ import os
 
 import pandas as pd
 import pytest
+from sire.legacy.IO import AmberRst
 
 import BioSimSpace.Sandpit.Exscientia as BSS
 from BioSimSpace.Sandpit.Exscientia.Units.Energy import kj_per_mol
@@ -121,8 +122,8 @@ def test_gromacs(protocol, system, ref_system, tmp_path):
 
 
 @pytest.mark.skipif(
-    has_gromacs is False or has_openff is False,
-    reason="Requires AMBER and openff to be installed",
+    has_openff is False,
+    reason="Requires openff to be installed",
 )
 def test_amber(protocol, system, ref_system, tmp_path):
     proc = BSS.Process.Amber(
@@ -137,12 +138,11 @@ def test_amber(protocol, system, ref_system, tmp_path):
 
     # We have generated a separate restraint reference
     assert os.path.exists(proc._ref_file)
-    contents_ref, contents_rst = (
-        open(proc._ref_file).readlines(),
-        open(proc._rst_file).readlines(),
-    )
-    diff = list(unified_diff(contents_ref, contents_rst))
-    assert len(diff)
+
+    ref = AmberRst(proc._ref_file).getFrame(0)
+    rst = AmberRst(proc._rst_file).getFrame(0)
+
+    assert ref != rst
 
     # We are pointing the reference to the correct file
     assert f"{proc._work_dir}/{proc.getArgs()['-ref']}" == proc._ref_file

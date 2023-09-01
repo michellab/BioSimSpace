@@ -353,6 +353,9 @@ def _unsquash_molecule(molecule, squashed_molecules, explicit_dummies=False):
 
         # Apply the translation if the atom is coming from the second molecule.
         if len(squashed_molecules) == 2 and apply_translation_vec:
+            # This is a dummy atom so we need to translate coordinates0 as well
+            if squashed_atom_idx0 == squashed_atom_idx1:
+                coordinates0 -= translation_vec
             coordinates1 -= translation_vec
 
         siremol = merged_atom.setProperty("coordinates0", coordinates0).molecule()

@@ -343,17 +343,18 @@ class TestGetRecord:
 
     def test_error_alchemlyb_extract(self, perturbable_system, monkeypatch):
         def extract(*args):
-            raise ValueError('alchemlyb.parsing.gmx.extract failed.')
-        monkeypatch.setattr('alchemlyb.parsing.gmx.extract', extract)
+            raise ValueError("alchemlyb.parsing.gmx.extract failed.")
+
+        monkeypatch.setattr("alchemlyb.parsing.gmx.extract", extract)
         # Create a process using any system and the protocol.
         process = BSS.Process.Gromacs(
             perturbable_system,
             BSS.Protocol.FreeEnergy(temperature=298 * BSS.Units.Temperature.kelvin),
         )
         process.wait()
-        with open(process.workDir() + '/gromacs.err', 'r') as f:
+        with open(process.workDir() + "/gromacs.err", "r") as f:
             text = f.read()
-            assert 'Exception Information' in text
+            assert "Exception Information" in text
 
 
 @pytest.mark.skipif(
