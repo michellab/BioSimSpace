@@ -889,7 +889,7 @@ class Relative:
             is_mbar = False
 
         # For dhdl need to consider the temperature, as the gradient is in
-        # kcal/mol in the simfile.dat .
+        # kcal/mol in the simfile.dat.
         if not is_mbar:
             k_b = _R_kJmol * _kJ2kcal
             beta = 1 / (k_b * T)
@@ -971,23 +971,13 @@ class Relative:
         # For MBAR, results in list of lists where each list is the 0 to 1
         # window values that lambda value. For TI, it is a list of gradients
         # at that lambda.
-        results = []
         if is_mbar:
-            # For the energies for each lambda window, append the kt to the
-            # data list of values for all lambda windows.
-            for t in time_rows:
-                row = file_df.loc[t][lambda_array].to_numpy()
-                E_ref = row[lambda_array.index(lambda_win)]
-                energies = []
-                for lam in lambda_array:
-                    E_ = row[lambda_array.index(lam)]
-                    energies.append((E_ - E_ref))
-                results.append(energies)
+            results = (
+                file_df.iloc[:, 5:].subtract(file_df[lambda_win], axis=0).to_numpy()
+            )
         else:
-            for t in time_rows:
-                gradient = file_df.loc[t]["gradient_kcal/mol"]
-                red_gradient = gradient * beta
-                results.append(red_gradient)
+            gradient = file_df["gradient_kcal/mol"].to_numpy()
+            results = gradient * beta
 
         # Turn into a dataframe that can be processed by alchemlyb.
         if is_mbar:
