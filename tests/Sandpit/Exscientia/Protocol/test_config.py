@@ -423,12 +423,16 @@ class TestSomdABFE:
                 assert atom in pert_text
             # Check perturbations are correct
             lines = [
+                "molecule LIG",
+                "atom",
                 "initial_type   C1",
                 "final_type     C1",
                 "initial_LJ     3.48065 0.08688",
                 "final_LJ       3.48065 0.08688",
                 "initial_charge -0.13000",
                 "final_charge   -0.13000",
+                "endatom",
+                "endmolecule",
             ]
             for line in lines:
                 assert line in pert_text
@@ -462,12 +466,16 @@ class TestSomdABFE:
                 assert atom in pert_text
             # Check perturbations are correct
             lines = [
+                "molecule LIG",
+                "atom",
                 "initial_type   C1",
                 "final_type     C1",
                 "initial_LJ     3.48065 0.08688",
                 "final_LJ       3.48065 0.08688",
                 "initial_charge -0.13000",
                 "final_charge   -0.13000",
+                "endatom",
+                "endmolecule",
             ]
             for line in lines:
                 assert line in pert_text
@@ -502,12 +510,16 @@ class TestSomdABFE:
             # and the atom types are all du
             # Check perturbations are correct
             lines = [
+                "molecule LIG",
+                "atom",
                 "initial_type   du",
                 "final_type     du",
                 "initial_LJ     0.00000 0.00000",
                 "final_LJ       0.00000 0.00000",
                 "initial_charge 0.00000",
                 "final_charge   0.00000",
+                "endatom",
+                "endmolecule",
             ]
             for line in lines:
                 assert line in pert_text
@@ -542,12 +554,16 @@ class TestSomdABFE:
                 assert atom in pert_text
             # Check perturbations are correct
             lines = [
+                "molecule LIG",
+                "atom",
                 "initial_type   C1",
                 "final_type     C1",
                 "initial_LJ     3.48065 0.08688",
                 "final_LJ       3.48065 0.08688",
                 "initial_charge -0.13000",
                 "final_charge   -0.00000",
+                "endatom",
+                "endmolecule",
             ]
             for line in lines:
                 assert line in pert_text
@@ -582,12 +598,16 @@ class TestSomdABFE:
                 assert atom in pert_text
             # Check perturbations are correct
             lines = [
+                "molecule LIG",
+                "atom",
                 "initial_type   C1",
                 "final_type     du",
                 "initial_LJ     3.48065 0.08688",
                 "final_LJ       0.00000 0.00000",
                 "initial_charge -0.00000",
                 "final_charge   -0.00000",
+                "endatom",
+                "endmolecule",
             ]
             for line in lines:
                 assert line in pert_text
@@ -622,12 +642,16 @@ class TestSomdABFE:
                 assert atom in pert_text
             # Check perturbations are correct
             lines = [
+                "molecule LIG",
+                "atom",
                 "initial_type   C1",
                 "final_type     du",
                 "initial_LJ     3.48065 0.08688",
                 "final_LJ       0.00000 0.00000",
                 "initial_charge -0.13000",
                 "final_charge   0.00000",
+                "endatom",
+                "endmolecule",
             ]
             for line in lines:
                 assert line in pert_text

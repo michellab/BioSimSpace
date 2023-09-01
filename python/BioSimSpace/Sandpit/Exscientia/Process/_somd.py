@@ -3082,8 +3082,8 @@ def _to_pert_file(
                             # End improper record.
                             file.write("    endimproper\n")
 
-            # End molecule record.
-            file.write("endmolecule\n")
+        # End molecule record.
+        file.write("endmolecule\n")
 
     # Finally, convert the molecule to the lambda = 0 state.
 
