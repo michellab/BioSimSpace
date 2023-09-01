@@ -1269,6 +1269,9 @@ def _to_pert_file(
                     # Get the perturbed atom.
                     atom = mol.atom(idx)
 
+                    # Start atom record.
+                    file.write("    atom\n")
+
                     # Only require the initial Lennard-Jones properties.
                     LJ0 = atom.property("LJ0")
 
@@ -3002,8 +3005,8 @@ def _to_pert_file(
                             # End improper record.
                             file.write("    endimproper\n")
 
-            # End molecule record.
-            file.write("endmolecule\n")
+        # End molecule record.
+        file.write("endmolecule\n")
 
     # Finally, convert the molecule to the lambda = 0 state.
 
