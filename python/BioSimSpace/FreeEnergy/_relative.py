@@ -1115,7 +1115,7 @@ class Relative:
             # Convert column index to float.
             df.columns = df.columns.astype(float)
 
-            return df
+            return df.dropna()
 
         else:
             columns_lambdas = df.columns[
@@ -1205,7 +1205,7 @@ class Relative:
             df.attrs["temperature"] = T
             df.attrs["energy_unit"] = "kT"
 
-            return df
+            return df.dropna()
 
     @staticmethod
     def _preprocess_data(data, estimator, **kwargs):
