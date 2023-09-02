@@ -1100,7 +1100,7 @@ class Relative:
         df = table.to_pandas()
 
         if is_mbar:
-            df = df[[str(i) for i in lambda_array]].copy()
+            df = df[[str(x) for x in lambda_array]].copy()
             lambdas = len(df.index) * [lam]
             multiindex = _pd.MultiIndex.from_arrays(
                 [df.index, lambdas], names=["time", "lambdas"]
@@ -1111,6 +1111,9 @@ class Relative:
             # Set the temperature and energy unit.
             df.attrs["temperature"] = T
             df.attrs["energy_unit"] = "kT"
+
+            # Convert column index to float.
+            df.columns = df.columns.astype(float)
 
             return df
 
