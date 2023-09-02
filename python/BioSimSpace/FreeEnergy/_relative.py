@@ -1105,11 +1105,8 @@ class Relative:
             multiindex = _pd.MultiIndex.from_arrays(
                 [df.index, lambdas], names=["time", "lambdas"]
             )
-            df = _pd.concat(
-                [df.iloc[:, :2], beta * df.iloc[:, 2:].subtract(df[str(lam)], axis=0)],
-                axis=1,
-            )
             df.index = multiindex
+            df = beta * df.subtract(df[str(lam)], axis=0)
 
             # Set the temperature and energy unit.
             df.attrs["temperature"] = T
