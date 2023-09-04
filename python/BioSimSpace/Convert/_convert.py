@@ -49,7 +49,6 @@ from sire import smiles as _sire_smiles
 
 import sire.legacy.Mol as _SireMol
 import sire.legacy.System as _SireSystem
-import sire.legacy.Vol as _SireVol
 
 import sire.system as _NewSireSystem
 
@@ -206,27 +205,13 @@ def to(obj, format="biosimspace", property_map={}):
                 try:
                     obj = obj.toSystem()
                 except:
-                    # Otherwise, convert residues/atoms to a molecule, then a system.
+                    # Otherwise, convert residues/atoms to a molecule.
                     try:
-                        obj = obj.toMolecule().toSystem()
+                        obj = obj.toMolecule()
                     except:
                         raise _ConversionError(
                             "Unable to convert object to OpenMM format!"
                         )
-
-            # Get the user-defined space property name.
-            prop = property_map.get("space", "space")
-
-            # Try to get the space property. Use an infinite cartesian space
-            # if none is present.
-            try:
-                space = obj._sire_object.property(prop)
-            except:
-                space = _SireVol.Cartesian()
-
-            # Set a shared space property.
-            obj._sire_object.addSharedProperty(prop)
-            obj._sire_object.setSharedProperty(prop, space)
 
             # Now try to convert the object to OpenMM format.
             try:
