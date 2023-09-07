@@ -1100,6 +1100,9 @@ class System(_SireWrapper):
         # Rotate the space according to the desired precision.
         space.rotate(precision)
 
+        # Update the space property in the sire object.
+        self._sire_object.setProperty(space_prop, space)
+
         # Get the rotation matrix.
         rotation_matrix = space.rotationMatrix()
 
