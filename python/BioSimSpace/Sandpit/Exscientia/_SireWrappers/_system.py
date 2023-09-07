@@ -1145,7 +1145,7 @@ class System(_SireWrapper):
         except:
             return
 
-        # A rotation is only applicable to a triclinic space.
+        # A rotation is only applicable to triclinic spaces.
         if not isinstance(space, _SireVol.TriclinicBox):
             return
 
@@ -1242,7 +1242,7 @@ class System(_SireWrapper):
         except:
             return
 
-        # A rotation is only applicable to a triclinic space.
+        # A rotation is only applicable to triclinic spaces.
         if not isinstance(space, _SireVol.TriclinicBox):
             return
 
