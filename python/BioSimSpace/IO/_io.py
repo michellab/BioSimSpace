@@ -370,7 +370,7 @@ def readMolecules(
         aligned with the x-axis, the second vector lies in the x-y plane,
         and the third vector has a positive z-component. This is a requirement
         of certain molecular dynamics engines and is used for simulation
-        efficiency. All vector properties of the system, e.g. positions,
+        efficiency. All vector properties of the system, e.g. coordinates,
         velocities, etc., will be rotated accordingly.
 
     reduce_box : bool
