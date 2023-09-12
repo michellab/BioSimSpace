@@ -116,6 +116,7 @@ finally:
                       "networkx",
                       "nglview",
                       "ipywidgets<8",
+                      "pyarrow",
                       "py3dmol",
                       "pypdb",
                       "rdkit",

@@ -47,11 +47,6 @@ has_mdanalysis = _have_imported(mda)
 mdtraj = _try_import("mdtraj")
 has_mdtraj = _have_imported(mdtraj)
 
-
-# Check for MDRestraintsGenerator.
-MDRestraintsGenerator = _try_import(
-    "MDRestraintsGenerator",
-    install_command="pip install MDRestraintsGenerator",
-)
-
-has_mdrestraints_generator = _have_imported(MDRestraintsGenerator)
+# Check for alchemlyb.
+_alchemlyb = _try_import("alchemlyb")
+has_alchemlyb = _have_imported(_alchemlyb)

@@ -1971,7 +1971,7 @@ class OpenMM(_process.Process):
             )
 
     def _add_config_restraints(self):
-        # Add backbone restraints. This uses the approach from:
+        # Add position restraints. This uses the approach from:
         # https://github.com/openmm/openmm/issues/2262#issuecomment-464157489
         # Here zero-mass dummy atoms are bonded to the restrained atoms to avoid
         # issues with position rescaling during barostat updates.
