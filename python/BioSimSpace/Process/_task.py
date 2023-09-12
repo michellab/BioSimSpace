@@ -30,15 +30,16 @@ from IPython.display import FileLink as _FileLink
 
 import glob as _glob
 import os as _os
-import tempfile as _tempfile
 import threading as _threading
 import zipfile as _zipfile
 
 from .. import _is_notebook
+from .. import _Utils
 
 
 def _wrap_task(task):
-    """A simple wrapper function to run a background tasks and catch exceptions.
+    """
+    A simple wrapper function to run a background tasks and catch exceptions.
 
     Parameters
     ----------
@@ -108,23 +109,8 @@ class Task:
         # Initialise the zip file name.
         self._zipfile = None
 
-        # Create a temporary working directory and store the directory name.
-        if work_dir is None:
-            self._tmp_dir = _tempfile.TemporaryDirectory()
-            self._work_dir = self._tmp_dir.name
-
-        # User specified working directory.
-        else:
-            self._tmp_dir = None
-
-            # Use full path.
-            if work_dir[0] != "/":
-                work_dir = _os.getcwd() + "/" + work_dir
-            self._work_dir = work_dir
-
-            # Create the directory if it doesn't already exist.
-            if not _os.path.isdir(work_dir):
-                _os.makedirs(work_dir, exist_ok=True)
+        # Create the working directory.
+        self._work_dir = _Utils.WorkDir(work_dir)
 
         # Start the task.
         if auto_start:
@@ -162,7 +148,7 @@ class Task:
         work_dir : str
             The path of the working directory.
         """
-        return self._work_dir
+        return str(self._work_dir)
 
     def getResult(self):
         """Get the result of the task. This will block until the task finishes."""
@@ -269,13 +255,8 @@ class Task:
             The name of, or link to, a zipfile containing the output.
         """
 
-        # The user has specified a working directory, return its name.
-        if self._tmp_dir is None:
-            return self._work_dir
-
         # Don't recreate an existing zip file.
         if self._zipfile is None:
-
             # Create the file name.
             if filename is None:
                 if self._name is None:

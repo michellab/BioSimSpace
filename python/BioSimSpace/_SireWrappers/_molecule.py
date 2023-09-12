@@ -1663,7 +1663,7 @@ class Molecule(_SireWrapper):
                 # Copy the property using the updated name.
                 mol = mol.setProperty(new_prop, mol.property(prop)).molecule()
 
-                # Store the amber types in the opposie end state.
+                # Store the amber types in the opposite end state.
                 if prop[:-1] == "ambertype":
                     if lam == "0":
                         amber_types = mol.property("ambertype1").toVector()
@@ -1689,20 +1689,21 @@ class Molecule(_SireWrapper):
             if mol.hasProperty(amber_type) and mol.hasProperty(element):
                 # Search for any dummy atoms.
                 try:
-                    search = mol.search("element Xx")
+                    search = mol.atoms("element Xx")
                 except:
                     search = []
 
                 # Replace the ambertype.
                 for dummy in search:
+                    index = dummy.index()
                     mol = (
-                        mol.atom(dummy.index())
-                        .setProperty(amber_type, amber_types[dummy.index().value()])
+                        mol.atom(index)
+                        .setProperty(amber_type, amber_types[index.value()])
                         .molecule()
                     )
                     mol = (
-                        mol.atom(dummy.index())
-                        .setProperty(element, elements[dummy.index().value()])
+                        mol.atom(index)
+                        .setProperty(element, elements[index.value()])
                         .molecule()
                     )
 

@@ -1,21 +1,20 @@
-import itertools as _it
-import math as _math
 import warnings as _warnings
 
+import math as _math
 from sire.legacy import Units as _SireUnits
-
-from ..Align._merge import _squash
-from .._Exceptions import IncompatibleError as _IncompatibleError
 from ..Units.Time import nanosecond as _nanosecond
 
 from .. import Protocol as _Protocol
+from .. import _gmx_version
+from .._Exceptions import IncompatibleError as _IncompatibleError
+from ..Align._squash import _amber_mask_from_indices, _squashed_atom_mapping
 
 
 class ConfigFactory:
     # TODO: Integrate this class better into the other Protocols.
     """A class for generating a config based on a template protocol."""
 
-    def __init__(self, system, protocol, squashed_system=None):
+    def __init__(self, system, protocol, explicit_dummies=False):
         """
         Constructor.
 
@@ -26,19 +25,27 @@ class ConfigFactory:
             The molecular system.
 
         protocol : :class:`Protocol <BioSimSpace.Protocol>`
+            The input protocol.
 
-        squashed_system : :class:`System <BioSimSpace._SireWrappers.System>`
-            (Optional) an AMBER-compatible squashed system.
+        explicit_dummies : bool
+            Whether to keep the dummy atoms explicit at the endstates or remove them.
+            This option is only used for AMBER.
         """
         self.system = system
         self.protocol = protocol
-        self.squashed_system = squashed_system
+        self.explicit_dummies = explicit_dummies
 
     @property
     def _has_box(self):
         """Return whether the current system has a box."""
         if "space" in self.system._sire_object.propertyKeys():
-            has_box = True
+            try:
+                # Make sure that we have a periodic box. The system will now have
+                # a default cartesian space.
+                box = self.system._sire_object.property("space")
+                has_box = box.isPeriodic()
+            except:
+                has_box = False
         else:
             _warnings.warn("No simulation box found. Assuming gas phase simulation.")
             has_box = False
@@ -56,7 +63,10 @@ class ConfigFactory:
             report_interval = 100
         else:
             report_interval = self.protocol.getReportInterval()
-            if report_interval > self._steps:
+            if self._steps == 0:
+                # Deal with the case where we just want single point energy.
+                report_interval = 1
+            elif report_interval > self._steps:
                 report_interval = self._steps
         return report_interval
 
@@ -89,47 +99,6 @@ class ConfigFactory:
             steps = _math.ceil(self.protocol.getRunTime() / self.protocol.getTimeStep())
         return steps
 
-    def _amber_mask_from_indices(self, atom_idxs):
-        """Internal helper function to create an AMBER restraint mask from a
-        list of atom indices.
-
-        Parameters
-        ----------
-
-        atom_idxs : [int]
-            A list of atom indices.
-
-        Returns
-        -------
-
-        restraint_mask : str
-            The AMBER restraint mask.
-        """
-        # AMBER has a restriction on the number of characters in the restraint
-        # mask (not documented) so we can't just use comma-separated atom
-        # indices. Instead we loop through the indices and use hyphens to
-        # separate contiguous blocks of indices, e.g. 1-23,34-47,...
-
-        if atom_idxs:
-            # AMBER masks are 1-indexed, while BioSimSpace indices are 0-indexed.
-            atom_idxs = [x + 1 for x in sorted(list(set(atom_idxs)))]
-            if not all(isinstance(x, int) for x in atom_idxs):
-                raise TypeError("'atom_idxs' must be a list of 'int' types.")
-            groups = []
-            initial_idx = atom_idxs[0]
-            for prev_idx, curr_idx in _it.zip_longest(atom_idxs, atom_idxs[1:]):
-                if curr_idx != prev_idx + 1 or curr_idx is None:
-                    if initial_idx == prev_idx:
-                        groups += [str(initial_idx)]
-                    else:
-                        groups += [f"{initial_idx}-{prev_idx}"]
-                    initial_idx = curr_idx
-            mask = "@" + ",".join(groups)
-        else:
-            mask = ""
-
-        return mask
-
     def _generate_amber_fep_masks(self, timestep):
         """Internal helper function which generates timasks and scmasks based on the system.
 
@@ -145,62 +114,47 @@ class ConfigFactory:
         option_dict : dict
             A dictionary of AMBER-compatible options.
         """
-        # Squash the system into an AMBER-friendly format.
-        if self.squashed_system is None:
-            self.squashed_system, _ = _squash(self.system)
-
-        # Get the perturbed molecules and the corresponding squashed molecules.
-        pertmols = self.system.getPerturbableMolecules()
-        pertmol_offset = len(self.system) - len(pertmols)
-        squashed_pertmols = self.squashed_system[pertmol_offset:]
-        atom_offsets = [0] + list(
-            _it.accumulate(mol.nAtoms() for mol in self.squashed_system.getMolecules())
+        # Get the merged to squashed atom mapping of the whole system for both endpoints.
+        kwargs = dict(environment=False, explicit_dummies=self.explicit_dummies)
+        mcs_mapping0 = _squashed_atom_mapping(
+            self.system, is_lambda1=False, common=True, dummies=False, **kwargs
+        )
+        mcs_mapping1 = _squashed_atom_mapping(
+            self.system, is_lambda1=True, common=True, dummies=False, **kwargs
+        )
+        dummy_mapping0 = _squashed_atom_mapping(
+            self.system, is_lambda1=False, common=False, dummies=True, **kwargs
+        )
+        dummy_mapping1 = _squashed_atom_mapping(
+            self.system, is_lambda1=True, common=False, dummies=True, **kwargs
         )
 
-        # Find the perturbed atom indices withing the squashed system.
-        mols0_indices, mols1_indices = [], []
-        dummy0_indices, dummy1_indices = [], []
-        for i, pertmol in enumerate(pertmols):
-            mol0 = squashed_pertmols[2 * i]
-            mol1 = squashed_pertmols[2 * i + 1]
-            atom_offset0 = atom_offsets[pertmol_offset + 2 * i]
-            atom_offset1 = atom_offset0 + mol0.nAtoms()
-            mols0_indices += list(range(atom_offset0, atom_offset1))
-            mols1_indices += list(range(atom_offset1, atom_offset1 + mol1.nAtoms()))
-            nondummy_indices0 = [
-                atom.index()
-                for atom in pertmol.getAtoms()
-                if "du" not in atom._sire_object.property("ambertype0")
-            ]
-            nondummy_indices1 = [
-                atom.index()
-                for atom in pertmol.getAtoms()
-                if "du" not in atom._sire_object.property("ambertype1")
-            ]
-            dummy0_indices += [
-                atom_offset0 + nondummy_indices0.index(atom.index())
-                for atom in pertmol.getAtoms()
-                if "du" in atom._sire_object.property("ambertype1")
-            ]
-            dummy1_indices += [
-                atom_offset1 + nondummy_indices1.index(atom.index())
-                for atom in pertmol.getAtoms()
-                if "du" in atom._sire_object.property("ambertype0")
-            ]
+        # Generate the TI and dummy masks.
+        mcs0_indices, mcs1_indices, dummy0_indices, dummy1_indices = [], [], [], []
+        for i in range(self.system.nAtoms()):
+            if i in dummy_mapping0:
+                dummy0_indices.append(dummy_mapping0[i])
+            if i in dummy_mapping1:
+                dummy1_indices.append(dummy_mapping1[i])
+            if i in mcs_mapping0:
+                mcs0_indices.append(mcs_mapping0[i])
+            if i in mcs_mapping1:
+                mcs1_indices.append(mcs_mapping1[i])
+        ti0_indices = mcs0_indices + dummy0_indices
+        ti1_indices = mcs1_indices + dummy1_indices
 
-        # Define whether HMR is used based on the timestep.
-        # When HMR is used, there can be no SHAKE.
-        if timestep >= 0.004:
+        # SHAKE should be used for timestep > 1 fs.
+        if timestep >= 0.002:
             no_shake_mask = ""
         else:
-            no_shake_mask = self._amber_mask_from_indices(mols0_indices + mols1_indices)
+            no_shake_mask = _amber_mask_from_indices(ti0_indices + ti1_indices)
 
         # Create an option dict with amber masks generated from the above indices.
         option_dict = {
-            "timask1": f'"{self._amber_mask_from_indices(mols0_indices)}"',
-            "timask2": f'"{self._amber_mask_from_indices(mols1_indices)}"',
-            "scmask1": f'"{self._amber_mask_from_indices(dummy0_indices)}"',
-            "scmask2": f'"{self._amber_mask_from_indices(dummy1_indices)}"',
+            "timask1": f'"{_amber_mask_from_indices(ti0_indices)}"',
+            "timask2": f'"{_amber_mask_from_indices(ti1_indices)}"',
+            "scmask1": f'"{_amber_mask_from_indices(dummy0_indices)}"',
+            "scmask2": f'"{_amber_mask_from_indices(dummy1_indices)}"',
             "noshakemask": f'"{no_shake_mask}"',
         }
 
@@ -279,15 +233,15 @@ class ConfigFactory:
             protocol_dict["ntf"] = 2  # Don't calculate forces for constrained bonds.
 
         # PBC.
-        if not self._has_box or not self._has_water:
-            protocol_dict["ntb"] = 0  # No periodic box.
-            protocol_dict["cut"] = "999."  # Non-bonded cut-off.
-        else:
+        if self._has_box:
             protocol_dict["cut"] = "8.0"  # Non-bonded cut-off.
             protocol_dict["iwrap"] = 1  # Wrap the coordinates.
+        else:
+            protocol_dict["ntb"] = 0  # No periodic box.
+            protocol_dict["cut"] = "999."  # Non-bonded cut-off.
 
         # Restraints.
-        if isinstance(self.protocol, _Protocol.Equilibration):
+        if isinstance(self.protocol, _Protocol._PositionRestraintMixin):
             # Restrain the backbone.
             restraint = self.protocol.getRestraint()
 
@@ -298,16 +252,24 @@ class ConfigFactory:
                 else:
                     atom_idxs = restraint
 
+                # Convert to a squashed representation, if needed
+                if isinstance(self.protocol, _Protocol._FreeEnergyMixin):
+                    atom_mapping0 = _squashed_atom_mapping(
+                        self.system, is_lambda1=False
+                    )
+                    atom_mapping1 = _squashed_atom_mapping(self.system, is_lambda1=True)
+                    atom_idxs = sorted(
+                        {atom_mapping0[x] for x in atom_idxs if x in atom_mapping0}
+                        | {atom_mapping1[x] for x in atom_idxs if x in atom_mapping1}
+                    )
+
                 # Don't add restraints if there are no atoms to restrain.
                 if len(atom_idxs) > 0:
                     # Generate the restraint mask based on atom indices.
-                    restraint_mask = self._amber_mask_from_indices(
-                        [i + 1 for i in atom_idxs]
-                    )
+                    restraint_mask = _amber_mask_from_indices(atom_idxs)
 
                     # The restraintmask cannot be more than 256 characters.
                     if len(restraint_mask) > 256:
-
                         # AMBER has a limit on the length of the restraintmask
                         # so it's easy to overflow if we are matching by index
                         # on a large protein. As such, handle "backbone" and
@@ -352,11 +314,15 @@ class ConfigFactory:
                     _warnings.warn(
                         "Cannot use a barostat for a vacuum or non-periodic simulation"
                     )
+            else:
+                protocol_dict["ntb"] = 1  # constant volume.
 
         # Temperature control.
         if not isinstance(self.protocol, _Protocol.Minimisation):
             protocol_dict["ntt"] = 3  # Langevin dynamics.
-            protocol_dict["gamma_ln"] = 2  # Collision frequency (ps).
+            protocol_dict["gamma_ln"] = "{:.5f}".format(
+                1 / self.protocol.getTauT().picoseconds().value()
+            )  # Collision frequency (ps^-1).
             if isinstance(self.protocol, _Protocol.Equilibration):
                 temp0 = self.protocol.getStartTemperature().kelvin().value()
                 temp1 = self.protocol.getEndTemperature().kelvin().value()
@@ -382,12 +348,15 @@ class ConfigFactory:
             protocol_dict["icfe"] = 1  # Free energy mode.
             protocol_dict["ifsc"] = 1  # Use softcore potentials.
             protocol_dict["ntf"] = 1  # Remove SHAKE constraints.
-            protocol = [str(x) for x in self.protocol.getLambdaValues()]
+            lambda_values = self.protocol.getLambdaValues(type="dataframe")
+            protocol = [f"{lam:.5f}" for lam in lambda_values["fep"]]
             protocol_dict["mbar_states"] = len(protocol)  # Number of lambda values.
             protocol_dict["mbar_lambda"] = ", ".join(protocol)  # Lambda values.
-            protocol_dict[
-                "clambda"
-            ] = self.protocol.getLambda()  # Current lambda value.
+            Lambda = self.protocol.getLambda(type="series")
+            protocol_dict["clambda"] = "{:.5f}".format(
+                Lambda["fep"]
+            )  # Current lambda value.
+
             if isinstance(self.protocol, _Protocol.Production):
                 protocol_dict["ifmbar"] = 1  # Calculate MBAR energies.
                 protocol_dict["logdvdl"] = 1  # Output dVdl
@@ -435,7 +404,7 @@ class ConfigFactory:
         # Define some miscellaneous defaults.
         protocol_dict = {
             "nstlog": self._report_interval,  # Interval between writing to the log file.
-            "nstenergy": self._restart_interval,  # Interval between writing to the energy file.
+            "nstenergy": self._report_interval,  # Interval between writing to the energy file.
             "nstxout-compressed": self._restart_interval,  # Interval between writing to the trajectory file.
         }
 
@@ -446,7 +415,7 @@ class ConfigFactory:
             timestep = (
                 self.protocol.getTimeStep().picoseconds().value()
             )  # Define the timestep in picoseconds
-            protocol_dict["dt"] = f"{timestep:.3f}"  # Integration time step.
+            protocol_dict["dt"] = f"{timestep:.4f}"  # Integration time step.
         protocol_dict["nsteps"] = self._steps  # Number of integration steps.
 
         # Constraints.
@@ -482,21 +451,20 @@ class ConfigFactory:
             protocol_dict["coulombtype"] = "Cut-off"  # Plain cut-off.
         protocol_dict["vdwtype"] = "Cut-off"  # Twin-range van der Waals cut-off.
 
-        # Restraints.
-        if isinstance(self.protocol, _Protocol.Equilibration):
-            protocol_dict[
-                "refcoord-scaling"
-            ] = "com"  # The actual restraints need to be defined elsewhere.
-
         # Pressure control.
         if not isinstance(self.protocol, _Protocol.Minimisation):
             if self.protocol.getPressure() is not None:
                 # Don't use barostat for vacuum simulations.
                 if self._has_box and self._has_water:
-                    protocol_dict["pcoupl"] = "c-rescale"  # Barostat type.
-                    protocol_dict[
-                        "tau-p"
-                    ] = 1  # 1ps time constant for pressure coupling.
+                    if _gmx_version >= 2021:
+                        protocol_dict["pcoupl"] = "C-rescale"  # C-rescale barostat.
+                    else:
+                        protocol_dict["pcoupl"] = "Berendsen"  # Berendsen barostat.
+                    # Do the MC move every 100 steps to be the same as AMBER.
+                    protocol_dict["nstpcouple"] = 100
+                    # 4ps time constant for pressure coupling.
+                    # As the tau-p has to be 10 times larger than nstpcouple * dt (4 fs)
+                    protocol_dict["tau-p"] = 4
                     protocol_dict[
                         "ref-p"
                     ] = f"{self.protocol.getPressure().bar().value():.5f}"  # Pressure in bar.
@@ -515,19 +483,16 @@ class ConfigFactory:
             protocol_dict[
                 "tc-grps"
             ] = "system"  # A single temperature group for the entire system.
-            protocol_dict["tau-t"] = 2  # Collision frequency (ps).
+            protocol_dict["tau-t"] = "{:.5f}".format(
+                self.protocol.getTauT().picoseconds().value()
+            )  # Collision frequency (ps).
 
             if isinstance(self.protocol, _Protocol.Equilibration):
                 if self.protocol.isConstantTemp():
                     temp = "%.2f" % self.protocol.getStartTemperature().kelvin().value()
-                    protocol_dict["ref-t"] = temp
-                    protocol_dict["gen-vel"] = "yes"
-                    protocol_dict["gen-temp"] = temp
                 else:
                     # still need a reference temperature for each group, even when heating/cooling
-                    protocol_dict["ref-t"] = (
-                        "%.2f" % self.protocol.getEndTemperature().kelvin().value()
-                    )
+                    temp = "%.2f" % self.protocol.getEndTemperature().kelvin().value()
                     # Work out the final time of the simulation.
                     timestep = self.protocol.getTimeStep().picoseconds().value()
                     end_time = _math.floor(timestep * self._steps)
@@ -546,9 +511,13 @@ class ConfigFactory:
                         self.protocol.getEndTemperature().kelvin().value(),
                     )
             else:
-                protocol_dict["ref-t"] = (
-                    "%.2f" % self.protocol.getTemperature().kelvin().value()
-                )
+                temp = "%.2f" % self.protocol.getTemperature().kelvin().value()
+            protocol_dict["ref-t"] = temp
+
+            # Regenerate the velocity if this is not a restart
+            if not self.protocol.isRestart():
+                protocol_dict["gen-vel"] = "yes"
+                protocol_dict["gen-temp"] = temp
 
         # Free energies.
         if isinstance(self.protocol, _Protocol._FreeEnergyMixin):
@@ -610,8 +579,12 @@ class ConfigFactory:
             protocol_dict[
                 "init-lambda-state"
             ] = self.protocol.getLambdaIndex()  # Current lambda value.
-            protocol_dict["nstcalcenergy"] = 200  # Calculate energies every 200 steps.
-            protocol_dict["nstdhdl"] = 200  # Write gradients every 200 steps.
+            protocol_dict[
+                "nstcalcenergy"
+            ] = self._report_interval  # Calculate energies every report_interval steps.
+            protocol_dict[
+                "nstdhdl"
+            ] = self._report_interval  # Write gradients every report_interval steps.
 
         # Put everything together in a line-by-line format.
         total_dict = {**protocol_dict, **extra_options}
@@ -621,9 +594,14 @@ class ConfigFactory:
 
         return total_lines
 
-    def generateSomdConfig(self, extra_options=None, extra_lines=None):
-        """
-        Outputs the current protocol in a format compatible with SOMD.
+    def generateSomdConfig(
+        self,
+        extra_options=None,
+        extra_lines=None,
+        restraint=None,
+        perturbation_type=None,
+    ):
+        """Outputs the current protocol in a format compatible with SOMD.
 
         Parameters
         ----------
@@ -633,6 +611,21 @@ class ConfigFactory:
 
         extra_lines : list
             A list of extra lines to be put at the end of the script.
+
+        restraint : :class:`Restraint <BioSimSpace.FreeEnergy.Restraint>`
+            The Restraint object that contains information for the ABFE
+            calculations.
+
+        perturbation_type : str
+            The type of perturbation to perform. Options are:
+            "full" : A full perturbation of all terms (default option).
+            "discharge_soft" : Perturb all discharging soft atom charge terms (i.e. value->0.0).
+            "vanish_soft" : Perturb all vanishing soft atom LJ terms (i.e. value->0.0).
+            "flip" : Perturb all hard atom terms as well as bonds/angles.
+            "grow_soft" : Perturb all growing soft atom LJ terms (i.e. 0.0->value).
+            "charge_soft" : Perturb all charging soft atom LJ terms (i.e. 0.0->value).
+            "restraint" : Perturb the receptor-ligand restraint strength by linearly
+                          scaling the force constants (0.0->value).
 
         Returns
         -------
@@ -645,58 +638,82 @@ class ConfigFactory:
         extra_lines = extra_lines if extra_lines is not None else []
 
         # Define some miscellaneous defaults.
-        protocol_dict = {"save coordinates": True}  # Save molecular coordinates.
+        # Save molecular coordinates.
+        protocol_dict = {"save coordinates": True}
 
         # Minimisation.
         if isinstance(self.protocol, _Protocol.Minimisation):
-            protocol_dict["minimise"] = True  # Minimisation simulation.
-            protocol_dict[
-                "minimise maximum iterations"
-            ] = self._steps  # Maximum number of steps.
-            protocol_dict["minimise tolerance"] = 1  # Convergence tolerance.
-            protocol_dict["ncycles"] = 1  # Perform a single SOMD cycle.
-            protocol_dict["nmoves"] = 1  # Perform a single MD move.
+            # Minimisation simulation.
+            protocol_dict["minimise"] = True
+            # Maximum number of steps.
+            protocol_dict["minimise maximum iterations"] = self._steps
+            # Convergence tolerance.
+            protocol_dict["minimise tolerance"] = 1
+            # Perform a single SOMD cycle.
+            protocol_dict["ncycles"] = 1
+            # Perform a single MD move.
+            protocol_dict["nmoves"] = 1
         else:
             # Get the report and restart intervals.
             report_interval = self._report_interval
             restart_interval = self._restart_interval
+            runtime = self.protocol.getRunTime()
 
-            # The restart and report intervals must be a multiple of the energy frequency,
-            # which is 200 steps.
+            # Get the timestep.
+            timestep = self.protocol._timestep
+
+            # Work out the number of cycles.
+            ncycles = (runtime / timestep) / report_interval
+
+            # If the number of cycles isn't integer valued, adjust the report
+            # interval so that we match specified the run time.
+            if ncycles - _math.floor(ncycles) != 0:
+                ncycles = _math.floor(ncycles)
+                if ncycles == 0:
+                    ncycles = 1
+                report_interval = _math.ceil((runtime / timestep) / ncycles)
+
+            # For free energy simulations, the report interval must be a multiple
+            # of the energy frequency which is 250 steps.
             if isinstance(self.protocol, _Protocol._FreeEnergyMixin):
-                report_interval = int(200 * _math.ceil(report_interval / 200))
-                restart_interval = int(200 * _math.ceil(restart_interval / 200))
+                if report_interval % 250 != 0:
+                    report_interval = 250 * _math.ceil(report_interval / 250)
 
+            # Work out the number of cycles per frame.
+            cycles_per_frame = restart_interval / report_interval
+
+            # Work out whether we need to adjust the buffer frequency.
+            buffer_freq = 0
+            if cycles_per_frame < 1:
+                buffer_freq = cycles_per_frame * restart_interval
+                cycles_per_frame = 1
+                self._buffer_freq = buffer_freq
+            else:
+                cycles_per_frame = _math.floor(cycles_per_frame)
+
+            # For free energy simulations, the buffer frequency must be an integer
+            # multiple of the frequency at which free energies are written, which
+            # is 250 steps. Round down to the closest multiple.
+            if isinstance(self.protocol, _Protocol._FreeEnergyMixin):
+                if buffer_freq > 0:
+                    buffer_freq = 250 * _math.floor(buffer_freq / 250)
+
+            # The number of SOMD cycles.
+            protocol_dict["ncycles"] = int(ncycles)
             # The number of moves per cycle.
-            nmoves = report_interval
-
-            # The number of cycles, so that nmoves * ncycles is equal to self._steps.
-            ncycles = max(1, self._steps // nmoves)
-
-            # How many cycles need to pass before we write a trajectory frame.
-            cycles_per_frame = max(1, restart_interval // nmoves)
-
-            # How many time steps need to pass before we write a trajectory frame.
-            buffer_freq = int(nmoves * ((restart_interval / nmoves) % 1))
-
-            protocol_dict["ncycles"] = ncycles  # The number of SOMD cycles.
-            protocol_dict["nmoves"] = nmoves  # The number of moves per cycle.
-            protocol_dict[
-                "ncycles_per_snap"
-            ] = cycles_per_frame  # Cycles per trajectory write.
-            protocol_dict[
-                "buffered coordinates frequency"
-            ] = buffer_freq  # Buffering frequency.
+            protocol_dict["nmoves"] = report_interval
+            # Cycles per trajectory write.
+            protocol_dict["ncycles_per_snap"] = cycles_per_frame
+            # Buffering frequency.
+            protocol_dict["buffered coordinates frequency"] = buffer_freq
             timestep = self.protocol.getTimeStep().femtoseconds().value()
-            protocol_dict["timestep"] = (
-                "%.2f femtosecond" % timestep
-            )  # Integration time step.
+            # Integration time step.
+            protocol_dict["timestep"] = "%.2f femtosecond" % timestep
 
             # Use the Langevin Middle integrator if it is a 4 fs timestep
             if timestep >= 4.00:
-                protocol_dict[
-                    "integrator_type"
-                ] = "langevinmiddle"  # Langevin middle integrator
+                # Langevin middle integrator
+                protocol_dict["integrator_type"] = "langevinmiddle"
             else:
                 pass
 
@@ -707,11 +724,11 @@ class ConfigFactory:
             protocol_dict["cutoff type"] = "cutoffnonperiodic"  # No periodic box.
         else:
             protocol_dict["cutoff type"] = "cutoffperiodic"  # Periodic box.
-        protocol_dict["cutoff distance"] = "8 angstrom"  # Non-bonded cut-off.
+        protocol_dict["cutoff distance"] = "10 angstrom"  # Non-bonded cut-off.
 
         # Restraints.
         if (
-            isinstance(self.protocol, _Protocol.Equilibration)
+            isinstance(self.protocol, _Protocol._PositionRestraintMixin)
             and self.protocol.getRestraint() is not None
         ):
             raise _IncompatibleError("We currently don't support restraints with SOMD.")
@@ -760,19 +777,29 @@ class ConfigFactory:
                 ] = "hbonds-notperturbed"  # Handle hydrogen perturbations.
                 protocol_dict[
                     "energy frequency"
-                ] = 200  # Write gradients every 200 steps.
+                ] = 250  # Write gradients every 250 steps.
 
             protocol = [str(x) for x in self.protocol.getLambdaValues()]
             protocol_dict["lambda array"] = ", ".join(protocol)
             protocol_dict[
                 "lambda_val"
             ] = self.protocol.getLambda()  # Current lambda value.
-            res_num = (
-                self.system.search("perturbable")
-                .residues()[0]
-                ._sire_object.number()
-                .value()
-            )
+
+            try:  # RBFE
+                res_num = (
+                    self.system.search("perturbable")
+                    .residues()[0]
+                    ._sire_object.number()
+                    .value()
+                )
+            except ValueError:  # No perturbable molecule - try ABFE
+                res_num = (
+                    self.system.getDecoupledMolecules()[0]
+                    .getResidues()[0]
+                    ._sire_object.number()
+                    .value()
+                )
+
             protocol_dict[
                 "perturbed residue number"
             ] = res_num  # Perturbed residue number.
@@ -782,5 +809,13 @@ class ConfigFactory:
         total_lines = [
             f"{k} = {v}" for k, v in total_dict.items() if v is not None
         ] + extra_lines
+
+        # Restraint
+        if restraint:
+            total_lines.append("use boresch restraints = True")
+            total_lines.append(restraint.toString(engine="SOMD"))
+            # If we are turning on the restraint, need to specify this in the config file
+            if perturbation_type == "restraint":
+                total_lines.append("turn on receptor-ligand restraints mode = True")
 
         return total_lines

@@ -43,10 +43,6 @@ import subprocess as _subprocess
 
 import warnings as _warnings
 
-# Suppress numpy warnings from RDKit import.
-_warnings.filterwarnings("ignore", message="numpy.dtype size changed")
-_warnings.filterwarnings("ignore", message="numpy.ndarray size changed")
-_warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
 # Suppress duplicate to-Python converted warnings.
 # Both Sire and RDKit register the same converter.
 with _warnings.catch_warnings():
@@ -145,7 +141,7 @@ class OpenForceField(_protocol.Protocol):
             The molecule to parameterise, either as a Molecule object or SMILES
             string.
 
-        work_dir : str
+        work_dir : :class:`WorkDir <BioSimSpace._Utils.WorkDir>`
             The working directory.
 
         queue : queue.Queue
@@ -163,8 +159,8 @@ class OpenForceField(_protocol.Protocol):
                 "'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule' or 'str'"
             )
 
-        if work_dir is not None and not isinstance(work_dir, str):
-            raise TypeError("'work_dir' must be of type 'str'")
+        if work_dir is not None and not isinstance(work_dir, _Utils.WorkDir):
+            raise TypeError("'work_dir' must be of type 'BioSimSpace._Utils.WorkDir'")
 
         if queue is not None and not isinstance(queue, _queue.Queue):
             raise TypeError("'queue' must be of type 'queue.Queue'")
@@ -312,31 +308,7 @@ class OpenForceField(_protocol.Protocol):
                 force_field=forcefield, topology=off_topology
             )
         except Exception as e:
-            msg = "Unable to convert Open Force Field topology to OpenMM topology!"
-            if _isVerbose():
-                msg += ": " + getattr(e, "message", repr(e))
-                raise _ThirdPartyError(msg) from e
-            else:
-                raise _ThirdPartyError(msg) from None
-
-        # Create an OpenMM system.
-        try:
-            omm_system = forcefield.create_openmm_system(off_topology)
-        except Exception as e:
-            msg = "Unable to create OpenMM System!"
-            if _isVerbose():
-                msg += ": " + getattr(e, "message", repr(e))
-                raise _ThirdPartyError(msg) from e
-            else:
-                raise _ThirdPartyError(msg) from None
-
-        # Convert the OpenMM System to a ParmEd structure.
-        try:
-            parmed_structure = _parmed.openmm.load_topology(
-                omm_topology, omm_system, off_molecule.conformers[0]
-            )
-        except Exception as e:
-            msg = "Unable to convert OpenMM System to ParmEd structure!"
+            msg = "Unable to create OpenFF Interchange object!"
             if _isVerbose():
                 msg += ": " + getattr(e, "message", repr(e))
                 raise _ThirdPartyError(msg) from e
@@ -358,7 +330,7 @@ class OpenForceField(_protocol.Protocol):
         # Load the parameterised molecule. (This could be a system of molecules.)
         try:
             par_mol = _IO.readMolecules(
-                [prefix + "parmed.prmtop", prefix + "parmed.inpcrd"]
+                [prefix + "interchange.prmtop", prefix + "interchange.inpcrd"]
             )
             # Extract single molecules.
             if par_mol.nMolecules() == 1:

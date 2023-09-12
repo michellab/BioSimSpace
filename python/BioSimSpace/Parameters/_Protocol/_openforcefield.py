@@ -135,7 +135,8 @@ class OpenForceField(_protocol.Protocol):
         molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, str
             The molecule to parameterise, either as a Molecule object or SMILES
             string.
-        work_dir : str
+
+        work_dir : :class:`WorkDir <BioSimSpace._Utils.WorkDir>`
             The working directory.
         queue : queue.Queue
             The thread queue is which this method has been run.
@@ -150,8 +151,8 @@ class OpenForceField(_protocol.Protocol):
                 "'molecule' must be of type 'BioSimSpace._SireWrappers.Molecule' or 'str'"
             )
 
-        if work_dir is not None and not isinstance(work_dir, str):
-            raise TypeError("'work_dir' must be of type 'str'")
+        if work_dir is not None and not isinstance(work_dir, _Utils.WorkDir):
+            raise TypeError("'work_dir' must be of type 'BioSimSpace._Utils.WorkDir'")
 
         if queue is not None and not isinstance(queue, _queue.Queue):
             raise TypeError("'queue' must be of type 'queue.Queue'")
@@ -293,35 +294,13 @@ class OpenForceField(_protocol.Protocol):
             else:
                 raise _ThirdPartyError(msg) from None
 
-        # Obtain the OpenMM Topology object from the OpenFF topology.
+        # Create an Interchange object.
         try:
-            omm_topology = off_topology.to_openmm()
-        except Exception as e:
-            msg = "Unable to convert Open Force Field topology to OpenMM topology!"
-            if _isVerbose():
-                msg += ": " + getattr(e, "message", repr(e))
-                raise _ThirdPartyError(msg) from e
-            else:
-                raise _ThirdPartyError(msg) from None
-
-        # Create an OpenMM system.
-        try:
-            omm_system = forcefield.create_openmm_system(off_topology)
-        except Exception as e:
-            msg = "Unable to create OpenMM System!"
-            if _isVerbose():
-                msg += ": " + getattr(e, "message", repr(e))
-                raise _ThirdPartyError(msg) from e
-            else:
-                raise _ThirdPartyError(msg) from None
-
-        # Convert the OpenMM System to a ParmEd structure.
-        try:
-            parmed_structure = _parmed.openmm.load_topology(
-                omm_topology, omm_system, off_molecule.conformers[0]
+            interchange = _Interchange.from_smirnoff(
+                force_field=forcefield, topology=off_topology
             )
         except Exception as e:
-            msg = "Unable to convert OpenMM System to ParmEd structure!"
+            msg = "Unable to create OpenFF Interchange object!"
             if _isVerbose():
                 msg += ": " + getattr(e, "message", repr(e))
                 raise _ThirdPartyError(msg) from e
@@ -330,10 +309,10 @@ class OpenForceField(_protocol.Protocol):
 
         # Export AMBER format files.
         try:
-            parmed_structure.save(prefix + "parmed.prmtop", overwrite=True)
-            parmed_structure.save(prefix + "parmed.inpcrd", overwrite=True)
+            interchange.to_prmtop(prefix + "interchange.prmtop")
+            interchange.to_inpcrd(prefix + "interchange.inpcrd")
         except Exception as e:
-            msg = "Unable to write ParmEd structure to AMBER format!"
+            msg = "Unable to write Interchange object to AMBER format!"
             if _isVerbose():
                 msg += ": " + getattr(e, "message", repr(e))
                 raise _ThirdPartyError(msg) from e
@@ -343,7 +322,7 @@ class OpenForceField(_protocol.Protocol):
         # Load the parameterised molecule. (This could be a system of molecules.)
         try:
             par_mol = _IO.readMolecules(
-                [prefix + "parmed.prmtop", prefix + "parmed.inpcrd"]
+                [prefix + "interchange.prmtop", prefix + "interchange.inpcrd"]
             )
             # Extract single molecules.
             if par_mol.nMolecules() == 1:
@@ -364,8 +343,15 @@ class OpenForceField(_protocol.Protocol):
             # this will be missing.
 
             # Rename the molecule with the original SMILES string.
+            # Since the name is written to topology file formats, we
+            # need to ensure that it doesn't start with an [ character,
+            # which would break GROMACS.
+            name = molecule
+            if name.startswith("["):
+                name = f"smiles:{name}"
+
             edit_mol = new_mol._sire_object.edit()
-            edit_mol = edit_mol.rename(molecule).molecule()
+            edit_mol = edit_mol.rename(name).molecule()
 
             # Rename the residue LIG.
             resname = _SireMol.ResName("LIG")

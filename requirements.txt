@@ -1,14 +1,15 @@
 # BioSimSpace runtime requirements.
 
-sire ~=2023.0.3   # this matches >= 2023.0.3 && < 2023.1.0
+# main
+#sire~=2023.3.0
 
-alchemlyb<2
+# devel
+sire==2023.4.0.dev
+
 configargparse
+ipywidgets
 kcombu_bss
-ipywidgets<8
 lomap2
-mdtraj
-mdanalysis
 networkx
 nglview
 openff-interchange-base
@@ -21,4 +22,10 @@ pypdb
 pytest
 pyyaml
 rdkit
-watchdog
+
+# The below are packages that aren't available on all
+# platforms/OSs and so need to be conditionally included
+
+mdtraj ; platform_machine != "aarch64"       # not on Linux/aarch64
+
+mdanalysis ; platform_machine != "aarch64"   # not on Linux/aarch64

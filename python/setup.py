@@ -39,7 +39,7 @@ if not os.getenv("BSS_CONDA_INSTALL"):
         )
 
     # Check the Sire version.
-    if int(sire.legacy.__version__.replace(".", "")) < min_ver_int:
+    if int(sire.legacy.__version__.replace(".", "").replace("dev", "")) < min_ver_int:
         raise ImportError("BioSimSpace requires Sire version '%s' or above." % min_ver)
 
 from setuptools import setup, find_packages
@@ -54,6 +54,7 @@ authors = (
 )
 
 _installed_list = None
+
 
 # Function to check if a conda dependency has been installed
 def is_installed(dep: str, conda: str):
@@ -81,8 +82,8 @@ try:
         cmdclass=versioneer.get_cmdclass(),
         description="BioSimSpace: Making biomolecular simulation a breeze.",
         author=authors,
-        url="https://github.com/michellab/BioSimSpace",
-        license="GPLv2",
+        url="https://github.com/openbiosim/biosimspace",
+        license="GPLv3",
         packages=find_packages(),
         include_package_data=True,
         zip_safe=False,
@@ -123,25 +124,27 @@ finally:
                       "mdtraj",             # known not available on aarch64
                       "mdanalysis",         # known not available on aarch64
                       "openff-toolkit"      # known not available on aarch64
-                     ]
+                      "kcombu_bss",
+                      "openff-interchange-base",
+                      "openff-toolkit-base",
+                      "sire",
+                    ]
 
         # Don't try to install things that are already installed...
         to_install_deps = []
 
         print("Checking for dependencies that are already installed...")
 
-        if sys.platform == "win32":
-            conda_exe = os.path.join(bin_dir, "Scripts", "mamba.exe")
-            real_conda_exe = os.path.join(bin_dir, "Scripts", "conda.exe")
+        from shutil import which
 
-            if not os.path.exists(conda_exe):
-                conda_exe = real_conda_exe
-        else:
-            conda_exe = os.path.join(bin_dir, "mamba")
-            real_conda_exe = os.path.join(bin_dir, "conda")
+        conda_exe = which("mamba")
+        real_conda_exe = which("conda")
 
-            if not os.path.exists(conda_exe):
-                conda_exe = real_conda_exe
+        if conda_exe is None or not os.path.exists(conda_exe):
+            conda_exe = real_conda_exe
+
+        if conda_exe is None or not os.path.exists(conda_exe):
+            raise IOError("Unable to install as cannot find conda or mamba!")
 
         for dep in conda_deps:
             if not is_installed(dep, conda=conda_exe):
@@ -156,6 +159,13 @@ finally:
 
         # Need to not use posix rules on windows with shlex.split, or path separator is escaped
         posix = sys.platform != "win32"
+
+        print("Adding openbiosim channel")
+        command = (
+            "%s config --system --prepend channels openbiosim/label/dev"
+            % real_conda_exe
+        )
+        print(command)
 
         print("Adding conda-forge channel")
         command = "%s config --system --prepend channels conda-forge" % real_conda_exe
@@ -247,25 +257,27 @@ finally:
             % bin_dir
         )
         subprocess.run(
-            shlex.split(command, posix=posix), shell=False, stdout=stdout, stderr=stderr
+            shlex.split(command, posix=posix),
+            shell=False,
+            stdout=stdout,
+            stderr=stderr,
         )
         command = "%s/jupyter-nbextension enable nglview --py --sys-prefix" % bin_dir
         subprocess.run(
-            shlex.split(command, posix=posix), shell=False, stdout=stdout, stderr=stderr
+            shlex.split(command, posix=posix),
+            shell=False,
+            stdout=stdout,
+            stderr=stderr,
         )
 
         print("Cleaning conda environment")
         command = "%s clean --all --yes --quiet" % conda_exe
         subprocess.run(
-            shlex.split(command, posix=posix), shell=False, stdout=stdout, stderr=stderr
+            shlex.split(command, posix=posix),
+            shell=False,
+            stdout=stdout,
+            stderr=stderr,
         )
-
-        # We can't install BioSimSpace here because it confuses the Sire old/new/mixed API
-        # try:
-        #    import BioSimSpace
-        # except:
-        #    print("\nPossible installation issues.")
-        #    sys.exit()
 
         print("\nDone!")
 
@@ -277,4 +289,3 @@ finally:
         print("AMBER:   http://ambermd.org")
         print("GROMACS: http://www.gromacs.org")
         print("NAMD:    http://www.ks.uiuc.edu/Research/namd")
-        print("FKCOMBU: https://pdbj.org/kcombu")

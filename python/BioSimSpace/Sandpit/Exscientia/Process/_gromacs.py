@@ -26,17 +26,23 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Gromacs"]
 
-from .._Utils import _try_import
-
-import math as _math
+import glob as _glob
 import os as _os
+import warnings as _warnings
+
+import pandas as pd
+
+from .._Utils import _try_import
 
 _pygtail = _try_import("pygtail")
 import shutil as _shutil
-import shlex as _shlex
 import subprocess as _subprocess
 import timeit as _timeit
 import warnings as _warnings
+from tempfile import TemporaryDirectory as _TemporaryDirectory
+from pathlib import Path as _Path
+
+import numpy as _np
 
 from sire.legacy import Base as _SireBase
 from sire.legacy import IO as _SireIO
@@ -44,10 +50,18 @@ from sire.legacy import Maths as _SireMaths
 from sire.legacy import Units as _SireUnits
 from sire.legacy import Vol as _SireVol
 
-from .. import _gmx_exe, _gmx_version
+from .._Utils import _assert_imported, _have_imported, _try_import
+
+# alchemlyb isn't available on all variants of Python that we support, so we
+# need to try_import it.
+_alchemlyb = _try_import("alchemlyb")
+
+if _have_imported(_alchemlyb):
+    from alchemlyb.parsing.gmx import extract as _extract
+
+from .. import _gmx_exe
 from .. import _isVerbose
 from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
-from .._SireWrappers import System as _System
 from ..Types._type import Type as _Type
 
 from .. import IO as _IO
@@ -75,14 +89,14 @@ class Gromacs(_process.Process):
         seed=None,
         extra_options=None,
         extra_lines=None,
+        reference_system=None,
         property_map={},
         restraint=None,
         ignore_warnings=False,
         show_errors=True,
         checkpoint_file=None,
     ):
-        """
-        Constructor.
+        """Constructor.
 
         Parameters
         ----------
@@ -110,6 +124,11 @@ class Gromacs(_process.Process):
 
         extra_lines : list
             A list of extra lines to be put at the end of the script.
+
+        reference_system : :class:`System <BioSimSpace._SireWrappers.System>` or None
+            An optional system to use as a source of reference coordinates, if applicable.
+            It is assumed that this system has the same topology as "system". If this is
+            None, then "system" is used as a reference.
 
         property_map : dict
             A dictionary that maps system "properties" to their user defined
@@ -179,11 +198,14 @@ class Gromacs(_process.Process):
             raise ValueError("'show_errors' must be of type 'bool'.")
         self._show_errors = show_errors
 
-        # Initialise the stdout dictionary and title header.
-        self._stdout_dict = _process._MultiDict()
+        # Initialise the energy dictionary and title header.
+        self._energy_dict = (
+            dict()
+        )  # cannot figure out how to set value for _process._MultiDict()
 
         # Store the name of the GROMACS log file.
         self._log_file = "%s/%s.log" % (self._work_dir, name)
+        self._eng_file = "%s/%s.edr" % (self._work_dir, name)
 
         # The names of the input files.
         self._gro_file = "%s/%s.gro" % (self._work_dir, name)
@@ -197,6 +219,10 @@ class Gromacs(_process.Process):
 
         # Set the path for the GROMACS configuration file.
         self._config_file = "%s/%s.mdp" % (self._work_dir, name)
+
+        # Set the reference system
+        self._ref_file = f"{self._work_dir}/{name}_ref.gro"
+        self._ref_system = reference_system
 
         # Create the list of input files.
         self._input_files = [self._config_file, self._gro_file, self._top_file]
@@ -224,14 +250,60 @@ class Gromacs(_process.Process):
         """Setup the input files and working directory ready for simulation."""
 
         # Create the input files...
+        self._write_system(
+            self._system, coord_file=self._gro_file, topol_file=self._top_file
+        )
 
+        # Create the reference file
+        if self._ref_system is not None and self._protocol.getRestraint() is not None:
+            self._write_system(self._ref_system, ref_file=self._ref_file)
+        else:
+            _shutil.copy(self._gro_file, self._ref_file)
+
+        # Create the binary input file name.
+        self._tpr_file = "%s/%s.tpr" % (self._work_dir, self._name)
+        self._input_files.append(self._tpr_file)
+
+        # Generate the GROMACS configuration file.
+        # Skip if the user has passed a custom config.
+        if isinstance(self._protocol, _Protocol.Custom):
+            self.setConfig(self._protocol.getConfig())
+        else:
+            self._generate_config()
+        self.writeConfig(self._config_file)
+
+        # Generate the dictionary of command-line arguments.
+        self._generate_args()
+
+        # Return the list of input files.
+        return self._input_files
+
+    def _write_system(self, system, coord_file=None, topol_file=None, ref_file=None):
+        """Validates an input system and makes some internal modifications to it,
+        if needed, before writing it out to a coordinate and/or a topology file.
+
+        Parameters
+        ----------
+
+        system : :class:`System <BioSimSpace._SireWrappers.System>`
+            The molecular system.
+
+        coord_file : str or None
+            The coordinate file to which to write out the system.
+
+        topol_file : str or None
+            The topology file to which to write out the system.
+
+        ref_file : str or None
+            The file to which to write out the reference system for position restraints.
+        """
         # Create a copy of the system.
-        system = self._system.copy()
+        system = system.copy()
 
         if isinstance(self._protocol, _Protocol._FreeEnergyMixin):
             # Check that the system contains a perturbable molecule.
             if (
-                self._system.nPerturbableMolecules() == 0
+                system.nPerturbableMolecules() == 0
                 and system.nDecoupledMolecules() == 0
             ):
                 raise ValueError(
@@ -255,47 +327,10 @@ class Gromacs(_process.Process):
         # Convert the water model topology so that it matches the GROMACS naming convention.
         system._set_water_topology("GROMACS")
 
-        # GRO87 file.
-        gro = _SireIO.Gro87(system._sire_object, self._property_map)
-        gro.writeToFile(self._gro_file)
-
-        # TOP file.
-        top = _SireIO.GroTop(system._sire_object, self._property_map)
-        top.writeToFile(self._top_file)
-        # Write the restraint to the topology file
-        if self._restraint:
-            with open(self._top_file, "a") as f:
-                f.write("\n")
-                f.write(self._restraint.toString(engine="GROMACS"))
-
-        # Create the binary input file name.
-        self._tpr_file = "%s/%s.tpr" % (self._work_dir, self._name)
-        self._input_files.append(self._tpr_file)
-
-        # Generate the GROMACS configuration file.
-        # Skip if the user has passed a custom config.
-        if isinstance(self._protocol, _Protocol.Custom):
-            self.setConfig(self._protocol.getConfig())
-        else:
-            self._generate_config()
-        self.writeConfig(self._config_file)
-
-        # Generate the dictionary of command-line arguments.
-        self._generate_args()
-
-        # Return the list of input files.
-        return self._input_files
-
-    def _generate_config(self):
-        """Generate GROMACS configuration file strings."""
-
-        # Clear the existing configuration list.
-        self._config = []
-
         # Check whether the system contains periodic box information.
-        # For now, well not attempt to generate a box if the system property
+        # For now, we'll not attempt to generate a box if the system property
         # is missing. If no box is present, we'll assume a non-periodic simulation.
-        if "space" in self._system._sire_object.propertyKeys():
+        if "space" in system._sire_object.propertyKeys():
             has_box = True
         else:
             _warnings.warn("No simulation box found. Assuming gas phase simulation.")
@@ -303,21 +338,38 @@ class Gromacs(_process.Process):
 
         # Deal with PBC.
         if not has_box or not self._has_water:
-            # Create a copy of the system.
-            system = self._system.copy()
-
-            # Convert the water model topology so that it matches the GROMACS naming convention.
-            system._set_water_topology("GROMACS")
-
             # Create a 999.9 nm periodic box and apply to the system.
             space = _SireVol.PeriodicBox(_SireMaths.Vector(9999, 9999, 9999))
             system._sire_object.setProperty(
                 self._property_map.get("space", "space"), space
             )
 
-            # Re-write the GRO file.
-            gro = _SireIO.Gro87(system._sire_object, self._property_map)
-            gro.writeToFile(self._gro_file)
+        # GRO87 coordinate files.
+        if coord_file is not None:
+            file = _os.path.splitext(coord_file)[0]
+            _IO.saveMolecules(file, system, "gro87", property_map=self._property_map)
+
+        # GRO87 reference files.
+        if ref_file is not None:
+            file = _os.path.splitext(ref_file)[0]
+            _IO.saveMolecules(file, system, "gro87", property_map=self._property_map)
+
+        # TOP file.
+        if topol_file is not None:
+            file = _os.path.splitext(topol_file)[0]
+            _IO.saveMolecules(file, system, "grotop", property_map=self._property_map)
+
+            # Write the restraint to the topology file
+            if self._restraint:
+                with open(topol_file, "a") as f:
+                    f.write("\n")
+                    f.write(self._restraint.toString(engine="GROMACS"))
+
+    def _generate_config(self):
+        """Generate GROMACS configuration file strings."""
+
+        # Clear the existing configuration list.
+        self._config = []
 
         config_options = {}
         if not isinstance(self._protocol, _Protocol.Minimisation):
@@ -332,13 +384,14 @@ class Gromacs(_process.Process):
             if self._checkpoint_file is not None:
                 config_options["continuation"] = "yes"
 
+        if isinstance(self._protocol, _Protocol._PositionRestraintMixin):
             # Add any position restraints.
             self._add_position_restraints(config_options)
 
         # Add configuration variables for a metadynamics simulation.
         if isinstance(self._protocol, _Protocol.Metadynamics):
             # Create the PLUMED input file and copy auxiliary files to the working directory.
-            self._plumed = _Plumed(self._work_dir)
+            self._plumed = _Plumed(str(self._work_dir))
             plumed_config, auxiliary_files = self._plumed.createConfig(
                 self._system, self._protocol, self._property_map
             )
@@ -361,7 +414,7 @@ class Gromacs(_process.Process):
         # Add configuration variables for a steered molecular dynamics protocol.
         elif isinstance(self._protocol, _Protocol.Steering):
             # Create the PLUMED input file and copy auxiliary files to the working directory.
-            self._plumed = _Plumed(self._work_dir)
+            self._plumed = _Plumed(str(self._work_dir))
             plumed_config, auxiliary_files = self._plumed.createConfig(
                 self._system, self._protocol, self._property_map
             )
@@ -380,16 +433,17 @@ class Gromacs(_process.Process):
             setattr(self, "getTime", self._getTime)
 
         # Set the configuration.
-        config = _Protocol.ConfigFactory(self._system, self._protocol)
-        self.addToConfig(
-            config.generateGromacsConfig(
-                extra_options={**config_options, **self._extra_options},
-                extra_lines=self._extra_lines,
+        if not isinstance(self._protocol, _Protocol.Dummy):
+            config = _Protocol.ConfigFactory(self._system, self._protocol)
+            self.addToConfig(
+                config.generateGromacsConfig(
+                    extra_options={**config_options, **self._extra_options},
+                    extra_lines=self._extra_lines,
+                )
             )
-        )
 
-        # Flag that this isn't a custom protocol.
-        self._protocol._setCustomised(False)
+            # Flag that this isn't a custom protocol.
+            self._protocol._setCustomised(False)
 
     def _generate_args(self):
         """Generate the dictionary of command-line arguments."""
@@ -423,7 +477,7 @@ class Gromacs(_process.Process):
                 mdp_out,
                 self._gro_file,
                 self._top_file,
-                self._gro_file,
+                self._ref_file,
                 self._checkpoint_file,
                 self._tpr_file,
             )
@@ -434,13 +488,13 @@ class Gromacs(_process.Process):
                 mdp_out,
                 self._gro_file,
                 self._top_file,
-                self._gro_file,
+                self._ref_file,
                 self._tpr_file,
             )
 
         # Warnings don't trigger an error. Set to a suitably large number.
         if self._ignore_warnings:
-            command += " --maxwarn -1"
+            command += " --maxwarn 9999"
 
         # Run the command.
         proc = _subprocess.run(
@@ -568,13 +622,11 @@ class Gromacs(_process.Process):
 
         # Run the process in the working directory.
         with _Utils.cd(self._work_dir):
-
             # Create the arguments string list.
             args = self.getArgStringList()
 
             # Write the command-line process to a README.txt file.
             with open("README.txt", "w") as f:
-
                 # Set the command-line string.
                 self._command = "%s " % self._exe + self.getArgString()
 
@@ -652,12 +704,17 @@ class Gromacs(_process.Process):
         """
         return self.getSystem(block=False)
 
-    def getTrajectory(self, block="AUTO"):
+    def getTrajectory(self, backend="AUTO", block="AUTO"):
         """
         Return a trajectory object.
 
         Parameters
         ----------
+
+        backend : str
+            The backend to use for trajectory parsing. To see supported backends,
+            run BioSimSpace.Trajectory.backends(). Using "AUTO" will try each in
+            sequence.
 
         block : bool
             Whether to block until the process has finished running.
@@ -668,6 +725,12 @@ class Gromacs(_process.Process):
         trajectory : :class:`System <BioSimSpace.Trajectory.Trajectory>`
             The latest trajectory object.
         """
+
+        if not isinstance(backend, str):
+            raise TypeError("'backend' must be of type 'str'")
+
+        if not isinstance(block, (bool, str)):
+            raise TypeError("'block' must be of type 'bool' or 'str'")
 
         # Wait for the process to finish.
         if block is True:
@@ -688,7 +751,7 @@ class Gromacs(_process.Process):
             else:
                 self._traj_file = traj_file
 
-            return _Trajectory.Trajectory(process=self)
+            return _Trajectory.Trajectory(process=self, backend=backend)
 
         except:
             return None
@@ -775,8 +838,8 @@ class Gromacs(_process.Process):
         if self.isError():
             _warnings.warn("The process exited with an error!")
 
-        self._update_stdout_dict()
-        return self._get_stdout_record(record, time_series, unit)
+        self._update_energy_dict()
+        return self._get_energy_record(record, time_series, unit)
 
     def getCurrentRecord(self, record, time_series=False, unit=None):
         """
@@ -804,8 +867,8 @@ class Gromacs(_process.Process):
         if self.isError():
             _warnings.warn("The process exited with an error!")
 
-        self._update_stdout_dict()
-        return self._get_stdout_record(record, time_series, unit)
+        self._update_energy_dict()
+        return self._get_energy_record(record, time_series, unit)
 
     def getRecords(self, block="AUTO"):
         """
@@ -833,7 +896,8 @@ class Gromacs(_process.Process):
         if self.isError():
             _warnings.warn("The process exited with an error!")
 
-        return self._stdout_dict.copy()
+        self._update_energy_dict()
+        return self._energy_dict.copy()
 
     def getCurrentRecords(self):
         """
@@ -873,11 +937,7 @@ class Gromacs(_process.Process):
             The current simulation time in nanoseconds.
         """
 
-        if isinstance(self._protocol, _Protocol.Minimisation):
-            return None
-
-        else:
-            return self.getRecord("TIME", time_series, _Units.Time.picosecond, block)
+        return self.getRecord("TIME", time_series, _Units.Time.picosecond, block)
 
     def getCurrentTime(self, time_series=False):
         """
@@ -918,8 +978,19 @@ class Gromacs(_process.Process):
 
         step : int
             The current number of integration steps.
+
+        Notes
+        -----
+        The step is calculated based on
+        :meth:`~BioSimSpace.Process.Gromacs.getTime` and
+        :meth:`~BioSimSpace.Protocol.getTimeStep`.
         """
-        return self.getRecord("STEP", time_series, None, block)
+        records = self.getRecord("TIME", time_series, _Units.Time.picosecond, block)
+        time_step = self._protocol.getTimeStep()
+        if isinstance(records, list):
+            return [record / time_step for record in records]
+        else:
+            return records / time_step
 
     def getCurrentStep(self, time_series=False):
         """
@@ -1730,7 +1801,7 @@ class Gromacs(_process.Process):
         length : :class:`Length <BioSimSpace.Types.Length>`
             The constrained RMSD.
         """
-        return self.getRecord("CONSTRRMSD", time_series, _Units.Length.nanometer, block)
+        return self.getRecord("CONSTRRMSD", time_series, None, block)
 
     def getCurrentConstraintRMSD(self, time_series=False):
         """
@@ -1749,6 +1820,43 @@ class Gromacs(_process.Process):
             The current constrained RMSD.
         """
         return self.getConstraintRMSD(time_series, block=False)
+
+    def getVolume(self, time_series=False, block="AUTO"):
+        """Get the volume.
+
+        Parameters
+        ----------
+
+        time_series : bool
+            Whether to return a list of time series records.
+
+        block : bool
+            Whether to block until the process has finished running.
+
+        Returns
+        -------
+
+        volume : :class:`Volume <BioSimSpace.Types.Volume>`
+           The volume.
+        """
+        return self.getRecord("VOLUME", time_series, _Units.Volume.angstrom3, block)
+
+    def getCurrentVolume(self, time_series=False):
+        """Get the current volume.
+
+        Parameters
+        ----------
+
+        time_series : bool
+            Whether to return a list of time series records.
+
+        Returns
+        -------
+
+        volume : :class:`Volume <BioSimSpace.Types.Volume>`
+           The volume.
+        """
+        return self.getVolume(time_series, block=False)
 
     def stdout(self, n=10):
         """
@@ -1800,7 +1908,6 @@ class Gromacs(_process.Process):
         restraint = self._protocol.getRestraint()
 
         if restraint is not None:
-
             # Get the force constant in units of kJ_per_mol/nanometer**2
             force_constant = self._protocol.getForceConstant()._sire_unit
             force_constant = force_constant.to(
@@ -1862,7 +1969,6 @@ class Gromacs(_process.Process):
 
             # A keyword restraint.
             if isinstance(restraint, str):
-
                 # The number of restraint files.
                 num_restraint = 1
 
@@ -1871,14 +1977,12 @@ class Gromacs(_process.Process):
                 for mol_type_idx, (mol_type, mol_idxs) in enumerate(
                     moltypes_sys_idx.items()
                 ):
-
                     # Initialise a list of restrained atom indices.
                     restrained_atoms = []
 
                     # Loop over each molecule in the system that matches this
                     # type and append any atoms matching the restraint.
                     for idx, mol_idx in enumerate(mol_idxs):
-
                         # Get the indices of any restrained atoms in this molecule,
                         # making sure that indices are relative to the molecule.
                         atom_idxs = self._system.getRestraintAtoms(
@@ -1946,7 +2050,6 @@ class Gromacs(_process.Process):
 
             # A user-defined list of atoms indices.
             else:
-
                 # Create an empty multi-dict for each molecule type.
                 mol_atoms = {}
                 for mol_type in gro_system.uniqueTypes():
@@ -1978,7 +2081,6 @@ class Gromacs(_process.Process):
                 # Loop over all of the molecule types and create a position
                 # restraint file for each.
                 for mol_type_idx, (mol_type, atom_idxs) in enumerate(mol_atoms.items()):
-
                     # Write the position restraint file for this molecule.
                     if len(atom_idxs) > 0:
                         # Create the file names.
@@ -2030,141 +2132,221 @@ class Gromacs(_process.Process):
                     for line in top_lines:
                         file.write("%s\n" % line)
 
-    def _update_stdout_dict(self):
-        """Update the dictionary of thermodynamic records."""
+    def _initialise_energy_dict(self):
+        # Grab the available energy terms
+        command = f"{self._exe} energy -f {self._eng_file}"
+        proc = _subprocess.run(
+            _Utils.command_split(command),
+            input="0",
+            stdout=_subprocess.PIPE,
+            stderr=_subprocess.PIPE,
+            encoding="utf-8",
+        )
+        err = proc.stderr
+        keys = self._parse_energy_terms(err)
+        # We need to stored the original key as the one in the
+        # self._energy_dict will be the sanitised keys.
+        self._energy_keys = keys
+        self._energy_dict["TIME"] = []
+        for key in keys:
+            # Skip surface tension records, since there is no appropriate general unit.
+            if key != "#Surf*SurfTen":
+                self._energy_dict[self._sanitise_energy_term(key)] = []
 
-        # Exit if log file hasn't been created.
-        if not _os.path.isfile(self._log_file):
-            return
+    @staticmethod
+    def _parse_energy_terms(text):
+        """Parse the output from gmx energy output to get the energy terms in
+        the edr file. Example output look like:
 
-        # A list of the new record lines.
-        lines = []
+        #                 :-) GROMACS - gmx energy, 2022.2-conda_forge (-:
+        # Command line:
+        #   gmx energy -f energy.edr
+        # Opened prod.edr as single precision energy file
+        # Select the terms you want from the following list by
+        # selecting either (part of) the name or the number or a combination.
+        # End your selection with an empty line or a zero.
+        # -------------------------------------------------------------------
+        #   1  Harmonic-Pot.    2  Angle            3  U-B              4  Proper-Dih.
+        # -------------------------------------------------------
 
-        # Append any new lines.
-        for line in _pygtail.Pygtail(self._log_file):
-            lines.append(line)
+        Parameters
+        ----------
 
-        # Store the number of lines.
-        num_lines = len(lines)
+        text : str
+            The output string from the gmx energy
 
-        # Line index counter.
-        x = 0
+        Returns
+        -------
 
-        # Append any new records to the stdout dictionary.
-        while x < num_lines:
+        list
+            A list of the string energy terms in the edr file.
 
-            # We've hit any energy record section.
-            if lines[x].strip() == "Energies (kJ/mol)":
-
-                # Initialise lists to hold all of the key/value pairs.
-                keys = []
-                values = []
-
-                # Loop until we reach a blank line, or the end of the lines.
-                while True:
-
-                    # End of file.
-                    if x + 2 >= num_lines:
-                        break
-
-                    # Extract the lines with the keys and values.
-                    k_line = lines[x + 1]
-                    v_line = lines[x + 2]
-
-                    # Empty line:
-                    if len(k_line.strip()) == 0 or len(v_line.strip()) == 0:
-                        break
-
-                    # Add whitespace at the end so that the splitting algorithm
-                    # below works properly.
-                    k_line = k_line + " "
-                    v_line = v_line + " "
-
-                    # Set the starting index of a record.
-                    start_idx = 0
-
-                    # Create lists to hold the keys and values.
-                    k = []
-                    v = []
-
-                    # Split the lines into the record headings and corresponding
-                    # values.
-                    for idx, val in enumerate(v_line):
-                        # We've hit the end of the line.
-                        if idx + 1 == len(v_line):
-                            break
-
-                        # This is the end of a record, i.e. we've gone from a
-                        # character to whitespace. Record the key and value and
-                        # update the start index for the next record.
-                        if val != " " and v_line[idx + 1] == " ":
-                            k.append(k_line[start_idx : idx + 1])
-                            v.append(v_line[start_idx : idx + 1])
-                            start_idx = idx + 1
-
-                    # Update the keys and values, making sure the number of
-                    # values matches the number of keys.
-                    keys.extend(k)
-                    values.extend(v[: len(k)])
-
-                    # Update the line index.
-                    x = x + 2
-
-                # Add the records to the dictionary.
-                if len(keys) == len(values):
-                    for key, value in zip(keys, values):
-                        # Replace certain characters in the key in order to make
-                        # the formatting consistent.
-
-                        # Convert to upper case.
-                        key = key.upper()
-
-                        # Strip whitespace and newlines from beginning and end.
-                        key = key.strip()
-
-                        # Remove whitespace.
-                        key = key.replace(" ", "")
-
-                        # Remove periods.
-                        key = key.replace(".", "")
-
-                        # Remove hyphens.
-                        key = key.replace("-", "")
-
-                        # Remove parentheses.
-                        key = key.replace("(", "")
-                        key = key.replace(")", "")
-
-                        # Remove instances of BAR.
-                        key = key.replace("BAR", "")
-
-                        # Add the record.
-                        self._stdout_dict[key] = value.strip()
-
-            # This is a time record.
-            elif "Step" in lines[x].strip():
-                if x + 1 < num_lines:
-                    records = lines[x + 1].split()
-
-                    # There should be two records, 'Step' and 'Time'.
-                    if len(records) == 2:
-                        self._stdout_dict["STEP"] = records[0].strip()
-                        self._stdout_dict["TIME"] = records[1].strip()
-
-                # Update the line index.
-                x += 2
-
-            # We've reached an averages section, abort.
-            elif " A V E R A G E S" in lines[x]:
-                break
-
-            # No match, move to the next line.
-            else:
-                x += 1
-
-    def _get_stdout_record(self, key, time_series=False, unit=None):
+        Notes
+        -----
+        The order that the key is stored is very important as the order that
+        the energy term is stored in the xvg file will obey this order. In this
+        case, the energy will be stored in the order of Harmonic-Pot., Angle,
+        U-B, Proper-Dih.. Note that this order is absolute and will not be
+        changed by the input to `gmx energy`.
         """
-        Helper function to get a stdout record from the dictionary.
+        sections = text.split("---")
+        # Remove the empty sections
+        sections = [section for section in sections if section]
+        # Concatenate the lines
+        section = sections[1].replace("\n", "")
+        terms = section.split()
+        # Remove the possible '-' from the separation line
+        terms = [term for term in terms if term != "-"]
+        # Check if the index order is correct
+        indexes = [int(term) for term in terms[::2]]
+        energy_names = terms[1::2]
+        length_nomatch = len(indexes) != len(energy_names)
+        # -1 as the index is 1-based.
+        index_nomatch = (_np.arange(len(indexes)) != _np.array(indexes) - 1).any()
+        if length_nomatch or index_nomatch:
+            raise ValueError(f"Cannot parse the energy terms in the {edr_file} file.")
+        else:
+            return energy_names
+
+    @staticmethod
+    def _parse_energy_units(text):
+        """Extract the energy unit from the output. Example outputs are:
+
+        # Statistics over 15000001 steps [ 0.0000 through 30000.0000 ps ], 53 data sets
+        # All statistics are over 15001 points (frames)
+        # Energy                      Average   Err.Est.       RMSD  Tot-Drift
+        # -------------------------------------------------------------------------------
+        # Harmonic Pot.               0.34534      0.009   0.491375 -0.0225767  (kJ/mol)
+        # Angle                       16159.4        4.7    202.124   -35.3327  (kJ/mol)
+        # U-B                         81396.5        3.7    431.584    9.91613  (kJ/mol)
+        # Proper Dih.                 71615.4         24    250.353    -101.74  (kJ/mol)
+
+        Parameters
+        ----------
+        text : str
+            Output text with term name and units.
+
+        Returns
+        -------
+        list
+            A list of the energy units of type :mod:`~BioSimSpace.Types._GeneralUnit`.
+
+        Notes
+        -----
+        The order that the energy unit is printed will obey the order obtained
+        from :meth:`~BioSimSpace.Process.Gromacs._parse_energy_terms`.
+        """
+        section = text.split("---")[-1]
+        lines = section.split("\n")
+        units = [
+            _Units.Time.picosecond,
+        ]
+        for line in lines:
+            terms = line.split()
+            if len(terms) > 1 and terms[0] != "#Surf*SurfTen":
+                unit = terms[-1][1:-1]
+                if unit == "K":
+                    units.append(_Units.Temperature.kelvin)
+                elif unit == "kJ/mol":
+                    units.append(_Units.Energy.kj_per_mol)
+                elif unit == "bar":
+                    units.append(_Units.Pressure.bar)
+                elif unit == "":
+                    units.append(_Units.Length.nanometer)
+                elif unit == "nm":
+                    units.append(_Units.Length.nanometer)
+                elif unit == "nm^3":
+                    units.append(_Units.Volume.nanometer3)
+                elif unit == "bar nm":
+                    units.append(_Units.Pressure.bar * _Units.Length.nanometer)
+                elif unit == "nm/ps":
+                    units.append(_Units.Length.nanometer / _Units.Time.picosecond)
+                elif unit == "kg/m^3":
+                    units.append(_Types._GeneralUnit("kg/m3"))
+                else:
+                    units.append(1.0)
+                    _warnings.warn(
+                        f"Unit {unit} cannot be parsed, recording the unit as unitless."
+                    )
+        return units
+
+    @staticmethod
+    def _sanitise_energy_term(key):
+        """Format the energy term names to compile with the BioSimSpace
+        standard.
+
+        Parameters
+        ----------
+        key : str
+            The original name of the energy term.
+
+        Returns
+        -------
+        str
+            The formatted name of the energy term.
+        """
+        # Convert to upper case.
+        key = key.upper()
+
+        # Strip whitespace and newlines from beginning and end.
+        key = key.strip()
+
+        # Remove whitespace.
+        key = key.replace(" ", "")
+
+        # Remove periods.
+        key = key.replace(".", "")
+
+        # Remove hyphens.
+        key = key.replace("-", "")
+
+        # Remove parentheses.
+        key = key.replace("(", "")
+        key = key.replace(")", "")
+
+        # Remove instances of BAR.
+        key = key.replace("BAR", "")
+        return key
+
+    def _update_energy_dict(self, initialise=False):
+        if initialise or len(self._energy_dict) == 0:
+            self._initialise_energy_dict()
+
+        keys = self._energy_keys
+
+        with _TemporaryDirectory() as tmpdirname:
+            temp_dir = _Path(tmpdirname)
+            output_file = temp_dir / "energy.xvg"
+            command = f"{self._exe} energy -f {self._eng_file} -o {output_file}"
+            proc = _subprocess.run(
+                _Utils.command_split(command),
+                input="\n".join(keys),
+                # The order that the input keys are generated is irrelavent.
+                # The order the energy term will be printed obeys
+                # :meth:`~BioSimSpace.Process.Gromacs._parse_energy_terms`
+                stdout=_subprocess.PIPE,
+                stderr=_subprocess.PIPE,
+                encoding="utf-8",
+            )
+            out = proc.stdout
+            results = _np.loadtxt(output_file, comments=["@", "#"])
+            units = self._parse_energy_units(out)
+
+            if len(units) != len(list(self._energy_dict)):
+                raise ValueError(
+                    "The number of energy units does not match the "
+                    "number of energy terms."
+                )
+
+        for i, key in enumerate(self._energy_dict):
+            if len(results.shape) == 1:
+                # Account for the case of single point energy
+                self._energy_dict[key] = [results[i] * units[i]]
+            else:
+                self._energy_dict[key] = [result * units[i] for result in results[:, i]]
+
+    def _get_energy_record(self, key, time_series=False, unit=None):
+        """Helper function to get a stdout record from the dictionary.
 
         Parameters
         ----------
@@ -2186,7 +2368,7 @@ class Gromacs(_process.Process):
         """
 
         # No data!
-        if len(self._stdout_dict) == 0:
+        if len(self._energy_dict) == 0:
             return None
 
         if not isinstance(time_series, bool):
@@ -2201,16 +2383,12 @@ class Gromacs(_process.Process):
         # Return the list of dictionary values.
         if time_series:
             try:
-                if key == "STEP":
-                    return [int(x) for x in self._stdout_dict[key]]
+                if unit is None:
+                    return [
+                        x._to_default_unit().value() for x in self._energy_dict[key]
+                    ]
                 else:
-                    if unit is None:
-                        return [float(x) for x in self._stdout_dict[key]]
-                    else:
-                        return [
-                            (float(x) * unit)._to_default_unit()
-                            for x in self._stdout_dict[key]
-                        ]
+                    return [x._to_default_unit() for x in self._energy_dict[key]]
 
             except KeyError:
                 return None
@@ -2218,15 +2396,10 @@ class Gromacs(_process.Process):
         # Return the most recent dictionary value.
         else:
             try:
-                if key == "STEP":
-                    return int(self._stdout_dict[key][-1])
+                if unit is None:
+                    return self._energy_dict[key][-1]._to_default_unit().value()
                 else:
-                    if unit is None:
-                        return float(self._stdout_dict[key][-1])
-                    else:
-                        return (
-                            float(self._stdout_dict[key][-1]) * unit
-                        )._to_default_unit()
+                    return self._energy_dict[key][-1]._to_default_unit()
 
             except KeyError:
                 return None
@@ -2244,7 +2417,6 @@ class Gromacs(_process.Process):
         """
         # Grab the last frame from the GRO file.
         with _Utils.cd(self._work_dir):
-
             # Do we need to get coordinates for the lambda=1 state.
             if "is_lambda1" in self._property_map:
                 is_lambda1 = True
@@ -2285,12 +2457,26 @@ class Gromacs(_process.Process):
             # need to recompute it next time.
             self._mapping = mapping
 
-            # Update the box information in the original system.
-            if "space" in new_system._sire_object.propertyKeys():
+            # Get the "space" property name from the property map.
+            space_prop = self._property_map.get("space", "space")
+
+            # Update the box information in the original system. Only do this if
+            # the original system contains space information, since it will have
+            # been added in order to run vacuum simulations.
+            if (
+                space_prop in old_system._sire_object.propertyKeys()
+                and space_prop in new_system._sire_object.propertyKeys()
+            ):
                 box = new_system._sire_object.property("space")
                 old_system._sire_object.setProperty(
                     self._property_map.get("space", "space"), box
                 )
+
+            # If this is a vacuum simulation, then translate the centre of mass
+            # of the system back to the origin.
+            if not space_prop in old_system._sire_object.propertyKeys():
+                com = old_system._getCenterOfMass()
+                old_system.translate([-x for x in com])
 
             return old_system
 
@@ -2317,7 +2503,6 @@ class Gromacs(_process.Process):
         # Grab the last frame from the current trajectory file.
         try:
             with _Utils.cd(self._work_dir):
-
                 # Do we need to get coordinates for the lambda=1 state.
                 if "is_lambda1" in self._property_map:
                     is_lambda1 = True
@@ -2383,12 +2568,26 @@ class Gromacs(_process.Process):
                 # need to recompute it next time.
                 self._mapping = mapping
 
-                # Update the box information in the original system.
-                if "space" in new_system._sire_object.propertyKeys():
+                # Get the "space" property name from the property map.
+                space_prop = self._property_map.get("space", "space")
+
+                # Update the box information in the original system. Only do this if
+                # the original system contains space information, since it will have
+                # been added in order to run vacuum simulations.
+                if (
+                    space_prop in old_system._sire_object.propertyKeys()
+                    and space_prop in new_system._sire_object.propertyKeys()
+                ):
                     box = new_system._sire_object.property("space")
                     old_system._sire_object.setProperty(
                         self._property_map.get("space", "space"), box
                     )
+
+                # If this is a vacuum simulation, then translate the centre of mass
+                # of the system back to the origin.
+                if not space_prop in old_system._sire_object.propertyKeys():
+                    com = new_system._getCenterOfMass()
+                    old_system.translate([-x for x in com])
 
                 return old_system
 
@@ -2417,7 +2616,7 @@ class Gromacs(_process.Process):
         # Check that the current trajectory file is found.
         if not _os.path.isfile(self._traj_file):
             # If not, first check for any trr extension.
-            traj_file = _IO.glob("%s/*.trr" % self._work_dir)
+            traj_file = _glob.glob("%s/*.trr" % self._work_dir)
 
             # Store the number of trr files.
             num_trr = len(traj_file)
@@ -2427,7 +2626,7 @@ class Gromacs(_process.Process):
                 return traj_file[0]
             else:
                 # Now check for any xtc files.
-                traj_file = _IO.glob("%s/*.xtc" % self._work_dir)
+                traj_file = _glob.glob("%s/*.xtc" % self._work_dir)
 
                 if len(traj_file) == 1:
                     return traj_file[0]
@@ -2440,6 +2639,51 @@ class Gromacs(_process.Process):
                     return None
         else:
             return self._traj_file
+
+    def saveMetric(
+        self, filename="metric.parquet", u_nk="u_nk.parquet", dHdl="dHdl.parquet"
+    ):
+        """
+        Helper function to save the simulation metrics to `filename`, which is a
+        pandas dataframe that can be loaded with `pd.read_parquet`. if the protocol
+        is Free Energy protocol, the dHdl and the u_nk data will be saved in the
+        same parquet format as well.
+        """
+
+        _assert_imported(_alchemlyb)
+
+        self._update_energy_dict(initialise=True)
+        datadict_keys = [
+            ("Time (ps)", _Units.Time.picosecond, "getTime"),
+            (
+                "PotentialEnergy (kJ/mol)",
+                _Units.Energy.kj_per_mol,
+                "getPotentialEnergy",
+            ),
+        ]
+        if not isinstance(self._protocol, _Protocol.Minimisation):
+            datadict_keys.extend(
+                [
+                    ("Volume (nm^3)", _Units.Volume.nanometer3, "getVolume"),
+                    ("Pressure (bar)", _Units.Pressure.bar, "getPressure"),
+                    (
+                        "Temperature (kelvin)",
+                        _Units.Temperature.kelvin,
+                        "getTemperature",
+                    ),
+                ]
+            )
+        df = self._convert_datadict_keys(datadict_keys)
+        df.to_parquet(path=f"{self.workDir()}/{filename}", index=True)
+        if isinstance(self._protocol, _Protocol.FreeEnergy):
+            energy = _extract(
+                f"{self.workDir()}/{self._name}.xvg",
+                T=self._protocol.getTemperature() / _Units.Temperature.kelvin,
+            )
+            if "u_nk" in energy:
+                energy["u_nk"].to_parquet(path=f"{self.workDir()}/{u_nk}", index=True)
+            if "dHdl" in energy:
+                energy["dHdl"].to_parquet(path=f"{self.workDir()}/{dHdl}", index=True)
 
 
 def _is_minimisation(config):

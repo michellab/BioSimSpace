@@ -38,28 +38,30 @@ from .. import Process as _Process
 from .. import Protocol as _Protocol
 
 # A dictionary mapping MD engines to their executable names and GPU support.
-#                engine        EXE               GPU
-_md_engines = { "AMBER"    : { "pmemd.cuda.MPI" : True,
-                               "pmemd.cuda"     : True,
-                               "pmemd.MPI"      : False,
-                               "pmemd"          : False,
-                               "sander"         : False },
-                 "GROMACS" : { "gmx"            : True,
-                               "gmx_mpi"        : True },
-                 "NAMD"    : { "namd2"          : False },
-                 "OPENMM"  : { "sire_python"    : True },
-                 "SOMD"    : { "somd"           : True }
-               }
+# engine, exe, gpu
+_md_engines = {
+    "AMBER": {
+        "pmemd.cuda.MPI": True,
+        "pmemd.cuda": True,
+        "pmemd.MPI": False,
+        "sander": False,
+    },
+    "GROMACS": {"gmx": True, "gmx_mpi": True},
+    "NAMD": {"namd2": False},
+    "OPENMM": {"sire_python": True},
+    "SOMD": {"somd": True},
+}
 
 # A dictionary reverse mapping MD engines to their supported Sire file extensions.
 # Use SOMD as a fall-back where possible. Since we can't guarantee interconversion
 # of potentials for CHARMM-PSF format input files, we restrict such simulations to
 # only run using NAMD.
-#                    EXTENSION        ENGINES
+#  extension, engines
 _file_extensions = {
     "PRM7,RST7": ["AMBER", "GROMACS", "OPENMM", "SOMD"],
     "PRM7,RST": ["AMBER", "GROMACS", "OPENMM", "SOMD"],
     "GroTop,Gro87": ["GROMACS", "AMBER", "OPENMM", "SOMD"],
+    "GROTOP,GRO87": ["GROMACS", "AMBER", "OPENMM", "SOMD"],
     "PSF,PDB": ["NAMD"],
 }
 

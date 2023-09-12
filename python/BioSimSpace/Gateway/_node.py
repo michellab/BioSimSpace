@@ -263,7 +263,7 @@ class Node:
 
     >>> import BioSimSpace as BSS
     >>> node = BSS.Gateway.Node("Perform energy minimisation")
-    >>> node.addAuthor(name="Lester Hedges", email="lester.hedges@bristol.ac.uk", affiliation="University of Bristol")
+    >>> node.addAuthor(name="Lester Hedges", email="lester@openbiosim.org", affiliation="OpenBioSim")
     >>> node.setLicence("GPLv3")
     >>> node.addInput("files", BSS.Gateway.FileSet(help="A set of molecular input files."))
     >>> node.addInput("steps", BSS.Gateway.Integer(help="The number of minimisation steps.", minimum=0, maximum=100000, default=10000))
@@ -901,7 +901,6 @@ class Node:
 
         # File / File set.
         elif isinstance(input, (_File, _FileSet)):
-
             # Create a fileupload widget.
             if isinstance(input, _FileSet):
                 widget = _widgets.FileUpload(multiple=True)
@@ -924,7 +923,7 @@ class Node:
             widget._name = name
 
             # Bind the callback function.
-            widget.observe(_on_file_upload, names="data")
+            widget.observe(_on_file_upload, names="value")
 
             # Store the widget.
             self._widgets[name] = widget
@@ -1188,7 +1187,6 @@ class Node:
 
         # Loop over all of the widgets.
         for name, widget in self._widgets.items():
-
             # Create the label string.
             string = "%s: %s" % (name, self._inputs[name].getHelp())
 
@@ -1256,7 +1254,6 @@ class Node:
         elif self._is_notebook:
             # Loop over the widgets and set the input values.
             for key, widget in self._widgets.items():
-
                 # Use the widget value if it has been set, otherwise, set the value to None.
                 # This ensures that the user actually sets a value.
 
@@ -1507,11 +1504,20 @@ def _on_file_upload(change):
     # Clear the list of files.
     change["owner"]._files = []
 
+    # Handle file upload widget API changes.
+    if isinstance(change["owner"].value, tuple):
+        is_tuple = True
+    else:
+        is_tuple = False
+
     # Loop over all uploaded files.
     for filename in change["owner"].value:
-
-        # Store the number of bytes.
-        num_bytes = len(change["owner"].value[filename]["content"])
+        if is_tuple:
+            name = filename["name"]
+            num_bytes = len(filename["content"])
+        else:
+            name = filename
+            num_bytes = len(change["owner"].value[filename]["content"])
 
         # Return if there is no data.
         if num_bytes == 0:
@@ -1522,18 +1528,20 @@ def _on_file_upload(change):
             label += ", "
 
         # Extract the file content.
-        content = change["owner"].value[filename]["content"]
+        if is_tuple:
+            content = filename["content"]
+        else:
+            content = change["owner"].value[filename]["content"]
 
         # Create the uploads directory if it doesn't already exist.
         if not _os.path.isdir("uploads"):
             _os.makedirs("uploads")
 
         # Append the upload directory to the file name.
-        new_filename = "uploads/%s" % filename
+        new_filename = "uploads/%s" % name
 
         # Has this file already been uploaded?
         if _os.path.isfile(new_filename):
-
             # We'll append a number to the file name.
             index = 1
             new_filename_append = new_filename + ".%d" % index
@@ -1551,10 +1559,10 @@ def _on_file_upload(change):
             file.write(content)
 
         # Report that the file was uploaded.
-        print("Uploaded '{}' ({:.2f} kB)".format(filename, num_bytes / 2**10))
+        print("Uploaded '{}' ({:.2f} kB)".format(name, num_bytes / 2**10))
 
         # Truncate the filename string if it is more than 15 characters.
-        label += (filename[:15] + "...") if len(filename) > 15 else filename
+        label += (name[:15] + "...") if len(name) > 15 else name
 
         # Increment the number of files.
         num_files += 1

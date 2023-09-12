@@ -72,7 +72,8 @@ get the minimised molecular system.
    import BioSimSpace as BSS
 
    # Load a molecular system from file.
-   system = BSS.IO.readMolecules(BSS.IO.glob("amber/ala/*"))
+   files = BSS.IO.expand(BSS.tutorialUrl(), ["ala.top", "ala.crd"], ".bz2")
+   system = BSS.IO.readMolecules(files)
 
    # Create a minimisation protocol with 1000 steps.
    protocol = BSS.Protocol.Minimisation(steps=1000)

@@ -24,21 +24,26 @@
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
 
-__all__ = ["getFrame", "Trajectory"]
+__all__ = ["getFrame", "Trajectory", "backends"]
 
-from .._Utils import _try_import
+from .._Utils import _try_import, _have_imported
 
 _mdanalysis = _try_import("MDAnalysis")
 _mdtraj = _try_import("mdtraj")
+
 import copy as _copy
+import logging as _logging
 import os as _os
 import shutil as _shutil
-import tempfile as _tempfile
 import uuid as _uuid
 import warnings as _warnings
 
+from sire.legacy import Base as _SireBase
 from sire.legacy import IO as _SireIO
 from sire.legacy import Mol as _SireMol
+
+from sire import load as _sire_load
+from sire._load import _resolve_path
 
 from .. import _isVerbose
 from .._Exceptions import IncompatibleError as _IncompatibleError
@@ -48,6 +53,20 @@ from ..Types import Time as _Time
 
 from .. import IO as _IO
 from .. import Units as _Units
+from .. import _Utils
+
+
+def backends():
+    """
+    Return the list of supported trajectory parsing backends.
+
+    Returns
+
+    backends : [str]
+        The list of supported trajectory parsing backends.
+    """
+
+    return ["SIRE", "MDANALYSIS", "MDTRAJ"]
 
 
 def getFrame(trajectory, topology, index, system=None, property_map={}):
@@ -99,6 +118,23 @@ def getFrame(trajectory, topology, index, system=None, property_map={}):
     if not isinstance(property_map, dict):
         raise TypeError("'property_map' must be of type 'dict'")
 
+    # Create a temporary working directory.
+    work_dir = _Utils.WorkDir()
+
+    # Download files if they are URLs.
+    if trajectory.startswith(("http", "www")):
+        try:
+            trajectory = _resolve_path(
+                trajectory.lower(), str(work_dir), show_warnings=False, silent=True
+            )[0]
+        except:
+            raise ValueError(f"Unable to download trajectory file: {trajectory}")
+    if topology.startswith(("http", "www")):
+        try:
+            topology = _resolve_path(topology.lower(), str(work_dir), silent=True)[0]
+        except:
+            raise ValueError(f"Unable to download trajectory file: {trajectory}")
+
     if system is not None:
         if not isinstance(system, _System):
             raise TypeError(
@@ -116,95 +152,134 @@ def getFrame(trajectory, topology, index, system=None, property_map={}):
         # Update the water topology to match topology/trajectory.
         system = _update_water_topology(system, topology, trajectory)
 
-    # Create a temporary working directory.
-    tmp_dir = _tempfile.TemporaryDirectory()
-    work_dir = tmp_dir.name
-
-    # Try to load the frame with MDTraj.
+    # Try to load the frame with Sire.
     errors = []
+    is_sire = False
     is_mdanalysis = False
     pdb_file = work_dir + f"/{str(_uuid.uuid4())}.pdb"
     try:
-        frame_file = work_dir + f"/{str(_uuid.uuid4())}.rst7"
-        frame = _mdtraj.load_frame(trajectory, index, top=topology)
-        frame.save(frame_file, force_overwrite=True)
-        frame.save(pdb_file, force_overwrite=True)
+        frame = _sire_load(
+            [trajectory, topology],
+            map=property_map,
+            ignore_topology_frame=True,
+            silent=True,
+        ).trajectory()[index]
+        is_sire = True
     except Exception as e:
-        is_mdanalysis = True
-        errors.append(f"MDTraj: {str(e)}")
-        # Try to load the frame with MDAnalysis.
+        errors.append(f"Sire: {str(e)}")
         try:
-            frame_file = work_dir + f"/{str(_uuid.uuid4())}.gro"
-            universe = _mdanalysis.Universe(topology, trajectory)
-            universe.trajectory.trajectory[index]
-            with _warnings.catch_warnings():
-                _warnings.simplefilter("ignore")
-                universe.select_atoms("all").write(frame_file)
-                universe.select_atoms("all").write(pdb_file)
+            frame_file = work_dir + f"/{str(_uuid.uuid4())}.rst7"
+            frame = _mdtraj.load_frame(trajectory, index, top=topology)
+            frame.save(frame_file, force_overwrite=True)
+            frame.save(pdb_file, force_overwrite=True)
         except Exception as e:
-            errors.append(f"MDAnalysis: {str(e)}")
-            msg = "MDTraj/MDAnalysis failed to read frame %d from: traj=%s, top=%s" % (
-                index,
-                trajectory,
-                topology,
-            )
-            if _isVerbose():
-                raise IOError(msg + "\n" + "\n".join(errors))
-            else:
-                raise IOError(msg) from None
+            is_mdanalysis = True
+            errors.append(f"MDTraj: {str(e)}")
+            # Try to load the frame with MDAnalysis.
+            try:
+                frame_file = work_dir + f"/{str(_uuid.uuid4())}.gro"
+                universe = _mdanalysis.Universe(topology, trajectory)
+                universe.trajectory.trajectory[index]
+                with _warnings.catch_warnings():
+                    _warnings.simplefilter("ignore")
+                    universe.select_atoms("all").write(frame_file)
+                    universe.select_atoms("all").write(pdb_file)
+            except Exception as e:
+                errors.append(f"MDAnalysis: {str(e)}")
+                msg = (
+                    "MDTraj/MDAnalysis failed to read frame %d from: traj=%s, top=%s"
+                    % (
+                        index,
+                        trajectory,
+                        topology,
+                    )
+                )
+                if _isVerbose():
+                    raise IOError(msg + "\n" + "\n".join(errors))
+                else:
+                    raise IOError(msg) from None
 
     # Try to update the coordinates/velocities in the reference system.
     if system is not None:
-        # Parse the coordinates/velocites frame.
-        try:
-            if is_mdanalysis:
-                frame = _SireIO.Gro87(frame_file)
-            else:
-                frame = _SireIO.AmberRst7(frame_file)
-        except Exception as e:
-            msg = "Failed to read trajectory frame: '%s'" % frame_file
-            if _isVerbose():
-                raise IOError(msg) from e
-            else:
-                raise IOError(msg) from None
+        if is_sire and frame.current().num_molecules() > 1:
+            try:
+                sire_system, _ = _SireIO.updateCoordinatesAndVelocities(
+                    system._sire_object,
+                    frame.current()._system,
+                    mapping,
+                    False,
+                    property_map,
+                    {},
+                )
 
-        # Parse the PDB frame.
-        try:
-            pdb = _SireIO.PDB2(pdb_file)
-        except Exception as e:
-            msg = "Failed to read PDB trajectory frame: '%s'" % pdb_file
-            if _isVerbose():
-                raise IOError(msg) from e
-            else:
-                raise IOError(msg) from None
+                new_system = _System(sire_system)
 
-        # The new_system object will contain a single molecule with the
-        # coordinates of all of the atoms in the reference. As such, we
-        # will need to split the system into molecules.
-        new_system = _split_molecules(frame, pdb, system, work_dir, property_map)
-        return _System(new_system)
-        try:
-            sire_system, _ = _SireIO.updateCoordinatesAndVelocities(
-                system._sire_object, new_system, mapping, False, property_map, {}
-            )
-
-            new_system = _System(sire_system)
-        except Exception as e:
-            msg = "Failed to copy trajectory coordinates/velocities into BioSimSpace system!"
-            if _isVerbose():
-                raise IOError(msg) from e
-            else:
-                raise IOError(msg) from None
+            except Exception as e:
+                msg = "Failed to copy trajectory coordinates/velocities into BioSimSpace system!"
+                if _isVerbose():
+                    raise IOError(msg) from e
+                else:
+                    raise IOError(msg) from None
 
         else:
-            raise IOError(
-                "The trajectory frame is incompatible with the passed system!"
+            # Parse the coordinates/velocites frame.
+            try:
+                if is_sire:
+                    frame = frame.current()._system
+                    pdb = _SireIO.PDB2(frame)
+                    pdb.writeToFile(pdb_file)
+                    frame = _SireIO.AmberRst7(frame)
+                elif is_mdanalysis:
+                    frame = _SireIO.Gro87(frame_file)
+                else:
+                    frame = _SireIO.AmberRst7(frame_file)
+            except Exception as e:
+                msg = "Failed to read trajectory frame: '%s'" % frame_file
+                if _isVerbose():
+                    raise IOError(msg) from e
+                else:
+                    raise IOError(msg) from None
+
+            # Parse the PDB frame.
+            try:
+                pdb = _SireIO.PDB2(pdb_file)
+            except Exception as e:
+                msg = "Failed to read PDB trajectory frame: '%s'" % pdb_file
+                if _isVerbose():
+                    raise IOError(msg) from e
+                else:
+                    raise IOError(msg) from None
+
+            # The new_system object will contain a single molecule with the
+            # coordinates of all of the atoms in the reference. As such, we
+            # will need to split the system into molecules.
+            new_system = _split_molecules(
+                frame, pdb, system, str(work_dir), property_map
             )
+            try:
+                sire_system, _ = _SireIO.updateCoordinatesAndVelocities(
+                    system._sire_object, new_system, mapping, False, property_map, {}
+                )
+
+                new_system = _System(sire_system)
+            except Exception as e:
+                msg = "Failed to copy trajectory coordinates/velocities into BioSimSpace system!"
+                if _isVerbose():
+                    raise IOError(msg) from e
+                else:
+                    raise IOError(msg) from None
+
+            else:
+                raise IOError(
+                    "The trajectory frame is incompatible with the passed system!"
+                )
 
     # Load the frame directly to create a new System object.
     else:
         try:
-            if is_mdanalysis:
+            if is_sire:
+                new_system = _System(frame.current()._system)
+            elif is_mdanalysis:
                 new_system = _System(_SireIO.MoleculeParser.read(frame_file))
             else:
                 new_system = _System(
@@ -225,7 +300,13 @@ class Trajectory:
     """A class for reading a manipulating biomolecular trajectories."""
 
     def __init__(
-        self, process=None, trajectory=None, topology=None, system=None, property_map={}
+        self,
+        process=None,
+        trajectory=None,
+        topology=None,
+        system=None,
+        backend="AUTO",
+        property_map={},
     ):
         """
         Constructor.
@@ -249,6 +330,12 @@ class Trajectory:
             be lost during reading of the topology format required by the
             trajectory backend.
 
+        backend : str
+            The backend used to parse the trajectory file. Options are 'Sire',
+            'MDTraj', or 'MDAnalysis'. Use "auto" if you are happy with any
+            backend, i.e. it will try each in sequence and use the first that
+            worked.
+
         property_map : dict
            A dictionary that maps system "properties" to their user defined
            values. This allows the user to refer to properties with their
@@ -262,6 +349,9 @@ class Trajectory:
         self._backend = None
         self._system = None
         self._property_map = {}
+
+        # Create a temporary working directory.
+        self._work_dir = _Utils.WorkDir()
 
         # Nothing to create a trajectory from.
         if process is None and trajectory is None:
@@ -292,6 +382,25 @@ class Trajectory:
 
         # Trajectory and topology files.
         elif isinstance(trajectory, str) and isinstance(topology, str):
+            # Download files if they are URLs.
+            if trajectory.startswith(("http", "www")):
+                try:
+                    trajectory = _resolve_path(
+                        trajectory.lower(), str(self._work_dir), silent=True
+                    )[0]
+                except:
+                    raise ValueError(
+                        f"Unable to download trajectory file: {trajectory}"
+                    )
+            if topology.startswith(("http", "www")):
+                try:
+                    topology = _resolve_path(
+                        topology.lower(), str(self._work_dir), silent=True
+                    )[0]
+                except:
+                    raise ValueError(
+                        f"Unable to download trajectory file: {trajectory}"
+                    )
 
             # Make sure the trajectory file exists.
             if not _os.path.isfile(trajectory):
@@ -338,16 +447,21 @@ class Trajectory:
                     self._system, self._top_file, self._traj_file
                 )
 
+        if not isinstance(backend, str):
+            raise TypeError("'backend' must be of type 'str'")
+
+        # Strip whitespace and convert to upper case.
+        backend = backend.replace(" ", "").upper()
+
+        if backend not in ["AUTO"] + backends():
+            _warnings.warn("Invalid trajectory format. Using default (Sire).")
+            backend = "SIRE"
+
         if not isinstance(property_map, dict):
             raise TypeError("'property_map' must be of type 'dict'")
-        self._property_map = property_map
-
-        # Create a temporary working directory.
-        self._tmp_dir = _tempfile.TemporaryDirectory()
-        self._work_dir = self._tmp_dir.name
 
         # Get the current trajectory.
-        self._trajectory = self.getTrajectory(format="AUTO")
+        self._trajectory = self.getTrajectory(format=backend)
 
     def __str__(self):
         """Return a human readable string representation of the object."""
@@ -371,10 +485,10 @@ class Trajectory:
         ----------
 
         format : str
-            Whether to return an 'MDTraj' or 'MDAnalysis' object.
-            Use "auto" if you are happy with either format, i.e. it
-            will try each backend in sequence and return an object
-            from the first one that works.
+            Whether to return a 'Sire', 'MDTraj', or 'MDAnalysis' object.
+            Use "auto" if you are happy with any format, i.e. it will try
+            each backend in sequence and return an object from the first one
+            that works.
 
         Returns
         -------
@@ -383,12 +497,15 @@ class Trajectory:
             The trajectory in MDTraj or MDAnalysis format.
         """
 
+        if not isinstance(format, str):
+            raise TypeError("'format' must be of type 'str'")
+
         # Strip whitespace and convert to upper case.
         format = format.replace(" ", "").upper()
 
-        if format.replace(" ", "").upper() not in ["MDTRAJ", "MDANALYSIS", "AUTO"]:
-            _warnings.warn("Invalid trajectory format. Using default (mdtraj).")
-            format = "MDTRAJ"
+        if format not in ["AUTO"] + backends():
+            _warnings.warn("Invalid trajectory format. Using default (Sire).")
+            format = "SIRE"
 
         # If this object isn't bound to a Process and the format matches the
         # existing backend, then return the trajectory directly.
@@ -397,6 +514,8 @@ class Trajectory:
                 return _copy.deepcopy(self._trajectory)
             elif format in ["MDANALYSIS", "AUTO"] and self._backend == "MDANALYSIS":
                 return self._trajectory.copy()
+            elif format in ["SIRE", "AUTO"] and self._backend == "SIRE":
+                return self._trajectory
 
         if format == "MDTRAJ" and self._backend == "MDANALYSIS":
             raise _IncompatibleError(
@@ -424,6 +543,30 @@ class Trajectory:
 
         if not _os.path.isfile(self._top_file):
             raise IOError("Topology file doesn't exist: '%s'" % self._top_file)
+
+        # Return a Sire trajectory object.
+        if format in ["SIRE", "AUTO"]:
+            try:
+                # Load the molecules.
+                mols = _sire_load(
+                    [self._traj_file, self._top_file],
+                    map=self._property_map,
+                    ignore_topology_frame=True,
+                    silent=True,
+                )
+
+                if self._backend is None:
+                    self._backend = "SIRE"
+
+                # Return the trajectory for the molecules.
+                return mols.trajectory()
+            except:
+                if format == "SIRE":
+                    _warnings.warn(
+                        "Sire failed to read: traj=%s, top=%s"
+                        % (self._traj_file, self._top_file)
+                    )
+                    return None
 
         # Return an MDTraj object.
         if format in ["MDTRAJ", "AUTO"]:
@@ -469,7 +612,7 @@ class Trajectory:
                     )
                 else:
                     _warnings.warn(
-                        "MDTraj and MDAnalysis failed to read: traj=%s, top=%s"
+                        "Sire, MDTraj, and MDAnalysis failed to read: traj=%s, top=%s"
                         % (self._traj_file, self._top_file)
                     )
                 universe = None
@@ -516,7 +659,14 @@ class Trajectory:
                 )
                 time_interval = time_interval.nanoseconds().value()
             else:
-                if self._backend == "MDTRAJ":
+                if self._backend == "SIRE":
+                    if len(self._trajectory) > 1:
+                        time_interval = (
+                            self._trajectory.times()[1] - self._trajectory.times()[0]
+                        ).to("nanoseconds")
+                    else:
+                        time_interval = self._trajectory.times()[0]
+                elif self._backend == "MDTRAJ":
                     time_interval = self._trajectory.timestep / 1000
                 elif self._backend == "MDANALYSIS":
                     time_interval = self._trajectory.trajectory.totaltime / 1000
@@ -575,7 +725,6 @@ class Trajectory:
 
         # Loop over all indices.
         for x in indices:
-
             # Make sure the frame index is within range.
             if x > 0 and x >= n_frames:
                 raise ValueError(
@@ -590,7 +739,9 @@ class Trajectory:
 
             pdb_file = self._work_dir + f"/{str(_uuid.uuid4())}.pdb"
 
-            if self._backend == "MDTRAJ":
+            if self._backend == "SIRE":
+                frame = self._trajectory[x]
+            elif self._backend == "MDTRAJ":
                 frame_file = self._work_dir + f"/{str(_uuid.uuid4())}.rst7"
                 self._trajectory[x].save(frame_file, force_overwrite=True)
                 self._trajectory[x].save(pdb_file, force_overwrite=True)
@@ -604,57 +755,89 @@ class Trajectory:
 
             # Try to update the coordinates/velocities in the reference system.
             if self._system is not None:
-                # Parse the coordinates/velocites frame.
-                try:
-                    if self._backend == "MDANALYSIS":
-                        frame = _SireIO.Gro87(frame_file)
-                    else:
-                        frame = _SireIO.AmberRst7(frame_file)
-                except Exception as e:
-                    msg = "Failed to read trajectory frame: '%s'" % frame_file
-                    if _isVerbose():
-                        raise IOError(msg) from e
-                    else:
-                        raise IOError(msg) from None
+                if self._backend == "SIRE" and frame.current().num_molecules() > 1:
+                    try:
+                        sire_system, _ = _SireIO.updateCoordinatesAndVelocities(
+                            self._system._sire_object,
+                            frame.current()._system,
+                            self._mapping,
+                            False,
+                            self._property_map,
+                            {},
+                        )
 
-                # Parse the PDB file.
-                try:
-                    pdb = _SireIO.PDB2(pdb_file)
-                except Exception as e:
-                    msg = "Failed to read PDB trajectory frame: '%s'" % pdb_file
-                    if _isVerbose():
-                        raise IOError(msg) from e
-                    else:
-                        raise IOError(msg) from None
+                        new_system = _System(sire_system)
+                    except Exception as e:
+                        msg = "Failed to copy trajectory coordinates/velocities into BioSimSpace system!"
+                        if _isVerbose():
+                            raise IOError(msg) from e
+                        else:
+                            raise IOError(msg) from None
 
-                # The new_system object will contain a single molecule with the
-                # coordinates of all of the atoms in the reference. As such, we
-                # will need to split the system into molecules.
-                new_system = _split_molecules(
-                    frame, pdb, self._system, self._work_dir, self._property_map
-                )
-                try:
-                    sire_system, _ = _SireIO.updateCoordinatesAndVelocities(
-                        self._system._sire_object,
-                        new_system,
-                        self._mapping,
-                        False,
+                else:
+                    # Parse the coordinates/velocites frame.
+                    try:
+                        if self._backend == "SIRE":
+                            frame = frame.current()._system
+                            pdb = _SireIO.PDB2(frame)
+                            pdb.writeToFile(pdb_file)
+                            frame = _SireIO.AmberRst7(frame)
+                        elif self._backend == "MDANALYSIS":
+                            frame = _SireIO.Gro87(frame_file)
+                        else:
+                            frame = _SireIO.AmberRst7(frame_file)
+                    except Exception as e:
+                        msg = "Failed to read trajectory frame: '%s'" % frame_file
+                        if _isVerbose():
+                            raise IOError(msg) from e
+                        else:
+                            raise IOError(msg) from None
+
+                    # Parse the PDB file.
+                    try:
+                        pdb = _SireIO.PDB2(pdb_file)
+                    except Exception as e:
+                        msg = "Failed to read PDB trajectory frame: '%s'" % pdb_file
+                        if _isVerbose():
+                            raise IOError(msg) from e
+                        else:
+                            raise IOError(msg) from None
+
+                    # The new_system object will contain a single molecule with the
+                    # coordinates of all of the atoms in the reference. As such, we
+                    # will need to split the system into molecules.
+                    new_system = _split_molecules(
+                        frame,
+                        pdb,
+                        self._system,
+                        str(self._work_dir),
                         self._property_map,
-                        {},
                     )
+                    try:
+                        sire_system, _ = _SireIO.updateCoordinatesAndVelocities(
+                            self._system._sire_object,
+                            new_system,
+                            self._mapping,
+                            False,
+                            self._property_map,
+                            {},
+                        )
 
-                    new_system = _System(sire_system)
-                except Exception as e:
-                    msg = "Failed to copy trajectory coordinates/velocities into BioSimSpace system!"
-                    if _isVerbose():
-                        raise IOError(msg) from e
-                    else:
-                        raise IOError(msg) from None
+                        new_system = _System(sire_system)
+                    except Exception as e:
+                        msg = "Failed to copy trajectory coordinates/velocities into BioSimSpace system!"
+                        if _isVerbose():
+                            raise IOError(msg) from e
+                        else:
+                            raise IOError(msg) from None
 
             # Load the frame directly to create a new System object.
             else:
                 try:
-                    if self._backend == "MDANALYSIS":
+                    if self._backend == "SIRE":
+                        new_system = _System(frame.current()._system)
+
+                    elif self._backend == "MDANALYSIS":
                         new_system = _System(
                             _SireIO.MoleculeParser.read(
                                 [frame_file], self._property_map
@@ -667,6 +850,7 @@ class Trajectory:
                             )
                         )
                 except Exception as e:
+                    raise
                     msg = "Failed to read trajectory frame: '%s'" % frame_file
                     if _isVerbose():
                         raise IOError(msg) from e
@@ -702,7 +886,9 @@ class Trajectory:
         if self._trajectory is None:
             return 0
         else:
-            if self._backend == "MDTRAJ":
+            if self._backend == "SIRE":
+                return len(self._trajectory)
+            elif self._backend == "MDTRAJ":
                 return self._trajectory.n_frames
             elif self._backend == "MDANALYSIS":
                 return self._trajectory.trajectory.n_frames
@@ -752,10 +938,35 @@ class Trajectory:
             # Check that all of the atom indices are integers.
             if not all(type(x) is int for x in atoms):
                 raise TypeError("'atom' indices must be of type 'int'")
+            # Make sure the atom index is within range.
+            num_atoms = self.getFrames()[0].nAtoms()
+            for atom in atoms:
+                if atom < 0 or atom >= num_atoms:
+                    raise ValueError(
+                        f"Atom index {atom} out of range [0, {num_atoms})."
+                    )
 
-        if self._backend == "MDTRAJ":
+        if self._backend == "SIRE":
+            # Get the reference.
+            if atoms is not None:
+                reference = self._trajectory.current().atoms()[atoms]
+            else:
+                reference = None
+
+            # Compute the RMSD.
+            rmsd = self._trajectory.rmsd(reference=reference, frame=frame)
+
+            # Convert to BioSimSpace units.
+            rmsd = [(_Units.Length.angstrom * x.value()).nanometers() for x in rmsd]
+
+        elif self._backend == "MDTRAJ":
             try:
-                rmsd = _mdtraj.rmsd(self._trajectory, self._trajectory, frame, atoms)
+                rmsd = _mdtraj.rmsd(
+                    self._trajectory,
+                    self._trajectory,
+                    frame=frame,
+                    atom_indices=atoms,
+                )
             except Exception as e:
                 msg = "Atom indices not found in the system."
                 if _isVerbose():
@@ -875,7 +1086,7 @@ def _split_molecules(frame, pdb, reference, work_dir, property_map={}):
             else:
                 raise IOError(msg) from None
 
-    elif "GroTop" in formats:
+    elif "GroTop" in formats or "GROTOP" in formats:
         try:
             top = _SireIO.GroTop(reference._sire_object)
             top.writeToFile(top_file)

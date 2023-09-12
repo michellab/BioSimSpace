@@ -30,6 +30,9 @@ from contextlib import contextmanager as _contextmanager
 
 import os as _os
 
+from ._workdir import WorkDir as _WorkDir
+
+
 # Adapted from: http://ralsina.me/weblog/posts/BB963.html
 @_contextmanager
 def cd(work_dir):
@@ -44,15 +47,21 @@ def cd(work_dir):
     """
 
     # Validate the input.
-    if not isinstance(work_dir, str):
-        raise TypeError("'work_dir' must be of type 'str'")
+    if not isinstance(work_dir, (str, _WorkDir)):
+        raise TypeError(
+            "'work_dir' must be of type 'str' or 'BioSimSpace._Utils.WorkDir'"
+        )
+
+    # Get path as a string.
+    if isinstance(work_dir, _WorkDir):
+        work_dir = str(work_dir)
 
     # Store the current directory.
     old_dir = _os.getcwd()
 
     # Create the working directory if it doesn't exist.
     if not _os.path.isdir(work_dir):
-        _os.makedirs(work_dir)
+        work_dir = str(_WorkDir(work_dir))
 
     # Change to the new directory.
     _os.chdir(work_dir)

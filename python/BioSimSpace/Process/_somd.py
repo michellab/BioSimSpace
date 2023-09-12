@@ -1,4 +1,4 @@
-######################################################################
+#####################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
 # Copyright: 2017-2023
@@ -44,9 +44,16 @@ __all__ = ["Somd"]
 
 from .._Utils import _try_import
 
-import os as _os
-
 _pygtail = _try_import("pygtail")
+
+import glob as _glob
+import math as _math
+import os as _os
+import random as _random
+import string as _string
+import sys as _sys
+import timeit as _timeit
+import warnings as _warnings
 
 from sire.legacy import Base as _SireBase
 from sire.legacy import CAS as _SireCAS
@@ -54,7 +61,20 @@ from sire.legacy import IO as _SireIO
 from sire.legacy import MM as _SireMM
 from sire.legacy import Mol as _SireMol
 
-__all__ = ["Somd"]
+from .. import _isVerbose
+from .._Config import Somd as _SomdConfig
+from .._Exceptions import IncompatibleError as _IncompatibleError
+from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
+from ..Protocol._free_energy_mixin import _FreeEnergyMixin
+from .._SireWrappers import Molecule as _Molecule
+from .._SireWrappers import System as _System
+
+from .. import IO as _IO
+from .. import Protocol as _Protocol
+from .. import Trajectory as _Trajectory
+from .. import _Utils
+
+from . import _process
 
 
 class Somd(_process.Process):
@@ -72,8 +92,8 @@ class Somd(_process.Process):
         platform="CPU",
         work_dir=None,
         seed=None,
-        extra_options=None,
-        extra_lines=None,
+        extra_options={},
+        extra_lines=[],
         property_map={},
     ):
         """
@@ -106,21 +126,63 @@ class Somd(_process.Process):
             purposes since SOMD uses the same seed for each Monte Carlo
             cycle.
 
-           extra_options : dict
-               A dictionary containing extra options. Overrides the ones generated from the protocol.
+        extra_options : dict
+            A dictionary containing extra options. Overrides the defaults generated
+            by the protocol.
 
-           extra_lines : list
-               A list of extra lines to be put at the end of the script.
+        extra_lines : [str]
+            A list of extra lines to put at the end of the configuration file.
 
-           property_map : dict
-               A dictionary that maps system "properties" to their user defined
-               values. This allows the user to refer to properties with their
-               own naming scheme, e.g. { "charge" : "my-charge" }
+        property_map : dict
+            A dictionary that maps system "properties" to their user defined
+            values. This allows the user to refer to properties with their
+            own naming scheme, e.g. { "charge" : "my-charge" }
         """
 
         # Call the base class constructor.
-        super().__init__(system, protocol, name, work_dir,
-                         seed, extra_options, extra_lines, property_map)
+        super().__init__(
+            system,
+            protocol,
+            name=name,
+            work_dir=work_dir,
+            seed=seed,
+            extra_options=extra_options,
+            extra_lines=extra_lines,
+            property_map=property_map,
+        )
+
+        # Catch unsupported protocols.
+        if isinstance(protocol, _Protocol.Steering):
+            raise _IncompatibleError(
+                "Unsupported protocol: '%s'" % self._protocol.__class__.__name__
+            )
+
+        # SOMD currently doesn't support FreeEnergyMinimisation or FreeEnergyEquilibration
+        # protocols at intermediate lambda values. Check to see if we're at an end state
+        # and convert the protocol accordingly.
+        if isinstance(protocol, _FreeEnergyMixin):
+            if not isinstance(protocol, _Protocol.FreeEnergyProduction):
+                # Get the lambda value.
+                lam = protocol.getLambda()
+
+                # Check the end states.
+
+                # Lambda = 0 (default)
+                if _math.isclose(lam, 0, abs_tol=1e-4):
+                    pass
+                # Lambda = 1 (specify via property map)
+                elif _math.isclose(lam, 1, abs_tol=1e-4):
+                    self._property_map["is_lambda1"] = _SireBase.wrap(True)
+                # Not supported.
+                else:
+                    raise ValueError(
+                        f"SOMD cannot execute the 'BioSimSpace.Protocol.{protocol.__class__.__name__}' "
+                        f"protocol at the intermediate lambda value of {lam:.4f}. Simulations are only "
+                        "possible at the lambda end states, i.e. lambda = 0 or lambda = 1."
+                    )
+
+                # If we get this far, convert to a regular protocol.
+                self._protocol = protocol._to_regular_protocol()
 
         # Set the package name.
         self._package_name = "SOMD"
@@ -302,8 +364,8 @@ class Somd(_process.Process):
 
         # RST file (coordinates).
         try:
-            rst = _SireIO.AmberRst7(system._sire_object, self._property_map)
-            rst.writeToFile(self._rst_file)
+            file = _os.path.splitext(self._rst_file)[0]
+            _IO.saveMolecules(file, system, "rst7", property_map=self._property_map)
         except Exception as e:
             msg = "Failed to write system to 'RST7' format."
             if _isVerbose():
@@ -313,8 +375,7 @@ class Somd(_process.Process):
 
         # PRM file (topology).
         try:
-            prm = _SireIO.AmberPrm(system._sire_object, self._property_map)
-            prm.writeToFile(self._top_file)
+            _IO.saveMolecules(file, system, "prm7", property_map=self._property_map)
         except Exception as e:
             msg = "Failed to write system to 'PRM7' format."
             if _isVerbose():
@@ -355,39 +416,40 @@ class Somd(_process.Process):
     def _generate_config(self):
         """Generate SOMD configuration file strings."""
 
-        # Clear the existing configuration list.
-        self._config = []
+        # Check whether the system contains periodic box information.
+        # For now, well not attempt to generate a box if the system property
+        # is missing. If no box is present, we'll assume a non-periodic simulation.
+        if "space" in self._system._sire_object.propertyKeys():
+            has_box = True
+        else:
+            _warnings.warn("No simulation box found. Assuming gas phase simulation.")
+            has_box = False
 
         config_options = {}
-        if not isinstance(self._protocol, _Protocol.Minimisation):
-            # Set the random number seed.
+        if isinstance(self._protocol, _Protocol.FreeEnergy):
+            # Set the debugging seed.
             if self._is_seeded:
-                seed = self._seed
-            else:
-                seed = -1
-            config_options["random seed"] = seed
+                config_options["debug seed"] = seed
 
-        # Work out the GPU device ID. (Default to 0.)
-        gpu_id = 0
-        if self._platform == "CUDA":
-            if "CUDA_VISIBLE_DEVICES" in _os.environ:
+        if self._platform == "CUDA" or self._platform == "OPENCL":
+            # Work out the GPU device ID. (Default to 0.)
+            gpu_id = 0
+            if self._platform == "CUDA" and "CUDA_VISIBLE_DEVICES" in _os.environ:
                 try:
                     # Get the ID of the first available device.
-                    # gpu_id = int(_os.environ.get("CUDA_VISIBLE_DEVICES").split(",")[0])
-                    gpu_id = 0
+                    gpu_id = int(_os.environ.get("CUDA_VISIBLE_DEVICES").split(",")[0])
                 except:
                     pass
-            # GPU device ID.
-            # config_options["gpu"] = gpu_id
+            # config_options["gpu"] = gpu_id  # GPU device ID. creates issues with slurm when set?
 
-        if not isinstance(self._protocol, (_Protocol.Minimisation, _Protocol.Equilibration, _Protocol.Production)):
-            raise _IncompatibleError(
-                "Unsupported protocol: '%s'" % self._protocol.__class__.__name__)
-
-        # Set the configuration.
-        config = _Protocol.ConfigFactory(_System(self._renumbered_system), self._protocol)
-        self.addToConfig(config.generateSomdConfig(extra_options={**config_options, **self._extra_options},
-                                                   extra_lines=self._extra_lines))
+        # Create and set the configuration.
+        somd_config = _SomdConfig(_System(self._renumbered_system), self._protocol)
+        self.setConfig(
+            somd_config.createConfig(
+                extra_options={**config_options, **self._extra_options},
+                extra_lines=self._extra_lines,
+            )
+        )
 
         # Flag that this isn't a custom protocol.
         self._protocol._setCustomised(False)
@@ -431,13 +493,11 @@ class Somd(_process.Process):
 
         # Run the process in the working directory.
         with _Utils.cd(self._work_dir):
-
             # Create the arguments string list.
             args = self.getArgStringList()
 
             # Write the command-line process to a README.txt file.
             with open("README.txt", "w") as f:
-
                 # Set the command-line string.
                 self._command = "%s " % self._exe + self.getArgString()
 
@@ -543,12 +603,17 @@ class Somd(_process.Process):
         """
         return self.getSystem(block=False)
 
-    def getTrajectory(self, block="AUTO"):
+    def getTrajectory(self, backend="AUTO", block="AUTO"):
         """
         Return a trajectory object.
 
         Parameters
         ----------
+
+        backend : str
+            The backend to use for trajectory parsing. To see supported backends,
+            run BioSimSpace.Trajectory.backends(). Using "AUTO" will try each in
+            sequence.
 
         block : bool
             Whether to block until the process has finished running.
@@ -559,6 +624,12 @@ class Somd(_process.Process):
         trajectory : :class:`Trajectory <BioSimSpace.Trajectory.trajectory>`
             The latest trajectory object.
         """
+
+        if not isinstance(backend, str):
+            raise TypeError("'backend' must be of type 'str'")
+
+        if not isinstance(block, (bool, str)):
+            raise TypeError("'block' must be of type 'bool' or 'str'")
 
         # Wait for the process to finish.
         if block is True:
@@ -571,7 +642,7 @@ class Somd(_process.Process):
             _warnings.warn("The process exited with an error!")
 
         try:
-            return _Trajectory.Trajectory(process=self)
+            return _Trajectory.Trajectory(process=self, backend=backend)
 
         except:
             return None
@@ -802,14 +873,13 @@ class Somd(_process.Process):
         if _os.path.isfile(file):
             _os.remove(file)
 
-        files = _IO.glob("%s/traj*.dcd" % self._work_dir)
+        files = _glob.glob("%s/traj*.dcd" % self._work_dir)
         for file in files:
             if _os.path.isfile(file):
                 _os.remove(file)
 
         # Additional files for free energy simulations.
-        if isinstance(self._protocol, _Protocol._FreeEnergyMixin):
-
+        if isinstance(self._protocol, _Protocol.FreeEnergy):
             file = "%s/gradients.dat" % self._work_dir
             if _os.path.isfile(file):
                 _os.remove(file)
@@ -954,7 +1024,6 @@ def _to_pert_file(
 
     # If there are duplicate names, then we need to rename the atoms.
     if sum(atom_names.values()) > len(names):
-
         # Make the molecule editable.
         edit_mol = mol.edit()
 
@@ -1180,12 +1249,11 @@ def _to_pert_file(
 
                 # Set LJ/charge based on requested perturbed term.
                 if perturbation_type == "discharge_soft":
-                    if (atom.property("element0") == _SireMol.Element("X") or
-                            atom.property("element1") == _SireMol.Element("X")):
-
+                    if atom.property("element0") == _SireMol.Element(
+                        "X"
+                    ) or atom.property("element1") == _SireMol.Element("X"):
                         # If perturbing TO dummy:
                         if atom.property("element1") == _SireMol.Element("X"):
-
                             atom_type1 = atom_type0
 
                             # In this step, only remove charges from soft-core perturbations.
@@ -1222,7 +1290,6 @@ def _to_pert_file(
                     if atom.property("element0") == _SireMol.Element(
                         "X"
                     ) or atom.property("element1") == _SireMol.Element("X"):
-
                         # If perturbing TO dummy:
                         if atom.property("element1") == _SireMol.Element("X"):
                             # allow atom types to change.
@@ -1238,7 +1305,6 @@ def _to_pert_file(
 
                         # If perturbing FROM dummy:
                         else:
-
                             # All terms have already been perturbed in "5_grow_soft".
                             atom_type1 = atom_type0
                             LJ0_value = LJ1_value = (
@@ -1262,7 +1328,6 @@ def _to_pert_file(
                     if atom.property("element0") == _SireMol.Element(
                         "X"
                     ) or atom.property("element1") == _SireMol.Element("X"):
-
                         # If perturbing TO dummy:
                         if atom.property("element1") == _SireMol.Element("X"):
                             # atom types have already been changed.
@@ -1297,7 +1362,6 @@ def _to_pert_file(
                     if atom.property("element0") == _SireMol.Element(
                         "X"
                     ) or atom.property("element1") == _SireMol.Element("X"):
-
                         # If perturbing TO dummy:
                         if atom.property("element1") == _SireMol.Element("X"):
                             # atom types have already been changed.
@@ -1334,7 +1398,6 @@ def _to_pert_file(
                     if atom.property("element0") == _SireMol.Element(
                         "X"
                     ) or atom.property("element1") == _SireMol.Element("X"):
-
                         # If perturbing TO dummy:
                         if atom.property("element1") == _SireMol.Element("X"):
                             # atom types have already been changed.
@@ -1553,7 +1616,6 @@ def _to_pert_file(
 
             # Check that an atom in the bond is perturbed.
             if _has_pert_atom([idx0, idx1], pert_idxs):
-
                 # Cast the bonds as AmberBonds.
                 amber_bond0 = _SireMM.AmberBond(
                     bond0.function(), _SireCAS.Symbol("r"))
@@ -1583,7 +1645,6 @@ def _to_pert_file(
 
                 # Only write record if the bond parameters change.
                 if has_dummy or amber_bond0 != amber_bond1:
-
                     # Start bond record.
                     file.write("    bond\n")
 
@@ -1879,7 +1940,6 @@ def _to_pert_file(
 
             # Check that an atom in the angle is perturbed.
             if _has_pert_atom([idx0, idx1, idx2], pert_idxs):
-
                 # Cast the functions as AmberAngles.
                 amber_angle0 = _SireMM.AmberAngle(
                     angle0.function(), _SireCAS.Symbol("theta")
@@ -1909,7 +1969,6 @@ def _to_pert_file(
 
                 # Only write record if the angle parameters change.
                 if has_dummy or amber_angle0 != amber_angle1:
-
                     # Start angle record.
                     file.write("    angle\n")
 
@@ -2210,7 +2269,6 @@ def _to_pert_file(
             dihedrals_shared_idx.values(),
             key=lambda idx_pair: sort_dihedrals(dihedrals0, idx_pair[0]),
         ):
-
             # Get the dihedral potentials.
             dihedral0 = dihedrals0[idx0]
             dihedral1 = dihedrals1[idx1]
@@ -2223,7 +2281,6 @@ def _to_pert_file(
 
             # Check that an atom in the dihedral is perturbed.
             if _has_pert_atom([idx0, idx1, idx2, idx3], pert_idxs):
-
                 # Cast the functions as AmberDihedrals.
                 amber_dihedral0 = _SireMM.AmberDihedral(
                     dihedral0.function(), _SireCAS.Symbol("phi")
@@ -2274,7 +2331,6 @@ def _to_pert_file(
 
                 # Only write record if the dihedral parameters change.
                 if zero_k or force_write or amber_dihedral0 != amber_dihedral1:
-
                     # Initialise a null dihedral.
                     null_dihedral = _SireMM.AmberDihedral()
 
@@ -2283,7 +2339,6 @@ def _to_pert_file(
                         amber_dihedral0 == null_dihedral
                         and amber_dihedral1 == null_dihedral
                     ):
-
                         # Start dihedral record.
                         file.write("    dihedral\n")
 
@@ -2635,7 +2690,6 @@ def _to_pert_file(
 
             # Check that an atom in the improper is perturbed.
             if _has_pert_atom([idx0, idx1, idx2, idx3], pert_idxs):
-
                 # Cast the functions as AmberDihedrals.
                 amber_dihedral0 = _SireMM.AmberDihedral(
                     improper0.function(), _SireCAS.Symbol("phi")
@@ -2686,7 +2740,6 @@ def _to_pert_file(
 
                 # Only write record if the improper parameters change.
                 if zero_k or force_write or amber_dihedral0 != amber_dihedral1:
-
                     # Initialise a null dihedral.
                     null_dihedral = _SireMM.AmberDihedral()
 
@@ -2695,7 +2748,6 @@ def _to_pert_file(
                         amber_dihedral0 == null_dihedral
                         and amber_dihedral1 == null_dihedral
                     ):
-
                         # Start improper record.
                         file.write("    improper\n")
 

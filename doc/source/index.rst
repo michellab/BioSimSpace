@@ -1,13 +1,13 @@
-===========
-BioSimSpace
-===========
+========================
+OpenBioSim | BioSimSpace
+========================
 
-.. image:: https://github.com/michellab/BioSimSpace/workflows/Build/badge.svg
-   :target: https://github.com/michellab/BioSimSpace/actions?query=workflow%3ABuild)
+.. image:: https://github.com/openbiosim/biosimspace/workflows/Build/badge.svg
+   :target: https://github.com/openbiosim/biosimspace/actions?query=workflow%3ABuild)
    :alt: Build status
 
-.. image:: https://anaconda.org/michellab/biosimspace/badges/downloads.svg
-   :target: https://anaconda.org/michellab/biosimspace
+.. image:: https://anaconda.org/openbiosim/biosimspace/badges/downloads.svg
+   :target: https://anaconda.org/openbiosim/biosimspace
    :alt: Conda Downloads
 
 .. image:: https://img.shields.io/badge/License-GPL%20v3-blue.svg
@@ -18,11 +18,14 @@ BioSimSpace
    :target: https://joss.theoj.org/papers/4ba84ad443693b5dded90e35bf5f8225
    :alt: Paper
 
-`BioSimSpace <https://github.com/michellab/BioSimSpace>`__ is an interoperable
+`BioSimSpace <https://github.com/openbiosim/biosimspace>`__ is an interoperable
 Python framework for biomolecular simulation. With it you can:
 
 * Write robust and portable biomolecular :ref:`workflow components <ref_nodes>` that work on different hardware, with different software packages, and that can be run in different ways, e.g. command-line, `Jupyter <https://jupyter.org>`__.
-* Interact with molecular-simulation processes in real time.
+* Start, stop, and monitor molecular simulation processes within interactive Python environments.
+
+BioSimSpace is distributed and supported as an open source community project by
+`OpenBioSim <https://openbiosim.org>`__.
 
 Citation |DOI for Citing BioSimSpace|
 =====================================
@@ -45,77 +48,71 @@ If you use BioSimSpace in any scientific software, please cite the following pap
 .. |DOI for Citing BioSimSpace| image:: https://joss.theoj.org/papers/4ba84ad443693b5dded90e35bf5f8225/status.svg
    :target: https://joss.theoj.org/papers/4ba84ad443693b5dded90e35bf5f8225
 
-Installation
-============
+Quick Start
+===========
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
+   features
    install
+   compatibility
+   quickstart/index
 
-Compatibility
-=============
+Tutorials
+=========
 
 .. toctree::
    :maxdepth: 2
 
-   compatibility
+   tutorials/index
+
+Detailed Guides
+===============
+
+.. toctree::
+   :maxdepth: 2
+
+   guides/index
 
 Documentation
 =============
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    api/index
 
-Development
-===========
-.. toctree::
-   :maxdepth: 2
-
-   development
-   changelog
-
-Nodes
-=====
-.. toctree::
-   :maxdepth: 2
-
-   nodes
-
-Notebook server
-===============
-.. toctree::
-   :maxdepth: 2
-
-   notebook
-
-Protocols
-=========
-.. toctree::
-   :maxdepth: 2
-
-   protocols
-
-Media
-=====
-.. toctree::
-   :maxdepth: 2
-
-   media
-
-Legal Notices
-=============
+Support
+=======
 .. toctree::
    :maxdepth: 1
 
-   legal
+   support
+
+Contributing
+============
+.. toctree::
+   :maxdepth: 2
+
+   contributing/index
+   contributors
+
+.. toctree::
+   :maxdepth: 1
+
+   code_of_conduct
+
+Changelog
+=========
+
+.. toctree::
+   :maxdepth: 1
+
+   changelog
 
 Indices and tables
 ==================
 
 * :ref:`genindex`
 * :ref:`modindex`
-* :ref:`search`
-

@@ -13,8 +13,8 @@
 
 import os
 import zipfile
-from sire.legacy.Mol import AtomIdx
 import BioSimSpace as BSS
+from sire.legacy.Mol import AtomIdx
 
 
 # In[ ]:
@@ -49,7 +49,7 @@ def writeLog(ligA, ligB, mapping):
 
 
 def loadMapping(mapping_file):
-    """Parse a text file that specifies mappings between atomic indices in input1 --> atoms in input2"""
+    """Parse a text file that specifies mappings between atomic indices in input1 --> atoms in input2."""
     stream = open(mapping_file, "r")
     buffer = stream.readlines()
     stream.close()

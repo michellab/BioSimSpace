@@ -43,14 +43,18 @@ To setup, run, and analyse a binding free-energy calculation:
 
    # Setup the perturbations for each leg, using the SOMD engine. This will
    # create all of the input files and simulation processes that are required.
-   fep_bound = BSS.FreeEnergy.Relative(complex_sol,
-                                       protocol_bound,
-                                       engine="somd",
-                                       work_dir="ligA_ligB/bound")
-   fep_free  = BSS.FreeEnergy.Relative(merged_sol,
-                                       protocol_bound,
-                                       engine="somd",
-                                       work_dir="ligA_ligB/free")
+   fep_bound = BSS.FreeEnergy.Relative(
+       complex_sol,
+       protocol_bound,
+       engine="somd",
+       work_dir="ligA_ligB/bound"
+   )
+   fep_free  = BSS.FreeEnergy.Relative(
+       merged_sol,
+       protocol_bound,
+       engine="somd",
+       work_dir="ligA_ligB/free"
+   )
 
    # Run all simulations for each leg. Note that the lambda windows are run
    # sequentially, so this is a sub-optimal way of executing the simulation
@@ -80,9 +84,11 @@ Similarly, for a solvation free-energy calculation:
    # the free leg from the previous example.
 
    # Setup the perturbation for the vacuum leg using a default protocol.
-   fep_vacuum = BSS.FreeEnergy.Relative(merged.toSystem(),
-                                        engine="somd",
-                                        work_dir="ligA_ligB/vacuum")
+   fep_vacuum = BSS.FreeEnergy.Relative(
+       merged.toSystem(),
+       engine="somd",
+       work_dir="ligA_ligB/vacuum"
+   )
 
    # Run the simulations for the perturbation.
    fep_vacuum.run()
@@ -109,10 +115,12 @@ To just setup the vacuum leg input files:
 
    # Setup the input for the vacuum leg. No processes are created so the .run()
    # method won't do anything.
-   fep_vacuum = BSS.FreeEnergy.Relative(merged.toSystem(),
-                                        engine="somd",
-                                        work_dir="ligA_ligB/vacuum",
-                                        setup_only=True)
+   fep_vacuum = BSS.FreeEnergy.Relative(
+       merged.toSystem(),
+       engine="somd",
+       work_dir="ligA_ligB/vacuum",
+       setup_only=True
+   )
 
 
 It is also possible to analyse existing simulation output directly by passing
@@ -126,3 +134,12 @@ the path to a working directory to :class:`FreeEnergy.Relative.analyse <BioSimSp
 
 .. toctree::
    :maxdepth: 1
+
+As well as the :class:`protocol <BioSimSpace.Protocol.FreeEnergy>` used for production
+simulations, it is also possible to use
+:class:`FreeEnergy.Relative <BioSimSpace.FreeEnergy.Relative>` to setup and run simulations
+for minimising or equilibrating structures for each lambda window. See the
+:class:`FreeEnergyMinimisation <BioSimSpace.Protocol.FreeEnergyMinimisation>` and
+:class:`FreeEnergyEquilibration <BioSimSpace.Protocol.FreeEnergyEquilibration>`
+protocols for details. At present, these protocols are only supported when not
+using :class:`SOMD <BioSimSpace.Process.Somd>` as the simulation engine.

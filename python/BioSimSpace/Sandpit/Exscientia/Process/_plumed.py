@@ -94,12 +94,21 @@ class Plumed:
         )
 
         if process.returncode == 0:
-            self._plumed_version = float(process.stdout.decode("ascii").strip())
+            self._plumed_version = process.stdout.decode("ascii").strip()
 
-            if self._plumed_version < 2.5:
+            # Get the major minor version.
+            major, minor = self._plumed_version.split(".")
+            major = int(major)
+            minor = int(minor)
+
+            if major < 2 or (major < 3 and minor < 5):
                 raise _Exceptions.IncompatibleError(
                     "PLUMED version >= 2.5 is required."
                 )
+
+            # Store the major and minor versions.
+            self._plumed_major = major
+            self._plumed_minor = minor
 
         else:
             raise _Exceptions.IncompatibleError("Could not determine PLUMED version!")
@@ -277,7 +286,6 @@ class Plumed:
         molecules = []
 
         for colvar in colvars:
-
             # Store all of the atoms to which the collective variable applies.
             atoms = []
 
@@ -318,7 +326,6 @@ class Plumed:
                     # Check whether the system has a space. If not, vacuum
                     # simulations are okay.
                     if space_prop in system._sire_object.propertyKeys():
-
                         # Get the space property.
                         space = system._sire_object.property(space_prop)
 
@@ -330,7 +337,7 @@ class Plumed:
                             # Check the upper bound is greater than dim/2 for
                             # each dimension.
                             for dim in dimensions:
-                                if value >= 0.5 * dim:
+                                if value >= 0.5 * dim.value():
                                     message = (
                                         "The simulation box is too small for the funnel. "
                                         "Try reducing the upper bound of the collective "
@@ -374,7 +381,9 @@ class Plumed:
 
                 # The funnel collective variable requires an auxiliary file for
                 # PLUMED versions < 2.7.
-                if self._plumed_version < 2.7:
+                if self._plumed_major < 2 or (
+                    self._plumed_major < 3 and self._plumed_minor < 7
+                ):
                     aux_file = "ProjectionOnAxis.cpp"
                     self._config.append(f"LOAD FILE={aux_file}")
                     aux_file = (
@@ -449,7 +458,6 @@ class Plumed:
         metad_string = "metad: METAD ARG="
 
         for idx, colvar in enumerate(colvars):
-
             # Get the lower/upper bounds and the grid data.
             lower_wall = colvar.getLowerBound()
             upper_wall = colvar.getUpperBound()
@@ -962,7 +970,6 @@ class Plumed:
         molecules = []
 
         for colvar in colvars:
-
             # Store all of the atoms to which the collective variable applies.
             atoms = []
 
@@ -1051,7 +1058,6 @@ class Plumed:
         arg_string = "ARG="
 
         for idx, colvar in enumerate(colvars):
-
             # Whether the collective variable is a torsion.
             is_torsion = False
 
@@ -1461,7 +1467,6 @@ class Plumed:
 
         # Move to the working directory.
         with _Utils.cd(self._work_dir + "/fes"):
-
             # Run the sum_hills command as a background process.
             proc = _subprocess.run(
                 _Utils.command_split(command),
@@ -1512,20 +1517,16 @@ class Plumed:
 
                 # Read the file.
                 with open(fes, "r") as file:
-
                     # Loop over all lines in the file.
                     for line in file:
-
                         # Ignore comments and blank lines.
                         if line[0] != "#":
-
                             # Extract the data.
                             # This is: colvar1, colvar2, ..., fes
                             data = [float(x) for x in line.split()]
 
                             # The line contains data.
                             if len(data) > 0:
-
                                 # Store data for each of the collective variables.
                                 if index is None:
                                     for x in range(0, self._num_components):
@@ -1575,7 +1576,6 @@ class Plumed:
         if self._use_hills:
             # Loop over all new lines in the file.
             for line in _pygtail.Pygtail(self._hills_file):
-
                 # Is this a header line. If so, store the keys.
                 if line[3:9] == "FIELDS":
                     self._colvar_keys = line[10:].split()[: self._num_components + 1]
@@ -1589,7 +1589,6 @@ class Plumed:
         else:
             # Loop over all new lines in the file.
             for line in _pygtail.Pygtail(self._colvar_file):
-
                 # Is this a header line. If so, store the keys.
                 if line[3:9] == "FIELDS":
                     self._colvar_keys = line[10:].split()
@@ -1609,7 +1608,6 @@ class Plumed:
 
         # Loop over all new lines in the file.
         for line in _pygtail.Pygtail(self._hills_file):
-
             # Is this a header line. If so, store the keys.
             if line[3:9] == "FIELDS":
                 self._hills_keys = line[10:].split()

@@ -7,7 +7,6 @@ def parse_fesetup_input(filename):
 
 
 def validate_fesetup_input(fe_dictionary):
-
     return False
 
 

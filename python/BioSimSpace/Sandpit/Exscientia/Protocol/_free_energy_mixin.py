@@ -20,8 +20,7 @@ class _FreeEnergyMixin(_Protocol):
         num_lam=11,
         perturbation_type="full",
     ):
-        """
-        Constructor.
+        """Constructor.
 
         Parameters
         ----------
@@ -43,12 +42,14 @@ class _FreeEnergyMixin(_Protocol):
 
         perturbation_type : str
             The type of perturbation to perform. Options are:
-             "full" : A full perturbation of all terms (default option).
-             "discharge_soft" : Perturb all discharging soft atom charge terms (i.e. value->0.0).
-             "vanish_soft" : Perturb all vanishing soft atom LJ terms (i.e. value->0.0).
-             "flip" : Perturb all hard atom terms as well as bonds/angles.
-             "grow_soft" : Perturb all growing soft atom LJ terms (i.e. 0.0->value).
-             "charge_soft" : Perturb all charging soft atom LJ terms (i.e. 0.0->value).
+            "full" : A full perturbation of all terms (default option).
+            "discharge_soft" : Perturb all discharging soft atom charge terms (i.e. value->0.0).
+            "vanish_soft" : Perturb all vanishing soft atom LJ terms (i.e. value->0.0).
+            "flip" : Perturb all hard atom terms as well as bonds/angles.
+            "grow_soft" : Perturb all growing soft atom LJ terms (i.e. 0.0->value).
+            "charge_soft" : Perturb all charging soft atom LJ terms (i.e. 0.0->value).
+            "restraint" : Perturb the receptor-ligand restraint strength by linearly
+                        scaling the force constants (0.0->value).
 
              Currently perturubation_type != "full" is only supported by
              BioSimSpace.Process.Somd.
@@ -63,23 +64,26 @@ class _FreeEnergyMixin(_Protocol):
         # Set the perturbation type. Default is "full", i.e. onestep protocol.
         self.setPerturbationType(perturbation_type)
 
+    def _get_parm(self):
+        """Return a string representation of the parameters."""
+        return (
+            f"lam={self._lambda.to_string()}, "
+            f"lam_vals={self._lambda_vals.to_string()}"
+        )
+
     def __str__(self):
         """Return a human readable string representation of the object."""
         if self._is_customised:
             return "<BioSimSpace.Protocol.Custom>"
         else:
-            return (
-                "<BioSimSpace.Protocol._FreeEnergyMixin: lam=\n%s, lam_vals=\n%s>"
-            ) % (self._lambda.to_string(), self._lambda_vals.to_string())
+            return f"<BioSimSpace.Protocol._FreeEnergyMixin: {self._get_parm()}>"
 
     def __repr__(self):
         """Return a string showing how to instantiate the object."""
         if self._is_customised:
-            return "<BioSimSpace.Protocol.Custom>"
+            return "BioSimSpace.Protocol.Custom"
         else:
-            return (
-                "<BioSimSpace.Protocol._FreeEnergyMixin: lam=\n%s, lam_vals=\n%s>"
-            ) % (self._lambda.to_string(), self._lambda_vals.to_string())
+            return f"BioSimSpace.Protocol._FreeEnergyMixin({self._get_parm()})"
 
     def getPerturbationType(self):
         """
@@ -102,12 +106,14 @@ class _FreeEnergyMixin(_Protocol):
 
         perturbation_type : str
             The type of perturbation to perform. Options are:
-             "full" : A full perturbation of all terms (default option).
-             "discharge_soft" : Perturb all discharging soft atom charge terms (i.e. value->0.0).
-             "vanish_soft" : Perturb all vanishing soft atom LJ terms (i.e. value->0.0).
-             "flip" : Perturb all hard atom terms as well as bonds/angles.
-             "grow_soft" : Perturb all growing soft atom LJ terms (i.e. 0.0->value).
-             "charge_soft" : Perturb all charging soft atom LJ terms (i.e. 0.0->value).
+            "full" : A full perturbation of all terms (default option).
+            "discharge_soft" : Perturb all discharging soft atom charge terms (i.e. value->0.0).
+            "vanish_soft" : Perturb all vanishing soft atom LJ terms (i.e. value->0.0).
+            "flip" : Perturb all hard atom terms as well as bonds/angles.
+            "grow_soft" : Perturb all growing soft atom LJ terms (i.e. 0.0->value).
+            "charge_soft" : Perturb all charging soft atom LJ terms (i.e. 0.0->value).
+            "restraint" : Perturb the receptor-ligand restraint strength by linearly
+                        scaling the force constants (0.0->value).
         """
         if type(perturbation_type) is not str:
             raise TypeError("'perturbation_type' must be of type 'str'")
@@ -122,6 +128,7 @@ class _FreeEnergyMixin(_Protocol):
             "flip",
             "grow_soft",
             "charge_soft",
+            "restraint",
         ]
 
         if perturbation_type not in allowed_perturbation_types:

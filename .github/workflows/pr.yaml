@@ -1,0 +1,70 @@
+name: Pull-Request
+
+on:
+  pull_request:
+    branches: [devel, main]
+
+jobs:
+  build:
+    name: build (${{ matrix.python-version }}, ${{ matrix.platform.name }})
+    runs-on: ${{ matrix.platform.os }}
+    strategy:
+      max-parallel: 9
+      fail-fast: false
+      matrix:
+        python-version: ["3.9", "3.10", "3.11"]
+        platform:
+          - { name: "windows", os: "windows-latest", shell: "pwsh" }
+          - { name: "linux", os: "ubuntu-latest", shell: "bash -l {0}" }
+          - { name: "macos", os: "macos-latest", shell: "bash -l {0}" }
+        exclude:
+          # Exclude all but the latest Python from all
+          # but Linux
+          - platform:
+              { name: "macos", os: "macos-latest", shell: "bash -l {0}" }
+            python-version: "3.9"
+          - platform: { name: "windows", os: "windows-latest", shell: "pwsh" }
+            python-version: "3.9"
+          - platform:
+              { name: "macos", os: "macos-latest", shell: "bash -l {0}" }
+            python-version: "3.10"
+          - platform: { name: "windows", os: "windows-latest", shell: "pwsh" }
+            python-version: "3.10"
+    environment:
+      name: biosimspace-build
+    defaults:
+      run:
+        shell: ${{ matrix.platform.shell }}
+    env:
+      SIRE_DONT_PHONEHOME: 1
+      SIRE_SILENT_PHONEHOME: 1
+      REPO: "${{ github.event.pull_request.head.repo.full_name || github.repository }}"
+    steps:
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          auto-update-conda: true
+          python-version: ${{ matrix.python-version }}
+          activate-environment: bss_build
+          miniforge-version: latest
+          miniforge-variant: Mambaforge
+          use-mamba: true
+#
+      - name: Clone the feature branch
+        run: git clone -b ${{ github.head_ref }} --single-branch https://github.com/${{ env.REPO }} biosimspace
+#
+      - name: Setup Conda
+        run: mamba install -y -c conda-forge boa anaconda-client packaging=21 pip-requirements-parser
+#
+      - name: Update Conda recipe
+        run: python ${{ github.workspace }}/biosimspace/actions/update_recipe.py
+#
+      - name: Prepare build location
+        run: mkdir ${{ github.workspace }}/build
+#
+      - name: Build Conda package using mamba build using main channel
+        if: ${{ github.base_ref == 'main' }}
+        run: conda mambabuild -c conda-forge -c openbiosim/label/main ${{ github.workspace }}/biosimspace/recipes/biosimspace
+#
+      - name: Build Conda package using mamba build using dev channel
+        if: ${{ github.base_ref != 'main' }}
+        run: conda mambabuild -c conda-forge -c openbiosim/label/dev ${{ github.workspace }}/biosimspace/recipes/biosimspace

@@ -29,12 +29,13 @@ __all__ = ["Production"]
 import math as _math
 import warnings as _warnings
 
-from .. import Types as _Types
-
+from ._position_restraint import _PositionRestraintMixin
 from ._protocol import Protocol as _Protocol
+from .. import Types as _Types
+from .. import Units as _Units
 
 
-class Production(_Protocol):
+class Production(_Protocol, _PositionRestraintMixin):
     """A class for storing production protocols."""
 
     def __init__(
@@ -43,13 +44,15 @@ class Production(_Protocol):
         runtime=_Types.Time(1, "nanosecond"),
         temperature=_Types.Temperature(300, "kelvin"),
         pressure=_Types.Pressure(1, "atmosphere"),
+        tau_t=_Types.Time(1, "picosecond"),
         report_interval=200,
         restart_interval=1000,
         first_step=0,
         restart=False,
+        restraint=None,
+        force_constant=10 * _Units.Energy.kcal_per_mol / _Units.Area.angstrom2,
     ):
-        """
-        Constructor.
+        """Constructor.
 
         Parameters
         ----------
@@ -66,6 +69,9 @@ class Production(_Protocol):
         pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
             The pressure. Pass pressure=None to use the NVT ensemble.
 
+        tau_t : :class:`Time <BioSimSpace.Types.Time>`
+            Time constant for thermostat coupling.
+
         report_interval : int
             The frequency at which statistics are recorded. (In integration steps.)
 
@@ -77,10 +83,31 @@ class Production(_Protocol):
 
         restart : bool
             Whether this is a continuation of a previous simulation.
+
+        restraint : str, [int]
+            The type of restraint to perform. This should be one of the
+            following options:
+                "backbone"
+                     Protein backbone atoms. The matching is done by a name
+                     template, so is unreliable on conversion between
+                     molecular file formats.
+                "heavy"
+                     All non-hydrogen atoms that aren't part of water
+                     molecules or free ions.
+                "all"
+                     All atoms that aren't part of water molecules or free
+                     ions.
+            Alternatively, the user can pass a list of atom indices for
+            more fine-grained control. If None, then no restraints are used.
+
+        force_constant : :class:`GeneralUnit <BioSimSpace.Types._GeneralUnit>`, float
+            The force constant for the restraint potential. If a 'float' is
+            passed, then default units of 'kcal_per_mol / angstrom**2' will
+            be used.
         """
 
         # Call the base class constructor.
-        super().__init__()
+        _Protocol.__init__(self)
 
         # Set the time step.
         self.setTimeStep(timestep)
@@ -97,6 +124,9 @@ class Production(_Protocol):
         else:
             self._pressure = None
 
+        # Set the time constant for the thermostat
+        self.setTauT(tau_t)
+
         # Set the report interval.
         self.setReportInterval(report_interval)
 
@@ -109,45 +139,35 @@ class Production(_Protocol):
         # Set the first time step.
         self.setFirstStep(first_step)
 
+        # Set the restraint.
+        _PositionRestraintMixin.__init__(self, restraint, force_constant)
+
+    def _get_parm(self):
+        """Return a string representation of the parameters."""
+        return (
+            f"timestep={self._timestep}, "
+            f"runtime={self._runtime}, "
+            f"temperature={self._temperature}, "
+            f"pressure={self._pressure}, "
+            f"report_interval={self._report_interval}, "
+            f"restart_interval={self._restart_interval}, "
+            f"first_step={self._first_step}, "
+            f"restart={self._restart}, " + _PositionRestraintMixin._get_parm(self)
+        )
+
     def __str__(self):
         """Return a human readable string representation of the object."""
         if self._is_customised:
             return "<BioSimSpace.Protocol.Custom>"
         else:
-            return (
-                "<BioSimSpace.Protocol.Production: timestep=%s, runtime=%s, "
-                "temperature=%s, pressure=%s, report_interval=%d, "
-                "restart_interval=%d, first_step=%d, restart=%r>"
-            ) % (
-                self._timestep,
-                self._runtime,
-                self._temperature,
-                self._pressure,
-                self._report_interval,
-                self._restart_interval,
-                self._first_step,
-                self._restart,
-            )
+            return f"<BioSimSpace.Protocol.Production: {self._get_parm()}>"
 
     def __repr__(self):
         """Return a string showing how to instantiate the object."""
         if self._is_customised:
-            return "<BioSimSpace.Protocol.Custom>"
+            return "BioSimSpace.Protocol.Custom"
         else:
-            return (
-                "BioSimSpace.Protocol.Production(timestep=%s, runtime=%s, "
-                "temperature=%s, pressure=%s, report_interval=%d, "
-                "restart_interval=%d, first_step=%d, restart=%r)"
-            ) % (
-                self._timestep,
-                self._runtime,
-                self._temperature,
-                self._pressure,
-                self._report_interval,
-                self._restart_interval,
-                self._first_step,
-                self._restart,
-            )
+            return f"BioSimSpace.Protocol.Production({self._get_parm()})"
 
     def getTimeStep(self):
         """
@@ -202,6 +222,33 @@ class Production(_Protocol):
             self._runtime = runtime
         else:
             raise TypeError("'runtime' must be of type 'BioSimSpace.Types.Time'")
+
+    def getTauT(self):
+        """
+        Return the time constant for the thermostat.
+
+        Returns
+        -------
+
+        runtime : :class:`Time <BioSimSpace.Types.Time>`
+            The time constant for the thermostat.
+        """
+        return self._tau_t
+
+    def setTauT(self, tau_t):
+        """
+        Set the time constant for the thermostat.
+
+        Parameters
+        ----------
+
+        tau_t : :class:`Time <BioSimSpace.Types.Time>`
+            The time constant for the thermostat.
+        """
+        if isinstance(tau_t, _Types.Time):
+            self._tau_t = tau_t
+        else:
+            raise TypeError("'tau_t' must be of type 'BioSimSpace.Types.Time'")
 
     def getTemperature(self):
         """

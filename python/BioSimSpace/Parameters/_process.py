@@ -47,7 +47,6 @@ import glob as _glob
 import os as _os
 import queue as _queue
 import sys as _sys
-import tempfile as _tempfile
 import threading as _threading
 import warnings as _warnings
 import zipfile as _zipfile
@@ -56,6 +55,7 @@ from .. import _is_notebook
 from .. import _isVerbose
 from .._Exceptions import ParameterisationError as _ParameterisationError
 from .._SireWrappers import Molecule as _Molecule
+from .. import _Utils
 
 from . import _Protocol
 
@@ -142,6 +142,9 @@ class Process:
                 _warnings.warn(
                     "Attempting to parameterise a molecule without hydrogen atoms!"
                 )
+        # Strip whitespace from SMILES strings.
+        else:
+            molecule = molecule.replace(" ", "")
 
         # Set attributes.
         self._molecule = molecule
@@ -157,18 +160,8 @@ class Process:
         # Create a hash for the object.
         self._hash = hash((molecule, protocol)) % ((_sys.maxsize + 1) * 2)
 
-        # Create a temporary working directory and store the directory name.
-        if work_dir is None:
-            self._tmp_dir = _tempfile.TemporaryDirectory()
-            self._work_dir = self._tmp_dir.name
-
-        # User specified working directory.
-        else:
-            self._work_dir = work_dir
-
-            # Create the directory if it doesn't already exist.
-            if not _os.path.isdir(work_dir):
-                _os.makedirs(work_dir, exist_ok=True)
+        # Create the working directory.
+        self._work_dir = _Utils.WorkDir(work_dir)
 
         # Flag that the process hasn't started/finished.
         self._is_started = False
@@ -329,4 +322,4 @@ class Process:
 
     def workDir(self):
         """Return the working directory."""
-        return self._work_dir
+        return str(self._work_dir)

@@ -60,7 +60,6 @@ import os as _os
 import re as _re
 import shutil as _shutil
 import subprocess as _subprocess
-import tempfile as _tempfile
 import warnings as _warnings
 import zipfile as _zipfile
 import alchemlyb as _alchemlyb
@@ -137,7 +136,9 @@ class Relative:
             a single perturbable molecule and is assumed to have already
             been equilibrated.
 
-        protocol : :class:`Protocol.FreeEnergy <BioSimSpace.Protocol.FreeEnergy>`, \
+        protocol : :class:`Protocol.FreeEnergyMinimisation <BioSimSpace.Protocol.FreeEnergyMinimisation>`, \
+                   :class:`Protocol.FreeEnergyEquilibration <BioSimSpace.Protocol.FreeEnergyEquilibration>`, \
+                   :class:`Protocol.FreeEnergyProduction <BioSimSpace.Protocol.FreeEnergyProduction>`
             The simulation protocol.
 
         work_dir : str
@@ -205,9 +206,6 @@ class Relative:
             # Use a default protocol.
             self._protocol = _Protocol.FreeEnergy()
 
-        self._extra_options = extra_options if extra_options is not None else {}
-        self._extra_lines = extra_lines if extra_lines is not None else []
-
         if not isinstance(setup_only, bool):
             raise TypeError("'setup_only' must be of type 'bool'.")
         else:
@@ -242,7 +240,7 @@ class Relative:
             # Check that the engine is supported.
             if engine not in self._engines:
                 raise ValueError(
-                    "Unsupported molecular dynamics engine '%s'. "
+                    f"Unsupported molecular dynamics engine {engine}. "
                     "Supported engines are: %r." % ", ".join(self._engines)
                 )
 
@@ -301,6 +299,49 @@ class Relative:
 
         # Set the engine.
         self._engine = engine
+
+        # Validate the protocol.
+        if protocol is not None:
+            from ..Protocol._free_energy_mixin import _FreeEnergyMixin
+
+            if isinstance(protocol, _FreeEnergyMixin):
+                if engine == "SOMD" and not isinstance(
+                    protocol, _Protocol.FreeEnergyProduction
+                ):
+                    raise ValueError(
+                        "Currently SOMD only supports protocols of type 'BioSimSpace.Protocol.FreeEnergyProduction'"
+                    )
+
+                self._protocol = protocol
+            else:
+                raise TypeError(
+                    "'protocol' must be of type 'BioSimSpace.Protocol.FreeEnergy'"
+                )
+        else:
+            # Use a default protocol.
+            self._protocol = _Protocol.FreeEnergy()
+
+        # Check that multi-step perturbation isn't specified if GROMACS is the chosen engine.
+        if engine == "GROMACS":
+            if self._protocol.getPerturbationType() != "full":
+                raise NotImplementedError(
+                    "GROMACS currently only supports the 'full' perturbation "
+                    "type. Please use engine='SOMD' when running multistep "
+                    "perturbation types."
+                )
+
+        if not isinstance(setup_only, bool):
+            raise TypeError("'setup_only' must be of type 'bool'.")
+        else:
+            self._setup_only = setup_only
+
+        if work_dir is None and setup_only:
+            raise ValueError(
+                "A 'work_dir' must be specified when 'setup_only' is True!"
+            )
+
+        # Create the working directory.
+        self._work_dir = _Utils.WorkDir(work_dir)
 
         # HMR check
         # by default, if the timestep is greater than 4 fs this should be true.
@@ -417,6 +458,23 @@ class Relative:
             raise ValueError("'estimator' must be either 'MBAR' or 'TI'.")
         self._estimator = estimator
 
+        # Check the extra options.
+        if not isinstance(extra_options, dict):
+            raise TypeError("'extra_options' must be of type 'dict'.")
+        else:
+            keys = extra_options.keys()
+            if not all(isinstance(k, str) for k in keys):
+                raise TypeError("Keys of 'extra_options' must be of type 'str'.")
+        self._extra_options = extra_options
+
+        # Check the extra lines.
+        if not isinstance(extra_lines, list):
+            raise TypeError("'extra_lines' must be of type 'list'.")
+        else:
+            if not all(isinstance(line, str) for line in extra_lines):
+                raise TypeError("Lines in 'extra_lines' must be of type 'str'.")
+        self._extra_lines = extra_lines
+
         # Check that the map is valid.
         if not isinstance(property_map, dict):
             raise TypeError("'property_map' must be of type 'dict'.")
@@ -487,7 +545,7 @@ class Relative:
         work_dir : str
             The path of the working directory.
         """
-        return self._work_dir
+        return str(self._work_dir)
 
     def getData(self, name="data", file_link=False, work_dir=None):
         """
@@ -1514,12 +1572,10 @@ class Relative:
 
         # First leg.
         with open("%s/mbar.txt" % work_dir) as file:
-
             # Process the MBAR data.
             for line in file:
                 # Process the overlap matrix.
                 if "#Overlap matrix" in line:
-
                     # Get the next row.
                     row = next(file)
 
@@ -1870,11 +1926,11 @@ class Relative:
         # Initialise list to store the processe
         processes = []
 
-        # Convert to an appropriate AMBER topology. (Required by SOMD for its
-        # FEP setup.)
-        if self._engine == "SOMD":
-            system._set_water_topology(
-                "AMBER", property_map=self._property_map)
+        # Convert to an appropriate water topology.
+        if self._engine == "SOMD" or self._engine == "AMBER":
+            system._set_water_topology("AMBER", property_map=self._property_map)
+        elif self._engine == "GROMACS":
+            system._set_water_topology("GROMACS", property_map=self._property_map)
 
         # Setup all of the simulation processes for each leg.
 
@@ -1901,23 +1957,37 @@ class Relative:
             else:
                 platform = "CPU"
 
-            first_process = _Process.Somd(system, self._protocol,
-                                          platform=platform, work_dir=first_dir,
-                                          property_map=self._property_map, extra_options=self._extra_options,
-                                          extra_lines=self._extra_lines)
+            first_process = _Process.Somd(system,
+                                          self._protocol,
+                                          platform=platform,
+                                          work_dir=first_dir,
+                                          extra_options=self._extra_options,
+                                          extra_lines=self._extra_lines,
+                                          property_map=self._property_map,
+                                          )
 
         # GROMACS.
         elif self._engine == "GROMACS":
-            first_process = _Process.Gromacs(system, self._protocol,
-                                             work_dir=first_dir, ignore_warnings=self._ignore_warnings,
-                                             show_errors=self._show_errors, extra_options=self._extra_options,
-                                             extra_lines=self._extra_lines)
+            first_process = _Process.Gromacs(system,
+                                          self._protocol,
+                                          work_dir=first_dir,
+                                          ignore_warnings=self._ignore_warnings,
+                                          show_errors=self._show_errors,
+                                          extra_options=self._extra_options,
+                                          extra_lines=self._extra_lines,
+                                          property_map=self._property_map,
+                                          )
 
         # AMBER.
         elif self._engine == "AMBER":
-            first_process = _Process.Amber(system, self._protocol, exe=self._exe,
-                                           work_dir=first_dir, extra_options=self._extra_options,
-                                           extra_lines=self._extra_lines)
+            first_process = _Process.Amber(system,
+                                           self._protocol,
+                                           exe=self._exe,
+                                           work_dir=first_dir,
+                                           extra_options=self._extra_options,
+                                           extra_lines=self._extra_lines,
+                                           property_map=self._property_map,
+                                           )
 
         if self._setup_only:
             del(first_process)
@@ -1929,9 +1999,9 @@ class Relative:
             # Name the directory.
             new_dir = "%s/lambda_%5.4f" % (self._work_dir, lam)
 
-            # Use the full path.
-            if new_dir[0] != "/":
-                new_dir = _os.getcwd() + "/" + new_dir
+            # Use absolute path.
+            if not _os.path.isabs(new_dir):
+                new_dir = _os.path.abspath(new_dir)
 
             # Delete any existing directories.
             if _os.path.isdir(new_dir):

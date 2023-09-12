@@ -43,9 +43,11 @@ from sire.legacy.Maths import Vector as _Vector
 from .. import _isVerbose
 from .._Exceptions import IncompatibleError as _IncompatibleError
 from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
+from ..Protocol._position_restraint_mixin import _PositionRestraintMixin
 from .._SireWrappers import System as _System
 from ..Types._type import Type as _Type
 
+from .. import IO as _IO
 from .. import Protocol as _Protocol
 from .. import Trajectory as _Trajectory
 from .. import Units as _Units
@@ -99,7 +101,12 @@ class Namd(_process.Process):
 
         # Call the base class constructor.
         super().__init__(
-            system, protocol, name, work_dir, seed, property_map=property_map
+            system,
+            protocol,
+            name=name,
+            work_dir=work_dir,
+            seed=seed,
+            property_map=property_map,
         )
 
         # Set the package name.
@@ -166,8 +173,8 @@ class Namd(_process.Process):
 
         # PSF and parameter files.
         try:
-            psf = _SireIO.CharmmPSF(self._system._sire_object, self._property_map)
-            psf.writeToFile(self._psf_file)
+            file = _os.path.splitext(self._psf_file)[0]
+            _IO.saveMolecules(file, system, "psf", property_map=self._property_map)
         except Exception as e:
             msg = "Failed to write system to 'CHARMMPSF' format."
             if _isVerbose():
@@ -177,7 +184,7 @@ class Namd(_process.Process):
 
         # PDB file.
         try:
-            pdb = _SireIO.PDB2(self._system._sire_object, self._property_map)
+            pdb = _SireIO.PDB2(system._sire_object, self._property_map)
             pdb.writeToFile(self._top_file)
         except Exception as e:
             msg = "Failed to write system to 'PDB' format."
@@ -218,10 +225,8 @@ class Namd(_process.Process):
 
         # Open the PSF file for reading.
         with open(self._psf_file) as file:
-
             # Loop over all lines.
             for line in file:
-
                 # There are improper records.
                 if "!NIMPHI" in line:
                     has_impropers = True
@@ -283,11 +288,17 @@ class Namd(_process.Process):
 
         prop = self._property_map.get("space", "space")
 
-        # Check whether the system contains periodic box information.
         if prop in self._system._sire_object.propertyKeys():
-            # Flag that we have found a box.
-            has_box = True
+            try:
+                box = self._system._sire_object.property(prop)
 
+                # Flag that we have found a periodic box.
+                has_box = box.isPeriodic()
+            except Exception:
+                box = None
+
+        # Check whether the system contains periodic box information.
+        if has_box:
             # Periodic box.
             try:
                 box_size = self._system._sire_object.property(prop).dimensions()
@@ -405,6 +416,40 @@ class Namd(_process.Process):
         self.addToConfig("binaryOutput          no")
         self.addToConfig("binaryRestart         no")
 
+        # Position restraints.
+        if isinstance(self._protocol, _PositionRestraintMixin):
+            restraint = self._protocol.getRestraint()
+            if restraint is not None:
+                # Create a restrained system.
+                restrained = self._createRestrainedSystem(self._system, restraint)
+
+                # Create a PDB object, mapping the "occupancy" property to "restrained".
+                prop = self._property_map.get("occupancy", "occupancy")
+
+                try:
+                    p = _SireIO.PDB2(restrained._sire_object, {prop: "restrained"})
+
+                    # File name for the restraint file.
+                    self._restraint_file = "%s/%s.restrained" % (
+                        self._work_dir,
+                        self._name,
+                    )
+
+                    # Write the PDB file.
+                    p.writeToFile(self._restraint_file)
+
+                except:
+                    _warnings.warn(
+                        "Failed to add restraints to PDB file. "
+                        "Perhaps there are no atoms matching the restraint?"
+                    )
+
+                # Update the configuration file.
+                self.addToConfig("constraints           yes")
+                self.addToConfig("consref               %s.restrained" % self._name)
+                self.addToConfig("conskfile             %s.restrained" % self._name)
+                self.addToConfig("conskcol              O")
+
         # Add configuration variables for a minimisation simulation.
         if isinstance(self._protocol, _Protocol.Minimisation):
             # Output frequency.
@@ -489,39 +534,6 @@ class Namd(_process.Process):
                 self.addToConfig("useFlexibleCell       no")
                 self.addToConfig("useConstantArea       no")
 
-            # Restrain the backbone.
-            restraint = self._protocol.getRestraint()
-            if restraint is not None:
-                # Create a restrained system.
-                restrained = self._createRestrainedSystem(self._system, restraint)
-
-                # Create a PDB object, mapping the "occupancy" property to "restrained".
-                prop = self._property_map.get("occupancy", "occupancy")
-
-                try:
-                    p = _SireIO.PDB2(restrained._sire_object, {prop: "restrained"})
-
-                    # File name for the restraint file.
-                    self._restraint_file = "%s/%s.restrained" % (
-                        self._work_dir,
-                        self._name,
-                    )
-
-                    # Write the PDB file.
-                    p.writeToFile(self._restraint_file)
-
-                except:
-                    _warnings.warn(
-                        "Failed to add restraints to PDB file. "
-                        "Perhaps there are no atoms matching the restraint?"
-                    )
-
-                # Update the configuration file.
-                self.addToConfig("constraints           yes")
-                self.addToConfig("consref               %s.restrained" % self._name)
-                self.addToConfig("conskfile             %s.restrained" % self._name)
-                self.addToConfig("conskcol              O")
-
             # Heating/cooling simulation.
             if not self._protocol.isConstantTemp():
                 # Work out temperature step size (assuming a unit increment).
@@ -585,10 +597,6 @@ class Namd(_process.Process):
                 "timestep              %.2f"
                 % self._protocol.getTimeStep().femtoseconds().value()
             )
-            if self._protocol.getFirstStep() != 0:
-                self.addToConfig(
-                    "firsttimestep         %d" % self._protocol.getFirstStep()
-                )
             self.addToConfig("rigidBonds            all")
             self.addToConfig("nonbondedFreq         1")
             self.addToConfig("fullElectFrequency    2")
@@ -657,10 +665,8 @@ class Namd(_process.Process):
 
         # Run the process in the working directory.
         with _Utils.cd(self._work_dir):
-
             # Write the command-line process to a README.txt file.
             with open("README.txt", "w") as file:
-
                 # Set the command-line string.
                 self._command = "%s %s.cfg" % (self._exe, self._name)
 
@@ -807,12 +813,17 @@ class Namd(_process.Process):
         """
         return self.getSystem(block=False)
 
-    def getTrajectory(self, block="AUTO"):
+    def getTrajectory(self, backend="AUTO", block="AUTO"):
         """
         Return a trajectory object.
 
         Parameters
         ----------
+
+        backend : str
+            The backend to use for trajectory parsing. To see supported backends,
+            run BioSimSpace.Trajectory.backends(). Using "AUTO" will try each in
+            sequence.
 
         block : bool
             Whether to block until the process has finished running.
@@ -823,6 +834,13 @@ class Namd(_process.Process):
         trajectory : :class:`Trajectory <BioSimSpace.Trajectory>`
             The latest trajectory object.
         """
+
+        if not isinstance(backend, str):
+            raise TypeError("'backend' must be of type 'str'")
+
+        if not isinstance(block, (bool, str)):
+            raise TypeError("'block' must be of type 'bool' or 'str'")
+
         # Wait for the process to finish.
         if block is True:
             self.wait()
@@ -834,7 +852,7 @@ class Namd(_process.Process):
             _warnings.warn("The process exited with an error!")
 
         try:
-            return _Trajectory.Trajectory(process=self)
+            return _Trajectory.Trajectory(process=self, backend=backend)
 
         except:
             return None
@@ -1006,6 +1024,7 @@ class Namd(_process.Process):
         if self.isError():
             _warnings.warn("The process exited with an error!")
 
+        self.stdout(0)
         return self._stdout_dict.copy()
 
     def getCurrentRecords(self):
@@ -1980,14 +1999,12 @@ class Namd(_process.Process):
 
         # Now search backwards through the list to find the last TIMING record.
         for _, record in reversed(list(enumerate(self._stdout))):
-
             # Split the record using whitespace.
             data = record.split()
 
             # We've found a TIMING record.
             if len(data) > 0:
                 if data[0] == "TIMING:":
-
                     # Try to find the "hours" record.
                     # If found, return the entry precedeing it.
                     try:
@@ -2023,7 +2040,6 @@ class Namd(_process.Process):
 
             # Make sure there is at least one record.
             if len(data) > 0:
-
                 # Store the updated energy title.
                 if data[0] == "ETITLE:":
                     self._stdout_title = data[1:]
@@ -2080,10 +2096,8 @@ class Namd(_process.Process):
 
         # Keyword restraint.
         if isinstance(restraint, str):
-
             # Loop over all molecules by number.
             for x, mol in enumerate(s):
-
                 # Get the indices of the restrained atoms for this molecule.
                 atoms = s.getRestraintAtoms(
                     restraint, x, is_absolute=False, allow_zero_matches=True
@@ -2114,7 +2128,6 @@ class Namd(_process.Process):
 
         # A user-defined list of atoms.
         elif isinstance(restraint, (list, tuple)):
-
             # Create an empty multi dict for each MolNum.
             mol_atoms = {}
             for num in s._mol_nums:
@@ -2136,7 +2149,6 @@ class Namd(_process.Process):
 
             # Now loop over the multi-dict.
             for num, idxs in mol_atoms.items():
-
                 # Extract the molecule and make it editable.
                 edit_mol = s._sire_object[num].edit()
 

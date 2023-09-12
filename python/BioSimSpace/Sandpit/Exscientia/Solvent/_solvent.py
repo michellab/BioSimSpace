@@ -31,7 +31,6 @@ import re as _re
 import subprocess as _subprocess
 import shlex as _shlex
 import sys as _sys
-import tempfile as _tempfile
 import warnings as _warnings
 
 from sire.legacy import Base as _SireBase
@@ -65,11 +64,12 @@ def solvate(
     shell=None,
     ion_conc=0,
     is_neutral=True,
+    is_aligned=False,
     work_dir=None,
     property_map={},
 ):
     """
-    Solvate with the specified water model..
+    Solvate with the specified water model.
 
     Parameters
     ----------
@@ -100,6 +100,10 @@ def solvate(
     is_neutral : bool
         Whether to neutralise the system.
 
+    is_aligned : bool
+        Whether to align the principal axes of the molecule to those of the
+        solvent box.
+
     work_dir : str
         The working directory for the process.
 
@@ -126,7 +130,15 @@ def solvate(
             raise ValueError("Supported water models are: %s" % waterModels())
 
     return _model_dict[model](
-        molecule, box, angles, shell, ion_conc, is_neutral, work_dir, property_map
+        molecule,
+        box,
+        angles,
+        shell,
+        ion_conc,
+        is_neutral,
+        is_aligned,
+        work_dir,
+        property_map,
     )
 
 
@@ -137,6 +149,7 @@ def spc(
     shell=None,
     ion_conc=0,
     is_neutral=True,
+    is_aligned=False,
     work_dir=None,
     property_map={},
 ):
@@ -169,6 +182,10 @@ def spc(
     is_neutral : bool
         Whether to neutralise the system.
 
+    is_aligned : bool
+        Whether to align the principal axes of the molecule to those of the
+        solvent box.
+
     work_dir : str
         The working directory for the process.
 
@@ -199,6 +216,7 @@ def spc(
         shell,
         ion_conc,
         is_neutral,
+        is_aligned,
         work_dir,
         property_map,
     )
@@ -213,6 +231,7 @@ def spc(
         3,
         ion_conc,
         is_neutral,
+        is_aligned,
         work_dir=work_dir,
         property_map=property_map,
     )
@@ -225,6 +244,7 @@ def spce(
     shell=None,
     ion_conc=0,
     is_neutral=True,
+    is_aligned=False,
     work_dir=None,
     property_map={},
 ):
@@ -257,6 +277,10 @@ def spce(
     is_neutral : bool
         Whether to neutralise the system.
 
+    is_aligned : bool
+        Whether to align the principal axes of the molecule to those of the
+        solvent box.
+
     work_dir : str
         The working directory for the process.
 
@@ -287,6 +311,7 @@ def spce(
         shell,
         ion_conc,
         is_neutral,
+        is_aligned,
         work_dir,
         property_map,
     )
@@ -301,6 +326,7 @@ def spce(
         3,
         ion_conc,
         is_neutral,
+        is_aligned,
         work_dir=work_dir,
         property_map=property_map,
     )
@@ -313,6 +339,7 @@ def tip3p(
     shell=None,
     ion_conc=0,
     is_neutral=True,
+    is_aligned=False,
     work_dir=None,
     property_map={},
 ):
@@ -345,6 +372,10 @@ def tip3p(
     is_neutral : bool
         Whether to neutralise the system.
 
+    is_aligned : bool
+        Whether to align the principal axes of the molecule to those of the
+        solvent box.
+
     work_dir : str
         The working directory for the process.
 
@@ -375,6 +406,7 @@ def tip3p(
         shell,
         ion_conc,
         is_neutral,
+        is_aligned,
         work_dir,
         property_map,
     )
@@ -389,6 +421,7 @@ def tip3p(
         3,
         ion_conc,
         is_neutral,
+        is_aligned,
         work_dir=work_dir,
         property_map=property_map,
     )
@@ -401,6 +434,7 @@ def tip4p(
     shell=None,
     ion_conc=0,
     is_neutral=True,
+    is_aligned=False,
     work_dir=None,
     property_map={},
 ):
@@ -433,6 +467,10 @@ def tip4p(
     is_neutral : bool
         Whether to neutralise the system.
 
+    is_aligned : bool
+        Whether to align the principal axes of the molecule to those of the
+        solvent box.
+
     work_dir : str
         The working directory for the process.
 
@@ -463,6 +501,7 @@ def tip4p(
         shell,
         ion_conc,
         is_neutral,
+        is_aligned,
         work_dir,
         property_map,
     )
@@ -477,6 +516,7 @@ def tip4p(
         4,
         ion_conc,
         is_neutral,
+        is_aligned,
         work_dir=work_dir,
         property_map=property_map,
     )
@@ -489,6 +529,7 @@ def tip5p(
     shell=None,
     ion_conc=0,
     is_neutral=True,
+    is_aligned=False,
     work_dir=None,
     property_map={},
 ):
@@ -521,6 +562,10 @@ def tip5p(
     is_neutral : bool
         Whether to neutralise the system.
 
+    is_aligned : bool
+        Whether to align the principal axes of the molecule to those of the
+        solvent box.
+
     work_dir : str
         The working directory for the process.
 
@@ -551,6 +596,7 @@ def tip5p(
         shell,
         ion_conc,
         is_neutral,
+        is_aligned,
         work_dir,
         property_map,
     )
@@ -565,13 +611,23 @@ def tip5p(
         5,
         ion_conc,
         is_neutral,
+        is_aligned,
         work_dir=work_dir,
         property_map=property_map,
     )
 
 
 def _validate_input(
-    model, molecule, box, angles, shell, ion_conc, is_neutral, work_dir, property_map
+    model,
+    molecule,
+    box,
+    angles,
+    shell,
+    ion_conc,
+    is_neutral,
+    is_aligned,
+    work_dir,
+    property_map,
 ):
     """
     Internal function to validate function arguments.
@@ -583,8 +639,8 @@ def _validate_input(
         The name of the water model.
 
     molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, \
-               :class:`Molecule <BioSimSpace._SireWrappers.Molecules>`, \
-               :class:`System <BioSimSpace._SireWrappers.System>`
+                :class:`Molecule <BioSimSpace._SireWrappers.Molecules>`, \
+                :class:`System <BioSimSpace._SireWrappers.System>`
         A molecule, or container/system of molecules.
 
     box : [:class:`Length <BioSimSpace.Types.Length>`]
@@ -604,6 +660,10 @@ def _validate_input(
 
     is_neutral : bool
         Whether to neutralise the system.
+
+    is_aligned : bool
+        Whether to align the principal axes of the molecule to those of the
+        solvent box.
 
     work_dir : str
         The working directory for the process.
@@ -754,6 +814,9 @@ def _validate_input(
     if not isinstance(is_neutral, bool):
         raise TypeError("'is_neutral' must be of type 'bool'.")
 
+    if not isinstance(is_aligned, bool):
+        raise TypeError("'is_aligned' must be of type 'bool'.")
+
     # Check that the working directory is valid.
     if work_dir is not None and not isinstance(work_dir, str):
         raise TypeError("'work_dir' must be of type 'str'")
@@ -783,6 +846,7 @@ def _solvate(
     num_point,
     ion_conc,
     is_neutral,
+    is_aligned,
     work_dir=None,
     property_map={},
 ):
@@ -816,6 +880,10 @@ def _solvate(
 
     is_neutral : bool
         Whether to neutralise the system.
+
+    is_aligned : bool
+        Whether to align the principal axes of the molecule to those of the
+        solvent box.
 
     work_dir : str
         The working directory for the process.
@@ -873,10 +941,8 @@ def _solvate(
             molecule.removeWaterMolecules()
             molecule = molecule + waters
 
-    # Create a temporary working directory and store the directory name.
-    if work_dir is None:
-        tmp_dir = _tempfile.TemporaryDirectory()
-        work_dir = tmp_dir.name
+    # Create the working directory.
+    work_dir = _Utils.WorkDir(work_dir)
 
     # Write to 6dp, unless precision is specified by use.
     _property_map = property_map.copy()
@@ -885,7 +951,6 @@ def _solvate(
 
     # Run the solvation in the working directory.
     with _Utils.cd(work_dir):
-
         # First, generate a box file corresponding to the requested geometry.
         if molecule is not None:
             # Write the molecule/system to a GRO files.
@@ -894,7 +959,7 @@ def _solvate(
         # We need to create a dummy input file with no molecule in it.
         else:
             with open("input.gro", "w") as file:
-                file.write("BioSimSpace System\n")
+                file.write("BioSimSpace_System\n")
                 file.write("    0\n")
                 file.write("   0.00000  0.00000  0.00000\n")
 
@@ -913,7 +978,7 @@ def _solvate(
                 angles[1].degrees().value(),
                 angles[2].degrees().value(),
             )
-            + " -noc -o box.gro"
+            + f" -noc -{'no' if not is_aligned else ''}princ -o box.gro"
         )
 
         with open("README.txt", "w") as file:
@@ -925,10 +990,21 @@ def _solvate(
         stdout = open("editconf.out", "w")
         stderr = open("editconf.err", "w")
 
-        # Run gmx solvate as a subprocess.
-        proc = _subprocess.run(
-            _Utils.command_split(command), shell=False, stdout=stdout, stderr=stderr
+        # Select the "System" if choosing to align.
+        proc_echo = _subprocess.Popen(
+            ["echo", "0"], shell=False, stdout=_subprocess.PIPE
         )
+        # Run the command as a subprocess.
+        proc = _subprocess.Popen(
+            _Utils.command_split(command),
+            shell=False,
+            stdin=proc_echo.stdout,
+            stdout=stdout,
+            stderr=stderr,
+        )
+        proc.wait()
+        proc_echo.stdout.close()
+
         stdout.close()
         stderr.close()
 
@@ -1043,7 +1119,6 @@ def _solvate(
 
         # Now we add ions to the system and neutralise the charge.
         if ion_conc > 0 or is_neutral:
-
             try:
                 # Write the molecule + water system to file.
                 _IO.saveMolecules(

@@ -34,6 +34,7 @@ __email__ = "lester.hedges@gmail.com"
 __all__ = [
     "Align",
     "Box",
+    "Convert",
     "FreeEnergy",
     "Gateway",
     "IO",
@@ -45,10 +46,16 @@ __all__ = [
     "Process",
     "Protocol",
     "Solvent",
+    "Stream",
     "Trajectory",
     "Types",
     "Units",
 ]
+
+# Disable NumPy warnings.
+import warnings as _warnings
+
+_warnings.filterwarnings("ignore", module="numpy")
 
 # Make sure we're using the Sire python interpreter.
 try:
@@ -113,6 +120,11 @@ def setVerbose(verbose):
     _is_verbose = verbose
 
 
+def tutorialUrl():
+    """Return the base URL for example files used in the tests and tutorials."""
+    return "https://biosimspace.openbiosim.org/m"
+
+
 def _isVerbose():
     """
     Whether verbose error messages are active.
@@ -126,8 +138,6 @@ def _isVerbose():
     global _is_verbose
     return _is_verbose
 
-
-from warnings import warn as _warn
 
 # Check to see if AMBERHOME is set.
 if "AMBERHOME" in _environ:
@@ -173,7 +183,6 @@ _gmx_version = None
 
 # Try using the GROMACS exe to get the version and data directory.
 if _gmx_exe is not None:
-
     import shlex as _shlex
     import subprocess as _subprocess
 
@@ -192,10 +201,10 @@ if _gmx_exe is not None:
     )
 
     del _command
+    del command_split
 
     # Get the data prefix.
     if _proc.returncode == 0:
-
         for _line in _proc.stdout.split("\n"):
             # Extract the "Data prefix" from the output.
             if "Data prefix" in _line:
@@ -218,6 +227,7 @@ if _gmx_exe is not None:
 
 from . import Align
 from . import Box
+from . import Convert
 from . import FreeEnergy
 from . import Gateway
 from . import IO
@@ -229,11 +239,20 @@ from . import Parameters
 from . import Process
 from . import Protocol
 from . import Solvent
+from . import Stream
 from . import Trajectory
 from . import Types
 from . import Units
 
-from ._version import get_versions
+# Import Versioneer from the package root.
+from ... import _version
 
-__version__ = get_versions()["version"]
-del get_versions
+__version__ = _version.get_versions()["version"]
+
+import logging as _logging
+
+for _name, _logger in _logging.root.manager.loggerDict.items():
+    _logger.disabled = True
+del _logger
+del _logging
+del _name

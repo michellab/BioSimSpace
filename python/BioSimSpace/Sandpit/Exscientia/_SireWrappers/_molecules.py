@@ -49,9 +49,9 @@ class Molecules(_SireWrapper):
         Parameters
         ----------
 
-        molecules : Sire.Mol.MoleculeGroup, Sire.System.System, \
-                    :class:`System <BioSimSpace._SireWrappers.System>` \
-                    [:class:`Molecule <BioSimSpace._SireWrappers.Molecule>`]
+        molecules : Sire.Mol.MoleculeGroup, Sire.System.System, Sire.Mol.SelectorMol, \
+                    :class:`System <BioSimSpace._SireWrappers.System>`, \
+                   [:class:`Molecule <BioSimSpace._SireWrappers.Molecule>`]
             A Sire Molecues object, a Sire or BioSimSpace System object,
             or a list of BioSimSpace Molecule objects.
         """
@@ -63,12 +63,18 @@ class Molecules(_SireWrapper):
             molecules = list(molecules)
 
         # A Sire MoleculeGroup object.
-        if isinstance(molecules, _SireMol._Mol.MoleculeGroup):
+        if isinstance(molecules, _SireMol.MoleculeGroup):
             super().__init__(molecules)
 
+        # A Sire SelectorMol object.
+        elif isinstance(molecules, _SireMol.SelectorMol):
+            super().__init__(molecules.toMoleculeGroup())
+
         # A Sire System object.
-        elif isinstance(molecules, _SireSystem._System.System):
-            super().__init__(molecules.molecules())
+        elif isinstance(molecules, _SireSystem.System):
+            molgrp = _SireMol.MoleculeGroup("all")
+            molgrp.add(molecules.molecules())
+            super().__init__(molgrp)
 
         # A BioSimSpace System object.
         elif isinstance(molecules, _System):
@@ -178,7 +184,6 @@ class Molecules(_SireWrapper):
 
         # Slice.
         if isinstance(key, slice):
-
             # Create a list to hold the molecules.
             molecules = []
 

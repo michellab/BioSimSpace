@@ -52,6 +52,7 @@ class Steering(_Protocol):
         runtime=_Types.Time(1, "nanosecond"),
         temperature=_Types.Temperature(300, "kelvin"),
         pressure=_Types.Pressure(1, "atmosphere"),
+        thermostat_time_constant=_Types.Time(1, "picosecond"),
         report_interval=1000,
         restart_interval=1000,
         colvar_file=None,
@@ -90,6 +91,9 @@ class Steering(_Protocol):
 
         pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
             The pressure. Pass pressure=None to use the NVT ensemble.
+
+        thermostat_time_constant : :class:`Time <BioSimSpace.Types.Time>`
+            Time constant for thermostat coupling.
 
         restart_interval : int
             The frequency at which restart configurations and trajectory
@@ -139,6 +143,9 @@ class Steering(_Protocol):
             self.setPressure(pressure)
         else:
             self._pressure = None
+
+        # Set the thermostat time constant.
+        self.setThermostatTimeConstant(thermostat_time_constant)
 
         if colvar_file is not None:
             self.setColvarFile(colvar_file)
@@ -544,6 +551,35 @@ class Steering(_Protocol):
             self._pressure = pressure
         else:
             raise TypeError("'pressure' must be of type 'BioSimSpace.Types.Pressure'")
+
+    def getThermostatTimeConstant(self):
+        """
+        Return the time constant for the thermostat.
+
+        Returns
+        -------
+
+        runtime : :class:`Time <BioSimSpace.Types.Time>`
+            The time constant for the thermostat.
+        """
+        return self._thermostat_time_constant
+
+    def setThermostatTimeConstant(self, thermostat_time_constant):
+        """
+        Set the time constant for the thermostat.
+
+        Parameters
+        ----------
+
+        thermostat_time_constant : :class:`Time <BioSimSpace.Types.Time>`
+            The time constant for the thermostat.
+        """
+        if isinstance(thermostat_time_constant, _Types.Time):
+            self._thermostat_time_constant = thermostat_time_constant
+        else:
+            raise TypeError(
+                "'thermostat_time_constant' must be of type 'BioSimSpace.Types.Time'"
+            )
 
     def getReportInterval(self):
         """

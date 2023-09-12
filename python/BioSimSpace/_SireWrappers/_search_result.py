@@ -107,7 +107,6 @@ class SearchResult:
 
         # Slice.
         if type(key) is slice:
-
             # Create a list to hold the results.
             results = []
 
@@ -142,15 +141,7 @@ class SearchResult:
                 return _Residue(result)
             # Molecule.
             elif isinstance(result, _Sire.Mol._Mol.Molecule):
-                # If the molecule contains a single atom, then convert to an atom.
-                if result.nAtoms() == 1:
-                    return _Atom(result.atom())
-                # If there's a single residue, the convert to a residue.
-                elif result.nResidues() == 1:
-                    return _Residue(result.residue())
-                # Otherwise, append the molecule.
-                else:
-                    return _Molecule(result)
+                return _Molecule(result)
             # Bond
             elif isinstance(result, _Sire.MM._MM.Bond):
                 return _Bond(result)

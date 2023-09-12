@@ -7,9 +7,18 @@ Compatibility
 BioSimSpace has been tested against the versions of its
 external dependencies listed below. Please let us know if
 you encounter problems by raising an issue on our
-`GitHub <https://github.com/michellab/BioSimSpace/issues>`__
+`GitHub <https://github.com/openbiosim/biosimspace/issues>`__
 page. (It may also work with more recent versions and we
 will update these lists as they are validated.)
+
+BioSimSpace is built to be compatible with the
+`ambertools <https://anaconda.org/conda-forge/ambertools>`__
+and `gromacs <https://anaconda.org/conda-forge/gromacs>`__
+packages from conda-forge, but this aren't required as
+a hard run-time dependency. This is because users will
+likely choose to install external versions of the packages
+that are optimised for their particular computing environment
+and use case.
 
 
 `AMBER <http://ambermd.org>`__

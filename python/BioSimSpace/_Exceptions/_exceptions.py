@@ -27,9 +27,11 @@ __email__ = "lester.hedges@gmail.com"
 __all__ = [
     "AlignmentError",
     "AnalysisError",
+    "ConversionError",
     "IncompatibleError",
     "MissingSoftwareError",
     "ParameterisationError",
+    "StreamError",
     "ThirdPartyError",
 ]
 
@@ -42,6 +44,10 @@ class AlignmentError(Exception):
 
 class AnalysisError(Exception):
     """Exception thrown when analysis on existing simulation data fails."""
+
+
+class ConversionError(Exception):
+    """Exception thrown when molecular conversion fails."""
 
 
 class IncompatibleError(Exception):
@@ -58,6 +64,12 @@ class MissingSoftwareError(Exception):
 
 class ParameterisationError(Exception):
     """Exception thrown when molecular parameterisation fails."""
+
+    pass
+
+
+class StreamError(Exception):
+    """Exception thrown when streaming fails."""
 
     pass
 

@@ -2,7 +2,7 @@
 # coding: utf-8
 
 # Author: Lester Hedges<br>
-# Email:&nbsp;&nbsp; lester.hedges@bristol.ac.uk
+# Email:&nbsp;&nbsp; lester@openbiosim.org
 #
 # # Conversion
 #
@@ -31,8 +31,8 @@ node = BSS.Gateway.Node("A node to convert between molecular file formats.")
 
 node.addAuthor(
     name="Lester Hedges",
-    email="lester.hedges@bristol.ac.uk",
-    affiliation="University of Bristol",
+    email="lester@openbiosim.org",
+    affiliation="OpenBioSim",
 )
 node.setLicense("GPLv3")
 
@@ -67,11 +67,11 @@ node.addOutput("converted", BSS.Gateway.File(help="The converted molecular syste
 #
 # When working interactively you will typically be running on a remote server where you won't have access to the local filesystem. In this case you'll need to upload files for any of the `File` or `FileSet` input requirements. The GUI below will provide buttons that allow you to browse your own filesystem and select files. Since Jupyter has a limit of 5MB for file transfers, we provide support for compressed formats, such as `.zip` or `.tar.gz`. (A single archive can contain a set of files, allowing you to set a single value for a `FileSet` requirement.) We've provided some example input files that can be used in the training notebooks, which are available to download from the links below. These can then be re-uploaded using the GUI.
 #
-# AMBER: [ala.crd](https://raw.githubusercontent.com/michellab/BioSimSpace/devel/demo/amber/ala/ala.crd), [ala.top](https://raw.githubusercontent.com/michellab/BioSimSpace/devel/demo/amber/ala/ala.top)
+# AMBER: [ala.crd](https://raw.githubusercontent.com/openbiosim/biosimspace/devel/demo/amber/ala/ala.crd), [ala.top](https://raw.githubusercontent.com/openbiosim/biosimspace/devel/demo/amber/ala/ala.top)
 #
-# GROMACS: [kigaki.gro](https://raw.githubusercontent.com/michellab/BioSimSpace/devel/demo/gromacs/kigaki/kigaki.gro), [kigaki.top](https://raw.githubusercontent.com/michellab/BioSimSpace/devel/demo/gromacs/kigaki/kigaki.top)
+# GROMACS: [kigaki.gro](https://raw.githubusercontent.com/openbiosim/biosimspace/devel/demo/gromacs/kigaki/kigaki.gro), [kigaki.top](https://raw.githubusercontent.com/openbiosim/biosimspace/devel/demo/gromacs/kigaki/kigaki.top)
 #
-# NAMD: [alanin.pdb](https://raw.githubusercontent.com/michellab/BioSimSpace/devel/demo/namd/alanin/alanin.pdb), [alanin.psf](https://raw.githubusercontent.com/michellab/BioSimSpace/devel/demo/namd/alanin/alanin.psf), [alanin.params](https://raw.githubusercontent.com/michellab/BioSimSpace/devel/demo/namd/alanin/alanin.params)
+# NAMD: [alanin.pdb](https://raw.githubusercontent.com/openbiosim/biosimspace/devel/demo/namd/alanin/alanin.pdb), [alanin.psf](https://raw.githubusercontent.com/openbiosim/biosimspace/devel/demo/namd/alanin/alanin.psf), [alanin.params](https://raw.githubusercontent.com/openbiosim/biosimspace/devel/demo/namd/alanin/alanin.params)
 #
 # When uploading files the name of the current file(s) will replace the `Upload` button. If you need to change the file, simply click on the button again and choose a new file.
 

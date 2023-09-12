@@ -2,7 +2,7 @@
 # coding: utf-8
 
 # Author: Lester Hedges<br>
-# Email:&nbsp;&nbsp; lester.hedges@bristol.ac.uk
+# Email:&nbsp;&nbsp; lester@openbiosim.org
 #
 # # Molecular setup
 #
@@ -33,8 +33,8 @@ node = BSS.Gateway.Node(
 
 node.addAuthor(
     name="Lester Hedges",
-    email="lester.hedges@bristol.ac.uk",
-    affiliation="University of Bristol",
+    email="lester@openbiosim.org",
+    affiliation="OpenBioSim",
 )
 node.setLicense("GPLv3")
 
@@ -98,7 +98,7 @@ node.addOutput(
 #
 # When working interactively you will typically be running on a remote server where you won't have access to the local filesystem. In this case you'll need to upload files for the _file_ input requirement. The GUI below will provide buttons that allow you to browse your own filesystem and select files. Since Jupyter has a limit of 5MB for file transfers, we provide support for compressed formats, such as `.zip` or `.tar.gz`. For simplicity, some example molecule files are available to download from the links below. These can then be re-uploaded using the GUI.
 #
-# Example files: [2JJC.pdb](https://raw.githubusercontent.com/michellab/BioSimSpace/devel/demo/molecules/2JJC.pdb), [benzene.pdb](https://raw.githubusercontent.com/michellab/BioSimSpace/devel/demo/molecules/benzene.pdb)
+# Example files: [2JJC.pdb](https://raw.githubusercontent.com/openbiosim/biosimspace/devel/demo/molecules/2JJC.pdb), [benzene.pdb](https://raw.githubusercontent.com/openbiosim/biosimspace/devel/demo/molecules/benzene.pdb)
 #
 # When uploading files the name of the current file will replace the `Upload` button. If you need to change the file, simply click on the button again and choose a new file.
 

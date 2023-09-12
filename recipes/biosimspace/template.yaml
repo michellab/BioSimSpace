@@ -2,16 +2,17 @@
 
 package:
   name: {{ name }}
-  version: {{ GIT_DESCRIBE_TAG if GIT_DESCRIBE_TAG is not none else 'PR' }}
+  version: {{ environ.get('GIT_DESCRIBE_TAG', 'PR') }}
 
 source:
-  git_url: https://github.com/michellab/BioSimSpace.git
+  git_url: BSS_REMOTE
   git_tag: BSS_BRANCH
 
 build:
-  number: {{ GIT_DESCRIBE_NUMBER if GIT_DESCRIBE_NUMBER is not none else 0 }}
+  number: {{ environ.get('GIT_DESCRIBE_NUMBER', 0) }}
 
 requirements:
+  build:
     BSS_BUILD_REQUIREMENTS
   host:
     - python
@@ -45,25 +46,26 @@ test:
     - SIRE_SILENT_PHONEHOME
   requires:
     - pytest
-    - pytest-black
-    - ambertools  # [linux]
-    - gromacs     # [linux]
+    - black 23      # [linux and x86_64 and py==39]
+    - pytest-black  # [linux and x86_64 and py==39]
+    - ambertools    # [linux and x86_64]
+    - gromacs       # [linux and x86_64]
   imports:
     - BioSimSpace
   source_files:
-    - python/BioSimSpace # [linux]
-    - test
+    - python/BioSimSpace # [linux and x86_64 and py==39]
+    - tests
   commands:
-    - pytest -vvv --color=yes --black python/BioSimSpace # [linux]
-    - pytest -vvv --color=yes --import-mode=importlib test
+    - pytest -vvv --color=yes --black python/BioSimSpace # [linux and x86_64 and py==39]
+    - pytest -vvv --color=yes --import-mode=importlib tests
 
 about:
-  home: https://biosimspace.org
+  home: https://biosimspace.openbiosim.org
   license: GPL-3.0-or-later
   license_file: '{{ environ["RECIPE_DIR"] }}/LICENSE'
   summary: "An interoperable Python framework for biomolecular simulation."
-  dev_url: https://github.com/michellab/BioSimSpace
-  doc_url: https://biosimspace.org
+  dev_url: https://github.com/openbiosim/biosimspace
+  doc_url: https://biosimspace.openbiosim.org
   description: |
                 BioSimSpace is an interoperable Python framework for
                 biomolecular simulation. With it you can:
@@ -76,22 +78,16 @@ about:
 
                 To install:
 
-                `conda install -c conda-forge -c michellab biosimspace`
+                `conda install -c conda-forge -c openbiosim biosimspace`
 
                 To install the development version:
 
-                `conda install -c conda-forge -c michellab/label/dev biosimspace`
+                `conda install -c conda-forge -c openbiosim/label/dev biosimspace`
 
                 When updating the development version it is generally advised to
                 update Sire at the same time:
 
-                `conda install -c conda-forge -c michellab/label/dev biosimspace sire`
-
-                Since BioSimSpace has many dependencies, an install or update
-                might not always give you the most recent version. If this is
-                the case, use, e.g.:
-
-                `conda install -c conda-forge -c michellab/label/dev biosimspace --all`
+                `conda install -c conda-forge -c openbiosim/label/dev biosimspace sire`
 
 extra:
   recipe-maintainers:

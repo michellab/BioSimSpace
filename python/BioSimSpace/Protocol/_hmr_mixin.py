@@ -2,10 +2,8 @@ __all__ = ["_HmrMixin"]
 
 from .. import Types as _Types
 
-from ._protocol import Protocol as _Protocol
 
-
-class _HmrMixin(_Protocol):
+class _HmrMixin:
     """A mixin for storing HMR protocols."""
 
     def __init__(self,
@@ -36,27 +34,27 @@ class _HmrMixin(_Protocol):
 
         """
 
-        # Call the base class constructor.
-        super().__init__()
-
         # Validate the inputs
         self.setHmr(hmr, hmr_factor, hmr_water, timestep)
 
+    def _get_parm(self):
+        """Return a string representation of the parameters."""
+
+        return (
+            f"hmr={self._hmr}, "
+            f"hmr_factor={self._hmr_factor}, "
+            f"hmr_water={self._hmr_water}, "
+        )
+
+
     def __str__(self):
+        print(self._get_parm())
         """Return a human readable string representation of the object."""
-        if self._is_customised:
-            return "<BioSimSpace.Protocol.Custom>"
-        else:
-            return ("<BioSimSpace.Protocol._HmrMixin: hmr=%r, hmr_factor=%1.1f, hmr_water=%r>"
-                   ) % (self._hmr, self._hmr_factor, self._hmr_water)
+        return f"<BioSimSpace.Protocol._HmrMixin: {self._get_parm()}>"
 
     def __repr__(self):
         """Return a string showing how to instantiate the object."""
-        if self._is_customised:
-            return "<BioSimSpace.Protocol.Custom>"
-        else:
-            return ("<BioSimSpace.Protocol._HmrMixin: hmr=%r, hmr_factor=%1.1f, hmr_water=%r>"
-                    ) % (self._hmr, self._hmr_factor, self._hmr_water)
+        return f"BioSimSpace.Protocol._HmrMixin({self._get_parm()})"
 
     def getHmr(self):
         """Set the HMR flag.

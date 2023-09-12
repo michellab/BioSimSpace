@@ -37,13 +37,16 @@ Classes
 .. autosummary::
     :toctree: generated/
 
-    Custom
+    Minimisation
     Equilibration
+    Production
+    FreeEnergyMinimisation
+    FreeEnergyEquilibration
+    FreeEnergyProduction
     FreeEnergy
     Metadynamics
-    Minimisation
-    Production
     Steering
+    Custom
 
 Examples
 ========
@@ -85,15 +88,19 @@ while restraining the positions of any backbone atoms.
 
    import BioSimSpace as BSS
 
-   protocol = BSS.Protocol.Equilibration(temperature_start=0*BSS.Units.Temperature.kelvin,
-                                         temperature_end=300*BSS.Units.Temperature.kelvin,
-                                         restraint="backbone")
+   protocol = BSS.Protocol.Equilibration(
+       temperature_start=0*BSS.Units.Temperature.kelvin,
+       temperature_end=300*BSS.Units.Temperature.kelvin,
+       restraint="backbone"
+   )
 """
 
 from ._config import *
 from ._custom import *
 from ._equilibration import *
-from ._free_energy_mixin import *
+from ._free_energy_equilibration import *
+from ._free_energy_minimisation import *
+from ._free_energy_production import *
 from ._metadynamics import *
 from ._minimisation import *
 from ._production import *
