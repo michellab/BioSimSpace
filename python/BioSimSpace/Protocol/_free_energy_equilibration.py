@@ -30,7 +30,6 @@ from .. import Types as _Types
 from .. import Units as _Units
 
 from ._free_energy_mixin import _FreeEnergyMixin
-from ._hmr_mixin import _HmrMixin
 from ._equilibration import Equilibration as _Equilibration
 
 
@@ -59,7 +58,7 @@ class FreeEnergyEquilibration(_Equilibration, _FreeEnergyMixin):
         perturbation_type="full",
         hmr="auto",
         hmr_factor="auto",
-        hmr_water="auto"    
+        hmr_water="auto",    
     ):
         """Constructor.
 
@@ -173,6 +172,9 @@ class FreeEnergyEquilibration(_Equilibration, _FreeEnergyMixin):
             restart_interval=restart_interval,
             restraint=restraint,
             force_constant=force_constant,
+            hmr=hmr,
+            hmr_factor=hmr_factor,
+            hmr_water=hmr_water,
         )
 
         _FreeEnergyMixin.__init__(
@@ -185,18 +187,11 @@ class FreeEnergyEquilibration(_Equilibration, _FreeEnergyMixin):
             perturbation_type=perturbation_type,
         )
 
-        _HmrMixin.__init__(self,
-                           hmr=hmr,
-                           hmr_factor=hmr_factor,
-                           hmr_water=hmr_water,
-                           timestep=timestep
-                           )
-
     def _get_parm(self):
         """Return a string representation of the parameters."""
 
         return ", ".join(
-            [_Equilibration._get_parm(self), _FreeEnergyMixin._get_parm(self), _HmrMixin._get_parm(self)]
+            [_Equilibration._get_parm(self), _FreeEnergyMixin._get_parm(self)]
         )
 
     def __str__(self):
@@ -229,4 +224,8 @@ class FreeEnergyEquilibration(_Equilibration, _FreeEnergyMixin):
             restart_interval=self.getRestartInterval(),
             restraint=self.getRestraint(),
             force_constant=self.getForceConstant(),
+            restart=self.isRestart(),
+            hmr=self.getHmr(),
+            hmr_factor=self.getHmrFactor(),
+            hmr_water=self.getHmrWater(),
         )

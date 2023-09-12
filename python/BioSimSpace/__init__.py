@@ -161,23 +161,23 @@ from os import path as _path
 # First, let the user tell us where to find GROMACS. This
 # assumes that gromacs is installed in $GROMACSHOME/bin/gmx.
 _gmx_exe = None
-if "GROMACSHOME" in _environ:
-    try:
-        _gmx_exe = _SireBase.findExe(
-            "%s/bin/gmx" % _environ.get("GROMACSHOME")
-        ).absoluteFilePath()
-    except:
-        try:
-            _gmx_exe = _SireBase.findExe(
-                "%s/bin/gmx_mpi" % _environ.get("GROMACSHOME")
-            ).absoluteFilePath()
-        except:
-            pass
+# if "GROMACSHOME" in _environ:
+#     try:
+#         _gmx_exe = _SireBase.findExe(
+#             "%s/bin/gmx" % _environ.get("GROMACSHOME")
+#         ).absoluteFilePath()
+#     except:
+#         try:
+#             _gmx_exe = _SireBase.findExe(
+#                 "%s/bin/gmx_mpi" % _environ.get("GROMACSHOME")
+#             ).absoluteFilePath()
+#         except:
+#             pass
 
 if _gmx_exe is None:
     # The user has not told us where it is, so need to look in $PATH.
     try:
-        _gmx_exe = _SireBase.findExe("gmx").absoluteFilePath()
+        _gmx_exe = _SireBase.findExe("gmx23").absoluteFilePath()
     except:
         try:
             _gmx_exe = _SireBase.findExe("gmx_mpi").absoluteFilePath()

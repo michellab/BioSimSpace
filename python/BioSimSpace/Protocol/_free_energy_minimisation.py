@@ -98,6 +98,7 @@ class FreeEnergyMinimisation(_Minimisation, _FreeEnergyMixin):
             The force constant for the restraint potential. If a 'float' is
             passed, then default units of 'kcal_per_mol / angstrom**2' will
             be used.
+
         """
 
         # Call the base class constructors.
@@ -118,7 +119,7 @@ class FreeEnergyMinimisation(_Minimisation, _FreeEnergyMixin):
             num_lam=num_lam,
             perturbation_type=perturbation_type,
         )
-
+        
     def _get_parm(self):
         """Return a string representation of the parameters."""
 
