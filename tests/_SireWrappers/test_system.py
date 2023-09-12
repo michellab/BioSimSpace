@@ -433,6 +433,8 @@ def test_rotate_box_vectors(system):
     assert math.isclose(box1[0].value(), box0[2].value())
     assert math.isclose(box1[1].value(), box0[0].value())
     assert math.isclose(box1[2].value(), box0[1].value())
+    # All angles should remain the same since this is a cubic system with
+    # 90 degree angles.
     assert math.isclose(angles1[0].value(), angles0[0].value())
     assert math.isclose(angles1[1].value(), angles0[1].value())
     assert math.isclose(angles1[2].value(), angles0[2].value())
