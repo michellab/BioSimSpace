@@ -41,6 +41,7 @@ from sire.legacy import Units as _SireUnits
 from .. import _isVerbose
 from .._Exceptions import IncompatibleError as _IncompatibleError
 from ..Types import Angle as _Angle
+from ..Types import Coordinate as _Coordinate
 from ..Types import Length as _Length
 from .. import Units as _Units
 
@@ -1115,7 +1116,16 @@ class System(_SireWrapper):
         """
         return len(self.getMLMolecules())
 
-    def rotateBoxVectors(self, precision=0.0, property_map={}):
+    def rotateBoxVectors(
+        self,
+        origin=_Coordinate(
+            0 * _Units.Length.angstrom,
+            0 * _Units.Length.angstrom,
+            0 * _Units.Length.angstrom,
+        ),
+        precision=0.0,
+        property_map={},
+    ):
         """
         Rotate the box vectors of the system so that the first vector is
         aligned with the x-axis, the second vector lies in the x-y plane,
@@ -1126,6 +1136,10 @@ class System(_SireWrapper):
 
         Parameters
         ----------
+
+        origin : :class:`Coordinate <BioSimSpace.Types.Coordinate>`
+            The origin of the triclinic space. This is the point about which
+            the lattice vectors are rotated.
 
         precision : float
             The precision to use when sorting box vectors by their magnitude.
@@ -1149,6 +1163,14 @@ class System(_SireWrapper):
         if not isinstance(space, _SireVol.TriclinicBox):
             return
 
+        # Validate input.
+
+        if not isinstance(origin, _Coordinate):
+            raise TypeError("'origin' must be of type 'BioSimSpace.Types.Coordinate'")
+
+        if not isinstance(precision, float):
+            raise TypeError("'precision' must be of type 'float'")
+
         # Rotate the space according to the desired precision.
         space.rotate(precision)
 
@@ -1157,6 +1179,9 @@ class System(_SireWrapper):
 
         # Get the rotation matrix.
         rotation_matrix = space.rotationMatrix()
+
+        # Get the center of rotation, as a Sire vector.
+        center = origin.toVector()._sire_object
 
         from sire.system import System
 
@@ -1169,7 +1194,7 @@ class System(_SireWrapper):
         try:
             prop_name = property_map.get("coordinates", "coordinates")
             cursor = cursor.rotate(
-                matrix=rotation_matrix, map={"coordinates": prop_name}
+                center=center, matrix=rotation_matrix, map={"coordinates": prop_name}
             )
         except:
             pass
@@ -1178,7 +1203,7 @@ class System(_SireWrapper):
         try:
             prop_name = property_map.get("velocity", "velocity")
             cursor = cursor.rotate(
-                matrix=rotation_matrix, map={"coordinates": prop_name}
+                center=center, matrix=rotation_matrix, map={"coordinates": prop_name}
             )
         except:
             pass
@@ -1189,11 +1214,15 @@ class System(_SireWrapper):
             try:
                 prop_name = property_map.get("coordinates", "coordinates") + "0"
                 cursor = cursor.rotate(
-                    matrix=rotation_matrix, map={"coordinates": prop_name}
+                    center=center,
+                    matrix=rotation_matrix,
+                    map={"coordinates": prop_name},
                 )
                 prop_name = property_map.get("coordinates", "coordinates") + "1"
                 cursor = cursor.rotate(
-                    matrix=rotation_matrix, map={"coordinates": prop_name}
+                    center=center,
+                    matrix=rotation_matrix,
+                    map={"coordinates": prop_name},
                 )
             except:
                 pass
@@ -1202,11 +1231,15 @@ class System(_SireWrapper):
             try:
                 prop_name = property_map.get("velocity", "velocity") + "0"
                 cursor = cursor.rotate(
-                    matrix=rotation_matrix, map={"coordinates": prop_name}
+                    center=center,
+                    matrix=rotation_matrix,
+                    map={"coordinates": prop_name},
                 )
                 prop_name = property_map.get("velocity", "velocity") + "1"
                 cursor = cursor.rotate(
-                    matrix=rotation_matrix, map={"coordinates": prop_name}
+                    center=center,
+                    matrix=rotation_matrix,
+                    map={"coordinates": prop_name},
                 )
             except:
                 pass
