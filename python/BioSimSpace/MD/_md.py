@@ -68,7 +68,7 @@ _file_extensions = {
 # Whether each engine supports free energy simulations. This dictionary needs to
 # be updated as support for different engines is added.
 _free_energy = {
-    "AMBER": False,
+    "AMBER": True,
     "GROMACS": True,
     "NAMD": False,
     "OPENMM": False,

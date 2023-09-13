@@ -728,6 +728,7 @@ def matchAtoms(
     max_scoring_matches=1000,
     property_map0={},
     property_map1={},
+    **kwargs
 ):
     """
     Find mappings between atom indices in molecule0 to those in molecule1.

@@ -30,6 +30,7 @@ import math as _math
 import warnings as _warnings
 
 from .. import Protocol as _Protocol
+from .._Exceptions import IncompatibleError as _IncompatibleError
 from ..Protocol._position_restraint_mixin import _PositionRestraintMixin
 
 from ._config import Config as _Config
@@ -112,10 +113,38 @@ class Somd(_Config):
             report_interval = self._protocol.getReportInterval()
             restart_interval = self._protocol.getRestartInterval()
 
-            # Work out the number of cycles.
-            ncycles = (
-                self._protocol.getRunTime() / self._protocol.getTimeStep()
-            ) / report_interval
+            # For free energy simulations, the report interval must be a multiple
+            # of the energy frequency which is 250 steps.
+            if isinstance(self._protocol, _Protocol._FreeEnergyMixin):
+                if report_interval % 200 != 0:
+                    report_interval = 200 * _math.ceil(report_interval / 200)
+                if restart_interval % 200 != 0:
+                    restart_interval = int(
+                        200 * _math.ceil(restart_interval / 200))
+
+        
+            # The number of moves per cycle - want about 1 cycle per 1 ns.
+            # if the run is less than 1 ns, want 1 cycle for this.
+            runtime = self._protocol.getRunTime().nanoseconds().value()
+            if runtime <= 1:
+                ncycles = int(1)       
+            else:
+                # calculate the number of cycles - rounds up to integer value
+                ncycles = _math.ceil(runtime)
+
+            # number of moves should be so that nmoves * ncycles is equal to self._steps.
+            nmoves = int(max(1, ((self.steps()) // (ncycles))))
+
+            if self.steps() != (nmoves * ncycles):
+                _warnings.warn(f"The runtime is not resulting in a suitable cycle/moves/steps combination. Changing it to {(nmoves * ncycles)*self._protocol.getTimeStep().nanoseconds()}.")
+
+            # Work out how many cycles need to pass before we write a trajectory frame.
+            cycles_per_frame = max(1, restart_interval // nmoves)
+
+            # How many time steps need to pass before we write a trajectory frame.
+            # The buffer frequency must be an integer multiple of the frequency
+            # at which free energies are written, which is 200 steps.
+            buffer_freq = int(nmoves * ((restart_interval / nmoves) % 1))
 
             # If the number of cycles isn't integer valued, adjust the report
             # interval so that we match specified the run time.
@@ -128,35 +157,17 @@ class Somd(_Config):
                     / ncycles
                 )
 
-            # For free energy simulations, the report interval must be a multiple
-            # of the energy frequency which is 250 steps.
-            if isinstance(self._protocol, _Protocol.FreeEnergyProduction):
-                if report_interval % 250 != 0:
-                    report_interval = 250 * _math.ceil(report_interval / 250)
-
-            # Work out the number of cycles per frame.
-            cycles_per_frame = restart_interval / report_interval
-
-            # Work out whether we need to adjust the buffer frequency.
-            buffer_freq = 0
-            if cycles_per_frame < 1:
-                buffer_freq = cycles_per_frame * restart_interval
-                cycles_per_frame = 1
-                self._buffer_freq = buffer_freq
-            else:
-                cycles_per_frame = _math.floor(cycles_per_frame)
-
             # For free energy simulations, the buffer frequency must be an integer
             # multiple of the frequency at which free energies are written, which
-            # is 250 steps. Round down to the closest multiple.
+            # is 200 steps. Round down to the closest multiple.
             if isinstance(self._protocol, _Protocol.FreeEnergyProduction):
                 if buffer_freq > 0:
-                    buffer_freq = 250 * _math.floor(buffer_freq / 250)
+                    buffer_freq = 200 * _math.floor(buffer_freq / 200)
 
             # The number of SOMD cycles.
             protocol_dict["ncycles"] = int(ncycles)
             # The number of moves per cycle.
-            protocol_dict["nmoves"] = report_interval
+            protocol_dict["nmoves"] = nmoves
             # Cycles per trajectory write.
             protocol_dict["ncycles_per_snap"] = cycles_per_frame
             # Buffering frequency.
@@ -183,7 +194,7 @@ class Somd(_Config):
             # Periodic box.
             protocol_dict["cutoff type"] = "cutoffperiodic"
         # Non-bonded cut-off.
-        protocol_dict["cutoff distance"] = "10 angstrom"
+        protocol_dict["cutoff distance"] = "12 angstrom"
 
         # Restraints.
         if (
@@ -247,7 +258,7 @@ class Somd(_Config):
             # Handle hydrogen perturbations.
             protocol_dict["constraint"] = "hbonds-notperturbed"
             # Write gradients every 250 steps.
-            protocol_dict["energy frequency"] = 250
+            protocol_dict["energy frequency"] = self.reportInterval()
 
             protocol = [str(x) for x in self._protocol.getLambdaValues()]
             protocol_dict["lambda array"] = ", ".join(protocol)

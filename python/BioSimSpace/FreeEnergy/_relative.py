@@ -33,7 +33,6 @@ import numpy as _np
 import os as _os
 import pandas as _pd
 import pathlib as _pathlib
-import pyarrow.parquet as _pq
 import re as _re
 import shutil as _shutil
 import subprocess as _subprocess
@@ -41,6 +40,13 @@ import sys as _sys
 import warnings as _warnings
 import zipfile as _zipfile
 import alchemlyb as _alchemlyb
+import tempfile as _tempfile
+
+# temporarily not, as only needed for new somd
+try:
+    import pyarrow.parquet as _pq
+except:
+    _warnings.warn("can't import pyarrow.parquet, cannot analyse somd2 files.")
 
 from pytest import approx
 from scipy.constants import proton_mass
@@ -88,36 +94,6 @@ from .._Utils import _assert_imported, _have_imported, _try_import
 # alchemlyb isn't available for all variants of Python that we support, so we
 # need to try_import it.
 _alchemlyb = _try_import("alchemlyb")
-
-if _have_imported(_alchemlyb):
-    import logging as _logging
-
-    # Silence pymbar warnings on startup.
-    _logger = _logging.getLogger("pymbar")
-    _logger.setLevel(_logging.ERROR)
-
-    # Handle alchemlyb MBAR API changes.
-    try:
-        from alchemlyb.estimators import AutoMBAR as _AutoMBAR
-    except ImportError:
-        from alchemlyb.estimators import MBAR as _AutoMBAR
-    from alchemlyb.estimators import TI as _TI
-    from alchemlyb.postprocessors.units import to_kcalmol as _to_kcalmol
-    from alchemlyb.parsing.amber import extract_dHdl as _amber_extract_dHdl
-    from alchemlyb.parsing.amber import extract_u_nk as _amber_extract_u_nk
-    from alchemlyb.parsing.gmx import extract_dHdl as _gmx_extract_dHdl
-    from alchemlyb.parsing.gmx import extract_u_nk as _gmx_extract_u_nk
-    from alchemlyb.preprocessing.subsampling import (
-        equilibrium_detection as _equilibrium_detection,
-    )
-    from alchemlyb.preprocessing.subsampling import (
-        statistical_inefficiency as _statistical_inefficiency,
-    )
-    from alchemlyb.preprocessing.subsampling import slicing as _slicing
-    from alchemlyb.preprocessing.subsampling import decorrelate_u_nk, decorrelate_dhdl
-    from alchemlyb.postprocessors.units import to_kcalmol as _to_kcalmol
-    from alchemlyb.postprocessors.units import kJ2kcal as _kJ2kcal
-    from alchemlyb.postprocessors.units import R_kJmol as _R_kJmol
 
 from sire.legacy.Base import getBinDir as _getBinDir
 from sire.legacy.Base import getShareDir as _getShareDir
@@ -176,8 +152,8 @@ class Relative:
         setup_only=False,
         ignore_warnings=False,
         show_errors=True,
-        extra_options=None,
-        extra_lines=None,
+        extra_options={},
+        extra_lines=[],
         estimator='MBAR',
         property_map={},
     ):
@@ -275,14 +251,9 @@ class Relative:
                 )
             self._tmp_dir = _tempfile.TemporaryDirectory()
             self._work_dir = self._tmp_dir.name
-
-        # User specified working directory.
         else:
-            self._work_dir = work_dir
-
-            # Create the directory if it doesn't already exist.
-            if not _os.path.isdir(work_dir):
-                _os.makedirs(work_dir, exist_ok=True)
+            # Create the working directory.
+            self._work_dir = _Utils.WorkDir(work_dir)
 
         # Validate the user specified molecular dynamics engine.
         self._exe = None
@@ -396,8 +367,22 @@ class Relative:
                 "A 'work_dir' must be specified when 'setup_only' is True!"
             )
 
-        # Create the working directory.
-        self._work_dir = _Utils.WorkDir(work_dir)
+        # Check the extra options.
+        if not isinstance(extra_options, dict):
+            raise TypeError("'extra_options' must be of type 'dict'.")
+        else:
+            keys = extra_options.keys()
+            if not all(isinstance(k, str) for k in keys):
+                raise TypeError("Keys of 'extra_options' must be of type 'str'.")
+        self._extra_options = extra_options
+
+        # Check the extra lines.
+        if not isinstance(extra_lines, list):
+            raise TypeError("'extra_lines' must be of type 'list'.")
+        else:
+            if not all(isinstance(line, str) for line in extra_lines):
+                raise TypeError("Lines in 'extra_lines' must be of type 'str'.")
+        self._extra_lines = extra_lines
 
         # HMR check
         # by default, if the timestep is greater than 4 fs this should be true.
@@ -513,23 +498,6 @@ class Relative:
         if estimator not in ['MBAR', 'TI']:
             raise ValueError("'estimator' must be either 'MBAR' or 'TI'.")
         self._estimator = estimator
-
-        # Check the extra options.
-        if not isinstance(extra_options, dict):
-            raise TypeError("'extra_options' must be of type 'dict'.")
-        else:
-            keys = extra_options.keys()
-            if not all(isinstance(k, str) for k in keys):
-                raise TypeError("Keys of 'extra_options' must be of type 'str'.")
-        self._extra_options = extra_options
-
-        # Check the extra lines.
-        if not isinstance(extra_lines, list):
-            raise TypeError("'extra_lines' must be of type 'list'.")
-        else:
-            if not all(isinstance(line, str) for line in extra_lines):
-                raise TypeError("Lines in 'extra_lines' must be of type 'str'.")
-        self._extra_lines = extra_lines
 
         # Check that the map is valid.
         if not isinstance(property_map, dict):

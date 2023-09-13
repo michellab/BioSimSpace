@@ -42,6 +42,9 @@ class FreeEnergyMinimisation(_Minimisation, _FreeEnergyMixin):
         perturbation_type="full",
         restraint=None,
         force_constant=10 * _Units.Energy.kcal_per_mol / _Units.Area.angstrom2,
+        hmr="auto",
+        hmr_factor="auto",
+        hmr_water="auto",
     ):
         """Constructor.
 
@@ -99,6 +102,15 @@ class FreeEnergyMinimisation(_Minimisation, _FreeEnergyMixin):
             passed, then default units of 'kcal_per_mol / angstrom**2' will
             be used.
 
+        hmr : "auto" or bool
+            Whether HMR should be applied.
+
+        hmr_factor : "auto" or float
+            The factor used to repartition.
+            "auto" indicates the recommended factor for the engine will be used.
+
+        hmr_water : "auto" or bool
+            Whether the water molecules should also be repartitioned.
         """
 
         # Call the base class constructors.
@@ -108,6 +120,9 @@ class FreeEnergyMinimisation(_Minimisation, _FreeEnergyMixin):
             steps=steps,
             restraint=restraint,
             force_constant=force_constant,
+            hmr=hmr,
+            hmr_factor=hmr_factor,
+            hmr_water=hmr_water,            
         )
 
         _FreeEnergyMixin.__init__(

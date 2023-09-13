@@ -46,7 +46,7 @@ class FreeEnergyProduction(_Production, _FreeEnergyMixin):
         runtime=_Types.Time(4, "nanosecond"),
         temperature=_Types.Temperature(300, "kelvin"),
         pressure=_Types.Pressure(1, "atmosphere"),
-        thermostat_time_constant=_Types.Time(1, "picosecond"),
+        thermostat_time_constant=_Types.Time(2, "picosecond"),
         report_interval=200,
         restart_interval=1000,
         restart=False,

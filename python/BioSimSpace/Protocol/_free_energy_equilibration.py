@@ -49,7 +49,7 @@ class FreeEnergyEquilibration(_Equilibration, _FreeEnergyMixin):
         temperature_end=_Types.Temperature(300, "kelvin"),
         temperature=None,
         pressure=None,
-        thermostat_time_constant=_Types.Time(1, "picosecond"),
+        thermostat_time_constant=_Types.Time(2, "picosecond"),
         report_interval=200,
         restart_interval=1000,
         restraint=None,

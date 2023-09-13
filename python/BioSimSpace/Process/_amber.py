@@ -127,12 +127,6 @@ class Amber(_process.Process):
             property_map=property_map,
         )
 
-        # Catch unsupported protocols.
-        if isinstance(protocol, _Protocol.FreeEnergy):
-            raise _IncompatibleError(
-                "Unsupported protocol: '%s'" % self._protocol.__class__.__name__
-            )
-
         # Set the package name.
         self._package_name = "AMBER"
 

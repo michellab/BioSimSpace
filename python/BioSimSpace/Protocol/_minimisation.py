@@ -29,17 +29,16 @@ __all__ = ["Minimisation"]
 import warnings as _warnings
 
 from .. import Units as _Units
+from .. import Types as _Types
 
 from ._position_restraint_mixin import _PositionRestraintMixin
 from ._protocol import Protocol as _Protocol
-
-# import restraint and force constant from _equilibration.py
-from ._equilibration import Equilibration as _Equilibration
+from ._hmr_mixin import _HmrMixin
 
 from .. import Units as _Units
 
 
-class Minimisation(_Protocol, _PositionRestraintMixin):
+class Minimisation(_Protocol, _PositionRestraintMixin, _HmrMixin):
     """A class for storing minimisation protocols."""
 
     def __init__(
@@ -47,6 +46,9 @@ class Minimisation(_Protocol, _PositionRestraintMixin):
         steps=10000,
         restraint=None,
         force_constant=10 * _Units.Energy.kcal_per_mol / _Units.Area.angstrom2,
+        hmr="auto",
+        hmr_factor="auto",
+        hmr_water="auto",
     ):
         """
         Constructor.
@@ -77,18 +79,42 @@ class Minimisation(_Protocol, _PositionRestraintMixin):
             The force constant for the restraint potential. If a 'float' is
             passed, then default units of 'kcal_per_mol / angstrom**2' will
             be used.
+
+        hmr : "auto" or bool
+            Whether HMR should be applied.
+
+        hmr_factor : "auto" or float
+            The factor used to repartition.
+            "auto" indicates the recommended factor for the engine will be used.
+
+        hmr_water : "auto" or bool
+            Whether the water molecules should also be repartitioned.
         """
 
         # Call the base class constructor.
         _Protocol.__init__(self)
         _PositionRestraintMixin.__init__(self, restraint, force_constant)
+        
+        # assume no HMR is to be applied to the system for minimisation unless set to True.
+        if not hmr or hmr == "auto":
+            timestep = _Types.Time(2, "femtosecond")
 
+        if hmr:
+            timestep = _Types.Time(4, "femtosecond")
+
+        _HmrMixin.__init__(self,
+                           hmr=hmr,
+                           hmr_factor=hmr_factor,
+                           hmr_water=hmr_water,
+                           timestep=timestep
+                           )
+        
         # Set the number of steps.
         self.setSteps(steps)
 
     def _get_parm(self):
         """Return a string representation of the parameters."""
-        return f"steps={self._steps}, " + _PositionRestraintMixin._get_parm(self)
+        return f"steps={self._steps}, " + _PositionRestraintMixin._get_parm(self) + _HmrMixin._get_parm(self)
 
     def __str__(self):
         """Return a human readable string representation of the object."""

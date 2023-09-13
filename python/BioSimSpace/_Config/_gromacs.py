@@ -100,23 +100,12 @@ class Gromacs(_Config):
             if not all(isinstance(line, str) for line in extra_lines):
                 raise TypeError("Lines in 'extra_lines' must be of type 'str'.")
 
-        # Make sure the report interval is a multiple of nstcalcenergy.
-        if isinstance(self._protocol, _FreeEnergyMixin):
-            nstcalcenergy = 250
-        else:
-            nstcalcenergy = 100
-        report_interval = self.reportInterval()
-        if report_interval % nstcalcenergy != 0:
-            report_interval = nstcalcenergy * _math.ceil(
-                report_interval / nstcalcenergy
-            )
-
         # Define some miscellaneous defaults.
         protocol_dict = {
             # Interval between writing to the log file.
-            "nstlog": report_interval,
+            "nstlog": self.reportInterval(),
             # Interval between writing to the energy file.
-            "nstenergy": report_interval,
+            "nstenergy": self.reportInterval(),
             # Interval between writing to the trajectory file.
             "nstxout-compressed": self.restartInterval(),
         }
@@ -124,6 +113,11 @@ class Gromacs(_Config):
         # Minimisation.
         if isinstance(self._protocol, _Protocol.Minimisation):
             protocol_dict["integrator"] = "steep"
+            protocol_dict["emstep"] = "0.001" # maximum step size in nm
+            if protocol_dict["integrator"] == "cg":
+                # step frequency of performing 1 steepest descent step whilst doing conjugate gradient descent
+                num_steep = 1000 # default is 1000
+                protocol_dict["nstcgsteep"] = num_steep
         else:
             # Timestep in picoseconds
             timestep = self._protocol.getTimeStep().picoseconds().value()
@@ -151,11 +145,11 @@ class Gromacs(_Config):
             # Rebuild neighbour list every 20 steps.
             protocol_dict["nstlist"] = "20"
             # Set short-range cutoff.
-            protocol_dict["rlist"] = "0.8"
+            protocol_dict["rlist"] = "1.0" # this is set by default with dynamics
             # Set van der Waals cutoff.
-            protocol_dict["rvdw"] = "0.8"
+            protocol_dict["rvdw"] = "1.0"
             # Set Coulomb cutoff.
-            protocol_dict["rcoulomb"] = "0.8"
+            protocol_dict["rcoulomb"] = "1.0"
             # Fast smooth Particle-Mesh Ewald.
             protocol_dict["coulombtype"] = "PME"
             # Dispersion corrections for energy and pressure.
@@ -188,10 +182,14 @@ class Gromacs(_Config):
                 # Don't use barostat for vacuum simulations.
                 if self.hasBox() and self.hasWater():
                     # Barostat type.
-                    if version and version >= 2021:
-                        protocol_dict["pcoupl"] = "c-rescale"
+                    if isinstance(self._protocol, _Protocol.Equilibration):
+                        # Barostat type.
+                        if version and version >= 2021:
+                            protocol_dict["pcoupl"] = "c-rescale"
+                        else:
+                            protocol_dict["pcoupl"] = "berendsen"
                     else:
-                        protocol_dict["pcoupl"] = "berendsen"
+                        protocol_dict["pcoupl"] = "parrinello-rahman"
                     # 1ps time constant for pressure coupling.
                     protocol_dict["tau-p"] = 1
                     # Pressure in bar.
@@ -207,10 +205,16 @@ class Gromacs(_Config):
 
         # Temperature control.
         if not isinstance(self._protocol, _Protocol.Minimisation):
-            # Leap-frog molecular dynamics.
-            protocol_dict["integrator"] = "md"
-            # Temperature coupling using velocity rescaling with a stochastic term.
-            protocol_dict["tcoupl"] = "v-rescale"
+
+            if isinstance(self._protocol, _FreeEnergyMixin):
+                # An accurate and efficient leap-frog stochastic dynamics integrator
+                protocol_dict["integrator"] = "sd"
+            else:
+                # Leap-frog molecular dynamics. Default.
+                protocol_dict["integrator"] = "md"
+                # Temperature coupling using velocity rescaling with a stochastic term.
+                protocol_dict["tcoupl"] = "v-rescale"
+
             # A single temperature group for the entire system.
             protocol_dict["tc-grps"] = "system"
             # Thermostat coupling frequency (ps).
@@ -252,30 +256,47 @@ class Gromacs(_Config):
                     "%.2f" % self._protocol.getTemperature().kelvin().value()
                 )
 
+
+            # if is restart, set as a continuation
+            if self.isRestart():
+                protocol_dict["continuation"] = "yes"
+                protocol_dict["gen-vel"] = "no"
+            else:
+                # else, generate velocities for the
+                protocol_dict["continuation"] = "no"
+                protocol_dict["gen-vel"] = "yes"
+                protocol_dict["gen-seed"] = "-1"
+                if isinstance(self._protocol, _Protocol.Equilibration):
+                    protocol_dict["gen-temp"] = "%.2f" % self._protocol.getStartTemperature().kelvin().value()
+                else:
+                    protocol_dict["gen-temp"] = "%.2f" % self._protocol.getTemperature().kelvin().value()
+
         # Free energies.
         if isinstance(self._protocol, _FreeEnergyMixin):
             # Extract the lambda array.
-            lam_vals = self._protocol.getLambdaValues()
-
+            protocol = [str(x) for x in self._protocol.getLambdaValues()]
             # Determine the index of the lambda value.
             idx = self._protocol.getLambdaIndex()
-
             # Free energy mode.
             protocol_dict["free-energy"] = "yes"
             # Initial lambda state.
             protocol_dict["init-lambda-state"] = idx
             # Lambda value array.
-            protocol_dict["fep-lambdas"] = " ".join([str(x) for x in lam_vals])
+            protocol_dict["fep-lambdas"] = " ".join(protocol)
             # All interactions on at lambda = 0
             protocol_dict["couple-lambda0"] = "vdw-q"
             # All interactions on at lambda = 1
             protocol_dict["couple-lambda1"] = "vdw-q"
             # Write all lambda values.
             protocol_dict["calc-lambda-neighbors"] = -1
-            # Calculate energies every 250 steps.
-            protocol_dict["nstcalcenergy"] = 250
-            # Write gradients every 250 steps.
-            protocol_dict["nstdhdl"] = 250
+            # Calculate energies every 200 steps.
+            protocol_dict["nstcalcenergy"] = self.reportInterval()
+            # Write gradients every 200 steps.
+            protocol_dict["nstdhdl"] = self.reportInterval()
+            # softcore parameters
+            protocol_dict["sc-alpha"] = "0.30"
+            protocol_dict["sc-sigma"] = "0.25"
+            protocol_dict["sc-coul"] = "yes"
 
         # Put everything together in a line-by-line format.
         total_dict = {**protocol_dict, **extra_options}

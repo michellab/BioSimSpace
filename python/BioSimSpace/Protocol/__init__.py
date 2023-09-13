@@ -95,7 +95,6 @@ while restraining the positions of any backbone atoms.
    )
 """
 
-from ._config import *
 from ._custom import *
 from ._equilibration import *
 from ._free_energy_equilibration import *
