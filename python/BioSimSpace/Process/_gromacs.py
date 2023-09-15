@@ -331,6 +331,7 @@ class Gromacs(_process.Process):
         if isinstance(self._protocol, _Protocol.Equilibration):
             if self._checkpoint_file is not None:
                 config_options["continuation"] = "yes"
+                config_options["gen-vel"] = "no"
 
         # Add any position restraints.
         if isinstance(self._protocol, _PositionRestraintMixin):
