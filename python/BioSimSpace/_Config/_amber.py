@@ -271,9 +271,8 @@ class Amber(_Config):
             # Langevin dynamics.
             protocol_dict["ntt"] = 3
             # Collision frequency (1 / ps).
-            # TODO check this. Is it 1/ ?
             protocol_dict["gamma_ln"] = "{:.5f}".format(
-                self._protocol.getThermostatTimeConstant().picoseconds().value()
+                1 / self._protocol.getThermostatTimeConstant().picoseconds().value()
             )
 
             if isinstance(self._protocol, _Protocol.Equilibration):

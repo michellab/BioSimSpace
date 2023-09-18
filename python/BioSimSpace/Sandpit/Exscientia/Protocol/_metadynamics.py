@@ -48,7 +48,7 @@ class Metadynamics(_Protocol):
         runtime=_Types.Time(1, "nanosecond"),
         temperature=_Types.Temperature(300, "kelvin"),
         pressure=_Types.Pressure(1, "atmosphere"),
-        thermostat_time_constant=_Types.Time(2, "picosecond"),
+        thermostat_time_constant=_Types.Time(1, "picosecond"),
         hill_height=_Types.Energy(1, "kj per mol"),
         hill_frequency=1000,
         report_interval=1000,

@@ -516,6 +516,7 @@ class Amber(_process.Process):
                         molecules.append(molecule)
                         mol_idx += 2
                 old_system = _System(molecules)
+                
             else:
                 # Update the coordinates and velocities and return a mapping between
                 # the molecule indices in the two systems.
