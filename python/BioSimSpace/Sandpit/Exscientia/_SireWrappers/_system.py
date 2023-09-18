@@ -136,23 +136,6 @@ class System(_SireWrapper):
         # Initialise the iterator counter.
         self._iter_count = 0
 
-        # Copy any fileformat property to each molecule.
-        if "fileformat" in self._sire_object.propertyKeys():
-            fileformat = self._sire_object.property("fileformat")
-            for num in self._mol_nums:
-                edit_mol = self._sire_object[num].edit()
-                edit_mol = edit_mol.setProperty("fileformat", fileformat)
-                self._sire_object.update(edit_mol.commit())
-        else:
-            # If a molecule has a fileformat property, use the first
-            # that we find.
-            for mol in self:
-                if mol._sire_object.hasProperty("fileformat"):
-                    self._sire_object.setProperty(
-                        "fileformat", mol._sire_object.property("fileformat")
-                    )
-                    break
-
         # Reset the index mappings.
         self._reset_mappings()
 
