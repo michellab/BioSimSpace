@@ -1184,11 +1184,6 @@ class Relative:
             back_m.name = "backward_mc"
             forward_m.name = "forward_mc"
 
-            if lambda_array is not None:
-                df[[str(i) for i in lambda_array]] = df[
-                    [str(i) for i in lambda_array]
-                ].apply(lambda x: x * -beta)
-
             df = _pd.concat(
                 [
                     df,
@@ -1211,8 +1206,8 @@ class Relative:
                 zip(time, lambdas), names=["time", "fep-lambdas"]
             )
 
-            # Get the gradients.
-            grads = list(df["gradient"])
+            # Get the gradients in kT.
+            grads = list(beta * df["gradient"])
 
             # Create a DataFrame with the multi-index
             df = _pd.DataFrame({"fep": grads}, index=multi_index)
