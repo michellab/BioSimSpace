@@ -27,6 +27,7 @@ __email__ = "lester.hedges@gmail.com"
 __all__ = ["Amber"]
 
 import os
+import shutil
 from pathlib import Path as _Path
 
 from .._Utils import _try_import
@@ -303,9 +304,11 @@ class Amber(_process.Process):
         if coord_file is not None:
             try:
                 file = _os.path.splitext(coord_file)[0]
-                _IO.saveMolecules(file, system, "rst7", property_map=self._property_map)
+                _IO.saveMolecules(file, system, "rst", property_map=self._property_map)
+                # To keep the file extension the same.
+                shutil.move(f"{file}.rst", f"{file}.rst7")
             except Exception as e:
-                msg = "Failed to write system to 'RST7' format."
+                msg = "Failed to write system to 'rst7' format."
                 if _isVerbose():
                     raise IOError(msg) from e
                 else:
@@ -315,9 +318,11 @@ class Amber(_process.Process):
         if ref_file is not None:
             try:
                 file = _os.path.splitext(ref_file)[0]
-                _IO.saveMolecules(file, system, "rst7", property_map=self._property_map)
+                _IO.saveMolecules(file, system, "rst", property_map=self._property_map)
+                # To keep the file extension the same.
+                shutil.move(f"{file}.rst", f"{file}.rst7")
             except Exception as e:
-                msg = "Failed to write system to 'RST7' format."
+                msg = "Failed to write system to 'rst7' format."
                 if _isVerbose():
                     raise IOError(msg) from e
                 else:
