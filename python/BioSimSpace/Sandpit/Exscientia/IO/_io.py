@@ -523,6 +523,28 @@ def readMolecules(
                 else:
                     raise IOError(msg) from None
 
+    # Add a file format shared property.
+    prop = property_map.get("fileformat", "fileformat")
+    system.addSharedProperty(prop, system.property(prop))
+
+    # Remove "space" and "time" shared properties since this causes incorrect
+    # behaviour when extracting molecules and recombining them to make other
+    # systems.
+    try:
+        # Space.
+        prop = property_map.get("space", "space")
+        space = system.property(prop)
+        system.removeSharedProperty(prop)
+        system.setProperty(prop, space)
+
+        # Time.
+        prop = property_map.get("time", "time")
+        time = system.property(prop)
+        system.removeSharedProperty(prop)
+        system.setProperties(prop, time)
+    except:
+        pass
+
     return _System(system)
 
 
@@ -1015,6 +1037,23 @@ def readPerturbableSystem(top0, coords0, top1, coords1, property_map={}):
     # Add the molecule0 and molecule1 properties.
     mol.setProperty("molecule0", system0[idx]._sire_object)
     mol.setProperty("molecule1", system1[idx]._sire_object)
+
+    # Get the connectivity property name.
+    conn_prop = property_map.get("connectivity", "connectivity")
+
+    # Get the connectivity from the end states.
+    conn0 = mol.property(conn_prop + "0")
+    conn1 = mol.property(conn_prop + "1")
+
+    # Check whether the connectivity is the same.
+    if conn0 == conn1:
+        # The connectivity is the same, so we can use the connectivity
+        # from the lambda=0 end state.
+        mol = mol.setProperty(conn_prop, conn0).molecule()
+
+        # Delete the end state properties.
+        mol = mol.removeProperty(conn_prop + "0").molecule()
+        mol = mol.removeProperty(conn_prop + "1").molecule()
 
     # Commit the changes.
     mol = _Molecule(mol.commit())
