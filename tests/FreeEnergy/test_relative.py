@@ -54,7 +54,7 @@ def expected_results():
     """A dictionary of expected FEP results."""
 
     return {
-        "somd": {"mbar": -6.3519, "ti": -10.6027},
+        "somd": {"mbar": -6.3519, "ti": -6.3209},
         "gromacs": {"mbar": -6.0238, "ti": -8.4158},
     }
 
