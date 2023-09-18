@@ -1167,11 +1167,11 @@ class Relative:
                 double_incr = (lam_above - lam) * 2
                 grad = (df[str(lam_above)] - df[str(lam)]) * 2 / double_incr
                 back_m = _np.exp(beta * (df[str(lam_above)] - df[str(lam)]))
-                forward_m = _np.exp(-1 * beta * (df[str(lam_above)] - df[str(lam)]))
+                forward_m = _np.exp(-beta * (df[str(lam_above)] - df[str(lam)]))
             elif lam_above is None:
                 double_incr = (lam - lam_below) * 2
                 grad = (df[str(lam)] - df[str(lam_below)]) * 2 / double_incr
-                back_m = _np.exp(-1 * beta * (df[str(lam_below)] - df[str(lam)]))
+                back_m = _np.exp(-beta * (df[str(lam_below)] - df[str(lam)]))
                 forward_m = _np.exp(beta * (df[str(lam_below)] - df[str(lam)]))
             else:
                 double_incr = lam_above - lam_below
@@ -1186,7 +1186,7 @@ class Relative:
             if lambda_array is not None:
                 df[[str(i) for i in lambda_array]] = df[
                     [str(i) for i in lambda_array]
-                ].apply(lambda x: x * -1 * beta)
+                ].apply(lambda x: x * -beta)
 
             df = _pd.concat(
                 [
