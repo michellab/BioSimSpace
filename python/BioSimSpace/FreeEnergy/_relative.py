@@ -979,8 +979,8 @@ class Relative:
         # TODO: get header from the file instead of like this.
         header = [
             "step",
-            "potential_kcal/mol",
-            "gradient_kcal/mol",
+            "potential",
+            "gradient",
             "forward_Metropolis",
             "backward_Metropolis",
         ]
@@ -1002,8 +1002,9 @@ class Relative:
                 file_df.iloc[:, 5:].subtract(file_df[lambda_win], axis=0).to_numpy()
             )
         else:
-            gradient = file_df["gradient_kcal/mol"].to_numpy()
-            results = gradient * beta
+            # This is actually in units of kT, but is reported incorrectly in
+            # the file originally written by SOMD.
+            results = file_df["gradient"].to_numpy()
 
         # Turn into a dataframe that can be processed by alchemlyb.
         if is_mbar:
