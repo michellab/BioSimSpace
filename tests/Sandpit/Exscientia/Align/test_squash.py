@@ -7,6 +7,7 @@ import sire
 from sire.maths import Vector
 
 import BioSimSpace.Sandpit.Exscientia as BSS
+from tests.conftest import root_fp
 
 # Make sure AMBER is installed.
 if BSS._amber_home is not None:
@@ -60,7 +61,7 @@ def dual_topology_system():
 @pytest.fixture
 def perturbed_tripeptide():
     return pickle.load(
-        open("tests/Sandpit/Exscientia/input/merged_tripeptide.pickle", "rb")
+        open(f"{root_fp}/Sandpit/Exscientia/input/merged_tripeptide.pickle", "rb")
     )
 
 

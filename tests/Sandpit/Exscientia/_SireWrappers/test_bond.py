@@ -1,10 +1,13 @@
 import pytest
 
 import BioSimSpace.Sandpit.Exscientia as BSS
+from tests.conftest import root_fp
 
 
 def test_bonds():
-    system = BSS.IO.readMolecules(["tests/input/ala.top", "tests/input/ala.crd"])
+    system = BSS.IO.readMolecules(
+        [f"{root_fp}/input/ala.top", f"{root_fp}/input/ala.crd"]
+    )
 
     bonds = system.search("bonds")
 

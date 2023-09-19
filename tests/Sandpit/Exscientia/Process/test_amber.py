@@ -10,12 +10,15 @@ import shutil
 import BioSimSpace.Sandpit.Exscientia as BSS
 
 from tests.Sandpit.Exscientia.conftest import url, has_amber, has_pyarrow
+from tests.conftest import root_fp
 
 
 @pytest.fixture(scope="session")
 def system():
     """Re-use the same molecuar system for each test."""
-    return BSS.IO.readMolecules(["tests/input/ala.top", "tests/input/ala.crd"])
+    return BSS.IO.readMolecules(
+        [f"{root_fp}/input/ala.top", f"{root_fp}/input/ala.crd"]
+    )
 
 
 @pytest.mark.skipif(
@@ -280,9 +283,9 @@ def test_parse_fep_output(system, protocol):
 
     # Assign the path to the output file.
     if isinstance(protocol, BSS.Protocol.FreeEnergy):
-        out_file = "tests/Sandpit/Exscientia/output/amber_fep.out"
+        out_file = f"{root_fp}/Sandpit/Exscientia/output/amber_fep.out"
     else:
-        out_file = "tests/Sandpit/Exscientia/output/amber_fep_min.out"
+        out_file = f"{root_fp}/Sandpit/Exscientia/output/amber_fep_min.out"
 
     # Copy the existing output file into the working directory.
     shutil.copyfile(out_file, process.workDir() + "/amber.out")
@@ -320,7 +323,6 @@ def test_parse_fep_output(system, protocol):
         assert len(records_sc1) != 0
 
 
-
 class TestsaveMetric:
     @staticmethod
     @pytest.fixture()
@@ -334,7 +336,6 @@ class TestsaveMetric:
         system_copy.updateMolecule(0, mol)
         return system_copy
 
-
     @staticmethod
     @pytest.fixture()
     def setup(alchemical_system):
@@ -344,7 +345,7 @@ class TestsaveMetric:
             BSS.Protocol.FreeEnergy(temperature=298 * BSS.Units.Temperature.kelvin),
         )
         shutil.copyfile(
-            "tests/Sandpit/Exscientia/output/amber_fep.out",
+            f"{root_fp}/Sandpit/Exscientia/output/amber_fep.out",
             process.workDir() + "/amber.out",
         )
         process.saveMetric()
@@ -357,10 +358,9 @@ class TestsaveMetric:
             BSS.Protocol.FreeEnergy(temperature=298 * BSS.Units.Temperature.kelvin),
         )
         process.wait()
-        with open(process.workDir() + '/amber.err', 'r') as f:
+        with open(process.workDir() + "/amber.err", "r") as f:
             text = f.read()
-            assert 'Exception Information' in text
-
+            assert "Exception Information" in text
 
     def test_metric_parquet_exist(self, setup):
         assert Path(f"{setup.workDir()}/metric.parquet").exists()

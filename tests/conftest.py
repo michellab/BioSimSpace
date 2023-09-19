@@ -1,3 +1,5 @@
+from pathlib import Path
+
 collect_ignore_glob = ["*/out_test*.py"]
 
 import os
@@ -55,3 +57,5 @@ MDRestraintsGenerator = _try_import(
 )
 
 has_mdrestraints_generator = _have_imported(MDRestraintsGenerator)
+
+root_fp = Path(__file__).parent.resolve()

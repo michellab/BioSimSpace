@@ -11,20 +11,23 @@ except Exception:
 
 
 from tests.Sandpit.Exscientia.conftest import has_mdanalysis, has_mdtraj
+from tests.conftest import root_fp
 
 
 @pytest.fixture(scope="session")
 def system():
     """A system object with the same topology as the trajectories."""
-    return BSS.IO.readMolecules(["tests/input/ala.top", "tests/input/ala.crd"])
+    return BSS.IO.readMolecules(
+        [f"{root_fp}/input/ala.top", f"{root_fp}/input/ala.crd"]
+    )
 
 
 @pytest.fixture(scope="session")
 def traj_sire(system):
     """A trajectory object using the Sire backend."""
     return BSS.Trajectory.Trajectory(
-        trajectory="tests/input/ala.trr",
-        topology="tests/input/ala.gro",
+        trajectory=f"{root_fp}/input/ala.trr",
+        topology=f"{root_fp}/input/ala.gro",
         system=system,
         backend="SIRE",
     )
@@ -34,8 +37,8 @@ def traj_sire(system):
 def traj_mdtraj(system):
     """A trajectory object using the MDTraj backend."""
     return BSS.Trajectory.Trajectory(
-        trajectory="tests/input/ala.trr",
-        topology="tests/input/ala.gro",
+        trajectory=f"{root_fp}/input/ala.trr",
+        topology=f"{root_fp}/input/ala.gro",
         system=system,
         backend="MDTRAJ",
     )
@@ -45,8 +48,8 @@ def traj_mdtraj(system):
 def traj_mdanalysis(system):
     """A trajectory object using the MDAnalysis backend."""
     return BSS.Trajectory.Trajectory(
-        trajectory="tests/input/ala.trr",
-        topology="tests/input/ala.tpr",
+        trajectory=f"{root_fp}/input/ala.trr",
+        topology=f"{root_fp}/input/ala.tpr",
         system=system,
         backend="MDANALYSIS",
     )
@@ -58,8 +61,8 @@ def traj_mdanalysis_pdb(system):
     new_system = system.copy()
     new_system._sire_object.setProperty("fileformat", wrap("PDB"))
     return BSS.Trajectory.Trajectory(
-        trajectory="tests/input/ala.trr",
-        topology="tests/input/ala.tpr",
+        trajectory=f"{root_fp}/input/ala.trr",
+        topology=f"{root_fp}/input/ala.tpr",
         system=new_system,
         backend="MDANALYSIS",
     )
