@@ -1115,6 +1115,33 @@ class System(_SireWrapper):
         """
         return len(self.getMLMolecules())
 
+    def getAlchemicalIon(self):
+        """
+        Return the Alchemical Ion in the system.
+
+        Returns
+        -------
+
+        molecule : [:class:`Molecule <BioSimSpace._SireWrappers.Molecule>`]
+            The Alchemical Ion or None if there isn't any.
+        """
+        try:
+            return self.search("mols with property AlchemicalIon").molecules()[0]
+        except:
+            return None
+
+    def getAlchemicalIonIdx(self):
+        """
+        Return the index of Alchemical Ion in the system.
+
+        Returns
+        -------
+
+        index : int
+            The index of Alchemical Ion in the system.
+        """
+        return self.getIndex(self.getAlchemicalIon())
+
     def repartitionHydrogenMass(
         self, factor=4, water="no", use_coordinates=False, property_map={}
     ):
