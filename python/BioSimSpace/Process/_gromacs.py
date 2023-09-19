@@ -254,15 +254,19 @@ class Gromacs(_process.Process):
             system = self._checkPerturbable(system)
 
         # Convert the water model topology so that it matches the GROMACS naming convention.
-        system._set_water_topology("GROMACS")
+        system._set_water_topology("GROMACS", property_map=self._property_map)
 
         # GRO87 file.
         file = _os.path.splitext(self._gro_file)[0]
-        _IO.saveMolecules(file, system, "gro87", property_map=self._property_map)
+        _IO.saveMolecules(
+            file, system, "gro87", match_water=False, property_map=self._property_map
+        )
 
         # TOP file.
         file = _os.path.splitext(self._top_file)[0]
-        _IO.saveMolecules(file, system, "grotop", property_map=self._property_map)
+        _IO.saveMolecules(
+            file, system, "grotop", match_water=False, property_map=self._property_map
+        )
 
         # Create the binary input file name.
         self._tpr_file = "%s/%s.tpr" % (self._work_dir, self._name)
@@ -331,6 +335,7 @@ class Gromacs(_process.Process):
         if isinstance(self._protocol, _Protocol.Equilibration):
             if self._checkpoint_file is not None:
                 config_options["continuation"] = "yes"
+                config_options["gen-vel"] = "no"
 
         # Add any position restraints.
         if isinstance(self._protocol, _PositionRestraintMixin):

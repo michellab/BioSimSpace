@@ -65,6 +65,7 @@ def solvate(
     ion_conc=0,
     is_neutral=True,
     is_aligned=False,
+    match_water=True,
     work_dir=None,
     property_map={},
 ):
@@ -103,6 +104,10 @@ def solvate(
     is_aligned : bool
         Whether to align the principal axes of the molecule to those of the
         solvent box.
+
+    match_water : bool
+        Whether to update the naming of existing water molecules to match the
+        expected convention for GROMACS, which is used as the solvation engine.
 
     work_dir : str
         The working directory for the process.
@@ -150,6 +155,7 @@ def spc(
     ion_conc=0,
     is_neutral=True,
     is_aligned=False,
+    match_water=True,
     work_dir=None,
     property_map={},
 ):
@@ -186,6 +192,10 @@ def spc(
         Whether to align the principal axes of the molecule to those of the
         solvent box.
 
+    match_water : bool
+        Whether to update the naming of existing water molecules to match the
+        expected convention for GROMACS, which is used as the solvation engine.
+
     work_dir : str
         The working directory for the process.
 
@@ -217,6 +227,7 @@ def spc(
         ion_conc,
         is_neutral,
         is_aligned,
+        match_water,
         work_dir,
         property_map,
     )
@@ -232,6 +243,7 @@ def spc(
         ion_conc,
         is_neutral,
         is_aligned,
+        match_water,
         work_dir=work_dir,
         property_map=property_map,
     )
@@ -245,6 +257,7 @@ def spce(
     ion_conc=0,
     is_neutral=True,
     is_aligned=False,
+    match_water=True,
     work_dir=None,
     property_map={},
 ):
@@ -281,6 +294,10 @@ def spce(
         Whether to align the principal axes of the molecule to those of the
         solvent box.
 
+    match_water : bool
+        Whether to update the naming of existing water molecules to match the
+        expected convention for GROMACS, which is used as the solvation engine.
+
     work_dir : str
         The working directory for the process.
 
@@ -312,6 +329,7 @@ def spce(
         ion_conc,
         is_neutral,
         is_aligned,
+        match_water,
         work_dir,
         property_map,
     )
@@ -327,6 +345,7 @@ def spce(
         ion_conc,
         is_neutral,
         is_aligned,
+        match_water,
         work_dir=work_dir,
         property_map=property_map,
     )
@@ -340,6 +359,7 @@ def tip3p(
     ion_conc=0,
     is_neutral=True,
     is_aligned=False,
+    match_water=True,
     work_dir=None,
     property_map={},
 ):
@@ -376,6 +396,10 @@ def tip3p(
         Whether to align the principal axes of the molecule to those of the
         solvent box.
 
+    match_water : bool
+        Whether to update the naming of existing water molecules to match the
+        expected convention for GROMACS, which is used as the solvation engine.
+
     work_dir : str
         The working directory for the process.
 
@@ -407,6 +431,7 @@ def tip3p(
         ion_conc,
         is_neutral,
         is_aligned,
+        match_water,
         work_dir,
         property_map,
     )
@@ -422,6 +447,7 @@ def tip3p(
         ion_conc,
         is_neutral,
         is_aligned,
+        match_water,
         work_dir=work_dir,
         property_map=property_map,
     )
@@ -435,6 +461,7 @@ def tip4p(
     ion_conc=0,
     is_neutral=True,
     is_aligned=False,
+    match_water=True,
     work_dir=None,
     property_map={},
 ):
@@ -471,6 +498,10 @@ def tip4p(
         Whether to align the principal axes of the molecule to those of the
         solvent box.
 
+    match_water : bool
+        Whether to update the naming of existing water molecules to match the
+        expected convention for GROMACS, which is used as the solvation engine.
+
     work_dir : str
         The working directory for the process.
 
@@ -502,6 +533,7 @@ def tip4p(
         ion_conc,
         is_neutral,
         is_aligned,
+        match_water,
         work_dir,
         property_map,
     )
@@ -517,6 +549,7 @@ def tip4p(
         ion_conc,
         is_neutral,
         is_aligned,
+        match_water,
         work_dir=work_dir,
         property_map=property_map,
     )
@@ -530,6 +563,7 @@ def tip5p(
     ion_conc=0,
     is_neutral=True,
     is_aligned=False,
+    match_water=True,
     work_dir=None,
     property_map={},
 ):
@@ -566,6 +600,10 @@ def tip5p(
         Whether to align the principal axes of the molecule to those of the
         solvent box.
 
+    match_water : bool
+        Whether to update the naming of existing water molecules to match the
+        expected convention for GROMACS, which is used as the solvation engine.
+
     work_dir : str
         The working directory for the process.
 
@@ -597,6 +635,7 @@ def tip5p(
         ion_conc,
         is_neutral,
         is_aligned,
+        match_water,
         work_dir,
         property_map,
     )
@@ -612,6 +651,7 @@ def tip5p(
         ion_conc,
         is_neutral,
         is_aligned,
+        match_water,
         work_dir=work_dir,
         property_map=property_map,
     )
@@ -626,6 +666,7 @@ def _validate_input(
     ion_conc,
     is_neutral,
     is_aligned,
+    match_water,
     work_dir,
     property_map,
 ):
@@ -664,6 +705,10 @@ def _validate_input(
     is_aligned : bool
         Whether to align the principal axes of the molecule to those of the
         solvent box.
+
+    match_water : bool
+        Whether to update the naming of existing water molecules to match the
+        expected convention for GROMACS, which is used as the solvation engine.
 
     work_dir : str
         The working directory for the process.
@@ -817,6 +862,9 @@ def _validate_input(
     if not isinstance(is_aligned, bool):
         raise TypeError("'is_aligned' must be of type 'bool'.")
 
+    if not isinstance(match_water, bool):
+        raise TypeError("'match_water' must be of type 'bool'.")
+
     # Check that the working directory is valid.
     if work_dir is not None and not isinstance(work_dir, str):
         raise TypeError("'work_dir' must be of type 'str'")
@@ -847,6 +895,7 @@ def _solvate(
     ion_conc,
     is_neutral,
     is_aligned,
+    match_water,
     work_dir=None,
     property_map={},
 ):
@@ -884,6 +933,10 @@ def _solvate(
     is_aligned : bool
         Whether to align the principal axes of the molecule to those of the
         solvent box.
+
+    match_water : bool
+        Whether to update the naming of existing water molecules to match the
+        expected convention for GROMACS, which is used as the solvation engine.
 
     work_dir : str
         The working directory for the process.
@@ -930,16 +983,26 @@ def _solvate(
         # Center the solute in the box.
         molecule.translate(shift)
 
+        # Intitialise the original waters.
+        original_waters = None
+
         if isinstance(molecule, _System):
+            # Store the existing water molecules.
+            original_waters = molecule.getWaterMolecules()
+
             # Reformat all of the water molecules so that they match the
-            # expected GROMACS topology template.
-            molecule._set_water_topology("GROMACS")
+            # expected GROMACS topology template, but flagged as crystal.
+            molecule._set_water_topology(
+                "GROMACS", is_crystal=True, property_map=property_map
+            )
+
+            # Extract the crystal waters.
+            crystal_waters = molecule.getWaterMolecules()
 
             # Make sure the water molecules are at the end of the topology
             # since gmx genion requires that they are contiguous.
-            waters = molecule.getWaterMolecules()
             molecule.removeWaterMolecules()
-            molecule = molecule + waters
+            molecule = molecule + crystal_waters
 
     # Create the working directory.
     work_dir = _Utils.WorkDir(work_dir)
@@ -954,7 +1017,14 @@ def _solvate(
         # First, generate a box file corresponding to the requested geometry.
         if molecule is not None:
             # Write the molecule/system to a GRO files.
-            _IO.saveMolecules("input", molecule, "gro87", property_map=_property_map)
+            _property_map["crystal_water"] = "XTL"
+            _IO.saveMolecules(
+                "input",
+                molecule,
+                "gro87",
+                match_water=False,
+                property_map=_property_map,
+            )
 
         # We need to create a dummy input file with no molecule in it.
         else:
@@ -1122,10 +1192,18 @@ def _solvate(
             try:
                 # Write the molecule + water system to file.
                 _IO.saveMolecules(
-                    "solvated", system, "gro87", property_map=_property_map
+                    "solvated",
+                    system,
+                    "gro87",
+                    match_water=False,
+                    property_map=_property_map,
                 )
                 _IO.saveMolecules(
-                    "solvated", system, "grotop", property_map=_property_map
+                    "solvated",
+                    system,
+                    "grotop",
+                    match_water=False,
+                    property_map=_property_map,
                 )
             except Exception as e:
                 msg = (
@@ -1330,7 +1408,29 @@ def _solvate(
                     # Create a new system by adding the water and ions to the original molecule.
                     if molecule is not None:
                         if isinstance(molecule, _System):
-                            system = molecule + water_ions
+                            # Preserve the original water naming.
+                            if match_water is False:
+                                # Flag each original water as non searchable.
+                                flagged_waters = []
+                                for water in original_waters:
+                                    water._sire_object = (
+                                        water._sire_object.edit()
+                                        .setProperty(
+                                            "is_non_searchable_water",
+                                            _SireBase.wrap(True),
+                                        )
+                                        .molecule()
+                                        .commit()
+                                    )
+                                    flagged_waters.append(water)
+                                molecule.removeWaterMolecules()
+                                system = molecule + flagged_waters + water_ions
+                            # Update crystal waters to match the standard water topology.
+                            else:
+                                molecule._set_water_topology(
+                                    "GROMACS", property_map=property_map
+                                )
+                                system = molecule + water_ions
                         else:
                             system = molecule.toSystem() + water_ions
 

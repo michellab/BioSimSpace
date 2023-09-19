@@ -230,7 +230,7 @@ class OpenMM(_process.Process):
         system = self._system.copy()
 
         # Convert the water model topology so that it matches the AMBER naming convention.
-        system._set_water_topology("AMBER", self._property_map)
+        system._set_water_topology("AMBER", property_map=self._property_map)
 
         # Check for perturbable molecules and convert to the chosen end state.
         system = self._checkPerturbable(system)
@@ -251,7 +251,13 @@ class OpenMM(_process.Process):
         # PRM file (topology).
         try:
             file = _os.path.splitext(self._top_file)[0]
-            _IO.saveMolecules(file, system, "prm7", property_map=self._property_map)
+            _IO.saveMolecules(
+                file,
+                system,
+                "prm7",
+                match_waters=False,
+                property_map=self._property_map,
+            )
         except Exception as e:
             msg = "Failed to write system to 'PRM7' format."
             if _isVerbose():

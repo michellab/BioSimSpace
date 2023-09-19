@@ -85,6 +85,7 @@ def check_cache(
     system,
     format,
     filebase,
+    match_water=True,
     property_map={},
     excluded_properties=[],
     skip_water=True,
@@ -104,6 +105,12 @@ def check_cache(
 
     filebase : str
         The file base to copy the file to.
+
+    match_water : bool
+        Whether to update the naming of water molecules to match the expected
+        convention for the chosen file format. This is useful when a system
+        is being saved to a different file format to that from which it was
+        loaded.
 
     property_map : dict
         A dictionary that maps system "properties" to their user
@@ -135,6 +142,9 @@ def check_cache(
     if not isinstance(filebase, str):
         raise TypeError("'filebase' must be of type 'str'")
 
+    if not isinstance(match_water, bool):
+        raise TypeError("'match_water' must be of type 'bool'")
+
     if not isinstance(excluded_properties, (list, tuple)):
         raise TypeError("'excluded_properties' must be a list of 'str' types.")
 
@@ -153,6 +163,7 @@ def check_cache(
         format,
         _compress_molnum_key(str(system._mol_nums)),
         str(set(excluded_properties)),
+        str(match_water),
         str(skip_water),
     )
 
@@ -211,7 +222,13 @@ def check_cache(
 
 
 def update_cache(
-    system, format, path, excluded_properties=[], skip_water=True, **kwargs
+    system,
+    format,
+    path,
+    excluded_properties=[],
+    match_water=True,
+    skip_water=True,
+    **kwargs,
 ):
     """
     Update the file cache when a new system is written to a specified format.
@@ -230,6 +247,12 @@ def update_cache(
 
     excluded_properties : [str]
         A list of properties to exclude when comparing systems when checking
+
+    match_water : bool
+        Whether to update the naming of water molecules to match the expected
+        convention for the chosen file format. This is useful when a system
+        is being saved to a different file format to that from which it was
+        loaded.
 
     skip_water : bool
         Whether to skip water molecules when comparing systems.
@@ -255,6 +278,9 @@ def update_cache(
     if not all(isinstance(x, str) for x in excluded_properties):
         raise TypeError("'excluded_properties' must be a list of 'str' types.")
 
+    if not isinstance(match_water, bool):
+        raise TypeError("'match_water' must be of type 'bool'")
+
     if not isinstance(skip_water, bool):
         raise TypeError("'skip_water' must be of type 'bool'.")
 
@@ -270,6 +296,7 @@ def update_cache(
         format,
         _compress_molnum_key(str(system._mol_nums)),
         str(set(excluded_properties)),
+        str(match_water),
         str(skip_water),
     )
 
