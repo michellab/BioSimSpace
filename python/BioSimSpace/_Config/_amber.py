@@ -39,7 +39,7 @@ from sire.legacy import Units as _SireUnits
 
 from .. import Protocol as _Protocol
 from ..Protocol._position_restraint_mixin import _PositionRestraintMixin
-from ..Protocol._hmr_mixin import _HmrMixin
+from ..Protocol._free_energy_mixin import _FreeEnergyMixin
 
 from ._config import Config as _Config
 
@@ -253,8 +253,12 @@ class Amber(_Config):
                         "pres0"
                     ] = f"{self._protocol.getPressure().bar().value():.5f}"
                     if isinstance(self._protocol, _Protocol.Equilibration):
-                        # Berendsen barostat.
-                        protocol_dict["barostat"] = 1
+                        if isinstance(self._protocol, _FreeEnergyMixin):
+                            # Monte Carlo barostat.
+                            protocol_dict["barostat"] = 2
+                        else:
+                            # Berendsen barostat.
+                            protocol_dict["barostat"] = 1
                     else:
                         # Monte Carlo barostat.
                         protocol_dict["barostat"] = 2

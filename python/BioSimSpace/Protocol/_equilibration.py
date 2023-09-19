@@ -51,6 +51,7 @@ class Equilibration(_Protocol, _PositionRestraintMixin, _HmrMixin):
         thermostat_time_constant=_Types.Time(1, "picosecond"),
         report_interval=200,
         restart_interval=1000,
+        restart=False,
         restraint=None,
         force_constant=10 * _Units.Energy.kcal_per_mol / _Units.Area.angstrom2,
         restart=False,
@@ -96,6 +97,9 @@ class Equilibration(_Protocol, _PositionRestraintMixin, _HmrMixin):
         restart_interval : int
             The frequency at which restart configurations and trajectory
             frames are saved. (In integration steps.)
+
+        restart : bool
+            Whether this is a continuation of a previous simulation.
 
         restraint : str, [int]
             The type of restraint to perform. This should be one of the
