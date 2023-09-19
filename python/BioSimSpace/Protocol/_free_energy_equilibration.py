@@ -110,6 +110,9 @@ class FreeEnergyEquilibration(_Equilibration, _FreeEnergyMixin):
             The frequency at which restart configurations and trajectory
             frames are saved. (In integration steps.)
 
+        restart : bool
+            Whether this is a continuation of a previous simulation.
+
         restraint : str, [int]
             The type of restraint to perform. This should be one of the
             following options:
@@ -170,6 +173,7 @@ class FreeEnergyEquilibration(_Equilibration, _FreeEnergyMixin):
             thermostat_time_constant=thermostat_time_constant,
             report_interval=report_interval,
             restart_interval=restart_interval,
+            restart=restart,
             restraint=restraint,
             force_constant=force_constant,
             hmr=hmr,

@@ -953,7 +953,7 @@ class Relative:
         try:
             data = [func(file, T=temp) for file, temp in zip(files, temperatures)]
         except Exception as e:
-            msg = "Could not extract the data from the provided files!"
+            msg = f"Could not extract the data from the provided files!, {file}"
             if _isVerbose():
                 raise _AnalysisError(msg) from e
             else:
