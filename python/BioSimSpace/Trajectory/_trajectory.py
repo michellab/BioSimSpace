@@ -41,6 +41,8 @@ import warnings as _warnings
 from sire.legacy import Base as _SireBase
 from sire.legacy import IO as _SireIO
 from sire.legacy import Mol as _SireMol
+from sire.legacy import Units as _SireUnits
+from sire.legacy import Vol as _SireVol
 
 from sire import load as _sire_load
 from sire._load import _resolve_path
@@ -203,14 +205,24 @@ def getFrame(trajectory, topology, index, system=None, property_map={}):
     if system is not None:
         if is_sire and frame.current().num_molecules() > 1:
             try:
+                new_system = frame.current()._system
+
                 sire_system, _ = _SireIO.updateCoordinatesAndVelocities(
                     system._sire_object,
-                    frame.current()._system,
+                    new_system,
                     mapping,
                     False,
                     property_map,
                     {},
                 )
+
+                # Update the box information in the original system.
+                if "space" in new_system.propertyKeys():
+                    box = new_system.property("space")
+                    if box.isPeriodic():
+                        sire_system.setProperty(
+                            self._property_map.get("space", "space"), box
+                        )
 
                 new_system = _System(sire_system)
 
@@ -260,6 +272,14 @@ def getFrame(trajectory, topology, index, system=None, property_map={}):
                 sire_system, _ = _SireIO.updateCoordinatesAndVelocities(
                     system._sire_object, new_system, mapping, False, property_map, {}
                 )
+
+                # Update the box information in the original system.
+                if "space" in new_system.propertyKeys():
+                    box = new_system.property("space")
+                    if box.isPeriodic():
+                        sire_system.setProperty(
+                            self._property_map.get("space", "space"), box
+                        )
 
                 new_system = _System(sire_system)
             except Exception as e:
@@ -762,14 +782,24 @@ class Trajectory:
             if self._system is not None:
                 if self._backend == "SIRE" and frame.current().num_molecules() > 1:
                     try:
+                        new_system = frame.current()._system
+
                         sire_system, _ = _SireIO.updateCoordinatesAndVelocities(
                             self._system._sire_object,
-                            frame.current()._system,
+                            new_system,
                             self._mapping,
                             False,
                             self._property_map,
                             {},
                         )
+
+                        # Update the box information in the original system.
+                        if "space" in new_system.propertyKeys():
+                            box = new_system.property("space")
+                            if box.isPeriodic():
+                                sire_system.setProperty(
+                                    self._property_map.get("space", "space"), box
+                                )
 
                         new_system = _System(sire_system)
                     except Exception as e:
@@ -827,6 +857,14 @@ class Trajectory:
                             self._property_map,
                             {},
                         )
+
+                        # Update the box information in the original system.
+                        if "space" in new_system.propertyKeys():
+                            box = new_system.property("space")
+                            if box.isPeriodic():
+                                sire_system.setProperty(
+                                    self._property_map.get("space", "space"), box
+                                )
 
                         new_system = _System(sire_system)
                     except Exception as e:
@@ -1080,6 +1118,17 @@ def _split_molecules(frame, pdb, reference, work_dir, property_map={}):
     # Whether we've parsed as a PDB file.
     is_pdb = False
 
+    # Create a triclinic space from the information in the frame file.
+    if isinstance(frame, _SireIO.AmberRst7):
+        # Get the box dimensions and angles. Take the values, since the
+        # units are wrong.
+        degree = _SireUnits.degree
+        dimensions = [x.value() for x in frame.box_dimensions()]
+        angles = [x.value() * degree for x in frame.box_angles()]
+        box = _SireVol.TriclinicBox(*dimensions, *angles)
+    else:
+        box = _SireVol.TriclinicBox(frame.box_v1(), frame.box_v2(), frame.box_v3())
+
     if "PRM7" in formats:
         try:
             top = _SireIO.AmberPrm(reference._sire_object)
@@ -1153,6 +1202,9 @@ def _split_molecules(frame, pdb, reference, work_dir, property_map={}):
                 raise IOError(msg) from e
             else:
                 raise IOError(msg) from None
+
+    # Add the space property.
+    split_system.setProperty(property_map.get("space", "space"), box)
 
     return split_system
 
