@@ -2013,11 +2013,8 @@ class RestraintSearch:
                 if len(available_ligand_atoms) == 0:
                     return filtered_pairs
 
-            # If not all ligand atoms have been used in a restraint, raise an error.
-            raise _AnalysisError(
-                "Not all ligand atoms have been used in a restraint. Try increasing the number of "
-                "candidate pairs."
-            )
+            # If not all ligand atoms have been used in a restraint, return nothing.
+            return None
 
         def _plotDistanceRestraints(distance_dict):
             """
@@ -2053,6 +2050,10 @@ class RestraintSearch:
                 axs[i].set_ylabel("Probability")
                 if i == n_pairs - 1:  # Only add legend to last plot
                     axs[i].legend()
+                # Hide unused axes
+                if i >= n_pairs:
+                    axs[i].axis("off")
+
             fig.tight_layout()
             fig.savefig(
                 f"{work_dir}/distance_restraints_hist.png",
@@ -2163,17 +2164,36 @@ class RestraintSearch:
         selected_ligand_atoms = u.select_atoms(ligand_selection_str).select_atoms(
             "not name H*"
         )
-        n_lig_heavy_atoms = len(selected_ligand_atoms)
-        pairs_ordered_clustered = _clusterPairsByDirection(
-            u, pairs_ordered_sd, n_clusters=n_lig_heavy_atoms
-        )
+        # Choose initial number of clusters to to the number of selected heavy atoms in the ligand.
+        n_clusters_initial = len(selected_ligand_atoms)
+        n_clusters_max = 3 * n_clusters_initial
+        n_clusters_to_try = [
+            round(n) for n in _np.linspace(n_clusters_initial, n_clusters_max, 5)
+        ]
 
-        # Check each pair in order of reverse variance. If the ligand heavy atom has not
-        # already been used in a restraint and no other restraints from the given cluster
-        # have been selected, accept the restraint.
-        pairs_ordered_clustered_filtered = _filterPairsByCluster(
-            pairs_ordered_clustered, selected_ligand_atoms
-        )
+        for n_clusters in n_clusters_to_try:
+            pairs_ordered_clustered = _clusterPairsByDirection(
+                u, pairs_ordered_sd, n_clusters=n_clusters
+            )
+
+            # Check each pair in order of reverse variance. If the ligand heavy atom has not
+            # already been used in a restraint and no other restraints from the given cluster
+            # have been selected, accept the restraint.
+            pairs_ordered_clustered_filtered = _filterPairsByCluster(
+                pairs_ordered_clustered, selected_ligand_atoms
+            )
+
+            if pairs_ordered_clustered_filtered is not None:
+                break
+
+            if (
+                n_clusters_to_try[-1] == n_clusters
+                and pairs_ordered_clustered_filtered is None
+            ):
+                raise _AnalysisError(
+                    "Could not find suitable multiple distance restraints. "
+                    "Please try increasing the number of candidate pairs."
+                )
 
         # Get restraint parameters for each pair by selecting the flat-bottomed region
         # to encompass 95 % of sampled configurations. This also plots the data.
