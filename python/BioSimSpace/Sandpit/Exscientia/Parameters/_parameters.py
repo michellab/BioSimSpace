@@ -135,6 +135,7 @@ def _parameterise_amber_protein(
     tolerance=1.2,
     max_distance=_Length(6, "A"),
     water_model=None,
+    custom_parameters=None,
     leap_commands=None,
     bonds=None,
     ensure_compatible=True,
@@ -171,11 +172,14 @@ def _parameterise_amber_protein(
         or lone oxygen atoms corresponding to structural (crystal) water
         molecules.
 
+    custom_parameters: [str]
+        A list of paths to custom parameter files. When this option is set,
+        we can no longer fall back on GROMACS's pdb2gmx.
+
     leap_commands : [str]
         An optional list of extra commands for the LEaP program. These
-        will be added after any default commands and can be used to, e.g.,
-        load additional parameter files. When this option is set, we can no
-        longer fall back on GROMACS's pdb2gmx.
+        will be added after any default commands. When this option is set,
+        we can no longer fall back on GROMACS's pdb2gmx.
 
     bonds : ((class:`Atom <BioSimSpace._SireWrappers.Atom>`, class:`Atom <BioSimSpace._SireWrappers.Atom>`))
         An optional tuple of atom pairs to specify additional atoms that
@@ -237,6 +241,7 @@ def _parameterise_amber_protein(
         max_distance=max_distance,
         water_model=water_model,
         check_ions=True,
+        custom_parameters=custom_parameters,
         leap_commands=leap_commands,
         bonds=bonds,
         ensure_compatible=ensure_compatible,
@@ -250,6 +255,7 @@ def _parameterise_amber_protein(
         tolerance=tolerance,
         water_model=water_model,
         max_distance=max_distance,
+        custom_parameters=custom_parameters,
         leap_commands=leap_commands,
         bonds=bonds,
         ensure_compatible=ensure_compatible,
@@ -796,6 +802,7 @@ def _validate(
     max_distance=None,
     water_model=None,
     check_ions=False,
+    custom_parameters=None,
     leap_commands=None,
     bonds=None,
     ensure_compatible=True,
@@ -832,11 +839,14 @@ def _validate(
         Whether to check for the presence of structural ions. This is only
         required when parameterising with protein force fields.
 
+    custom_parameters: [str]
+        A list of paths to custom parameter files. When this option is set,
+        we can no longer fall back on GROMACS's pdb2gmx.
+
     leap_commands : [str]
         An optional list of extra commands for the LEaP program. These
-        will be added after any default commands and can be used to, e.g.,
-        load additional parameter files. When this option is set, we can no
-        longer fall back on GROMACS's pdb2gmx.
+        will be added after any default commands. When this option is set,
+        we can no longer fall back on GROMACS's pdb2gmx.
 
     bonds : ((class:`Atom <BioSimSpace._SireWrappers.Atom>`, class:`Atom <BioSimSpace._SireWrappers.Atom>`))
         An optional tuple of atom pairs to specify additional atoms that
@@ -894,6 +904,16 @@ def _validate(
                 f"The molecule contains the following ions: {ion_string}. "
                 "Please choose a 'water_model' for the ion parameters."
             )
+
+    if custom_parameters is not None:
+        if not isinstance(custom_parameters, (list, tuple)):
+            raise TypeError("'custom_parameters' must be a 'list' of 'str' types.")
+        else:
+            if not all(isinstance(x, str) for x in custom_parameters):
+                raise TypeError("'custom_parameters' must be a 'list' of 'str' types.")
+            for x in custom_parameters:
+                if not os.path.isfile(x):
+                    raise ValueError(f"Custom parameter file does not exist: '{x}'")
 
     if leap_commands is not None:
         if not isinstance(leap_commands, (list, tuple)):
