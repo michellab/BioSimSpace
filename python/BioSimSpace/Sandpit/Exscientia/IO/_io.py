@@ -342,7 +342,13 @@ def readPDB(id, pdb4amber=False, work_dir=None, show_warnings=False, property_ma
 
 
 def readMolecules(
-    files, make_whole=False, show_warnings=False, download_dir=None, property_map={}
+    files,
+    make_whole=False,
+    rotate_box=False,
+    reduce_box=False,
+    show_warnings=False,
+    download_dir=None,
+    property_map={},
 ):
     """
     Read a molecular system from file.
@@ -358,6 +364,17 @@ def readMolecules(
     make_whole : bool
         Whether to make molecules whole, i.e. unwrap those that are split across
         the periodic boundary.
+
+    rotate_box : bool
+        Rotate the box vectors of the system so that the first vector is
+        aligned with the x-axis, the second vector lies in the x-y plane,
+        and the third vector has a positive z-component. This is a requirement
+        of certain molecular dynamics engines and is used for simulation
+        efficiency. All vector properties of the system, e.g. coordinates,
+        velocities, etc., will be rotated accordingly.
+
+    reduce_box : bool
+        Reduce the box vectors.
 
     show_warnings : bool
         Whether to show any warnings raised during parsing of the input files.
@@ -438,6 +455,14 @@ def readMolecules(
     # Flag that we want' to unwrap molecules.
     if make_whole:
         property_map["make_whole"] = _SireBase.wrap(make_whole)
+
+    # Validate the box rotation flag.
+    if not isinstance(rotate_box, bool):
+        raise TypeError("'rotate_box' must be of type 'bool'.")
+
+    # Validate the box reduction flag.
+    if not isinstance(reduce_box, bool):
+        raise TypeError("'reduce_box' must be of type 'bool'.")
 
     # Validate the warning message flag.
     if not isinstance(show_warnings, bool):
@@ -545,7 +570,18 @@ def readMolecules(
     except:
         pass
 
-    return _System(system)
+    # Wrap the Sire system.
+    system = _System(system)
+
+    # Rotate the box vectors.
+    if rotate_box:
+        system.rotateBoxVectors()
+
+    # Reduce the box vectors.
+    if reduce_box:
+        system.reduceBoxVectors()
+
+    return system
 
 
 def saveMolecules(

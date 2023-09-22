@@ -1,6 +1,8 @@
 import math
 import pytest
 
+from sire.legacy.Vol import TriclinicBox
+
 import BioSimSpace as BSS
 
 from tests.conftest import url, has_amber, has_openff
@@ -266,6 +268,9 @@ def test_set_box(system):
     # Generate box dimensions and angles for a truncated octahedron.
     box, angles = BSS.Box.truncatedOctahedron(30 * BSS.Units.Length.angstrom)
 
+    # Make a copy of the system.
+    system = system.copy()
+
     # Set the box dimensions in the system.
     system.setBox(box, angles)
 
@@ -391,3 +396,54 @@ def test_velocity_removal():
 
     # Check that no molecules have a velocity property.
     assert len(new_system.search("not mol with property velocity").molecules()) == 2
+
+
+def test_rotate_box_vectors(system):
+    # Make sure that the triclinic space is rotated correctly and that vector
+    # properties (here coordinates) are updated accordingly.
+
+    # Store the initial coordinates for the first molecule.
+    coords0 = system[0].coordinates()
+
+    # Extract the space property.
+    space = system._sire_object.property("space")
+
+    # Store the box matrix.
+    box_matrix = space.boxMatrix()
+
+    # Create a triclinic box using the box matrix. This will create:
+    # TriclinicBox( ( 31.3979, 0, 0 ), ( 0, 34.1, 0 ), ( 0, 0, 29.273 ) )
+    box = TriclinicBox(box_matrix.column0(), box_matrix.column1(), box_matrix.column2())
+
+    # Update the space property.
+    system._sire_object.setProperty("space", box)
+
+    # Store the current box.
+    box0, angles0 = system.getBox()
+
+    # Rotate the box. This will create an "optimal" triclinic space, where the
+    # shortest vector is aligned with the x axis, the second vector is in the
+    # x-y plane, and the largest has positive z component.
+    system.rotateBoxVectors()
+
+    # Store the updated box.
+    box1, angles1 = system.getBox()
+
+    # Store the updated coordinates for the first molecule.
+    coords1 = system[0].coordinates()
+
+    # Make sure the box dimensions have been rotated correctly.
+    assert math.isclose(box1[0].value(), box0[2].value())
+    assert math.isclose(box1[1].value(), box0[0].value())
+    assert math.isclose(box1[2].value(), box0[1].value())
+    # All angles should remain the same since this is a cubic system with
+    # 90 degree angles.
+    assert math.isclose(angles1[0].value(), angles0[0].value())
+    assert math.isclose(angles1[1].value(), angles0[1].value())
+    assert math.isclose(angles1[2].value(), angles0[2].value())
+
+    # Make sure the coordinates have been rotated correctly.
+    for c0, c1 in zip(coords0, coords1):
+        assert math.isclose(c1.x().value(), c0.z().value())
+        assert math.isclose(c1.y().value(), c0.x().value())
+        assert math.isclose(c1.z().value(), c0.y().value())
