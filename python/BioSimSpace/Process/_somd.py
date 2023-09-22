@@ -540,6 +540,13 @@ class Somd(_process.Process):
 
             new_system = _IO.readMolecules(self._restart_file)
 
+            # Try loading the trajectory file to get the box information.
+            try:
+                frame = self.getTrajectory().getFrames(-1)
+                box = frame._sire_object.property("space")
+            except:
+                box = None
+
             # Since SOMD requires specific residue and water naming we copy the
             # coordinates back into the original system.
             old_system = self._system.copy()
@@ -564,8 +571,7 @@ class Somd(_process.Process):
             self._mapping = mapping
 
             # Update the box information in the original system.
-            if "space" in new_system._sire_object.propertyKeys():
-                box = new_system._sire_object.property("space")
+            if box and box.isPeriodic():
                 old_system._sire_object.setProperty(
                     self._property_map.get("space", "space"), box
                 )
