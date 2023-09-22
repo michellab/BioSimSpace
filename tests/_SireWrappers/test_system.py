@@ -268,6 +268,9 @@ def test_set_box(system):
     # Generate box dimensions and angles for a truncated octahedron.
     box, angles = BSS.Box.truncatedOctahedron(30 * BSS.Units.Length.angstrom)
 
+    # Make a copy of the system.
+    system = system.copy()
+
     # Set the box dimensions in the system.
     system.setBox(box, angles)
 
