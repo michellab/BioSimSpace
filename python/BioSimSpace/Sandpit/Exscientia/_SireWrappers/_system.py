@@ -41,6 +41,7 @@ from sire.legacy import Units as _SireUnits
 from .. import _isVerbose
 from .._Exceptions import IncompatibleError as _IncompatibleError
 from ..Types import Angle as _Angle
+from ..Types import Coordinate as _Coordinate
 from ..Types import Length as _Length
 from .. import Units as _Units
 
@@ -1114,6 +1115,175 @@ class System(_SireWrapper):
             The number of ML molecules in the system.
         """
         return len(self.getMLMolecules())
+
+    def rotateBoxVectors(
+        self,
+        origin=_Coordinate(
+            0 * _Units.Length.angstrom,
+            0 * _Units.Length.angstrom,
+            0 * _Units.Length.angstrom,
+        ),
+        precision=0.0,
+        property_map={},
+    ):
+        """
+        Rotate the box vectors of the system so that the first vector is
+        aligned with the x-axis, the second vector lies in the x-y plane,
+        and the third vector has a positive z-component. This is a requirement
+        of certain molecular dynamics engines and is used for simulation
+        efficiency. All vector properties of the system, e.g. coordinates,
+        velocities, etc., will be rotated accordingly.
+
+        Parameters
+        ----------
+
+        origin : :class:`Coordinate <BioSimSpace.Types.Coordinate>`
+            The origin of the triclinic space. This is the point about which
+            the lattice vectors are rotated.
+
+        precision : float
+            The precision to use when sorting box vectors by their magnitude.
+            This can be used to prevent unecessary box rotation when the
+            vectors were read from a text file with limited precision.
+
+        property_map : dict
+            A dictionary that maps system "properties" to their user defined
+            values. This allows the user to refer to properties with their
+            own naming scheme, e.g. { "charge" : "my-charge" }
+        """
+
+        # First check that the system has a space.
+        space_prop = property_map.get("space", "space")
+        try:
+            space = self._sire_object.property(space_prop)
+        except:
+            return
+
+        # A rotation is only applicable to triclinic spaces.
+        if not isinstance(space, _SireVol.TriclinicBox):
+            return
+
+        # Validate input.
+
+        if not isinstance(origin, _Coordinate):
+            raise TypeError("'origin' must be of type 'BioSimSpace.Types.Coordinate'")
+
+        if not isinstance(precision, float):
+            raise TypeError("'precision' must be of type 'float'")
+
+        # Rotate the space according to the desired precision.
+        space.rotate(precision)
+
+        # Update the space property in the sire object.
+        self._sire_object.setProperty(space_prop, space)
+
+        # Get the rotation matrix.
+        rotation_matrix = space.rotationMatrix()
+
+        # Get the center of rotation, as a Sire vector.
+        center = origin.toVector()._sire_object
+
+        from sire.system import System
+
+        # Create a cursor.
+        cursor = System(self._sire_object).cursor()
+
+        # Rotate all vector properties.
+
+        # Coordinates.
+        try:
+            prop_name = property_map.get("coordinates", "coordinates")
+            cursor = cursor.rotate(
+                center=center, matrix=rotation_matrix, map={"coordinates": prop_name}
+            )
+        except:
+            pass
+
+        # Velocities.
+        try:
+            prop_name = property_map.get("velocity", "velocity")
+            cursor = cursor.rotate(
+                center=center, matrix=rotation_matrix, map={"coordinates": prop_name}
+            )
+        except:
+            pass
+
+        # Now deal with any perturbable molecules.
+        if self.nPerturbableMolecules() > 0:
+            # Coordinates.
+            try:
+                prop_name = property_map.get("coordinates", "coordinates") + "0"
+                cursor = cursor.rotate(
+                    center=center,
+                    matrix=rotation_matrix,
+                    map={"coordinates": prop_name},
+                )
+                prop_name = property_map.get("coordinates", "coordinates") + "1"
+                cursor = cursor.rotate(
+                    center=center,
+                    matrix=rotation_matrix,
+                    map={"coordinates": prop_name},
+                )
+            except:
+                pass
+
+            # Velocities.
+            try:
+                prop_name = property_map.get("velocity", "velocity") + "0"
+                cursor = cursor.rotate(
+                    center=center,
+                    matrix=rotation_matrix,
+                    map={"coordinates": prop_name},
+                )
+                prop_name = property_map.get("velocity", "velocity") + "1"
+                cursor = cursor.rotate(
+                    center=center,
+                    matrix=rotation_matrix,
+                    map={"coordinates": prop_name},
+                )
+            except:
+                pass
+
+        # Commit the changes.
+        self._sire_object = cursor.commit()._system
+
+    def reduceBoxVectors(self, bias=0, property_map={}):
+        """
+        Reduce the box vectors.
+
+        Parameters
+        ----------
+
+        bias : float
+            The bias to use when rounding during the lattice reduction. Negative
+            values biases towards left-tilting boxes, whereas positive values
+            biases towards right-tilting boxes. This can be used to ensure that
+            rounding is performed in a consistent direction, avoiding oscillation
+            when the box is instantiated from box vectors, or dimensions and
+            angles, that have been read from fixed-precision input files.
+
+        property_map : dict
+            A dictionary that maps system "properties" to their user defined
+            values. This allows the user to refer to properties with their
+            own naming scheme, e.g. { "charge" : "my-charge" }
+        """
+
+        # First check that the system has a space.
+        space_prop = property_map.get("space", "space")
+        try:
+            space = self._sire_object.property(space_prop)
+        except:
+            return
+
+        # A rotation is only applicable to triclinic spaces.
+        if not isinstance(space, _SireVol.TriclinicBox):
+            return
+
+        # Reduce the space using the desired bias.
+        space.reduce(bias)
+
+        # Update the space property in the sire object.
+        self._sire_object.setProperty(space_prop, space)
 
     def repartitionHydrogenMass(
         self, factor=4, water="no", use_coordinates=False, property_map={}
