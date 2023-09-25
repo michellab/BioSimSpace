@@ -44,13 +44,13 @@ from sire.legacy import IO as _SireIO
 from sire.legacy import Mol as _SireMol
 
 from .. import _amber_home, _isVerbose
+from ..Align._squash import _squash, _unsquash
 from .._Config import Amber as _AmberConfig
 from .._Exceptions import IncompatibleError as _IncompatibleError
 from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
 from ..Protocol._position_restraint_mixin import _PositionRestraintMixin
 from .._SireWrappers import System as _System
 from ..Types._type import Type as _Type
-from ..Align._merge import _squash
 
 from .. import IO as _IO
 from .. import Protocol as _Protocol
@@ -74,6 +74,7 @@ class Amber(_process.Process):
         name="amber",
         work_dir=None,
         seed=None,
+        explicit_dummies=False,
         extra_options={},
         extra_lines=[],
         property_map={},
@@ -101,7 +102,10 @@ class Amber(_process.Process):
 
         seed : int
             A random number seed.
-
+            
+        explicit_dummies : bool
+            Whether to keep the dummy atoms explicit at the endstates or remove them.
+            
         extra_options : dict
             A dictionary containing extra options. Overrides the defaults generated
             by the protocol.
@@ -177,6 +181,9 @@ class Amber(_process.Process):
         # Create the list of input files.
         self._input_files = [self._config_file, self._rst_file, self._top_file]
 
+        # Set whether the dummies are explicit
+        self._explicit_dummies = explicit_dummies
+
         # Now set up the working directory for the process.
         self._setup()
 
@@ -184,12 +191,24 @@ class Amber(_process.Process):
         """Setup the input files and working directory ready for simulation."""
 
         # Create the input files...
+        self._squashed_system, self._mapping = self._write_system(
+            self._system, coord_file=self._rst_file, topol_file=self._top_file
+        )
 
-        # Create a copy of the system.
-        system = self._system.copy()
+        # Generate the AMBER configuration file.
+        # Skip if the user has passed a custom config.
+        if isinstance(self._protocol, _Protocol.Custom):
+            self.setConfig(self._protocol.getConfig())
+        else:
+            self._generate_config()
+        self.writeConfig(self._config_file)
 
-        # Convert the water model topology so that it matches the AMBER naming convention.
-        system._set_water_topology("AMBER", self._property_map)
+        # Generate the dictionary of command-line arguments.
+        self._generate_args()
+
+        # Return the list of input files.
+        return self._input_files
+
 
         # Check for perturbable molecules and convert to the chosen end state.
         if isinstance(self._protocol, _Protocol._FreeEnergyMixin):
@@ -233,6 +252,91 @@ class Amber(_process.Process):
 
         # Return the list of input files.
         return self._input_files
+
+
+    def _write_system(self, system, coord_file=None, topol_file=None, ref_file=None):
+        """Validates an input system and makes some internal modifications to it,
+        if needed, before writing it out to a coordinate and/or a topology file.
+
+        Parameters
+        ----------
+
+        system : :class:`System <BioSimSpace._SireWrappers.System>`
+            The molecular system.
+
+        coord_file : str or None
+            The coordinate file to which to write out the system.
+
+        topol_file : str or None
+            The topology file to which to write out the system.
+
+        ref_file : str or None
+            The coordinate file for the reference system used for position restraints.
+
+        Returns
+        -------
+
+        system : BioSimSpace._SireWrappers.System
+             The system used for writing out the topologies.
+
+        mapping : dict(Sire.Mol.MolIdx, Sire.Mol.MolIdx)
+             The corresponding molecule-to-molecule mapping.
+        """
+        # Create a copy of the system.
+        system = system.copy()
+
+        # Convert the water model topology so that it matches the AMBER naming convention.
+        system._set_water_topology("AMBER", self._property_map)
+
+        # Check for perturbable molecules and convert to the chosen end state.
+        if isinstance(self._protocol, _Protocol._FreeEnergyMixin):
+            # Represent the perturbed system in an AMBER-friendly format.
+            system, mapping = _squash(system, explicit_dummies=self._explicit_dummies)
+        else:
+            system = self._checkPerturbable(system)
+            mapping = {
+                _SireMol.MolIdx(x): _SireMol.MolIdx(x)
+                for x in range(0, system.nMolecules())
+            }
+
+        # RST file (coordinates).
+        if coord_file is not None:
+            try:
+                file = _os.path.splitext(coord_file)[0]
+                _IO.saveMolecules(file, system, "rst7", property_map=self._property_map)
+            except Exception as e:
+                msg = "Failed to write system to 'RST7' format."
+                if _isVerbose():
+                    raise IOError(msg) from e
+                else:
+                    raise IOError(msg) from None
+
+        # RST file (reference for position restraints).
+        if ref_file is not None:
+            try:
+                file = _os.path.splitext(ref_file)[0]
+                _IO.saveMolecules(file, system, "rst7", property_map=self._property_map)
+            except Exception as e:
+                msg = "Failed to write system to 'RST7' format."
+                if _isVerbose():
+                    raise IOError(msg) from e
+                else:
+                    raise IOError(msg) from None
+
+        # PRM file (topology).
+        if topol_file is not None:
+            try:
+                file = _os.path.splitext(topol_file)[0]
+                _IO.saveMolecules(file, system, "prm7", property_map=self._property_map)
+            except Exception as e:
+                msg = "Failed to write system to 'PRM7' format."
+                if _isVerbose():
+                    raise IOError(msg) from e
+                else:
+                    raise IOError(msg) from None
+
+        return system, mapping
+
 
     def _generate_config(self):
         """Generate AMBER configuration file strings."""
@@ -279,7 +383,7 @@ class Amber(_process.Process):
             setattr(self, "getTime", self._getTime)
 
         # Instantiate the AMBER configuration generator.
-        amber_config = _AmberConfig(self._system, self._protocol)
+        amber_config = _AmberConfig(self._system, self._protocol, explicit_dummies=self._explicit_dummies)
 
         # Create the configuration.
         self.setConfig(
@@ -418,115 +522,44 @@ class Amber(_process.Process):
 
             # Create a copy of the existing system object.
             old_system = self._system.copy()
-            
-            if isinstance(self._protocol, _Protocol._FreeEnergyMixin):
-                # Read the coordinates into the squashed system.
-                old_system_squashed = _squash(old_system)
 
+            if isinstance(self._protocol, _Protocol._FreeEnergyMixin):
                 # Udpate the coordinates and velocities and return a mapping between
                 # the molecule indices in the two systems.
-                sire_system, mapping = _SireIO.updateCoordinatesAndVelocities(
-                        old_system_squashed._sire_object,
-                        new_system._sire_object,
-                        self._mapping,
-                        is_lambda1,
-                        self._property_map,
-                        self._property_map)
+                mapping = {
+                    _SireMol.MolIdx(x): _SireMol.MolIdx(x)
+                    for x in range(0, self._squashed_system.nMolecules())
+                }
+                (
+                    self._squashed_system._sire_object,
+                    _,
+                ) = _SireIO.updateCoordinatesAndVelocities(
+                    self._squashed_system._sire_object,
+                    new_system._sire_object,
+                    mapping,
+                    is_lambda1,
+                    self._property_map,
+                    self._property_map,
+                )
 
-                # Update the underlying Sire object.
-                old_system_squashed._sire_object = sire_system
-
-                # Store the mapping between the MolIdx in both systems so we don't
-                # need to recompute it next time.
-                self._mapping = mapping
-
-                # Even though the two molecules should have the same coordinates, they might be PBC wrapped differently.
-                # Here we take the first common core atom and translate the second molecule.
-                pertmol_idx, pertmol = next((i, molecule) for i, molecule in enumerate(old_system.getMolecules())
-                                            if molecule._is_perturbable)
-                pertatom_idx0, pertatom_idx1 = 0, 0
-                for i, atom in enumerate(pertmol.getAtoms()):
-                    is_dummy0 = "du" in atom._sire_object.property("ambertype0")
-                    is_dummy1 = "du" in atom._sire_object.property("ambertype1")
-                    if not is_dummy0 and not is_dummy1:
-                        break
-                    pertatom_idx0 += not is_dummy0
-                    pertatom_idx1 += not is_dummy1
-                old_system_squashed_pertatom0 = old_system_squashed[pertmol_idx].getAtoms()[pertatom_idx0]
-                old_system_squashed_pertatom1 = old_system_squashed[pertmol_idx + 1].getAtoms()[pertatom_idx1]
-                pertatom_coords0 = old_system_squashed_pertatom0._sire_object.property("coordinates")
-                pertatom_coords1 = old_system_squashed_pertatom1._sire_object.property("coordinates")
-                translation_vec = pertatom_coords1 - pertatom_coords0
-
-                # Update the velocities.
-                update_velocities = True
-                for idx in range(0, old_system_squashed.nMolecules()):
-                    # Extract the molecules from each system.
-                    mol0 = old_system_squashed._sire_object.molecule(_SireMol.MolIdx(idx))
-                    mol1 = new_system._sire_object.molecule(_SireMol.MolIdx(idx))
-
-                    try:
-                        # Update the velocities.
-                        mol0 = mol0.edit().setProperty("velocity", mol1.property("velocity")).molecule().commit()
-                    except:
-                        # There are actually no velocities.
-                        update_velocities = False
-                        break
-
-                    # Update the molecule.
-                    old_system_squashed._sire_object.update(mol0)
-
-                # Convert the squashed system coordinates into merged system coordinates.
-                mol_idx = 0
-                molecules = []
-                for i, molecule in enumerate(old_system.getMolecules()):
-                    if not molecule._is_perturbable:
-                        # Just copy the molecule.
-                        molecules.append(old_system_squashed[mol_idx].copy())
-                        mol_idx += 1
-                    else:
-                        # Extract the non-dummy atom coordinates and velocities from the squashed system.
-                        idx0, idx1 = 0, 0
-                        editor = molecule._sire_object.edit()
-                        for j in range(0, molecule._sire_object.nAtoms()):
-                            atom = editor.atom(_SireMol.AtomIdx(j))
-                            coordinates = None
-                            velocities = None
-                            if "du" not in atom.property("ambertype0"):
-                                new_atom = old_system_squashed[mol_idx].getAtoms()[idx0]
-                                coordinates = new_atom._sire_object.property("coordinates")
-                                if update_velocities:
-                                    velocities = new_atom._sire_object.property("velocity")
-                                idx0 += 1
-                            if "du" not in atom.property("ambertype1"):
-                                new_atom = old_system_squashed[mol_idx + 1].getAtoms()[idx1]
-                                if coordinates is None:
-                                    coordinates = new_atom._sire_object.property("coordinates") - translation_vec
-                                if update_velocities and velocities is None:
-                                    velocities = new_atom._sire_object.property("velocity")
-                                idx1 += 1
-
-                            # Set the properties
-                            if velocities:
-                                atom.setProperty("velocity0", velocities)
-                                atom.setProperty("velocity1", velocities)
-                            atom.setProperty("coordinates0", coordinates)
-                            editor = atom.setProperty("coordinates1", coordinates).molecule()
-                        molecule._sire_object = editor.commit()
-                        molecules.append(molecule)
-                        mol_idx += 2
-                old_system = _System(molecules)
-                
+                # Update the unsquashed system based on the updated squashed system.
+                old_system = _unsquash(
+                    old_system,
+                    self._squashed_system,
+                    self._mapping,
+                    explicit_dummies=self._explicit_dummies,
+                )
             else:
                 # Update the coordinates and velocities and return a mapping between
                 # the molecule indices in the two systems.
                 sire_system, mapping = _SireIO.updateCoordinatesAndVelocities(
-                        old_system._sire_object,
-                        new_system._sire_object,
-                        self._mapping,
-                        is_lambda1,
-                        self._property_map,
-                        self._property_map)
+                    old_system._sire_object,
+                    new_system._sire_object,
+                    self._mapping,
+                    is_lambda1,
+                    self._property_map,
+                    self._property_map,
+                )
 
                 # Update the underlying Sire object.
                 old_system._sire_object = sire_system

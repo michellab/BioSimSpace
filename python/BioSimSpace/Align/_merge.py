@@ -1452,29 +1452,3 @@ def _removeDummies(molecule, is_lambda1):
     molecule = _Molecule(edit_mol.commit())
 
     return molecule
-
-def _squash(system):
-    """Internal function which converts a merged BioSimSpace system into an AMBER-compatible format, where all perturbed
-       molecules are represented sequentially, instead of in a mixed topology, like in GROMACS.
-
-       Parameters
-       ----------
-
-       system : BioSimSpace._SireWrappers.System
-           The system.
-    """
-    # Squash the system.
-    all_molecules = []
-    for molecule in system.getMolecules():
-        if not molecule._is_perturbable:
-            all_molecules += [_Molecule(molecule)]
-        else:
-            all_molecules += [_removeDummies(molecule, False), _removeDummies(molecule, True)]
-
-    # Copy all the properties from the old system.
-    new_system = _System(all_molecules)
-    for prop in system._sire_object.propertyKeys():
-        val = system._sire_object.property(prop)
-        new_system._sire_object.setProperty(prop, val)
-
-    return new_system

@@ -486,6 +486,22 @@ class Molecule(_SireWrapper):
         """
         return self._is_perturbable
 
+    def isDecoupled(self):
+        """
+        Whether this molecule is decoupled, i.e. it can be used in a
+        free-energy decoupling simulation.
+
+        Returns
+        -------
+
+        is_decoupled : bool
+            Whether the molecule is decoupled.
+        """
+        if self._sire_object.hasProperty("decouple"):
+            return True
+        else:
+            return False
+        
     def isWater(self, property_map={}):
         """
         Whether this is a water molecule.
@@ -1374,7 +1390,7 @@ class Molecule(_SireWrapper):
         self._sire_object = mol
 
     def repartitionHydrogenMass(
-        self, factor=4, water="no", use_coordinates=False, property_map={}
+        self, factor=3, water="no", use_coordinates=False, property_map={}
     ):
         """
         Redistrubute mass of heavy atoms connected to bonded hydrogens into
@@ -1596,7 +1612,11 @@ class Molecule(_SireWrapper):
         self._sire_object = edit_mol.commit()
 
     def _toRegularMolecule(
-        self, property_map={}, is_lambda1=False, convert_amber_dummies=False
+        self,
+        property_map={},
+        is_lambda1=False,
+        convert_amber_dummies=False,
+        generate_intrascale=False,
     ):
         """
         Internal function to convert a merged molecule to a regular molecule.
@@ -1617,6 +1637,9 @@ class Molecule(_SireWrapper):
             Whether to convert dummies to the correct AMBER formatting for
             non-FEP simulations. This will replace the "du" ambertype
             and "Xx" element with the properties from the other end state.
+
+        generate_intrascale : bool
+            Whether to regenerate the intrascale matrix.
 
         Returns
         -------
@@ -1690,28 +1713,45 @@ class Molecule(_SireWrapper):
                 # Search for any dummy atoms.
                 try:
                     search = mol.atoms("element Xx")
-                except:
+                except KeyError:
                     search = []
 
                 # Replace the ambertype.
                 for dummy in search:
                     index = dummy.index()
+                    amber_type_value = amber_types[index.value()]
+                    element_value = elements[index.value()]
+
+                    # We have a dummy in both endstates so we try to infer the element.
+                    # This is not general so it is only suitable for some common cases.
+                    if element_value.symbol() == "Xx":
+                        name = property_map.get("name", "name")
+                        element_symbol = dummy.property(name)[0].upper()
+                        element_value = _SireMol.Element(element_symbol)
+
                     mol = (
                         mol.atom(index)
-                        .setProperty(amber_type, amber_types[index.value()])
+                        .setProperty(amber_type, amber_type_value)
                         .molecule()
                     )
-                    mol = (
-                        mol.atom(index)
-                        .setProperty(element, elements[index.value()])
-                        .molecule()
-                    )
+                    mol = mol.atom(index).setProperty(element, element_value).molecule()
 
                 # Delete redundant properties.
                 mol = mol.removeProperty("ambertype0").molecule()
                 mol = mol.removeProperty("ambertype1").molecule()
                 mol = mol.removeProperty("element0").molecule()
                 mol = mol.removeProperty("element1").molecule()
+
+        if generate_intrascale:
+            # First we regenerate the connectivity based on the bonds.
+            conn = _SireMol.Connectivity(mol.info()).edit()
+            for bond in mol.property("bond").potentials():
+                conn.connect(bond.atom0(), bond.atom1())
+            mol.setProperty("connectivity", conn.commit())
+
+            # Now we have the correct connectivity, we can regenerate the exclusions.
+            gro_sys = _SireIO.GroTop(_System(mol)._sire_object).toSystem()
+            mol.setProperty("intrascale", gro_sys[0].property("intrascale"))
 
         # Return the updated molecule.
         return Molecule(mol.commit())

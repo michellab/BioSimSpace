@@ -152,6 +152,7 @@ class Relative:
         setup_only=False,
         ignore_warnings=False,
         show_errors=True,
+        explicit_dummies=False,
         extra_options={},
         extra_lines=[],
         estimator='MBAR',
@@ -202,19 +203,23 @@ class Relative:
             run file. This option is specific to GROMACS and will be ignored
             when a different molecular dynamics engine is chosen.
 
-           extra_options : dict
-               A dictionary containing extra options. Overrides the ones generated from the protocol.
+        explicit_dummies : bool
+            Whether to keep the dummy atoms explicit at the endstates or remove them.
+            Only applicable for AMBER.
 
-           extra_lines : list
-               A list of extra lines to be put at the end of the script.
+        extra_options : dict
+            A dictionary containing extra options. Overrides the ones generated from the protocol.
 
-           estimator : str
-               Estimator used for the analysis - must be either 'MBAR' or 'TI'.
+        extra_lines : list
+            A list of extra lines to be put at the end of the script.
 
-           property_map : dict
-               A dictionary that maps system "properties" to their user defined
-               values. This allows the user to refer to properties with their
-               own naming scheme, e.g. { "charge" : "my-charge" }
+        estimator : str
+            Estimator used for the analysis - must be either 'MBAR' or 'TI'.
+
+        property_map : dict
+            A dictionary that maps system "properties" to their user defined
+            values. This allows the user to refer to properties with their
+            own naming scheme, e.g. { "charge" : "my-charge" }
         """
 
         # Validate the input.
@@ -498,6 +503,12 @@ class Relative:
         if estimator not in ['MBAR', 'TI']:
             raise ValueError("'estimator' must be either 'MBAR' or 'TI'.")
         self._estimator = estimator
+
+        # Check explicit dummy atoms for AMBER
+        if not isinstance(explicit_dummies, bool):
+            raise TypeError("'setup_only' must be of type 'bool'.")
+        else:
+            self._explicit_dummies = explicit_dummies
 
         # Check that the map is valid.
         if not isinstance(property_map, dict):
@@ -2345,6 +2356,7 @@ class Relative:
                                            extra_options=self._extra_options,
                                            extra_lines=self._extra_lines,
                                            property_map=self._property_map,
+                                           explicit_dummies=self._explicit_dummies
                                            )
 
         if self._setup_only:

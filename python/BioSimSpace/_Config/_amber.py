@@ -31,7 +31,7 @@ import math as _math
 import warnings as _warnings
 
 from .. import Protocol as _Protocol
-from ..Align._merge import _squash
+from ..Align._squash import _amber_mask_from_indices, _squashed_atom_mapping
 from .._Exceptions import IncompatibleError as _IncompatibleError
 from ..Units.Time import nanosecond as _nanosecond
 
@@ -47,7 +47,7 @@ from ._config import Config as _Config
 class Amber(_Config):
     """A class for generating configuration files for AMBER."""
 
-    def __init__(self, system, protocol, property_map={}):
+    def __init__(self, system, protocol, explicit_dummies=False, property_map={}):
         """
         Constructor.
 
@@ -60,6 +60,9 @@ class Amber(_Config):
         protocol : :class:`Protocol <BioSimSpace.Protocol>`
             The protocol for the process.
 
+        explicit_dummies : bool
+            Whether to keep the dummy atoms explicit at the endstates or remove them.
+
         property_map : dict
             A dictionary that maps system "properties" to their user defined
             values. This allows the user to refer to properties with their
@@ -68,6 +71,7 @@ class Amber(_Config):
 
         # Call the base class constructor.
         super().__init__(system, protocol, property_map=property_map)
+        self.explicit_dummies = explicit_dummies
 
     def createConfig(
         self, version=None, is_pmemd=False, extra_options={}, extra_lines=[]
@@ -326,10 +330,17 @@ class Amber(_Config):
                 protocol_dict["ifmbar"] = 1
                 # Output dVdl
                 protocol_dict["logdvdl"] = 1
-            # Atom masks based on if HMR.
-            hmr = self._protocol.getHmr()
-            protocol_dict = {**protocol_dict, **
-                             self._generate_amber_fep_masks(hmr)}
+            # Atom masks based on timestep
+            if isinstance(self._protocol, _Protocol.Minimisation):
+                if self._protocol.getHmr(): # as minimisation has no timestep, assume timestep based on hmr
+                    timestep = 0.004
+                else:
+                    timestep = 0.002
+                protocol_dict = {**protocol_dict, **
+                                            self._generate_amber_fep_masks(timestep)}
+            else:
+                protocol_dict = {**protocol_dict, **
+                                self._generate_amber_fep_masks(self._protocol.getTimeStep().picoseconds().value())}
             # Do not wrap the coordinates for equilibration steps 
             # as this can create issues for the free leg of FEP runs.
             if isinstance(self._protocol, _Protocol.Equilibration) or isinstance(self._protocol, _Protocol.Minimisation):
@@ -422,56 +433,14 @@ class Amber(_Config):
 
         return restraint_mask
 
-
-    def _amber_mask_from_indices(self, atom_idxs):
-        """Internal helper function to create an AMBER restraint mask from a
-           list of atom indices.
-
-           Parameters
-           ----------
-
-           atom_idxs : [int]
-               A list of atom indices.
-
-           Returns
-           -------
-
-           restraint_mask : str
-               The AMBER restraint mask.
-        """
-        # AMBER has a restriction on the number of characters in the restraint
-        # mask (not documented) so we can't just use comma-separated atom
-        # indices. Instead we loop through the indices and use hyphens to
-        # separate contiguous blocks of indices, e.g. 1-23,34-47,...
-
-        if atom_idxs:
-            atom_idxs = sorted(list(set(atom_idxs)))
-            if not all(isinstance(x, int) for x in atom_idxs):
-                raise TypeError("'atom_idxs' must be a list of 'int' types.")
-            groups = []
-            initial_idx = atom_idxs[0]
-            for prev_idx, curr_idx in _it.zip_longest(atom_idxs, atom_idxs[1:]):
-                if curr_idx != prev_idx + 1 or curr_idx is None:
-                    if initial_idx == prev_idx:
-                        groups += [str(initial_idx)]
-                    else:
-                        groups += [f"{initial_idx}-{prev_idx}"]
-                    initial_idx = curr_idx
-            mask = "@" + ",".join(groups)
-        else:
-            mask = ""
-
-        return mask
-
-    def _generate_amber_fep_masks(self, hmr):
+    def _generate_amber_fep_masks(self, timestep):
         """Internal helper function which generates timasks and scmasks based on the system.
 
            Parameters
            ----------
 
-           hmr : bool
-               Whether HMR has been applied or not.
-               Generates a different mask based on this.
+            timestep : [float]
+                The timestep in ps for the FEP perturbation. Generates a different mask based on this.
 
            Returns
            -------
@@ -480,67 +449,49 @@ class Amber(_Config):
                A dictionary of AMBER-compatible options.
         """
 
-        # Squash the system into an AMBER-friendly format.
-        squashed_system = _squash(self._system)
+        # Get the merged to squashed atom mapping of the whole system for both endpoints.
+        kwargs = dict(environment=False, explicit_dummies=self.explicit_dummies)
+        mcs_mapping0 = _squashed_atom_mapping(
+            self._system, is_lambda1=False, common=True, dummies=False, **kwargs
+        )
+        mcs_mapping1 = _squashed_atom_mapping(
+            self._system, is_lambda1=True, common=True, dummies=False, **kwargs
+        )
+        dummy_mapping0 = _squashed_atom_mapping(
+            self._system, is_lambda1=False, common=False, dummies=True, **kwargs
+        )
+        dummy_mapping1 = _squashed_atom_mapping(
+            self._system, is_lambda1=True, common=False, dummies=True, **kwargs
+        )
 
-        # When HMR is used, there can be no noshakemask
-        HMR_on = hmr
+        # Generate the TI and dummy masks.
+        mcs0_indices, mcs1_indices, dummy0_indices, dummy1_indices = [], [], [], []
+        for i in range(self._system.nAtoms()):
+            if i in dummy_mapping0:
+                dummy0_indices.append(dummy_mapping0[i])
+            if i in dummy_mapping1:
+                dummy1_indices.append(dummy_mapping1[i])
+            if i in mcs_mapping0:
+                mcs0_indices.append(mcs_mapping0[i])
+            if i in mcs_mapping1:
+                mcs1_indices.append(mcs_mapping1[i])
+        ti0_indices = mcs0_indices + dummy0_indices
+        ti1_indices = mcs1_indices + dummy1_indices
 
-        # Extract all perturbable molecules from both the squashed and the merged systems.
-        perturbable_mol_mask = []
-        mols_hybr = []
-        nondummy_indices0, nondummy_indices1 = [], []
-        for mol in self._system.getMolecules():
-            if mol._is_perturbable:
-                perturbable_mol_mask += [0, 1]
-                mols_hybr += [mol]
-                nondummy_indices0 += [[atom.index() for atom in mol.getAtoms()
-                                       if "du" not in atom._sire_object.property("ambertype0")]]
-                nondummy_indices1 += [[atom.index() for atom in mol.getAtoms()
-                                       if "du" not in atom._sire_object.property("ambertype1")]]
-            else:
-                perturbable_mol_mask += [None]
-        mols0 = [squashed_system.getMolecule(i) for i, mask in enumerate(
-            perturbable_mol_mask) if mask == 0]
-        mols1 = [squashed_system.getMolecule(i) for i, mask in enumerate(
-            perturbable_mol_mask) if mask == 1]
-
-        # Find the perturbed atom indices withing the squashed system.
-        mols0_indices = [squashed_system.getIndex(
-            atom) + 1 for mol in mols0 for atom in mol.getAtoms()]
-        mols1_indices = [squashed_system.getIndex(
-            atom) + 1 for mol in mols1 for atom in mol.getAtoms()]
-
-        # Find the dummy indices within the squashed system.
-        offsets = [0] + list(_it.accumulate(mol.nAtoms()
-                             for mol in squashed_system.getMolecules()))
-        offsets0 = [offsets[i]
-                    for i, mask in enumerate(perturbable_mol_mask) if mask == 0]
-        offsets1 = [offsets[i]
-                    for i, mask in enumerate(perturbable_mol_mask) if mask == 1]
-        dummy0_indices = [offset + idx_map.index(atom.index()) + 1
-                          for mol, offset, idx_map in zip(mols_hybr, offsets0, nondummy_indices0)
-                          for atom in mol.getAtoms()
-                          if "du" in atom._sire_object.property("ambertype1")]
-        dummy1_indices = [offset + idx_map.index(atom.index()) + 1
-                          for mol, offset, idx_map in zip(mols_hybr, offsets1, nondummy_indices1)
-                          for atom in mol.getAtoms()
-                          if "du" in atom._sire_object.property("ambertype0")]
-
-        # If it is HMR
-        if HMR_on == True:
+        # SHAKE should be used for timestep > 1 fs.
+        if timestep >= 0.002:
             no_shake_mask = ""
         else:
-            no_shake_mask = self._amber_mask_from_indices(
-                mols0_indices + mols1_indices)
+            no_shake_mask = _amber_mask_from_indices(ti0_indices + ti1_indices)
 
         # Create an option dict with amber masks generated from the above indices.
         option_dict = {
-            "timask1": f"\"{self._amber_mask_from_indices(mols0_indices)}\"",
-            "timask2": f"\"{self._amber_mask_from_indices(mols1_indices)}\"",
-            "scmask1": f"\"{self._amber_mask_from_indices(dummy0_indices)}\"",
-            "scmask2": f"\"{self._amber_mask_from_indices(dummy1_indices)}\"",
-            "noshakemask": f"\"{no_shake_mask}\"",
+            "timask1": f'"{_amber_mask_from_indices(ti0_indices)}"',
+            "timask2": f'"{_amber_mask_from_indices(ti1_indices)}"',
+            "scmask1": f'"{_amber_mask_from_indices(dummy0_indices)}"',
+            "scmask2": f'"{_amber_mask_from_indices(dummy1_indices)}"',
+            "noshakemask": f'"{no_shake_mask}"',
         }
 
         return option_dict
+    

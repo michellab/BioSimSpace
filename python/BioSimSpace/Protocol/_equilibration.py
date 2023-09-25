@@ -54,7 +54,6 @@ class Equilibration(_Protocol, _PositionRestraintMixin, _HmrMixin):
         restart=False,
         restraint=None,
         force_constant=10 * _Units.Energy.kcal_per_mol / _Units.Area.angstrom2,
-        restart=False,
         hmr="auto",
         hmr_factor="auto",
         hmr_water="auto",
@@ -122,9 +121,6 @@ class Equilibration(_Protocol, _PositionRestraintMixin, _HmrMixin):
                passed, then default units of 'kcal_per_mol / angstrom**2' will
                be used.
 
-           restart : bool
-               Whether this is a continuation of a previous simulation.
-           
            hmr : "auto" or bool
                Whether HMR should be applied.
 
