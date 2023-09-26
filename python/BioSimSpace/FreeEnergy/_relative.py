@@ -1012,7 +1012,8 @@ class Relative:
                 results,
                 columns=_np.array(lambda_array, dtype=_np.float64),
                 index=_pd.MultiIndex.from_arrays(
-                    [time, _np.repeat(lambda_win, len(time))], names=["time", "lambdas"]
+                    [time, _np.repeat(lambda_win, len(time))],
+                    names=["time", "fep-lambda"],
                 ),
             )
         else:
@@ -1021,7 +1022,7 @@ class Relative:
                 columns=["fep"],
                 index=_pd.MultiIndex.from_arrays(
                     [time, _np.repeat(lambda_win, len(time))],
-                    names=["time", "fep-lambdas"],
+                    names=["time", "fep-lambda"],
                 ),
             )
         df.attrs["temperature"] = T
@@ -1076,10 +1077,6 @@ class Relative:
         else:
             is_mbar = False
 
-        # Beta factor for computing reduced potentials and gradients.
-        k_b = _R_kJmol * _kJ2kcal
-        beta = 1 / (k_b * T)
-
         # Try to read the file.
         try:
             table = _pq.read_table(parquet_file)
@@ -1089,7 +1086,6 @@ class Relative:
         # Try to extract the metadata.
         try:
             metadata = _json.loads(table.schema.metadata["somd2".encode()])
-            temperature = float(metadata["temperature"])
         except:
             raise IOError(
                 f"Could not read the SOMD2 metadta from parquet file: {parquet_file}"
@@ -1097,13 +1093,21 @@ class Relative:
 
         # Validate metadata required by all analysis methods.
         try:
+            temperature = float(metadata["temperature"])
+        except:
+            raise ValueError("Parquet metadata does not contain 'temperature'.")
+        try:
+            attrs = dict(metadata["attrs"])
+        except:
+            raise ValueError("Parquet metadata does not contain 'attrs'.")
+        try:
             lam = float(metadata["lambda"])
         except:
-            raise ValueError("Parquet metadata does not contain lambda value.")
+            raise ValueError("Parquet metadata does not contain 'lambda'.")
         try:
             lambda_array = metadata["lambda_array"]
         except:
-            raise ValueError("Parquet metadata does not contain lambda array.")
+            raise ValueError("Parquet metadata does not contain 'lambda array'")
 
         # Make sure that the temperature is correct.
         if not T == temperature:
@@ -1116,20 +1120,14 @@ class Relative:
         df = table.to_pandas()
 
         if is_mbar:
-            df = df[[str(x) for x in lambda_array]].copy()
-            lambdas = len(df.index) * [lam]
-            multiindex = _pd.MultiIndex.from_arrays(
-                [df.index, lambdas], names=["time", "lambdas"]
-            )
-            df.index = multiindex
-            df = beta * df.subtract(df[str(lam)], axis=0)
+            # Extract the columns correspodning to the lambda array.
+            df = df[[str(x) for x in lambda_array]]
 
-            # Set the temperature and energy unit.
-            df.attrs["temperature"] = T
-            df.attrs["energy_unit"] = "kT"
+            # Subtract the potential at the simulated lambda.
+            df = df.subtract(df[str(lam)], axis=0)
 
-            # Convert column index to float.
-            df.columns = df.columns.astype(float)
+            # Apply the existing attributes.
+            df.attrs = attrs
 
             return df.dropna()
 
@@ -1167,54 +1165,24 @@ class Relative:
             if lam_below is None:
                 double_incr = (lam_above - lam) * 2
                 grad = (df[str(lam_above)] - df[str(lam)]) * 2 / double_incr
-                back_m = _np.exp(beta * (df[str(lam_above)] - df[str(lam)]))
-                forward_m = _np.exp(-beta * (df[str(lam_above)] - df[str(lam)]))
             elif lam_above is None:
                 double_incr = (lam - lam_below) * 2
                 grad = (df[str(lam)] - df[str(lam_below)]) * 2 / double_incr
-                back_m = _np.exp(-beta * (df[str(lam_below)] - df[str(lam)]))
-                forward_m = _np.exp(beta * (df[str(lam_below)] - df[str(lam)]))
             else:
                 double_incr = lam_above - lam_below
                 grad = (df[str(lam_above)] - df[str(lam_below)]) / double_incr
-                back_m = _np.exp(beta * (df[str(lam)] - df[str(lam_below)]))
-                forward_m = _np.exp(beta * (df[str(lam)] - df[str(lam_above)]))
-
-            grad.name = "gradient"
-            back_m.name = "backward_mc"
-            forward_m.name = "forward_mc"
-
-            df = _pd.concat(
-                [
-                    df,
-                    _pd.DataFrame(grad),
-                    _pd.DataFrame(back_m),
-                    _pd.DataFrame(forward_m),
-                ],
-                axis=1,
-            )
-
-            try:
-                time = list(df["time"])
-            except KeyError:
-                time = list(df.index)
-
-            lambdas = len(time) * [lam]
-
-            # Create a multi-index from the two lists
-            multi_index = _pd.MultiIndex.from_tuples(
-                zip(time, lambdas), names=["time", "fep-lambdas"]
-            )
-
-            # Get the gradients in kT.
-            grads = list(beta * df["gradient"])
 
             # Create a DataFrame with the multi-index
-            df = _pd.DataFrame({"fep": grads}, index=multi_index)
+            df = _pd.DataFrame({"fep": grad}, index=df.index)
 
-            # Set the temperature and energy unit.
-            df.attrs["temperature"] = T
-            df.attrs["energy_unit"] = "kT"
+            # Set the original attributes.
+            df.attrs = attrs
+
+            # Set the index, ensuring that fep-lambda is a float.
+            idx = df.index
+            df.index = _pd.MultiIndex(
+                [idx.levels[0], idx.levels[1].astype(float)], idx.codes, names=idx.names
+            )
 
             return df.dropna()
 
