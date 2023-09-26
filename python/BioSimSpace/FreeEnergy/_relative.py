@@ -1108,6 +1108,11 @@ class Relative:
             lambda_array = metadata["lambda_array"]
         except:
             raise ValueError("Parquet metadata does not contain 'lambda array'")
+        if not is_mbar:
+            try:
+                lambda_grad = metadata["lambda_grad"]
+            except:
+                raise ValueError("Parquet metadata does not contain 'lambda grad'")
 
         # Make sure that the temperature is correct.
         if not T == temperature:
@@ -1132,43 +1137,23 @@ class Relative:
             return df.dropna()
 
         else:
-            columns_lambdas = df.columns[
-                _pd.to_numeric(df.columns, errors="coerce").to_series().notnull()
-            ]
+            # Forward or backward difference.
+            if len(lambda_grad) == 1:
+                lam_delta = lambda_grad[0]
 
-            if len(columns_lambdas) > 3 and lambda_array is None:
-                raise ValueError(
-                    "More than 3 lambda values in the dataframe but no lambda array provided?"
-                )
-            try:
-                lam_below = max(
-                    [
-                        float(lambda_val)
-                        for lambda_val in columns_lambdas
-                        if float(lambda_val) < lam
-                    ]
-                )
-            except ValueError:
-                lam_below = None
-            try:
-                lam_above = min(
-                    [
-                        float(lambda_val)
-                        for lambda_val in columns_lambdas
-                        if float(lambda_val) > lam
-                    ]
-                )
-            except ValueError:
-                lam_above = None
+                # Forward difference.
+                if lam_delta > lam:
+                    double_incr = (lam_delta - lam) * 2
+                    grad = (df[str(lam_delta)] - df[str(lam)]) * 2 / double_incr
 
-            # Compute gradient using finite differences.
-            if lam_below is None:
-                double_incr = (lam_above - lam) * 2
-                grad = (df[str(lam_above)] - df[str(lam)]) * 2 / double_incr
-            elif lam_above is None:
-                double_incr = (lam - lam_below) * 2
-                grad = (df[str(lam)] - df[str(lam_below)]) * 2 / double_incr
+                # Backward difference.
+                else:
+                    double_incr = (lam - lam_delta) * 2
+                    grad = (df[str(lam)] - df[str(lam_delta)]) * 2 / double_incr
+
+            # Central difference.
             else:
+                lam_below, lam_above = lambda_grad
                 double_incr = lam_above - lam_below
                 grad = (df[str(lam_above)] - df[str(lam_below)]) / double_incr
 
