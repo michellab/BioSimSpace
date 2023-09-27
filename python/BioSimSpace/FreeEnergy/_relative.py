@@ -1126,10 +1126,10 @@ class Relative:
 
         if is_mbar:
             # Extract the columns correspodning to the lambda array.
-            df = df[[str(x) for x in lambda_array]]
+            df = df[[x for x in lambda_array]]
 
             # Subtract the potential at the simulated lambda.
-            df = df.subtract(df[str(lam)], axis=0)
+            df = df.subtract(df[lam], axis=0)
 
             # Apply the existing attributes.
             df.attrs = attrs
@@ -1144,30 +1144,24 @@ class Relative:
                 # Forward difference.
                 if lam_delta > lam:
                     double_incr = (lam_delta - lam) * 2
-                    grad = (df[str(lam_delta)] - df[str(lam)]) * 2 / double_incr
+                    grad = (df[lam_delta] - df[lam]) * 2 / double_incr
 
                 # Backward difference.
                 else:
                     double_incr = (lam - lam_delta) * 2
-                    grad = (df[str(lam)] - df[str(lam_delta)]) * 2 / double_incr
+                    grad = (df[lam] - df[lam_delta]) * 2 / double_incr
 
             # Central difference.
             else:
                 lam_below, lam_above = lambda_grad
                 double_incr = lam_above - lam_below
-                grad = (df[str(lam_above)] - df[str(lam_below)]) / double_incr
+                grad = (df[lam_above] - df[lam_below]) / double_incr
 
             # Create a DataFrame with the multi-index
             df = _pd.DataFrame({"fep": grad}, index=df.index)
 
             # Set the original attributes.
             df.attrs = attrs
-
-            # Set the index, ensuring that fep-lambda is a float.
-            idx = df.index
-            df.index = _pd.MultiIndex(
-                [idx.levels[0], idx.levels[1].astype(float)], idx.codes, names=idx.names
-            )
 
             return df.dropna()
 
