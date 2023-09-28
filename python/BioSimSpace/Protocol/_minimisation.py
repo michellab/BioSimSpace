@@ -96,11 +96,10 @@ class Minimisation(_Protocol, _PositionRestraintMixin, _HmrMixin):
         _PositionRestraintMixin.__init__(self, restraint, force_constant)
         
         # assume no HMR is to be applied to the system for minimisation unless set to True.
-        if not hmr or hmr == "auto":
-            timestep = _Types.Time(2, "femtosecond")
-
-        if hmr:
+        if hmr == True:
             timestep = _Types.Time(4, "femtosecond")
+        elif not hmr or hmr == "auto":
+            timestep = _Types.Time(2, "femtosecond")
 
         _HmrMixin.__init__(self,
                            hmr=hmr,
