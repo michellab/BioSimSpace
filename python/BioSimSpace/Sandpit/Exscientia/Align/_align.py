@@ -36,9 +36,6 @@ __all__ = [
 import csv as _csv
 import os as _os
 import subprocess as _subprocess
-import shutil as _shutil
-import shlex as _shlex
-import sys as _sys
 
 from .._Utils import _try_import, _have_imported, _assert_imported
 
