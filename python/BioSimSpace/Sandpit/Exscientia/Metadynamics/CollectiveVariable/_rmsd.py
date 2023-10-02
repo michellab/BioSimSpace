@@ -451,6 +451,7 @@ class RMSD(_CollectiveVariable):
         to the reference.
 
         Returns
+        -------
 
         reference_index : int
             The index of the molecule in the system that corresponds to
