@@ -277,11 +277,50 @@ class TestBSS_analysis:
     def test_dG_off_mdr(self, multiple_distance_restraint):
         """Test if the restraint generated has the same energy"""
         restraint, _ = multiple_distance_restraint
-        assert np.isclose(-0.0790, restraint.correction.value(), atol=0.01)
+        assert np.isclose(-0.0790, restraint.correction.value(), atol=0.001)
 
-    # TODO: Check that the atoms picked are always the same (once the resraint search algorithm is stable)
+    def test_index_mdr(self, multiple_distance_restraint):
+        """Check that the same atoms are selected for the distance restraint."""
+        restraint, _ = multiple_distance_restraint
+        idxs_receptor = [
+            pair["r1"].index()
+            for pair in restraint._restraint_dict["distance_restraints"]
+        ]
+        idxs_ligand = [
+            pair["l1"].index()
+            for pair in restraint._restraint_dict["distance_restraints"]
+        ]
+        # The search algorithm is not deterministic, so the receptor anchor points
+        # are not always the same. The ligand anchor points are always the same as
+        # all heavy atoms are used.
+        expected_idxs_ligand = [13, 9, 16, 12, 11, 14, 15, 8, 17].sort()
+        assert len(idxs_receptor) == len(idxs_ligand)
+        assert idxs_ligand.sort() == expected_idxs_ligand
 
-    # TODO: Test the dict parameters are the same (once the resraint search algorithm is stable)
+        # Check the permanent distance restraint - this is always the same
+        assert (
+            restraint._restraint_dict["permanent_distance_restraint"]["r1"].index()
+            == 1539
+        )
+        assert (
+            restraint._restraint_dict["permanent_distance_restraint"]["l1"].index()
+            == 10
+        )
+
+    def test_parameters_mdr(self, multiple_distance_restraint):
+        """
+        Check the parameters selected for the permanent distance restraint.
+        Other restraints are not tested as the multiple distance restraint
+        selection algorithm is not deterministic.
+        """
+        restraint, _ = multiple_distance_restraint
+        permanent_restraint = restraint._restraint_dict["permanent_distance_restraint"]
+        assert np.isclose(8.9019, permanent_restraint["r0"] / angstrom, atol=0.001)
+        assert np.isclose(
+            40,
+            permanent_restraint["kr"] / (kcal_per_mol / angstrom**2),
+        )
+        assert np.isclose(0.5756, permanent_restraint["r_fb"] / angstrom, atol=0.001)
 
     def test_analysis_failure_mdr(self, _restraint_search):
         restraint_search, _ = _restraint_search

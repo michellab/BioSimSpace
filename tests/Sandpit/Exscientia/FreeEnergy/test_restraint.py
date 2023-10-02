@@ -329,8 +329,10 @@ def mdr_restraint_component_fb_r0():
 
 @pytest.fixture(scope="session")
 def mdr_restraint_fb_r0(mdr_restraint_component_fb_r0):
-    """Generate the multiple distance restraints restraint object with
-    the values for r0 and r_fb set to 0 for the permanent restraint."""
+    """
+    Generate the multiple distance restraints restraint object with
+    the values for r0 and r_fb set to 0 for the permanent restraint.
+    """
     system, restraint_dict = mdr_restraint_component_fb_r0
 
     restraint = Restraint(
