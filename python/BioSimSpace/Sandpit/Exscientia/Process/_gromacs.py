@@ -325,7 +325,7 @@ class Gromacs(_process.Process):
             system = self._checkPerturbable(system)
 
         # Convert the water model topology so that it matches the GROMACS naming convention.
-        system._set_water_topology("GROMACS")
+        system._set_water_topology("GROMACS", property_map=self._property_map)
 
         # Check whether the system contains periodic box information.
         # For now, we'll not attempt to generate a box if the system property
@@ -347,17 +347,35 @@ class Gromacs(_process.Process):
         # GRO87 coordinate files.
         if coord_file is not None:
             file = _os.path.splitext(coord_file)[0]
-            _IO.saveMolecules(file, system, "gro87", property_map=self._property_map)
+            _IO.saveMolecules(
+                file,
+                system,
+                "gro87",
+                match_waters=False,
+                property_map=self._property_map,
+            )
 
         # GRO87 reference files.
         if ref_file is not None:
             file = _os.path.splitext(ref_file)[0]
-            _IO.saveMolecules(file, system, "gro87", property_map=self._property_map)
+            _IO.saveMolecules(
+                file,
+                system,
+                "gro87",
+                match_waters=False,
+                property_map=self._property_map,
+            )
 
         # TOP file.
         if topol_file is not None:
             file = _os.path.splitext(topol_file)[0]
-            _IO.saveMolecules(file, system, "grotop", property_map=self._property_map)
+            _IO.saveMolecules(
+                file,
+                system,
+                "grotop",
+                match_waters=False,
+                property_map=self._property_map,
+            )
 
             # Write the restraint to the topology file
             if self._restraint:
@@ -2579,9 +2597,10 @@ class Gromacs(_process.Process):
                     and space_prop in new_system._sire_object.propertyKeys()
                 ):
                     box = new_system._sire_object.property("space")
-                    old_system._sire_object.setProperty(
-                        self._property_map.get("space", "space"), box
-                    )
+                    if box.isPeriodic():
+                        old_system._sire_object.setProperty(
+                            self._property_map.get("space", "space"), box
+                        )
 
                 # If this is a vacuum simulation, then translate the centre of mass
                 # of the system back to the origin.

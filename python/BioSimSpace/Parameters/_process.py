@@ -223,7 +223,16 @@ class Process:
 
             # Fix the charges so that the total is integer valued.
             if self._new_molecule is not None:
-                self._new_molecule._fixCharge(property_map=self._protocol._property_map)
+                # This is a single molecule.
+                try:
+                    self._new_molecule._fixCharge(
+                        property_map=self._protocol._property_map
+                    )
+                # This is a system object.
+                except:
+                    for mol in self._new_molecule:
+                        mol._fixCharge(property_map=self._protocol._property_map)
+                        self._new_molecule.updateMolecules(mol)
 
         # If there was an problem, return the last error.
         if self._is_error:

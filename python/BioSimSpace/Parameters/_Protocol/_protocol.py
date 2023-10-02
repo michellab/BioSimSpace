@@ -33,7 +33,7 @@ __all__ = ["Protocol"]
 class Protocol:
     """A base class for parameterisation protocols."""
 
-    def __init__(self, forcefield, property_map={}):
+    def __init__(self, forcefield, ensure_compatible=True, property_map={}):
         """
         Constructor.
 
@@ -42,6 +42,13 @@ class Protocol:
 
         forcefield : str
             The name of the force field.
+
+        ensure_compatible : bool
+            Whether to ensure that the topology of the parameterised molecule is
+            compatible with that of the original molecule. An exception will be
+            raised if this isn't the case, e.g. if atoms have been added. Set
+            this to False is parameterising lone oxygen atoms corresponding to
+            structural (crystal) water molecules.
 
         property_map : dict
             A dictionary that maps system "properties" to their user defined
@@ -58,6 +65,12 @@ class Protocol:
             raise TypeError("'forcefield' must be of type 'str'")
         else:
             self._forcefield = forcefield
+
+        # Validate and set the topology compatibilty flag.
+        if not isinstance(ensure_compatible, bool):
+            raise TypeError("'ensure_compatible' must be of type 'bool'")
+        else:
+            self._ensure_compatible = ensure_compatible
 
         # Validate and set the property map.
         if not isinstance(property_map, dict):
