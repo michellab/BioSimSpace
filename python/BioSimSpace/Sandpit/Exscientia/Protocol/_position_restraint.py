@@ -165,7 +165,7 @@ class _PositionRestraintMixin:
                     force_constant = _Units._GeneralUnit(force_constant)
                 except:
                     raise ValueError(
-                        f"Unable to parse force constant '{force_constant}' string."
+                        f"Unable to parse 'force_constant' string."
                     ) from None
 
             elif not isinstance(force_constant, _Types._GeneralUnit):
