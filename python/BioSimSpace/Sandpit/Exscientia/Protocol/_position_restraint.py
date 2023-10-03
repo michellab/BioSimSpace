@@ -148,7 +148,7 @@ class _PositionRestraintMixin:
         Parameters
         ----------
 
-        force_constant : :class:`GeneralUnit <BioSimSpace.Types._GeneralUnit>`, float
+        force_constant : :class:`GeneralUnit <BioSimSpace.Types._GeneralUnit>`, float, str
         """
 
         # Convert int to float.
@@ -159,18 +159,26 @@ class _PositionRestraintMixin:
             # Use default units.
             force_constant *= _Units.Energy.kcal_per_mol / _Units.Area.angstrom2
 
-        elif isinstance(force_constant, _Types._GeneralUnit):
+        else:
+            if isinstance(force_constant, str):
+                try:
+                    force_constant = _Units._GeneralUnit(force_constant)
+                except:
+                    raise ValueError(
+                        f"Unable to parse force constant '{force_constant}' string."
+                    ) from None
+
+            elif not isinstance(force_constant, _Types._GeneralUnit):
+                raise TypeError(
+                    "'force_constant' must be of type 'BioSimSpace.Types._GeneralUnit', or 'float'."
+                )
+
             # Validate the dimensions.
             if force_constant.dimensions() != (0, 0, 0, 1, -1, 0, -2):
                 raise ValueError(
                     "'force_constant' has invalid dimensions! "
                     f"Expected dimensions are 'M Q-1 T-2', found '{force_constant.unit()}'"
                 )
-
-        else:
-            raise TypeError(
-                "'force_constant' must be of type 'BioSimSpace.Types._GeneralUnit', or 'float'."
-            )
 
         self._force_constant = force_constant
 

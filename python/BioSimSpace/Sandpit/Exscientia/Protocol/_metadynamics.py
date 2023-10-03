@@ -252,13 +252,20 @@ class Metadynamics(_Protocol):
         Parameters
         ----------
 
-        timestep : :class:`Time <BioSimSpace.Types.Time>`
+        timestep : str, :class:`Time <BioSimSpace.Types.Time>`
             The integration time step.
         """
-        if isinstance(timestep, _Types.Time):
+        if isinstance(timestep, str):
+            try:
+                self._timestep = _Types.Time(timestep)
+            except:
+                raise ValueError("Unable to parse 'timestep' string.") from None
+        elif isinstance(timestep, _Types.Time):
             self._timestep = timestep
         else:
-            raise TypeError("'timestep' must be of type 'BioSimSpace.Types.Time'")
+            raise TypeError(
+                "'timestep' must be of type 'str' or 'BioSimSpace.Types.Time'"
+            )
 
     def getRunTime(self):
         """
@@ -279,13 +286,20 @@ class Metadynamics(_Protocol):
         Parameters
         ----------
 
-        runtime : :class:`Time <BioSimSpace.Types.Time>`
+        runtime : str, :class:`Time <BioSimSpace.Types.Time>`
             The simulation run time.
         """
-        if isinstance(runtime, _Types.Time):
+        if isinstance(runtime, str):
+            try:
+                self._runtime = _Types.Time(runtime)
+            except:
+                raise ValueError("Unable to parse 'runtime' string.") from None
+        elif isinstance(runtime, _Types.Time):
             self._runtime = runtime
         else:
-            raise TypeError("'runtime' must be of type 'BioSimSpace.Types.Time'")
+            raise TypeError(
+                "'runtime' must be of type 'str' or 'BioSimSpace.Types.Time'"
+            )
 
     def getTemperature(self):
         """
@@ -306,14 +320,19 @@ class Metadynamics(_Protocol):
         Parameters
         ----------
 
-        temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
+        temperature : str, :class:`Temperature <BioSimSpace.Types.Temperature>`
             The simulation temperature.
         """
+        if isinstance(temperature, str):
+            try:
+                self._temperature = _Types.Temperature(temperature)
+            except:
+                raise ValueError("Unable to parse 'temperature' string.") from None
         if isinstance(temperature, _Types.Temperature):
             self._temperature = temperature
         else:
             raise TypeError(
-                "'temperature' must be of type 'BioSimSpace.Types.Temperature'"
+                "'temperature' must be of type 'str' or 'BioSimSpace.Types.Temperature'"
             )
 
     def getPressure(self):
@@ -338,10 +357,17 @@ class Metadynamics(_Protocol):
         pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
             The pressure.
         """
-        if isinstance(pressure, _Types.Pressure):
+        if isinstance(pressure, str):
+            try:
+                self._pressure = _Types.Pressure(pressure)
+            except:
+                raise ValueError("Unable to parse 'pressure' string.") from None
+        elif isinstance(pressure, _Types.Pressure):
             self._pressure = pressure
         else:
-            raise TypeError("'pressure' must be of type 'BioSimSpace.Types.Pressure'")
+            raise TypeError(
+                "'pressure' must be of type 'str' or 'BioSimSpace.Types.Pressure'"
+            )
 
     def getThermostatTimeConstant(self):
         """
@@ -365,11 +391,18 @@ class Metadynamics(_Protocol):
         thermostat_time_constant : :class:`Time <BioSimSpace.Types.Time>`
             The time constant for the thermostat.
         """
-        if isinstance(thermostat_time_constant, _Types.Time):
+        if isinstance(thermostat_time_constant, str):
+            try:
+                self._thermostat_time_constant = _Types.Time(thermostat_time_constant)
+            except:
+                raise ValueError(
+                    "Unable to parse 'thermostat_time_constant' string."
+                ) from None
+        elif isinstance(thermostat_time_constant, _Types.Time):
             self._thermostat_time_constant = thermostat_time_constant
         else:
             raise TypeError(
-                "'thermostat_time_constant' must be of type 'BioSimSpace.Types.Time'"
+                "'thermostat_time_constant' must be of type 'str' or 'BioSimSpace.Types.Time'"
             )
 
     def getHillHeight(self):
@@ -394,9 +427,15 @@ class Metadynamics(_Protocol):
         hill_height : :class:`Energy <BioSimSpace.Types.Energy>`
             The hill height.
         """
-
-        if not isinstance(hill_height, _Types.Energy):
-            raise TypeError("'hill_height' must be of type 'BioSimSpace.Types.Energy'")
+        if isinstance(hill_height, str):
+            try:
+                hill_height = _Types.Energy(hill_height)
+            except:
+                raise ValueError("Unable to parse 'hill_height' string.") from None
+        elif not isinstance(hill_height, _Types.Energy):
+            raise TypeError(
+                "'hill_height' must be of type 'str' or 'BioSimSpace.Types.Energy'"
+            )
 
         # Check that heights is greater than zero.
         if hill_height.value() <= 0:
