@@ -328,7 +328,7 @@ class Metadynamics(_Protocol):
                 self._temperature = _Types.Temperature(temperature)
             except:
                 raise ValueError("Unable to parse 'temperature' string.") from None
-        if isinstance(temperature, _Types.Temperature):
+        elif isinstance(temperature, _Types.Temperature):
             self._temperature = temperature
         else:
             raise TypeError(
