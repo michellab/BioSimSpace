@@ -145,6 +145,7 @@ class Production(_Protocol, _PositionRestraintMixin):
             f"runtime={self._runtime}, "
             f"temperature={self._temperature}, "
             f"pressure={self._pressure}, "
+            f"thermostat_time_constant={self._thermostat_time_constant}, "
             f"report_interval={self._report_interval}, "
             f"restart_interval={self._restart_interval}, "
             f"restart={self._restart}, " + _PositionRestraintMixin._get_parm(self)
@@ -178,6 +179,7 @@ class Production(_Protocol, _PositionRestraintMixin):
             and self._runtime == other._runtime
             and self._temperature == other._temperature
             and self._pressure == other._pressure
+            and self._thermostat_time_constant == other._thermostat_time_constant
             and self._report_interval == other._report_interval
             and self._restart_interval == other._restart_interval
             and self._restart == other._restart

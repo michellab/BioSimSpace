@@ -166,6 +166,7 @@ class Equilibration(_Protocol, _PositionRestraintMixin):
             f"temperature_start={self._temperature_start}, "
             f"temperature_end={self._temperature_end}, "
             f"pressure={self._pressure}, "
+            f"thermostat_time_constant={self._thermostat_time_constant}, "
             f"report_interval={self._report_interval}, "
             f"restart_interval={self._restart_interval}, "
             + _PositionRestraintMixin._get_parm(self)
@@ -200,6 +201,7 @@ class Equilibration(_Protocol, _PositionRestraintMixin):
             and self._temperature_start == other._temperature_start
             and self._temperature_end == other._temperature_end
             and self._pressure == other._pressure
+            and self._thermostat_time_constant == other._thermostat_time_constant
             and self._report_interval == other._report_interval
             and self._restart_interval == other._restart_interval
             and _PositionRestraintMixin.__eq__(self, other)

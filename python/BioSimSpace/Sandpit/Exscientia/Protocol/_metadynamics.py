@@ -48,7 +48,6 @@ class Metadynamics(_Protocol):
         runtime=_Types.Time(1, "nanosecond"),
         temperature=_Types.Temperature(300, "kelvin"),
         pressure=_Types.Pressure(1, "atmosphere"),
-        thermostat_time_constant=_Types.Time(1, "picosecond"),
         hill_height=_Types.Energy(1, "kj per mol"),
         hill_frequency=1000,
         report_interval=1000,
@@ -76,9 +75,6 @@ class Metadynamics(_Protocol):
 
         pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
             The pressure. Pass pressure=None to use the NVT ensemble.
-
-        thermostat_time_constant : :class:`Time <BioSimSpace.Types.Time>`
-            Time constant for thermostat coupling.
 
         hill_height : :class:`Energy <BioSimSpace.Types.Energy>`
             The height of the Gaussian hills.
@@ -127,9 +123,6 @@ class Metadynamics(_Protocol):
         else:
             self._pressure = None
 
-        # Set the thermostat time constant.
-        self.setThermostatTimeConstant(thermostat_time_constant)
-
         # Set the hill parameters: height, frequency.
         self.setHillHeight(hill_height)
         self.setHillFrequency(hill_frequency)
@@ -168,6 +161,28 @@ class Metadynamics(_Protocol):
     def __repr__(self):
         """Return a string showing how to instantiate the object."""
         return self.__str__()
+
+    def __eq__(self, other):
+        """Equality operator."""
+
+        if not isinstance(other, Metadynamics):
+            return False
+
+        if self._is_customised or other._is_customised:
+            return False
+
+        return (
+            self._collective_variable == other._collective_variable
+            and self._timestep == other._timestep
+            and self._runtime == other._runtime
+            and self._temperature == other._temperature
+            and self._pressure == other._pressure
+            and self._hill_height == other._hill_height
+            and self._hill_frequency == other._hill_frequency
+            and self._bias_factor == other._bias_factor
+            and self._report_interval == other._report_interval
+            and self._restart_interval == other._restart_interval
+        )
 
     def getCollectiveVariable(self):
         """
@@ -354,7 +369,7 @@ class Metadynamics(_Protocol):
         Parameters
         ----------
 
-        pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
+        pressure : str, :class:`Pressure <BioSimSpace.Types.Pressure>`
             The pressure.
         """
         if isinstance(pressure, str):
@@ -367,42 +382,6 @@ class Metadynamics(_Protocol):
         else:
             raise TypeError(
                 "'pressure' must be of type 'str' or 'BioSimSpace.Types.Pressure'"
-            )
-
-    def getThermostatTimeConstant(self):
-        """
-        Return the time constant for the thermostat.
-
-        Returns
-        -------
-
-        runtime : :class:`Time <BioSimSpace.Types.Time>`
-            The time constant for the thermostat.
-        """
-        return self._thermostat_time_constant
-
-    def setThermostatTimeConstant(self, thermostat_time_constant):
-        """
-        Set the time constant for the thermostat.
-
-        Parameters
-        ----------
-
-        thermostat_time_constant : :class:`Time <BioSimSpace.Types.Time>`
-            The time constant for the thermostat.
-        """
-        if isinstance(thermostat_time_constant, str):
-            try:
-                self._thermostat_time_constant = _Types.Time(thermostat_time_constant)
-            except:
-                raise ValueError(
-                    "Unable to parse 'thermostat_time_constant' string."
-                ) from None
-        elif isinstance(thermostat_time_constant, _Types.Time):
-            self._thermostat_time_constant = thermostat_time_constant
-        else:
-            raise TypeError(
-                "'thermostat_time_constant' must be of type 'str' or 'BioSimSpace.Types.Time'"
             )
 
     def getHillHeight(self):
@@ -424,9 +403,10 @@ class Metadynamics(_Protocol):
         Parameters
         ----------
 
-        hill_height : :class:`Energy <BioSimSpace.Types.Energy>`
+        hill_height : str, :class:`Energy <BioSimSpace.Types.Energy>`
             The hill height.
         """
+
         if isinstance(hill_height, str):
             try:
                 hill_height = _Types.Energy(hill_height)

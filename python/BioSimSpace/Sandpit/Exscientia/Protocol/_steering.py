@@ -175,6 +175,28 @@ class Steering(_Protocol):
         """Return a string showing how to instantiate the object."""
         return self.__str__()
 
+    def __eq__(self, other):
+        """Equality operator."""
+
+        if not isinstance(other, Steering):
+            return False
+
+        if self._is_customised or other._is_customised:
+            return False
+
+        return (
+            self._collective_variable == other._collective_variable
+            and self._schedule == other._schedule
+            and self._restraints == other._restraints
+            and self._verse == other._verse
+            and self._timestep == other._timestep
+            and self._runtime == other._runtime
+            and self._temperature == other._temperature
+            and self._pressure == other._pressure
+            and self._report_interval == other._report_interval
+            and self._restart_interval == other._restart_interval
+        )
+
     def getCollectiveVariable(self):
         """
         Return the collective variable (or variables).

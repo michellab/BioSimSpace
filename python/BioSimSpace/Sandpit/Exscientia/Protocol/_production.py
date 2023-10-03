@@ -149,6 +149,7 @@ class Production(_Protocol, _PositionRestraintMixin):
             f"runtime={self._runtime}, "
             f"temperature={self._temperature}, "
             f"pressure={self._pressure}, "
+            f"tau_t={self._tau_t}, "
             f"report_interval={self._report_interval}, "
             f"restart_interval={self._restart_interval}, "
             f"first_step={self._first_step}, "
@@ -168,6 +169,28 @@ class Production(_Protocol, _PositionRestraintMixin):
             return "BioSimSpace.Protocol.Custom"
         else:
             return f"BioSimSpace.Protocol.Production({self._get_parm()})"
+
+    def __eq__(self, other):
+        """Equality operator."""
+
+        if not isinstance(other, Production):
+            return False
+
+        if self._is_customised or other._is_customised:
+            return False
+
+        return (
+            self._timestep == other._timestep
+            and self._runtime == other._runtime
+            and self._temperature == other._temperature
+            and self._pressure == other._pressure
+            and self._tau_t == other._tau_t
+            and self._report_interval == other._report_interval
+            and self._restart_interval == other._restart_interval
+            and self._restart == other._restart
+            and self._first_step == other._first_step
+            and _PositionRestraintMixin.__eq__(self, other)
+        )
 
     def getTimeStep(self):
         """

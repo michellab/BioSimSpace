@@ -72,6 +72,17 @@ class _PositionRestraintMixin:
         else:
             return f"BioSimSpace.Protocol._PositionRestraintMixin({self._get_parm()})"
 
+    def __eq__(self, other):
+        """Equality operator."""
+
+        if not isinstance(other, _PositionRestraintMixin):
+            return False
+
+        return (
+            self._restraint == other._restraint
+            and self._force_constant == other._force_constant
+        )
+
     def getRestraint(self):
         """Return the type of restraint..
 

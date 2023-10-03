@@ -177,6 +177,7 @@ class Equilibration(_Protocol, _PositionRestraintMixin):
             f"temperature_start={self._temperature_start}, "
             f"temperature_end={self._temperature_end}, "
             f"pressure={self._pressure}, "
+            f"tau_t={self._tau_t}, "
             f"report_interval={self._report_interval}, "
             f"restart_interval={self._restart_interval}, "
             f"restart={self._restart}, " + _PositionRestraintMixin._get_parm(self)
@@ -195,6 +196,28 @@ class Equilibration(_Protocol, _PositionRestraintMixin):
             return "BioSimSpace.Protocol.Custom"
         else:
             return f"BioSimSpace.Protocol.Equilibration({self._get_parm()})"
+
+    def __eq__(self, other):
+        """Equality operator."""
+
+        if not isinstance(other, Equilibration):
+            return False
+
+        if self._is_customised or other._is_customised:
+            return False
+
+        return (
+            self._timestep == other._timestep
+            and self._runtime == other._runtime
+            and self._temperature_start == other._temperature_start
+            and self._temperature_end == other._temperature_end
+            and self._pressure == other._pressure
+            and self._tau_t == other._tau_t
+            and self._report_interval == other._report_interval
+            and self._restart_interval == other._restart_interval
+            and self._restart == other._restart
+            and _PositionRestraintMixin.__eq__(self, other)
+        )
 
     def getTimeStep(self):
         """
