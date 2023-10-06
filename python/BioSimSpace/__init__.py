@@ -154,6 +154,45 @@ if "AMBERHOME" in _environ:
 else:
     _amber_home = None
 
+# check amber version
+_amber_version = None
+
+if _amber_home:
+
+    import subprocess as _subprocess
+
+    # Generate the shell command. Find cuda version
+    _command = "%s/bin/pmemd.cuda --version" % _amber_home
+
+    from ._Utils import command_split
+
+    try:
+        # Run the command.
+        _proc = _subprocess.run(
+            command_split(_command),
+            shell=False,
+            text=True,
+            stdout=_subprocess.PIPE,
+            stderr=_subprocess.PIPE,
+        )
+        returncode = _proc.returncode
+    except:
+        returncode = 1
+
+    del _command
+    del command_split
+
+    # Get the data prefix.
+    if returncode == 0:
+        for _line in _proc.stdout.split("\n"):
+            # Extract the version from the output.
+            if "pmemd.cuda" in _line:
+                _amber_version = float(_line.split("Version")[-1].strip())
+                break
+        del _line
+
+    del _subprocess
+
 # Check to see if GROMACS is installed.
 from sire.legacy import Base as _SireBase
 from os import path as _path

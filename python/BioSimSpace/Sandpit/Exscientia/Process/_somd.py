@@ -353,7 +353,7 @@ class Somd(_process.Process):
             system = self._checkPerturbable(system)
 
         # Convert the water model topology so that it matches the AMBER naming convention.
-        system._set_water_topology("AMBER", self._property_map)
+        system._set_water_topology("AMBER", property_map=self._property_map)
 
         # RST file (coordinates).
         try:
@@ -369,7 +369,13 @@ class Somd(_process.Process):
         # PRM file (topology).
         try:
             file = _os.path.splitext(self._top_file)[0]
-            _IO.saveMolecules(file, system, "prm7", property_map=self._property_map)
+            _IO.saveMolecules(
+                file,
+                system,
+                "prm7",
+                match_waters=False,
+                property_map=self._property_map,
+            )
         except Exception as e:
             msg = "Failed to write system to 'PRM7' format."
             if _isVerbose():
@@ -553,6 +559,13 @@ class Somd(_process.Process):
 
             new_system = _IO.readMolecules(self._restart_file)
 
+            # Try loading the trajectory file to get the box information.
+            try:
+                frame = self.getTrajectory().getFrames(-1)
+                box = frame._sire_object.property("space")
+            except:
+                box = None
+
             # Since SOMD requires specific residue and water naming we copy the
             # coordinates back into the original system.
             old_system = self._system.copy()
@@ -577,8 +590,7 @@ class Somd(_process.Process):
             self._mapping = mapping
 
             # Update the box information in the original system.
-            if "space" in new_system._sire_object.propertyKeys():
-                box = new_system._sire_object.property("space")
+            if box and box.isPeriodic():
                 old_system._sire_object.setProperty(
                     self._property_map.get("space", "space"), box
                 )

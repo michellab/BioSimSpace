@@ -802,10 +802,10 @@ class Relative:
         return is_okay, num_low
 
     @staticmethod
-    def difference(pmf, pmf_ref):
+    def difference(pmf, pmf_ref=None):
         """
         Compute the relative free-energy difference between two perturbation
-        legs.
+        legs, or between the end states of a single leg.
 
         Parameters
         ----------
@@ -829,7 +829,7 @@ class Relative:
 
         if not isinstance(pmf, list):
             raise TypeError("'pmf' must be of type 'list'.")
-        if not isinstance(pmf_ref, list):
+        if pmf_ref is not None and not isinstance(pmf_ref, list):
             raise TypeError("'pmf_ref' must be of type 'list'.")
 
         for rec in pmf:
@@ -851,47 +851,62 @@ class Relative:
                             "'pmf' must contain 'BioSimSpace.Types.Energy' types."
                         )
 
-        for rec in pmf_ref:
-            if not isinstance(rec, tuple):
-                raise TypeError(
-                    "'pmf_ref' must contain tuples containing lambda "
-                    "values and the associated free-energy and error."
-                )
-            else:
-                if len(rec) != 3:
-                    raise ValueError(
-                        "Each tuple in 'pmf_ref' must contain three items: "
-                        "a lambda value and the associated free energy "
-                        "and error."
+        if pmf_ref is not None:
+            for rec in pmf_ref:
+                if not isinstance(rec, tuple):
+                    raise TypeError(
+                        "'pmf_ref' must contain tuples containing lambda "
+                        "values and the associated free-energy and error."
                     )
-                for val in rec[1:]:
-                    if not isinstance(val, _Types.Energy):
-                        raise TypeError(
-                            "'pmf_ref' must contain 'BioSimSpace.Types.Energy' types."
+                else:
+                    if len(rec) != 3:
+                        raise ValueError(
+                            "Each tuple in 'pmf_ref' must contain three items: "
+                            "a lambda value and the associated free energy "
+                            "and error."
                         )
+                    for val in rec[1:]:
+                        if not isinstance(val, _Types.Energy):
+                            raise TypeError(
+                                "'pmf_ref' must contain 'BioSimSpace.Types.Energy' types."
+                            )
 
-        # Work out the difference in free energy.
-        free_energy = (pmf[-1][1] - pmf[0][1]) - (pmf_ref[-1][1] - pmf_ref[0][1])
+        if pmf_ref is not None:
+            # Work out the difference in free energy.
+            free_energy = (pmf[-1][1] - pmf[0][1]) - (pmf_ref[-1][1] - pmf_ref[0][1])
 
-        # Propagate the errors. (These add in quadrature.)
+            # Propagate the errors. (These add in quadrature.)
 
-        # Measure.
-        error0 = _math.sqrt(
-            (pmf[-1][2].value() * pmf[-1][2].value())
-            + (pmf[0][2].value() * pmf[0][2].value())
-        )
+            # Measure.
+            error0 = _math.sqrt(
+                (pmf[-1][2].value() * pmf[-1][2].value())
+                + (pmf[0][2].value() * pmf[0][2].value())
+            )
 
-        # Reference.
-        error1 = _math.sqrt(
-            (pmf_ref[-1][2].value() * pmf_ref[-1][2].value())
-            + (pmf_ref[0][2].value() * pmf_ref[0][2].value())
-        )
+            # Reference.
+            error1 = _math.sqrt(
+                (pmf_ref[-1][2].value() * pmf_ref[-1][2].value())
+                + (pmf_ref[0][2].value() * pmf_ref[0][2].value())
+            )
 
-        # Error for free-energy difference.
-        error = (
-            _math.sqrt((error0 * error0) + (error1 * error1))
-            * _Units.Energy.kcal_per_mol
-        )
+            # Error for free-energy difference.
+            error = (
+                _math.sqrt((error0 * error0) + (error1 * error1))
+                * _Units.Energy.kcal_per_mol
+            )
+
+        else:
+            # Work out the difference in free energy.
+            free_energy = pmf[-1][1] - pmf[0][1]
+
+            # Work out the error.
+            error = (
+                _math.sqrt(
+                    (pmf[-1][2].value() * pmf[-1][2].value())
+                    + (pmf[0][2].value() * pmf[0][2].value())
+                )
+                * _Units.Energy.kcal_per_mol
+            )
 
         return (free_energy, error)
 
@@ -1185,8 +1200,9 @@ class Relative:
                 file_df.iloc[:, 5:].subtract(file_df[lambda_win], axis=0).to_numpy()
             )
         else:
-            gradient = file_df["gradient"].to_numpy()
-            results = gradient
+            # This is actually in units of kT, but is reported incorrectly in
+            # the file originally written by SOMD.
+            results = file_df["gradient"].to_numpy()
 
         # Turn into a dataframe that can be processed by alchemlyb.
         if is_mbar:
@@ -1350,11 +1366,11 @@ class Relative:
                 double_incr = (lam_above - lam) * 2
                 grad = (df[str(lam_above)] - df[str(lam)]) * 2 / double_incr
                 back_m = _np.exp(beta * (df[str(lam_above)] - df[str(lam)]))
-                forward_m = _np.exp(-1 * beta * (df[str(lam_above)] - df[str(lam)]))
+                forward_m = _np.exp(-beta * (df[str(lam_above)] - df[str(lam)]))
             elif lam_above is None:
                 double_incr = (lam - lam_below) * 2
                 grad = (df[str(lam)] - df[str(lam_below)]) * 2 / double_incr
-                back_m = _np.exp(-1 * beta * (df[str(lam_below)] - df[str(lam)]))
+                back_m = _np.exp(-beta * (df[str(lam_below)] - df[str(lam)]))
                 forward_m = _np.exp(beta * (df[str(lam_below)] - df[str(lam)]))
             else:
                 double_incr = lam_above - lam_below
@@ -1365,11 +1381,6 @@ class Relative:
             grad.name = "gradient"
             back_m.name = "backward_mc"
             forward_m.name = "forward_mc"
-
-            if lambda_array is not None:
-                df[[str(i) for i in lambda_array]] = df[
-                    [str(i) for i in lambda_array]
-                ].apply(lambda x: x * -1 * beta)
 
             df = _pd.concat(
                 [
@@ -1393,8 +1404,8 @@ class Relative:
                 zip(time, lambdas), names=["time", "fep-lambdas"]
             )
 
-            # Get the gradients.
-            grads = list(df["gradient"])
+            # Get the gradients in kT.
+            grads = list(beta * df["gradient"])
 
             # Create a DataFrame with the multi-index
             df = _pd.DataFrame({"fep": grads}, index=multi_index)
@@ -2202,10 +2213,10 @@ class Relative:
         else:
             raise ValueError("Overlap matrix isn't supported for this estimator.")
 
-    def _difference(self, pmf_ref):
+    def _difference(self, pmf_ref=None):
         """
         Compute the relative free-energy difference between two perturbation
-        legs.
+        legs, or between the end states of a single leg.
 
         Parameters
         ----------
@@ -2226,7 +2237,7 @@ class Relative:
         pmf, _ = self.analyse()
 
         # Now call the staticmethod passing in both PMFs.
-        return Relative.difference(pmf, pmf_ref)
+        return Relative.difference(pmf, pmf_ref=pmf_ref)
 
     @staticmethod
     def checkOverlap(overlap, estimator="MBAR", threshold=0.03):

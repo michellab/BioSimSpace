@@ -210,50 +210,6 @@ class Amber(_process.Process):
         return self._input_files
 
 
-        # Check for perturbable molecules and convert to the chosen end state.
-        if isinstance(self._protocol, _Protocol._FreeEnergyMixin):
-            # Represent the perturbed system in an AMBER-friendly format.
-            system = _squash(system)
-        else:
-            system = self._checkPerturbable(system)
-
-        # RST file (coordinates).
-        try:
-            file = _os.path.splitext(self._rst_file)[0]
-            _IO.saveMolecules(file, system, "rst7", property_map=self._property_map)
-        except Exception as e:
-            msg = "Failed to write system to 'RST7' format."
-            if _isVerbose():
-                raise IOError(msg) from e
-            else:
-                raise IOError(msg) from None
-
-        # PRM file (topology).
-        try:
-            file = _os.path.splitext(self._top_file)[0]
-            _IO.saveMolecules(file, system, "prm7", property_map=self._property_map)
-        except Exception as e:
-            msg = "Failed to write system to 'PRM7' format."
-            if _isVerbose():
-                raise IOError(msg) from e
-            else:
-                raise IOError(msg) from None
-
-        # Generate the AMBER configuration file.
-        # Skip if the user has passed a custom config.
-        if isinstance(self._protocol, _Protocol.Custom):
-            self.setConfig(self._protocol.getConfig())
-        else:
-            self._generate_config()
-        self.writeConfig(self._config_file)
-
-        # Generate the dictionary of command-line arguments.
-        self._generate_args()
-
-        # Return the list of input files.
-        return self._input_files
-
-
     def _write_system(self, system, coord_file=None, topol_file=None, ref_file=None):
         """Validates an input system and makes some internal modifications to it,
         if needed, before writing it out to a coordinate and/or a topology file.

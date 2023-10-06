@@ -787,9 +787,10 @@ class Namd(_process.Process):
                 # Update the box information in the original system.
                 if "space" in new_system._sire_object.propertyKeys():
                     box = new_system._sire_object.property("space")
-                    old_system._sire_object.setProperty(
-                        self._property_map.get("space", "space"), box
-                    )
+                    if box.isPeriodic():
+                        old_system._sire_object.setProperty(
+                            self._property_map.get("space", "space"), box
+                        )
 
                 return old_system
 

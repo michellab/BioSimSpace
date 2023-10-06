@@ -234,7 +234,7 @@ def plot(
     if xerr is not None:
         xerr = [xerr[i] for i in idx]
     if yerr is not None:
-        yerr = [xerr[i] for i in idx]
+        yerr = [yerr[i] for i in idx]
 
     # y-dimension
     idx = [i for i, v in enumerate(y) if v is not None]

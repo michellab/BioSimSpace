@@ -65,7 +65,14 @@ from ._process import Process as _Process
 from . import _Protocol
 
 
-def parameterise(molecule, forcefield, work_dir=None, property_map={}, **kwargs):
+def parameterise(
+    molecule,
+    forcefield,
+    ensure_compatible=True,
+    work_dir=None,
+    property_map={},
+    **kwargs,
+):
     """
     Parameterise a molecule using a specified force field.
 
@@ -79,6 +86,15 @@ def parameterise(molecule, forcefield, work_dir=None, property_map={}, **kwargs)
     forcefield : str
         The force field. Run BioSimSpace.Parameters.forceFields() to get a
         list of the supported force fields.
+
+    ensure_compatible : bool
+        Whether to ensure that the topology of the parameterised molecule is
+        compatible with that of the original molecule. An exception will be
+        raised if this isn't the case, e.g. if atoms have been added. Set
+        this to False is parameterising lone oxygen atoms corresponding to
+        structural (crystal) water molecules. When True, the parameterised
+        molecule will preserve the topology of the original molecule, e.g.
+        the original atom and residue names will be kept.
 
     work_dir : str
         The working directory for the process.
@@ -119,8 +135,10 @@ def _parameterise_amber_protein(
     tolerance=1.2,
     max_distance=_Length(6, "A"),
     water_model=None,
+    custom_parameters=None,
     leap_commands=None,
     bonds=None,
+    ensure_compatible=True,
     work_dir=None,
     property_map={},
     **kwargs,
@@ -150,17 +168,31 @@ def _parameterise_amber_protein(
     water_model : str
         The water model used to parameterise any structural ions.
         Run 'BioSimSpace.Solvent.waterModels()' to see the supported
-        water models. This is ignored if ions are not present.
+        water models. This can also be used to parameterise water molecules,
+        or lone oxygen atoms corresponding to structural (crystal) water
+        molecules.
+
+    custom_parameters: [str]
+        A list of paths to custom parameter files. When this option is set,
+        we can no longer fall back on GROMACS's pdb2gmx.
 
     leap_commands : [str]
         An optional list of extra commands for the LEaP program. These
-        will be added after any default commands and can be used to, e.g.,
-        load additional parameter files. When this option is set, we can no
-        longer fall back on GROMACS's pdb2gmx.
+        will be added after any default commands. When this option is set,
+        we can no longer fall back on GROMACS's pdb2gmx.
 
     bonds : ((class:`Atom <BioSimSpace._SireWrappers.Atom>`, class:`Atom <BioSimSpace._SireWrappers.Atom>`))
         An optional tuple of atom pairs to specify additional atoms that
         should be bonded.
+
+    ensure_compatible : bool
+        Whether to ensure that the topology of the parameterised molecule is
+        compatible with that of the original molecule. An exception will be
+        raised if this isn't the case, e.g. if atoms have been added. Set
+        this to False is parameterising lone oxygen atoms corresponding to
+        structural (crystal) water molecules. When True, the parameterised
+        molecule will preserve the topology of the original molecule, e.g.
+        the original atom and residue names will be kept.
 
     work_dir : str
         The working directory for the process.
@@ -209,8 +241,10 @@ def _parameterise_amber_protein(
         max_distance=max_distance,
         water_model=water_model,
         check_ions=True,
+        custom_parameters=custom_parameters,
         leap_commands=leap_commands,
         bonds=bonds,
+        ensure_compatible=ensure_compatible,
         property_map=property_map,
     )
 
@@ -221,8 +255,10 @@ def _parameterise_amber_protein(
         tolerance=tolerance,
         water_model=water_model,
         max_distance=max_distance,
+        custom_parameters=custom_parameters,
         leap_commands=leap_commands,
         bonds=bonds,
+        ensure_compatible=ensure_compatible,
         property_map=property_map,
     )
 
@@ -236,6 +272,7 @@ def gaff(
     work_dir=None,
     net_charge=None,
     charge_method="BCC",
+    ensure_compatible=True,
     property_map={},
     **kwargs,
 ):
@@ -255,6 +292,13 @@ def gaff(
     charge_method : str
             The method to use when calculating atomic charges:
             "RESP", "CM2", "MUL", "BCC", "ESP", "GAS"
+
+    ensure_compatible : bool
+        Whether to ensure that the topology of the parameterised molecule is
+        compatible with that of the original molecule. An exception will be
+        raised if this isn't the case, e.g. if atoms have been added. When True,
+        the parameterised molecule will preserve the topology of the original
+        molecule, e.g. the original atom and residue names will be kept.
 
     work_dir : str
         The working directory for the process.
@@ -278,7 +322,12 @@ def gaff(
         )
 
     # Validate arguments.
-    _validate(molecule=molecule, check_ions=False, property_map=property_map)
+    _validate(
+        molecule=molecule,
+        check_ions=False,
+        ensure_compatible=ensure_compatible,
+        property_map=property_map,
+    )
 
     if net_charge is not None:
         # Get the value of the charge.
@@ -302,6 +351,7 @@ def gaff(
         version=1,
         net_charge=net_charge,
         charge_method=charge_method,
+        ensure_compatible=ensure_compatible,
         property_map=property_map,
     )
 
@@ -315,6 +365,7 @@ def gaff2(
     work_dir=None,
     net_charge=None,
     charge_method="BCC",
+    ensure_compatible=True,
     property_map={},
     **kwargs,
 ):
@@ -334,6 +385,13 @@ def gaff2(
     charge_method : str
             The method to use when calculating atomic charges:
             "RESP", "CM2", "MUL", "BCC", "ESP", "GAS"
+
+    ensure_compatible : bool
+        Whether to ensure that the topology of the parameterised molecule is
+        compatible with that of the original molecule. An exception will be
+        raised if this isn't the case, e.g. if atoms have been added. When True,
+        the parameterised molecule will preserve the topology of the original
+        molecule, e.g. the original atom and residue names will be kept.
 
     work_dir : str
         The working directory for the process.
@@ -357,7 +415,12 @@ def gaff2(
         )
 
     # Validate arguments.
-    _validate(molecule=molecule, check_ions=False, property_map=property_map)
+    _validate(
+        molecule=molecule,
+        check_ions=False,
+        ensure_compatible=ensure_compatible,
+        property_map=property_map,
+    )
 
     if net_charge is not None:
         # Get the value of the charge.
@@ -384,6 +447,7 @@ def gaff2(
         version=2,
         net_charge=net_charge,
         charge_method=charge_method,
+        ensure_compatible=ensure_compatible,
         property_map=property_map,
     )
 
@@ -393,7 +457,12 @@ def gaff2(
 
 
 def _parameterise_openff(
-    forcefield, molecule, work_dir=None, property_map={}, **kwargs
+    forcefield,
+    molecule,
+    ensure_compatible=True,
+    work_dir=None,
+    property_map={},
+    **kwargs,
 ):
     """
     Parameterise a molecule using a force field from the Open Force Field
@@ -409,6 +478,13 @@ def _parameterise_openff(
     molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, str
         The molecule to parameterise, either as a Molecule object or SMILES
         string.
+
+    ensure_compatible : bool
+        Whether to ensure that the topology of the parameterised molecule is
+        compatible with that of the original molecule. An exception will be
+        raised if this isn't the case, e.g. if atoms have been added. When True,
+        the parameterised molecule will preserve the topology of the original
+        molecule, e.g. the original atom and residue names will be kept.
 
     work_dir : str
         The working directory for the process.
@@ -508,7 +584,9 @@ def _parameterise_openff(
         raise TypeError("'property_map' must be of type 'dict'")
 
     # Create a default protocol.
-    protocol = _Protocol.OpenForceField(forcefield, property_map=property_map)
+    protocol = _Protocol.OpenForceField(
+        forcefield, ensure_compatible=ensure_compatible, property_map=property_map
+    )
 
     # Run the parameterisation protocol in the background and return
     # a handle to the thread.
@@ -724,8 +802,10 @@ def _validate(
     max_distance=None,
     water_model=None,
     check_ions=False,
+    custom_parameters=None,
     leap_commands=None,
     bonds=None,
+    ensure_compatible=True,
     work_dir=None,
     property_map=None,
 ):
@@ -751,21 +831,35 @@ def _validate(
     water_model : str
         The water model used to parameterise any structural ions.
         Run 'BioSimSpace.Solvent.waterModels()' to see the supported
-        water models. This is ignored if ions are not present.
+        water models. This can also be used to parameterise water molecules,
+        or lone oxygen atoms corresponding to structural (crystal) water
+        molecules.
 
     check_ions : bool
         Whether to check for the presence of structural ions. This is only
         required when parameterising with protein force fields.
 
+    custom_parameters: [str]
+        A list of paths to custom parameter files. When this option is set,
+        we can no longer fall back on GROMACS's pdb2gmx.
+
     leap_commands : [str]
         An optional list of extra commands for the LEaP program. These
-        will be added after any default commands and can be used to, e.g.,
-        load additional parameter files. When this option is set, we can no
-        longer fall back on GROMACS's pdb2gmx.
+        will be added after any default commands. When this option is set,
+        we can no longer fall back on GROMACS's pdb2gmx.
 
     bonds : ((class:`Atom <BioSimSpace._SireWrappers.Atom>`, class:`Atom <BioSimSpace._SireWrappers.Atom>`))
         An optional tuple of atom pairs to specify additional atoms that
         should be bonded.
+
+    ensure_compatible : bool
+        Whether to ensure that the topology of the parameterised molecule is
+        compatible with that of the original molecule. An exception will be
+        raised if this isn't the case, e.g. if atoms have been added. Set this
+        to False is parameterising lone oxygen atoms corresponding to
+        structural (crystal) water molecules. When True, the parameterised
+        molecule will preserve the topology of the original molecule, e.g.
+        the original atom and residue names will be kept.
 
     work_dir : str
         The working directory for the process.
@@ -811,6 +905,16 @@ def _validate(
                 "Please choose a 'water_model' for the ion parameters."
             )
 
+    if custom_parameters is not None:
+        if not isinstance(custom_parameters, (list, tuple)):
+            raise TypeError("'custom_parameters' must be a 'list' of 'str' types.")
+        else:
+            if not all(isinstance(x, str) for x in custom_parameters):
+                raise TypeError("'custom_parameters' must be a 'list' of 'str' types.")
+            for x in custom_parameters:
+                if not os.path.isfile(x):
+                    raise ValueError(f"Custom parameter file does not exist: '{x}'")
+
     if leap_commands is not None:
         if not isinstance(leap_commands, (list, tuple)):
             raise TypeError("'leap_commands' must be a 'list' of 'str' types.")
@@ -853,6 +957,9 @@ def _validate(
                                 "Atoms in 'bonds' don't belong to the 'molecule'."
                             )
 
+    if not isinstance(ensure_compatible, bool):
+        raise TypeError("'ensure_compatible' must be of type 'bool'.")
+
     if property_map is not None:
         if not isinstance(property_map, dict):
             raise TypeError("'property_map' must be of type 'dict'")
@@ -876,6 +983,7 @@ def _make_amber_protein_function(name):
         water_model=None,
         leap_commands=None,
         bonds=None,
+        ensure_compatible=True,
         work_dir=None,
         property_map={},
     ):
@@ -901,7 +1009,9 @@ def _make_amber_protein_function(name):
         water_model : str
             The water model used to parameterise any structural ions.
             Run 'BioSimSpace.Solvent.waterModels()' to see the supported
-            water models. This is ignored if ions are not present.
+            water models. This can also be used to parameterise water molecules,
+            or lone oxygen atoms corresponding to structural (crystal) water
+            molecules.
 
         leap_commands : [str]
             An optional list of extra commands for the LEaP program. These
@@ -912,6 +1022,15 @@ def _make_amber_protein_function(name):
         bonds : ((class:`Atom <BioSimSpace._SireWrappers.Atom>`, class:`Atom <BioSimSpace._SireWrappers.Atom>`))
             An optional tuple of atom pairs to specify additional atoms that
             should be bonded.
+
+        ensure_compatible : bool
+            Whether to ensure that the topology of the parameterised molecule is
+            compatible with that of the original molecule. An exception will be
+            raised if this isn't the case, e.g. if atoms have been added. Set
+            this to False is parameterising lone oxygen atoms corresponding to
+            structural (crystal) water molecules. When True, the parameterised
+            molecule will preserve the topology of the original molecule, e.g.
+            the original atom and residue names will be kept.
 
         work_dir : str
              The working directory for the process.
@@ -935,6 +1054,7 @@ def _make_amber_protein_function(name):
             water_model=water_model,
             leap_commands=leap_commands,
             bonds=bonds,
+            ensure_compatible=ensure_compatible,
             work_dir=work_dir,
             property_map=property_map,
         )
@@ -948,7 +1068,7 @@ def _make_amber_protein_function(name):
 # it conforms to sensible function naming standards, i.e. "-" and "."
 # characters replaced by underscores.
 def _make_openff_function(name):
-    def _function(molecule, work_dir=None, property_map={}):
+    def _function(molecule, ensure_compatible=True, work_dir=None, property_map={}):
         """
         Parameterise a molecule using the named force field from the
         Open Force Field initiative.
@@ -959,6 +1079,15 @@ def _make_openff_function(name):
         molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`, str
             The molecule to parameterise, either as a Molecule object or SMILES
             string.
+
+        ensure_compatible : bool
+            Whether to ensure that the topology of the parameterised molecule is
+            compatible with that of the original molecule. An exception will be
+            raised if this isn't the case, e.g. if atoms have been added. Set
+            this to False is parameterising lone oxygen atoms corresponding to
+            structural (crystal) water molecules. When True, the parameterised
+            molecule will preserve the topology of the original molecule, e.g.
+            the original atom and residue names will be kept.
 
         work_dir : str
             The working directory for the process.
@@ -974,7 +1103,13 @@ def _make_openff_function(name):
         molecule : :class:`Molecule <BioSimSpace._SireWrappers.Molecule>`
             The parameterised molecule.
         """
-        return _parameterise_openff(name, molecule, work_dir, property_map)
+        return _parameterise_openff(
+            name,
+            molecule,
+            ensure_compatible=ensure_compatible,
+            work_dir=work_dir,
+            property_map=property_map,
+        )
 
     return _function
 

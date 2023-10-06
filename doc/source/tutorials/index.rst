@@ -20,5 +20,6 @@ please :doc:`ask for support. <../support>`
 .. toctree::
    :maxdepth: 1
 
+   crystal_water
    hydration_freenrg
    metadynamics
