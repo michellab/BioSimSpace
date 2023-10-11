@@ -1239,8 +1239,8 @@ class Relative:
         else:
             data = raw_data
 
-        # If using auto equilibration, do we want to remove burn in?
-        # Perform a statistical inefficiency check afterwards.
+        # The decorrelate function calls either autoequilibration or statistical_inefficiency in alchemlyb, which both subsample the data.
+        # As such, auto equilibration (remove_burnin) can only be carried out if statistical inefficency detection is also carried out.
         if stat_ineff:
             if estimator == "MBAR":
                 decorrelated_data = [
@@ -1449,7 +1449,7 @@ class Relative:
             each lambda window. For TI, this returns None.
         """
 
-        if type(work_dir) is not str:
+        if not isinstance(work_dir, str):
             raise TypeError("'work_dir' must be of type 'str'.")
         if not _os.path.isdir(work_dir):
             raise ValueError("'work_dir' doesn't exist!")
@@ -1490,7 +1490,7 @@ class Relative:
 
                 if not found_temperature:
                     raise ValueError(
-                        "The temperature was not detected in the AMBER output file."
+                        f"The temperature was not detected in the AMBER output file: {file}."
                     )
 
         if temperatures[0] != temperatures[-1]:
