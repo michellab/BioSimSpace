@@ -1239,8 +1239,9 @@ class Relative:
         else:
             data = raw_data
 
-        # The decorrelate function calls either autoequilibration or statistical_inefficiency in alchemlyb, which both subsample the data.
-        # As such, auto equilibration (remove_burnin) can only be carried out if statistical inefficency detection is also carried out.
+        # The decorrelate function calls either autoequilibration or statistical_inefficiency
+        # in alchemlyb, which both subsample the data. As such, auto equilibration (remove_burnin)
+        # can only be carried out if statistical inefficency detection is also carried out.
         if stat_ineff:
             if estimator == "MBAR":
                 decorrelated_data = [
