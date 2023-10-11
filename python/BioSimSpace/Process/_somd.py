@@ -434,15 +434,27 @@ class Somd(_process.Process):
                 config_options["debug seed"] = seed
 
         if self._platform == "CUDA" or self._platform == "OPENCL":
-            # Work out the GPU device ID. (Default to 0.)
-            gpu_id = 0
-            if self._platform == "CUDA" and "CUDA_VISIBLE_DEVICES" in _os.environ:
-                try:
-                    # Get the ID of the first available device.
-                    gpu_id = int(_os.environ.get("CUDA_VISIBLE_DEVICES").split(",")[0])
-                except:
-                    pass
-            # config_options["gpu"] = gpu_id  # GPU device ID. creates issues with slurm when set?
+            # Here the "gpu" option  is the index into the CUDA_VISIBLE_DEVICES or
+            # OPENCL_VISIBLE_DEVICES environment variable array, not the index of
+            # the device itself. Unless the user overrides this, we'll use the first
+            # available device. Multi-gpu support isn't considered.
+            config_options["gpu"] = 0
+
+            # Warn the user if they have requested at GPU platform but haven't set the
+            # appropriate environment variable. OpenMM won't run if this is case.
+            if self._platform == "CUDA" and "CUDA_VISIBLE_DEVICES" not in _os.environ:
+                _warnings.warn(
+                    "'CUDA' platform selected but 'CUDA_VISIBLE_DEVICES' "
+                    "environment variable is unset."
+                )
+            elif (
+                self._platform == "OPENCL"
+                and "OPENCL_VISIBLE_DEVICES" not in _os.environ
+            ):
+                _warnings.warn(
+                    "'OpenCL' platform selected but 'OPENCL_VISIBLE_DEVICES' "
+                    "environment variable is unset."
+                )
 
         # Create and set the configuration.
         somd_config = _SomdConfig(_System(self._renumbered_system), self._protocol)

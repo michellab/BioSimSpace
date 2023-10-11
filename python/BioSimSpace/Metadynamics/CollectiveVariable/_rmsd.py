@@ -348,6 +348,18 @@ class RMSD(_CollectiveVariable):
         """Return a string showing how to instantiate the object."""
         return self.__str__()
 
+    def __eq__(self, other):
+        """Equality operator."""
+        return (
+            self._reference == other._reference
+            and self._hill_width == other._hill_width
+            and self._lower_bound == other._lower_bound
+            and self._upper_bound == other._upper_bound
+            and self._grid == other._grid
+            and self._alignment_type == other._alignment_type
+            and self._pbc == other._pbc
+        )
+
     def getReferencePDB(self):
         """
         Return the reference PDB file as a list of strings.
@@ -439,6 +451,7 @@ class RMSD(_CollectiveVariable):
         to the reference.
 
         Returns
+        -------
 
         reference_index : int
             The index of the molecule in the system that corresponds to

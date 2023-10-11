@@ -197,6 +197,7 @@ class Equilibration(_Protocol, _PositionRestraintMixin, _HmrMixin):
             f"temperature_start={self._temperature_start}, "
             f"temperature_end={self._temperature_end}, "
             f"pressure={self._pressure}, "
+            f"thermostat_time_constant={self._thermostat_time_constant}, "
             f"report_interval={self._report_interval}, "
             f"restart_interval={self._restart_interval}, "
             + _PositionRestraintMixin._get_parm(self)
@@ -218,6 +219,27 @@ class Equilibration(_Protocol, _PositionRestraintMixin, _HmrMixin):
         else:
             return f"BioSimSpace.Protocol.Equilibration({self._get_parm()})"
 
+    def __eq__(self, other):
+        """Equality operator."""
+
+        if not isinstance(other, Equilibration):
+            return False
+
+        if self._is_customised or other._is_customised:
+            return False
+
+        return (
+            self._timestep == other._timestep
+            and self._runtime == other._runtime
+            and self._temperature_start == other._temperature_start
+            and self._temperature_end == other._temperature_end
+            and self._pressure == other._pressure
+            and self._thermostat_time_constant == other._thermostat_time_constant
+            and self._report_interval == other._report_interval
+            and self._restart_interval == other._restart_interval
+            and _PositionRestraintMixin.__eq__(self, other)
+        )
+
     def getTimeStep(self):
         """
         Return the time step.
@@ -237,14 +259,20 @@ class Equilibration(_Protocol, _PositionRestraintMixin, _HmrMixin):
         Parameters
         ----------
 
-        time : :class:`Time <BioSimSpace.Types.Time>`
+        time : str, :class:`Time <BioSimSpace.Types.Time>`
             The integration time step.
         """
-        if isinstance(timestep, _Types.Time):
+        if isinstance(timestep, str):
+            try:
+                self._timestep = _Types.Time(timestep)
+            except:
+                raise ValueError("Unable to parse 'timestep' string.") from None
+        elif isinstance(timestep, _Types.Time):
             self._timestep = timestep
         else:
             raise TypeError(
-                "'timestep' must be of type 'BioSimSpace.Types.Time'")
+                "'timestep' must be of type 'str' or 'BioSimSpace.Types.Time'"
+            )
 
     def getRunTime(self):
         """
@@ -265,14 +293,20 @@ class Equilibration(_Protocol, _PositionRestraintMixin, _HmrMixin):
         Parameters
         ----------
 
-        runtime : :class:`Time <BioSimSpace.Types.Time>`
+        runtime : str, :class:`Time <BioSimSpace.Types.Time>`
             The simulation run time.
         """
-        if isinstance(runtime, _Types.Time):
+        if isinstance(runtime, str):
+            try:
+                self._runtime = _Types.Time(runtime)
+            except:
+                raise ValueError("Unable to parse 'runtime' string.") from None
+        elif isinstance(runtime, _Types.Time):
             self._runtime = runtime
         else:
             raise TypeError(
-                "'runtime' must be of type 'BioSimSpace.Types.Time'")
+                "'runtime' must be of type 'str' or 'BioSimSpace.Types.Time'"
+            )
 
     def getStartTemperature(self):
         """
@@ -293,18 +327,23 @@ class Equilibration(_Protocol, _PositionRestraintMixin, _HmrMixin):
         Parameters
         ----------
 
-        temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
+        temperature : str, :class:`Temperature <BioSimSpace.Types.Temperature>`
             The starting temperature.
         """
 
-        if isinstance(temperature, _Types.Temperature):
-            if _math.isclose(temperature.kelvin().value(), 0, rel_tol=1e-6):
-                temperature._value = 0.01
-            self._temperature_start = temperature
-        else:
+        if isinstance(temperature, str):
+            try:
+                temperature = _Types.Temperature(temperature)
+            except:
+                raise ValueError("Unable to parse 'temperature' string.") from None
+        elif not isinstance(temperature, _Types.Temperature):
             raise TypeError(
-                "'temperature_start' must be of type 'BioSimSpace.Types.Temperature'"
+                "'temperature' must be of type 'str' or 'BioSimSpace.Types.Temperature'"
             )
+
+        if _math.isclose(temperature.kelvin().value(), 0, rel_tol=1e-6):
+            temperature._value = 0.01
+        self._temperature_start = temperature
 
     def getEndTemperature(self):
         """
@@ -325,17 +364,22 @@ class Equilibration(_Protocol, _PositionRestraintMixin, _HmrMixin):
         Parameters
         ----------
 
-        temperature : :class:`Temperature <BioSimSpace.Types.Temperature>`
+        temperature : str, :class:`Temperature <BioSimSpace.Types.Temperature>`
             The final temperature.
         """
-        if isinstance(temperature, _Types.Temperature):
-            if _math.isclose(temperature.kelvin().value(), 0, rel_tol=1e-6):
-                temperature._value = 0.01
-            self._temperature_end = temperature
-        else:
+        if isinstance(temperature, str):
+            try:
+                temperature = _Types.Temperature(temperature)
+            except:
+                raise ValueError("Unable to parse 'temperature' string.") from None
+        elif not isinstance(temperature, _Types.Temperature):
             raise TypeError(
-                "'temperature_end' must be of type 'BioSimSpace.Types.Temperature'"
+                "'temperature' must be of type 'str' or 'BioSimSpace.Types.Temperature'"
             )
+
+        if _math.isclose(temperature.kelvin().value(), 0, rel_tol=1e-6):
+            temperature._value = 0.01
+        self._temperature_end = temperature
 
     def getPressure(self):
         """
@@ -356,42 +400,19 @@ class Equilibration(_Protocol, _PositionRestraintMixin, _HmrMixin):
         Parameters
         ----------
 
-        pressure : :class:`Pressure <BioSimSpace.Types.Pressure>`
+        pressure : str, :class:`Pressure <BioSimSpace.Types.Pressure>`
             The pressure.
         """
-        if isinstance(pressure, _Types.Pressure):
+        if isinstance(pressure, str):
+            try:
+                self._pressure = _Types.Pressure(pressure)
+            except:
+                raise ValueError("Unable to parse 'pressure' string.") from None
+        elif isinstance(pressure, _Types.Pressure):
             self._pressure = pressure
         else:
             raise TypeError(
-                "'pressure' must be of type 'BioSimSpace.Types.Pressure'")
-
-    def getThermostatTimeConstant(self):
-        """
-        Return the time constant for the thermostat.
-
-        Returns
-        -------
-
-        runtime : :class:`Time <BioSimSpace.Types.Time>`
-            The time constant for the thermostat.
-        """
-        return self._thermostat_time_constant
-
-    def setThermostatTimeConstant(self, thermostat_time_constant):
-        """
-        Set the time constant for the thermostat.
-
-        Parameters
-        ----------
-
-        thermostat_time_constant : :class:`Time <BioSimSpace.Types.Time>`
-            The time constant for the thermostat.
-        """
-        if isinstance(thermostat_time_constant, _Types.Time):
-            self._thermostat_time_constant = thermostat_time_constant
-        else:
-            raise TypeError(
-                "'thermostat_time_constant' must be of type 'BioSimSpace.Types.Time'"
+                "'pressure' must be of type 'str' or 'BioSimSpace.Types.Pressure'"
             )
 
     def getThermostatTimeConstant(self):
@@ -413,14 +434,21 @@ class Equilibration(_Protocol, _PositionRestraintMixin, _HmrMixin):
         Parameters
         ----------
 
-        thermostat_time_constant : :class:`Time <BioSimSpace.Types.Time>`
+        thermostat_time_constant : str, :class:`Time <BioSimSpace.Types.Time>`
             The time constant for the thermostat.
         """
-        if isinstance(thermostat_time_constant, _Types.Time):
+        if isinstance(thermostat_time_constant, str):
+            try:
+                self._thermostat_time_constant = _Types.Time(thermostat_time_constant)
+            except:
+                raise ValueError(
+                    "Unable to parse 'thermostat_time_constant' string."
+                ) from None
+        elif isinstance(thermostat_time_constant, _Types.Time):
             self._thermostat_time_constant = thermostat_time_constant
         else:
             raise TypeError(
-                "'thermostat_time_constant' must be of type 'BioSimSpace.Types.Time'"
+                "'thermostat_time_constant' must be of type 'str' or 'BioSimSpace.Types.Time'"
             )
 
     def getReportInterval(self):

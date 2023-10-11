@@ -73,6 +73,14 @@ class Restraint:
         """Return a human readable string representation of the object."""
         return self.__str__()
 
+    def __eq__(self, other):
+        """Equality operator."""
+        return (
+            self._value == other._value
+            and self._force_constant == other._force_constant
+            and self._slope == other._slope
+        )
+
     def setValue(self, value):
         """
         Set the value of the bound.
