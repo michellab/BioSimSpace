@@ -85,6 +85,18 @@ class _FreeEnergyMixin(_Protocol):
         else:
             return f"BioSimSpace.Protocol._FreeEnergyMixin({self._get_parm()})"
 
+    def __eq__(self, other):
+        """Equality operator."""
+
+        if not isinstance(other, _FreeEnergyMixin):
+            return False
+
+        return (
+            self._lambda == other._lambda
+            and self._lambda_vals == other._lambda_vals
+            and self._perturbation_type == other._perturbation_type
+        )
+
     def getPerturbationType(self):
         """
         Get the perturbation type.

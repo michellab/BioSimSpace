@@ -79,6 +79,15 @@ class Bound:
         """Return a human readable string representation of the object."""
         return self.__str__()
 
+    def __eq__(self, other):
+        """Equality operator."""
+        return (
+            self._value == other._value
+            and self._force_constant == other._force_constant
+            and self._exponent == other._exponent
+            and self._epsilon == other._epsilon
+        )
+
     def setValue(self, value):
         """
         Set the value of the bound.
