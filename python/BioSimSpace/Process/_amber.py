@@ -242,7 +242,7 @@ class Amber(_process.Process):
         system = system.copy()
 
         # Convert the water model topology so that it matches the AMBER naming convention.
-        system._set_water_topology("AMBER", self._property_map)
+        system._set_water_topology("AMBER", property_map=self._property_map)
 
         # Check for perturbable molecules and convert to the chosen end state.
         if isinstance(self._protocol, _Protocol._FreeEnergyMixin):

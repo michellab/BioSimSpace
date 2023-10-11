@@ -259,7 +259,7 @@ class Amber(_Config):
                     if isinstance(self._protocol, _Protocol.Equilibration):
                         if isinstance(self._protocol, _FreeEnergyMixin):
                             # Monte Carlo barostat.
-                            protocol_dict["barostat"] = 2
+                            protocol_dict["barostat"] = 2                        
                         else:
                             # Berendsen barostat.
                             protocol_dict["barostat"] = 1
