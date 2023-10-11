@@ -98,6 +98,19 @@ class Minimisation(_Protocol, _PositionRestraintMixin):
         else:
             return f"BioSimSpace.Protocol.Minimisation({self._get_parm()})"
 
+    def __eq__(self, other):
+        """Equality operator."""
+
+        if not isinstance(other, Minimisation):
+            return False
+
+        if self._is_customised or other._is_customised:
+            return False
+
+        return self._steps == other._steps and _PositionRestraintMixin.__eq__(
+            self, other
+        )
+
     def getSteps(self):
         """
         Return the maximum number of steps.

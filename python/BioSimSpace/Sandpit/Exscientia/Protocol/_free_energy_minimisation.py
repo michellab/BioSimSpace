@@ -117,3 +117,16 @@ class FreeEnergyMinimisation(_Minimisation, _FreeEnergyMixin):
             return "BioSimSpace.Protocol.Custom"
         else:
             return f"BioSimSpace.Protocol.FreeEnergyMinimisation({self._get_parm()})"
+
+    def __eq__(self, other):
+        """Equality operator."""
+
+        if not isinstance(other, FreeEnergyMinimisation):
+            return False
+
+        if self._is_customised or other._is_customised:
+            return False
+
+        return _Minimisation.__eq__(self, other) and _FreeEnergyMixin.__eq__(
+            self, other
+        )
