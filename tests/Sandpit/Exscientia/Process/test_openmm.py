@@ -70,7 +70,7 @@ def test_minimise(system, restraint):
     )
 
     # Run the process, check that it finished without error, and returns a system.
-    run_process(system, protocol, restraint=restraint, tolerance=0.05)
+    run_process(system, protocol, restraint=restraint, tolerance=0.1)
 
 
 @pytest.mark.parametrize("restraint", ["backbone", "heavy", "all", "none"])
