@@ -1,6 +1,7 @@
 import pytest
 
 from tests.Sandpit.Exscientia.conftest import has_amber, has_gromacs
+from tests.conftest import root_fp
 
 import BioSimSpace.Sandpit.Exscientia as BSS
 from BioSimSpace.Sandpit.Exscientia.Process._process import Process
@@ -9,7 +10,9 @@ from BioSimSpace.Sandpit.Exscientia.Process._process import Process
 @pytest.fixture(scope="session")
 def system():
     """Re-use the same molecuar system for each test."""
-    return BSS.IO.readMolecules(["tests/input/ala.top", "tests/input/ala.crd"])
+    return BSS.IO.readMolecules(
+        [f"{root_fp}/input/ala.top", f"{root_fp}/input/ala.crd"]
+    )
 
 
 @pytest.mark.skipif(

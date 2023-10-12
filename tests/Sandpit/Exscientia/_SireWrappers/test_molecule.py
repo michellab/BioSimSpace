@@ -3,11 +3,14 @@ import pytest
 import BioSimSpace.Sandpit.Exscientia as BSS
 
 from tests.Sandpit.Exscientia.conftest import url, has_amber, has_pyarrow
+from tests.conftest import root_fp
 
 
 @pytest.fixture(scope="session")
 def system():
-    return BSS.IO.readMolecules(["tests/input/ala.top", "tests/input/ala.crd"])
+    return BSS.IO.readMolecules(
+        [f"{root_fp}/input/ala.top", f"{root_fp}/input/ala.crd"]
+    )
 
 
 @pytest.mark.skipif(

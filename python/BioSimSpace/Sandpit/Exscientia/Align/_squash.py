@@ -113,9 +113,30 @@ def _squash_molecule(molecule, explicit_dummies=False):
         return molecule
 
     if explicit_dummies:
-        # We make sure we use the same coordinates at both endstates.
+        # Get the common core atoms
+        atom_mapping0_common = _squashed_atom_mapping(
+            molecule,
+            is_lambda1=False,
+            explicit_dummies=explicit_dummies,
+            environment=False,
+            dummies=False,
+        )
+        atom_mapping1_common = _squashed_atom_mapping(
+            molecule,
+            is_lambda1=True,
+            explicit_dummies=explicit_dummies,
+            environment=False,
+            dummies=False,
+        )
+        if set(atom_mapping0_common) != set(atom_mapping1_common):
+            raise RuntimeError("The MCS atoms don't match between the two endstates")
+        common_atoms = set(atom_mapping0_common)
+
+        # We make sure we use the same coordinates for the common core at both endstates.
         c = molecule.copy()._sire_object.cursor()
-        c["coordinates1"] = c["coordinates0"]
+        for i, atom in enumerate(c.atoms()):
+            if i in common_atoms:
+                atom["coordinates1"] = atom["coordinates0"]
         molecule = _Molecule(c.commit())
 
     # Generate a "system" from the molecule at lambda = 0 and another copy at lambda = 1.
@@ -269,20 +290,38 @@ def _unsquash_molecule(molecule, squashed_molecules, explicit_dummies=False):
     molecule : BioSimSpace._SireWrappers.Molecule
          The output updated merged molecule.
     """
-    # Get the atom mapping and combine it with the lambda=0 molecule being prioritised
+    # Get the common core atoms
+    atom_mapping0_common = _squashed_atom_mapping(
+        molecule,
+        is_lambda1=False,
+        explicit_dummies=explicit_dummies,
+        environment=False,
+        dummies=False,
+    )
+    atom_mapping1_common = _squashed_atom_mapping(
+        molecule,
+        is_lambda1=True,
+        explicit_dummies=explicit_dummies,
+        environment=False,
+        dummies=False,
+    )
+    if set(atom_mapping0_common) != set(atom_mapping1_common):
+        raise RuntimeError("The MCS atoms don't match between the two endstates")
+    common_atoms = set(atom_mapping0_common)
+
+    # Get the atom mapping from both endstates
     atom_mapping0 = _squashed_atom_mapping(
         molecule, is_lambda1=False, explicit_dummies=explicit_dummies
     )
     atom_mapping1 = _squashed_atom_mapping(
         molecule, is_lambda1=True, explicit_dummies=explicit_dummies
     )
-    atom_mapping = {**atom_mapping1, **atom_mapping0}
     update_velocity = squashed_molecules[0]._sire_object.hasProperty("velocity")
 
-    # Even though the two molecules should have the same coordinates, they might be PBC wrapped differently.
+    # Even though the common core of the two molecules should have the same coordinates,
+    # they might be PBC wrapped differently.
     # Here we take the first common core atom and translate the second molecule.
     if len(squashed_molecules) == 2:
-        common_atoms = set(atom_mapping0.keys()) & set(atom_mapping1.keys())
         first_common_atom = list(sorted(common_atoms))[0]
         pertatom0 = squashed_molecules.getAtom(atom_mapping0[first_common_atom])
         pertatom1 = squashed_molecules.getAtom(atom_mapping1[first_common_atom])
@@ -292,25 +331,42 @@ def _unsquash_molecule(molecule, squashed_molecules, explicit_dummies=False):
 
     # Update the coordinates and velocities.
     siremol = molecule.copy()._sire_object.edit()
-    for merged_atom_idx, squashed_atom_idx in atom_mapping.items():
+    for merged_atom_idx in range(molecule.nAtoms()):
+        # Get the relevant atom indices
         merged_atom = siremol.atom(_SireMol.AtomIdx(merged_atom_idx))
-        squashed_atom = squashed_molecules.getAtom(squashed_atom_idx)
+        if merged_atom_idx in atom_mapping0:
+            squashed_atom_idx0 = atom_mapping0[merged_atom_idx]
+        else:
+            squashed_atom_idx0 = atom_mapping1[merged_atom_idx]
+        if merged_atom_idx in atom_mapping1:
+            squashed_atom_idx1 = atom_mapping1[merged_atom_idx]
+            apply_translation_vec = True
+        else:
+            squashed_atom_idx1 = atom_mapping0[merged_atom_idx]
+            apply_translation_vec = False
 
-        # Update the coordinates.
-        coordinates = squashed_atom._sire_object.property("coordinates")
+        # Get the coordinates.
+        squashed_atom0 = squashed_molecules.getAtom(squashed_atom_idx0)
+        squashed_atom1 = squashed_molecules.getAtom(squashed_atom_idx1)
+        coordinates0 = squashed_atom0._sire_object.property("coordinates")
+        coordinates1 = squashed_atom1._sire_object.property("coordinates")
 
         # Apply the translation if the atom is coming from the second molecule.
-        if len(squashed_molecules) == 2 and squashed_atom_idx in atom_mapping1.values():
-            coordinates -= translation_vec
+        if len(squashed_molecules) == 2 and apply_translation_vec:
+            # This is a dummy atom so we need to translate coordinates0 as well
+            if squashed_atom_idx0 == squashed_atom_idx1:
+                coordinates0 -= translation_vec
+            coordinates1 -= translation_vec
 
-        siremol = merged_atom.setProperty("coordinates0", coordinates).molecule()
-        siremol = merged_atom.setProperty("coordinates1", coordinates).molecule()
+        siremol = merged_atom.setProperty("coordinates0", coordinates0).molecule()
+        siremol = merged_atom.setProperty("coordinates1", coordinates1).molecule()
 
         # Update the velocities.
         if update_velocity:
-            velocities = squashed_atom._sire_object.property("velocity")
-            siremol = merged_atom.setProperty("velocity0", velocities).molecule()
-            siremol = merged_atom.setProperty("velocity1", velocities).molecule()
+            velocities0 = squashed_atom0._sire_object.property("velocity")
+            velocities1 = squashed_atom1._sire_object.property("velocity")
+            siremol = merged_atom.setProperty("velocity0", velocities0).molecule()
+            siremol = merged_atom.setProperty("velocity1", velocities1).molecule()
 
     return _Molecule(siremol.commit())
 

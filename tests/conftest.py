@@ -2,6 +2,8 @@ collect_ignore_glob = ["*/out_test*.py"]
 
 import os
 
+from pathlib import Path
+
 import BioSimSpace as BSS
 
 from BioSimSpace._Utils import _try_import, _have_imported
@@ -50,3 +52,6 @@ has_mdtraj = _have_imported(mdtraj)
 # Check for alchemlyb.
 _alchemlyb = _try_import("alchemlyb")
 has_alchemlyb = _have_imported(_alchemlyb)
+
+# Allow tests to be run from any directory.
+root_fp = Path(__file__).parent.resolve()

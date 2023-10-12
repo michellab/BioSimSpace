@@ -1,6 +1,7 @@
 import pytest
 
 from BioSimSpace.Sandpit.Exscientia.Gateway import FileSet
+from tests.conftest import root_fp
 
 
 def test_no_arguments():
@@ -13,11 +14,11 @@ def test_no_arguments():
 @pytest.mark.parametrize(
     "value",
     [
-        ["tests/input/ala.crd", "tests/input/ala.top"],
+        [f"{root_fp}/input/ala.crd", f"{root_fp}/input/ala.top"],
         [
-            "tests/input/alanin.pdb",
-            "tests/input/alanin.psf",
-            "tests/input/alanin.params",
+            f"{root_fp}/input/alanin.pdb",
+            f"{root_fp}/input/alanin.psf",
+            f"{root_fp}/input/alanin.params",
         ],
     ],
 )
@@ -58,7 +59,7 @@ def test_missing_files():
     # One file missing.
     with pytest.raises(IOError):
         f = FileSet(help="Help!")
-        f.setValue(["tests/input/amber/ala/ala.crd", "missing2.txt"])
+        f.setValue([f"{root_fp}/input/amber/ala/ala.crd", "missing2.txt"])
 
 
 @pytest.mark.parametrize("optional", [True, False])
