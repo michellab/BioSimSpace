@@ -2152,7 +2152,7 @@ class OpenMM(_process.Process):
             )
 
             self.addToConfig(
-                "\n# Restrain the position of backbone atoms using zero-mass dummy atoms."
+                "\n# Restrain the position of atoms using zero-mass dummy atoms."
             )
             self.addToConfig("restraint = HarmonicBondForce()")
             self.addToConfig("restraint.setUsesPeriodicBoundaryConditions(True)")
