@@ -3,6 +3,7 @@ import pytest
 import BioSimSpace.Sandpit.Exscientia as BSS
 
 from tests.Sandpit.Exscientia.conftest import url, has_amber, has_gromacs, has_namd
+from tests.conftest import root_fp
 
 
 @pytest.mark.skipif(has_amber is False, reason="Requires AMBER to be installed.")
@@ -13,7 +14,9 @@ def test_amber():
     protocol = BSS.Protocol.Minimisation(steps=100)
 
     # Load the molecular system.
-    system = BSS.IO.readMolecules(["tests/input/ala.top", "tests/input/ala.crd"])
+    system = BSS.IO.readMolecules(
+        [f"{root_fp}/input/ala.top", f"{root_fp}/input/ala.crd"]
+    )
 
     # Initialise the AMBER process.
     process = BSS.MD.run(system, protocol, name="test")
@@ -55,9 +58,9 @@ def test_namd():
     # Load the molecular system.
     system = BSS.IO.readMolecules(
         [
-            "tests/input/alanin.psf",
-            "tests/input/alanin.pdb",
-            "tests/input/alanin.params",
+            f"{root_fp}/input/alanin.psf",
+            f"{root_fp}/input/alanin.pdb",
+            f"{root_fp}/input/alanin.params",
         ]
     )
 

@@ -353,7 +353,7 @@ class Somd(_process.Process):
             system = self._checkPerturbable(system)
 
         # Convert the water model topology so that it matches the AMBER naming convention.
-        system._set_water_topology("AMBER", self._property_map)
+        system._set_water_topology("AMBER", property_map=self._property_map)
 
         # RST file (coordinates).
         try:
@@ -369,7 +369,13 @@ class Somd(_process.Process):
         # PRM file (topology).
         try:
             file = _os.path.splitext(self._top_file)[0]
-            _IO.saveMolecules(file, system, "prm7", property_map=self._property_map)
+            _IO.saveMolecules(
+                file,
+                system,
+                "prm7",
+                match_waters=False,
+                property_map=self._property_map,
+            )
         except Exception as e:
             msg = "Failed to write system to 'PRM7' format."
             if _isVerbose():
@@ -407,15 +413,27 @@ class Somd(_process.Process):
             config_options["random seed"] = seed
 
         if self._platform == "CUDA" or self._platform == "OPENCL":
-            # Work out the GPU device ID. (Default to 0.)
-            gpu_id = 0
-            if self._platform == "CUDA" and "CUDA_VISIBLE_DEVICES" in _os.environ:
-                try:
-                    # Get the ID of the first available device.
-                    gpu_id = int(_os.environ.get("CUDA_VISIBLE_DEVICES").split(",")[0])
-                except:
-                    pass
-            config_options["gpu"] = gpu_id  # GPU device ID.
+            # Here the "gpu" option  is the index into the CUDA_VISIBLE_DEVICES or
+            # OPENCL_VISIBLE_DEVICES environment variable array, not the index of
+            # the device itself. Unless the user overrides this, we'll use the first
+            # available device. Multi-gpu support isn't considered.
+            config_options["gpu"] = 0
+
+            # Warn the user if they have requested at GPU platform but haven't set the
+            # appropriate environment variable. OpenMM won't run if this is case.
+            if self._platform == "CUDA" and "CUDA_VISIBLE_DEVICES" not in _os.environ:
+                _warnings.warn(
+                    "'CUDA' platform selected but 'CUDA_VISIBLE_DEVICES' "
+                    "environment variable is unset."
+                )
+            elif (
+                self._platform == "OPENCL"
+                and "OPENCL_VISIBLE_DEVICES" not in _os.environ
+            ):
+                _warnings.warn(
+                    "'OpenCL' platform selected but 'OPENCL_VISIBLE_DEVICES' "
+                    "environment variable is unset."
+                )
 
         if not isinstance(
             self._protocol,

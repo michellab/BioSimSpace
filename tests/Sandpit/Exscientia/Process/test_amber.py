@@ -10,12 +10,15 @@ import shutil
 import BioSimSpace.Sandpit.Exscientia as BSS
 
 from tests.Sandpit.Exscientia.conftest import url, has_amber, has_pyarrow
+from tests.conftest import root_fp
 
 
 @pytest.fixture(scope="session")
 def system():
     """Re-use the same molecuar system for each test."""
-    return BSS.IO.readMolecules(["tests/input/ala.top", "tests/input/ala.crd"])
+    return BSS.IO.readMolecules(
+        [f"{root_fp}/input/ala.top", f"{root_fp}/input/ala.crd"]
+    )
 
 
 @pytest.mark.skipif(
@@ -280,9 +283,9 @@ def test_parse_fep_output(system, protocol):
 
     # Assign the path to the output file.
     if isinstance(protocol, BSS.Protocol.FreeEnergy):
-        out_file = "tests/Sandpit/Exscientia/output/amber_fep.out"
+        out_file = f"{root_fp}/Sandpit/Exscientia/output/amber_fep.out"
     else:
-        out_file = "tests/Sandpit/Exscientia/output/amber_fep_min.out"
+        out_file = f"{root_fp}/Sandpit/Exscientia/output/amber_fep_min.out"
 
     # Copy the existing output file into the working directory.
     shutil.copyfile(out_file, process.workDir() + "/amber.out")
@@ -320,14 +323,10 @@ def test_parse_fep_output(system, protocol):
         assert len(records_sc1) != 0
 
 
-@pytest.mark.skipif(
-    has_amber is False or has_pyarrow is False,
-    reason="Requires AMBER and pyarrow to be installed.",
-)
 class TestsaveMetric:
     @staticmethod
     @pytest.fixture()
-    def setup(system):
+    def alchemical_system(system):
         # Copy the system.
         system_copy = system.copy()
 
@@ -335,18 +334,33 @@ class TestsaveMetric:
         mol = system_copy[0]
         mol = BSS.Align.decouple(mol)
         system_copy.updateMolecule(0, mol)
+        return system_copy
 
+    @staticmethod
+    @pytest.fixture()
+    def setup(alchemical_system):
         # Create a process using any system and the protocol.
         process = BSS.Process.Amber(
-            system_copy,
+            alchemical_system,
             BSS.Protocol.FreeEnergy(temperature=298 * BSS.Units.Temperature.kelvin),
         )
         shutil.copyfile(
-            "tests/Sandpit/Exscientia/output/amber_fep.out",
+            f"{root_fp}/Sandpit/Exscientia/output/amber_fep.out",
             process.workDir() + "/amber.out",
         )
         process.saveMetric()
         return process
+
+    def test_error_alchemlyb_extract(self, alchemical_system):
+        # Create a process using any system and the protocol.
+        process = BSS.Process.Amber(
+            alchemical_system,
+            BSS.Protocol.FreeEnergy(temperature=298 * BSS.Units.Temperature.kelvin),
+        )
+        process.wait()
+        with open(process.workDir() + "/amber.err", "r") as f:
+            text = f.read()
+            assert "Exception Information" in text
 
     def test_metric_parquet_exist(self, setup):
         assert Path(f"{setup.workDir()}/metric.parquet").exists()

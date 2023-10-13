@@ -30,6 +30,7 @@ from .._Utils import _try_import, _have_imported
 
 _mdanalysis = _try_import("MDAnalysis")
 _mdtraj = _try_import("mdtraj")
+
 import copy as _copy
 import logging as _logging
 import os as _os
@@ -151,7 +152,7 @@ def getFrame(trajectory, topology, index, system=None, property_map={}):
         }
 
         # Update the water topology to match topology/trajectory.
-        system = _update_water_topology(system, topology, trajectory)
+        system = _update_water_topology(system, topology, trajectory, property_map)
 
     # Try to load the frame with Sire.
     errors = []
@@ -439,6 +440,10 @@ class Trajectory:
                 "or a trajectory and topology file."
             )
 
+        if not isinstance(property_map, dict):
+            raise TypeError("'property_map' must be of type 'dict'")
+        self._property_map = property_map
+
         if system is not None:
             if not isinstance(system, _System):
                 raise TypeError(
@@ -457,13 +462,17 @@ class Trajectory:
                 # If this is a GROMACS process, convert the water topology to
                 # GROMACS format. Use AMBER for everything else.
                 if process._package_name == "GROMACS":
-                    self._system._set_water_topology("GROMACS")
+                    self._system._set_water_topology(
+                        "GROMACS", property_map=process._property_map
+                    )
                 else:
-                    self._system._set_water_topology("AMBER")
+                    self._system._set_water_topology(
+                        "AMBER", property_map=process._property_map
+                    )
             else:
                 # Update the water topology to match topology/trajectory.
                 self._system = _update_water_topology(
-                    self._system, self._top_file, self._traj_file
+                    self._system, self._top_file, self._traj_file, self._property_map
                 )
 
         if not isinstance(backend, str):
@@ -475,9 +484,6 @@ class Trajectory:
         if backend not in ["AUTO"] + backends():
             _warnings.warn("Invalid trajectory format. Using default (Sire).")
             backend = "SIRE"
-
-        if not isinstance(property_map, dict):
-            raise TypeError("'property_map' must be of type 'dict'")
 
         # Get the current trajectory.
         self._trajectory = self.getTrajectory(format=backend)
@@ -975,11 +981,26 @@ class Trajectory:
             # Check that all of the atom indices are integers.
             if not all(type(x) is int for x in atoms):
                 raise TypeError("'atom' indices must be of type 'int'")
+            # Make sure the atom index is within range.
+            num_atoms = self.getFrames()[0].nAtoms()
+            for atom in atoms:
+                if atom < 0 or atom >= num_atoms:
+                    raise ValueError(
+                        f"Atom index {atom} out of range [0, {num_atoms})."
+                    )
 
         if self._backend == "SIRE":
-            raise _IncompatibleError(
-                "RMSD currently isn't supported using the Sire backend."
-            )
+            # Get the reference.
+            if atoms is not None:
+                reference = self._trajectory.current().atoms()[atoms]
+            else:
+                reference = None
+
+            # Compute the RMSD.
+            rmsd = self._trajectory.rmsd(reference=reference, frame=frame)
+
+            # Convert to BioSimSpace units.
+            rmsd = [(_Units.Length.angstrom * x.value()).nanometers() for x in rmsd]
 
         elif self._backend == "MDTRAJ":
             try:
@@ -1188,7 +1209,7 @@ def _split_molecules(frame, pdb, reference, work_dir, property_map={}):
     return split_system
 
 
-def _update_water_topology(system, topology, trajectory):
+def _update_water_topology(system, topology, trajectory, property_map):
     """
     Internal helper function to update the water topology of the system
     so that it is consistent with the passed topology or trajectory.
@@ -1204,6 +1225,11 @@ def _update_water_topology(system, topology, trajectory):
 
     topology : str
         A topology file.
+
+    property_map : dict
+        A dictionary that maps system "properties" to their user defined
+        values. This allows the user to refer to properties with their
+        own naming scheme, e.g. { "charge" : "my-charge" }
 
     Returns
     -------
@@ -1221,10 +1247,13 @@ def _update_water_topology(system, topology, trajectory):
     if not isinstance(topology, str):
         raise TypeError("'topology' must be of type 'str'")
 
+    if not isinstance(property_map, dict):
+        raise TypeError("'property_map' must be of type 'dict'")
+
     # GROMACS topology file.
     try:
         top = _SireIO.GroTop(topology)
-        system._set_water_topology("GROMACS")
+        system._set_water_topology("GROMACS", property_map=property_map)
         matched_topology = True
     except:
         # GROMACS coordinate file.
@@ -1236,7 +1265,7 @@ def _update_water_topology(system, topology, trajectory):
         except:
             try:
                 top = _SireIO.AmberPrm(topology)
-                system._set_water_topology("AMBER")
+                system._set_water_topology("AMBER", property_map=property_map)
                 if top.toString() != "AmberPrm::null":
                     matched_topology = True
                 else:
@@ -1256,6 +1285,6 @@ def _update_water_topology(system, topology, trajectory):
 
     # If nothing matched, default to AMBER water format.
     if not matched_topology:
-        system._set_water_topology("AMBER")
+        system._set_water_topology("AMBER", property_map=property_map)
 
     return system

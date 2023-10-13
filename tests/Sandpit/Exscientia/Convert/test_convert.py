@@ -3,11 +3,14 @@ import pytest
 from sire.legacy import Mol as SireMol
 
 import BioSimSpace.Sandpit.Exscientia as BSS
+from tests.conftest import root_fp
 
 
 @pytest.fixture(scope="session")
 def system():
-    return BSS.IO.readMolecules(["tests/input/ala.crd", "tests/input/ala.top"])
+    return BSS.IO.readMolecules(
+        [f"{root_fp}/input/ala.crd", f"{root_fp}/input/ala.top"]
+    )
 
 
 def test_system(system):
