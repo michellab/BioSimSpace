@@ -2,6 +2,7 @@ import pytest
 
 import BioSimSpace.Sandpit.Exscientia as BSS
 from BioSimSpace.Sandpit.Exscientia.Align import make_ml
+from tests.conftest import root_fp
 
 # Store the tutorial URL.
 url = BSS.tutorialUrl()
@@ -9,7 +10,9 @@ url = BSS.tutorialUrl()
 
 @pytest.fixture
 def mol():
-    return BSS.IO.readMolecules(["tests/input/ala.top", "tests/input/ala.crd"])[0]
+    return BSS.IO.readMolecules(
+        [f"{root_fp}/input/ala.top", f"{root_fp}/input/ala.crd"]
+    )[0]
 
 
 @pytest.fixture

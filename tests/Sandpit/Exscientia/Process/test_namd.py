@@ -3,6 +3,7 @@ import pytest
 import BioSimSpace.Sandpit.Exscientia as BSS
 
 from tests.Sandpit.Exscientia.conftest import url, has_namd
+from tests.conftest import root_fp
 
 
 @pytest.fixture(scope="session")
@@ -10,9 +11,9 @@ def system():
     """Re-use the same molecuar system for each test."""
     return BSS.IO.readMolecules(
         [
-            "tests/input/alanin.psf",
-            f"tests/input/alanin.pdb",
-            f"tests/input/alanin.params",
+            f"{root_fp}/input/alanin.psf",
+            f"{root_fp}/input/alanin.pdb",
+            f"{root_fp}/input/alanin.params",
         ]
     )
 

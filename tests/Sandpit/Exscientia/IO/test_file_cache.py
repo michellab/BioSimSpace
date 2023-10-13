@@ -6,6 +6,7 @@ import tempfile
 import BioSimSpace.Sandpit.Exscientia as BSS
 
 from tests.Sandpit.Exscientia.conftest import has_amber, has_openff
+from tests.conftest import root_fp
 
 
 def test_file_cache():
@@ -18,7 +19,7 @@ def test_file_cache():
     BSS.IO._file_cache._cache = BSS.IO._file_cache._FixedSizeOrderedDict()
 
     # Load the molecular system.
-    s = BSS.IO.readMolecules(["tests/input/ala.crd", "tests/input/ala.top"])
+    s = BSS.IO.readMolecules([f"{root_fp}/input/ala.crd", f"{root_fp}/input/ala.top"])
 
     # Create a temporary working directory.
     tmp_dir = tempfile.TemporaryDirectory()
