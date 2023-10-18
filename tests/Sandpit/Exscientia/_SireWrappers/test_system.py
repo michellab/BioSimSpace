@@ -6,12 +6,15 @@ from sire.legacy.Vol import TriclinicBox
 import BioSimSpace.Sandpit.Exscientia as BSS
 
 from tests.Sandpit.Exscientia.conftest import url, has_amber, has_openff
+from tests.conftest import root_fp
 
 
 @pytest.fixture(scope="session")
 def system():
     """Re-use the same molecuar system for each test."""
-    return BSS.IO.readMolecules(["tests/input/ala.top", "tests/input/ala.crd"])
+    return BSS.IO.readMolecules(
+        [f"{root_fp}/input/ala.top", f"{root_fp}/input/ala.crd"]
+    )
 
 
 # Parameterise the function with a set of molecule indices.

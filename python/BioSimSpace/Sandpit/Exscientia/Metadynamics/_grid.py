@@ -76,6 +76,14 @@ class Grid:
         """Return a human readable string representation of the object."""
         return self.__str__()
 
+    def __eq__(self, other):
+        """Equality operator."""
+        return (
+            self._minimum == other._minimum
+            and self._maximum == other._maximum
+            and self._num_bins == other._num_bins
+        )
+
     def setMinimum(self, minimum):
         """
         Set the minimum value of the grid.

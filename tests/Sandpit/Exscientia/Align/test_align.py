@@ -1,4 +1,5 @@
 import pytest
+import sys
 
 from sire.legacy.MM import InternalFF, IntraCLJFF, IntraFF
 from sire.legacy.Mol import AtomIdx, Element, PartialMolecule
@@ -39,6 +40,9 @@ def test_flex_align(system0, system1):
 
 
 # Parameterise the function with a set of valid atom pre-matches.
+@pytest.mark.skipif(
+    sys.platform == "win32", reason="Sire MCS currently not supported on Windows"
+)
 @pytest.mark.parametrize("prematch", [{3: 1}, {5: 9}, {4: 5}, {1: 0}])
 def test_prematch(system0, system1, prematch):
     # Extract the molecules.

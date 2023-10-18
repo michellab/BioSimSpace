@@ -234,7 +234,7 @@ def plot(
     if xerr is not None:
         xerr = [xerr[i] for i in idx]
     if yerr is not None:
-        yerr = [xerr[i] for i in idx]
+        yerr = [yerr[i] for i in idx]
 
     # y-dimension
     idx = [i for i, v in enumerate(y) if v is not None]
@@ -546,10 +546,12 @@ def plotOverlapMatrix(
 
     overlap : List of List of float, or 2D numpy array of float
         The overlap matrix.
+
     continuous_cbar : bool, optional, default=False
         If True, use a continuous colour bar. Otherwise, use a discrete
         set of values defined by the 'color_bar_cutoffs' argument to
         assign a colour to each element in the matrix.
+
     color_bar_cutoffs : List of float, optional, default=[0.03, 0.1, 0.3]
         The cutoffs to use when assigning a colour to each element in the
         matrix. This is used for both the continuous and discrete color bars.
@@ -575,8 +577,13 @@ def plotOverlapMatrix(
             "The 'overlap' matrix must be a list of list types, or a numpy array!"
         )
 
-    # Convert to a numpy array - no issues if this is already an array.
-    overlap = _np.array(overlap)
+    # Try converting to a NumPy array.
+    try:
+        overlap = _np.array(overlap)
+    except:
+        raise TypeError(
+            "'overlap' must be of type 'np.matrix',  'np.ndarray', or a list of lists."
+        )
 
     # Store the number of rows.
     num_rows = len(overlap)

@@ -26,6 +26,7 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Type"]
 
+import math as _math
 import re as _re
 
 from sire.legacy import Units as _SireUnits
@@ -372,13 +373,16 @@ class Type:
 
         # Compare to another object of the same type.
         if type(other) is type(self):
-            return self._to_default_unit().value() == other._to_default_unit().value()
+            return _math.isclose(
+                self._to_default_unit().value(),
+                other._to_default_unit().value(),
+            )
 
         # Compare with a string.
         elif isinstance(other, str):
-            return (
-                self._to_default_unit().value()
-                == self._from_string(other)._to_default_unit().value()
+            return _math.isclose(
+                self._to_default_unit().value(),
+                self._from_string(other)._to_default_unit().value(),
             )
 
         else:
@@ -389,13 +393,16 @@ class Type:
 
         # Compare to another object of the same type.
         if type(other) is type(self):
-            return self._to_default_unit().value() != other._to_default_unit().value()
+            return _math.isclose(
+                self._to_default_unit().value(),
+                other._to_default_unit().value(),
+            )
 
         # Compare with a string.
         elif isinstance(other, str):
-            return (
-                self._to_default_unit().value()
-                != self._from_string(other)._to_default_unit().value()
+            return not _math.isclose(
+                self._to_default_unit().value(),
+                self._from_string(other)._to_default_unit().value(),
             )
 
         else:

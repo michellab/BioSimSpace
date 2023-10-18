@@ -9,6 +9,33 @@ company supporting open-source development of fostering academic/industrial coll
 within the biomolecular simulation community. Our software is hosted via the `OpenBioSim`
 `GitHub <https://github.com/OpenBioSim/biosimspace>`__ organisation.
 
+`2023.4.0 <https://github.com/openbiosim/biosimspace/compare/2023.3.1...2023.4.0>`_ - Oct 13 2023
+-------------------------------------------------------------------------------------------------
+
+* Add support for computing trajectory RMSDs using Sire backend (`#152 <https://github.com/OpenBioSim/biosimspace/pull/152>`__).
+* Add support for setting up systems containing crystal waters (`#154 <https://github.com/OpenBioSim/biosimspace/pull/154>`__).
+* Add unified free-energy perturbation analysis using ``alchemlyb`` (`@annamherz <https://github.com/annamherz>`_) (`#155 <https://github.com/OpenBioSim/biosimspace/pull/155>`__).
+* Fix handling of connectivity changes during molecular perturbations (`#157 <https://github.com/OpenBioSim/biosimspace/pull/157>`__).
+* Fix issues related to new shared properties in Sire (`#160 <https://github.com/OpenBioSim/biosimspace/pull/160>`__).
+* Fix issues in SOMD perturbation files for absolute binding free-energy simulations (`@fkclark <https://github.com/fjclark>`_) (`#164 <https://github.com/OpenBioSim/biosimspace/pull/164>`__).
+* Don't generate velocities when performing a continuation with GROMACS (`#169 <https://github.com/OpenBioSim/biosimspace/pull/169>`__).
+* Decouple custom parameters and additional commands in ``LEaP`` input (`#170 <https://github.com/OpenBioSim/biosimspace/pull/170>`__).
+* Check for periodic space when updating box information from restart file or trajectory (`#173 <https://github.com/OpenBioSim/biosimspace/pull/173>`__).
+* Add functionality to allow manual rotation and reduction of triclinic boxes, rather than performing automatically on read (`#175 <https://github.com/OpenBioSim/biosimspace/pull/175>`__).
+* Allow unit-based protocol options to be passed as strings (`#179 <https://github.com/OpenBioSim/biosimspace/pull/179>`__).
+* Fix assignment of ``gpu`` configuration option for SOMD (`#181 <https://github.com/OpenBioSim/biosimspace/pull/181>`__).
+
+`2023.3.1 <https://github.com/openbiosim/biosimspace/compare/2023.3.0...2023.3.1>`_ - Aug 14 2023
+-------------------------------------------------------------------------------------------------
+
+* Check for non-periodic cartesian space when setting up vacuum simulations with all engines (`#125 <https://github.com/OpenBioSim/biosimspace/pull/125>`__).
+* Fixed several issues caught by BioSimSpace tutorials suite (`#128 <https://github.com/OpenBioSim/biosimspace/pull/128>`__).
+* Fixed import of incorrect ``alchemlyb`` extract function for GROMACS (`#132 <https://github.com/OpenBioSim/biosimspace/pull/132>`__).
+* Handle issues with using certain triclinic box vectors with OpenMM by performing a pre lattice reduction using the internal OpenMM functionality (`#135 <https://github.com/OpenBioSim/biosimspace/pull/135>`__).
+* Add support for OpenMM in example equilibration node (`@mb2055 <https://github.com/mb2055>`_) (`#138 <https://github.com/OpenBioSim/biosimspace/pull/138>`__).
+* Fix use of ``totalSteps`` when using the OpenMM ``StateDataReporter`` (`#146 <https://github.com/OpenBioSim/biosimspace/pull/146>`__).
+* Make sure ``alchemlyb`` is imported using ``try_import`` to avoid errors on platforms where it isn't available (`#151 <https://github.com/OpenBioSim/biosimspace/pull/151>`__).
+
 `2023.3.0 <https://github.com/openbiosim/biosimspace/compare/2023.2.2...2023.3.0>`_ - Jun 30 2023
 -------------------------------------------------------------------------------------------------
 

@@ -178,6 +178,21 @@ class Funnel(_CollectiveVariable):
         """Return a string showing how to instantiate the object."""
         return self.__str__()
 
+    def __eq__(self, other):
+        """Equality operator."""
+        return (
+            self._atoms0 == other._atoms0
+            and self._atoms1 == other._atoms1
+            and self._width == other._width
+            and self._buffer == other._buffer
+            and self._steepness == other._steepness
+            and self._inflection == other._inflection
+            and self._hill_width == other._hill_width
+            and self._lower_bound == other._lower_bound
+            and self._upper_bound == other._upper_bound
+            and self._grid == other._grid
+        )
+
     def setAtoms0(self, atoms0):
         """
         Set the list of atom indices whose center-of-mass define the origin

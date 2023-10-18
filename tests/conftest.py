@@ -2,6 +2,8 @@ collect_ignore_glob = ["*/out_test*.py"]
 
 import os
 
+from pathlib import Path
+
 import BioSimSpace as BSS
 
 from BioSimSpace._Utils import _try_import, _have_imported
@@ -47,11 +49,9 @@ has_mdanalysis = _have_imported(mda)
 mdtraj = _try_import("mdtraj")
 has_mdtraj = _have_imported(mdtraj)
 
+# Check for alchemlyb.
+_alchemlyb = _try_import("alchemlyb")
+has_alchemlyb = _have_imported(_alchemlyb)
 
-# Check for MDRestraintsGenerator.
-MDRestraintsGenerator = _try_import(
-    "MDRestraintsGenerator",
-    install_command="pip install MDRestraintsGenerator",
-)
-
-has_mdrestraints_generator = _have_imported(MDRestraintsGenerator)
+# Allow tests to be run from any directory.
+root_fp = Path(__file__).parent.resolve()
