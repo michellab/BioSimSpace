@@ -1855,6 +1855,44 @@ class System(_SireWrapper):
             "ASF",
         }
 
+        # A set of nucleic acid residues. Taken from MDAnalysis.
+        nucl_res = {
+            "ADE",
+            "URA",
+            "CYT",
+            "GUA",
+            "THY",
+            "DA",
+            "DC",
+            "DG",
+            "DT",
+            "RA",
+            "RU",
+            "RG",
+            "RC",
+            "A",
+            "T",
+            "U",
+            "C",
+            "G",
+            "DA5",
+            "DC5",
+            "DG5",
+            "DT5",
+            "DA3",
+            "DC3",
+            "DG3",
+            "DT3",
+            "RA5",
+            "RU5",
+            "RG5",
+            "RC5",
+            "RA3",
+            "RU3",
+            "RG3",
+            "RC3",
+        }
+
         # A list of ion elements.
         ions = [
             "F",
@@ -1930,11 +1968,12 @@ class System(_SireWrapper):
             if self.nPerturbableMolecules() == 0:
                 # Backbone restraints.
                 if restraint == "backbone":
-                    # Find all N, CA, C, and O atoms in protein residues.
+                    # Find all backbone atoms in protein residues or nucleotides.
                     string = (
                         "(not water) and (resname "
                         + ",".join(prot_res)
-                        + ") and (atomname N,CA,C,O)"
+                        + ",".join(nucl_res)
+                        + ") and (atomname N,CA,C,O,P,C5,C3,O3,O5)"
                     )
                     try:
                         search = self.search(string, property_map)
@@ -1984,11 +2023,12 @@ class System(_SireWrapper):
 
                     if restraint == "backbone":
                         if not mol.isWater():
-                            # Find all N, CA, C, and O atoms in protein residues.
+                            # Find all backbone atoms in protein residues or nucleotides.
                             string = (
-                                "(resname "
+                                "(not water) and (resname "
                                 + ",".join(prot_res)
-                                + ") and (atomname N,CA,C,O)"
+                                + ",".join(nucl_res)
+                                + ") and (atomname N,CA,C,O,P,C5,C3,O3,O5)"
                             )
                             try:
                                 search = mol.search(string, _property_map)
@@ -2040,9 +2080,12 @@ class System(_SireWrapper):
 
             if restraint == "backbone":
                 if not mol.isWater():
-                    # Find all N, CA, C, and O atoms in protein residues.
+                    # Find all backbone atoms in protein residues or nucleotides.
                     string = (
-                        "(resname " + ",".join(prot_res) + ") and (atomname N,CA,C,O)"
+                        "(resname "
+                        + ",".join(prot_res)
+                        + ",".join(nucl_res)
+                        + ") and (atomname N,CA,C,O,P,C5,C3,O3,O5)"
                     )
                     try:
                         search = mol.search(string, _property_map)
@@ -2080,7 +2123,7 @@ class System(_SireWrapper):
                 if num_results == 0:
                     msg = "No atoms matched the restraint!"
                     if restraint == "backbone":
-                        msg += " Backbone restraints only apply to atoms in protein residues."
+                        msg += " Backbone restraints only apply to atoms in protein residues or nucleotides."
                     raise _IncompatibleError(msg)
 
             # Loop over the searches for each molecule.
@@ -2097,9 +2140,7 @@ class System(_SireWrapper):
             if len(search) == 0 and not allow_zero_matches:
                 msg = "No atoms matched the restraint!"
                 if restraint == "backbone":
-                    msg += (
-                        " Backbone restraints only apply to atoms in protein residues."
-                    )
+                    msg += " Backbone restraints only apply to atoms in protein residues or nucleotides."
                 raise _IncompatibleError(msg)
 
             # Now loop over all matching atoms and get their indices.

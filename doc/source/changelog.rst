@@ -12,6 +12,7 @@ within the biomolecular simulation community. Our software is hosted via the `Op
 `2023.3.0 <https://github.com/openbiosim/biosimspace/compare/2023.2.2...2023.3.0>`_ - Jun 30 2023
 -------------------------------------------------------------------------------------------------
 
+* Added support for restraining "backbone" atoms in nucleic acids (PR HERE).
 * Reinstate :data:`BioSimSpace.Stream <BioSimSpace.Stream>` sub-package (`#36 <https://github.com/OpenBioSim/biosimspace/pull/36>`__).
 * Fixed ``setup.py`` file to work correctly on Windows (`#72 <https://github.com/OpenBioSim/biosimspace/pull/72>`__).
 * Fixed bug with missing working directory when using ``rmsd_flex_align`` scoring function (`#75 <https://github.com/OpenBioSim/biosimspace/pull/75>`__).

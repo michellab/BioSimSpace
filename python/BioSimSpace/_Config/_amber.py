@@ -210,7 +210,7 @@ class Amber(_Config):
                         # "heavy" restraints using a non-interoperable name mask.
                         if type(restraint) is str:
                             if restraint == "backbone":
-                                restraint_mask = "@CA,C,O,N"
+                                restraint_mask = "@CA,C,O,N,P,C5,C3,O3,O5"
                             elif restraint == "heavy":
                                 restraint_mask = "!:WAT & !@H"
                             elif restraint == "all":
