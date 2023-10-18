@@ -1973,7 +1973,7 @@ class System(_SireWrapper):
                         "(not water) and (resname "
                         + ",".join(prot_res)
                         + ",".join(nucl_res)
-                        + ") and (atomname N,CA,C,O,P,C5,C3,O3,O5)"
+                        + ") and (atomname N,CA,C,O,P,C5',C3',O3',O5')"
                     )
                     try:
                         search = self.search(string, property_map)
@@ -2028,7 +2028,7 @@ class System(_SireWrapper):
                                 "(not water) and (resname "
                                 + ",".join(prot_res)
                                 + ",".join(nucl_res)
-                                + ") and (atomname N,CA,C,O,P,C5,C3,O3,O5)"
+                                + ") and (atomname N,CA,C,O,P,C5',C3',O3',O5')"
                             )
                             try:
                                 search = mol.search(string, _property_map)
@@ -2085,7 +2085,7 @@ class System(_SireWrapper):
                         "(resname "
                         + ",".join(prot_res)
                         + ",".join(nucl_res)
-                        + ") and (atomname N,CA,C,O,P,C5,C3,O3,O5)"
+                        + ") and (atomname N,CA,C,O,P,C5',C3',O3',O5')"
                     )
                     try:
                         search = mol.search(string, _property_map)
