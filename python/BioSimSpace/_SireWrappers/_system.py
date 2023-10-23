@@ -53,6 +53,224 @@ from sire.mol import Select as _Select
 class System(_SireWrapper):
     """A container class for storing molecular systems."""
 
+    # A set of protein residues. Taken from MDAnalysis.
+    prot_res = {
+        # CHARMM top_all27_prot_lipid.rtf
+        "ALA",
+        "ARG",
+        "ASN",
+        "ASP",
+        "CYS",
+        "GLN",
+        "GLU",
+        "GLY",
+        "HSD",
+        "HSE",
+        "HSP",
+        "ILE",
+        "LEU",
+        "LYS",
+        "MET",
+        "PHE",
+        "PRO",
+        "SER",
+        "THR",
+        "TRP",
+        "TYR",
+        "VAL",
+        "ALAD",
+        ## 'CHO','EAM', # -- special formyl and ethanolamine termini of gramicidin
+        # PDB
+        "HIS",
+        "MSE",
+        # from Gromacs 4.5.3 oplsaa.ff/aminoacids.rtp
+        "ARGN",
+        "ASPH",
+        "CYS2",
+        "CYSH",
+        "QLN",
+        "PGLU",
+        "GLUH",
+        "HIS1",
+        "HISD",
+        "HISE",
+        "HISH",
+        "LYSH",
+        # from Gromacs 4.5.3 gromos53a6.ff/aminoacids.rtp
+        "ASN1",
+        "CYS1",
+        "HISA",
+        "HISB",
+        "HIS2",
+        # from Gromacs 4.5.3 amber03.ff/aminoacids.rtp
+        "HID",
+        "HIE",
+        "HIP",
+        "ORN",
+        "DAB",
+        "LYN",
+        "HYP",
+        "CYM",
+        "CYX",
+        "ASH",
+        "GLH",
+        "ACE",
+        "NME",
+        # from Gromacs 2016.3 amber99sb-star-ildn.ff/aminoacids.rtp
+        "NALA",
+        "NGLY",
+        "NSER",
+        "NTHR",
+        "NLEU",
+        "NILE",
+        "NVAL",
+        "NASN",
+        "NGLN",
+        "NARG",
+        "NHID",
+        "NHIE",
+        "NHIP",
+        "NTRP",
+        "NPHE",
+        "NTYR",
+        "NGLU",
+        "NASP",
+        "NLYS",
+        "NPRO",
+        "NCYS",
+        "NCYX",
+        "NMET",
+        "CALA",
+        "CGLY",
+        "CSER",
+        "CTHR",
+        "CLEU",
+        "CILE",
+        "CVAL",
+        "CASF",
+        "CASN",
+        "CGLN",
+        "CARG",
+        "CHID",
+        "CHIE",
+        "CHIP",
+        "CTRP",
+        "CPHE",
+        "CTYR",
+        "CGLU",
+        "CASP",
+        "CLYS",
+        "CPRO",
+        "CCYS",
+        "CCYX",
+        "CMET",
+        "CME",
+        "ASF",
+    }
+
+    # A set of nucleic acid residues. Taken from MDAnalysis.
+    nucl_res = {
+        "ADE",
+        "URA",
+        "CYT",
+        "GUA",
+        "THY",
+        "DA",
+        "DC",
+        "DG",
+        "DT",
+        "RA",
+        "RU",
+        "RG",
+        "RC",
+        "A",
+        "T",
+        "U",
+        "C",
+        "G",
+        "DA5",
+        "DC5",
+        "DG5",
+        "DT5",
+        "DA3",
+        "DC3",
+        "DG3",
+        "DT3",
+        "RA5",
+        "RU5",
+        "RG5",
+        "RC5",
+        "RA3",
+        "RU3",
+        "RG3",
+        "RC3",
+    }
+
+    # A list of ion elements.
+    ions = [
+        "F",
+        "Cl",
+        "Br",
+        "I",
+        "Li",
+        "Na",
+        "K",
+        "Rb",
+        "Cs",
+        "Mg",
+        "Tl",
+        "Cu",
+        "Ag",
+        "Be",
+        "Cu",
+        "Ni",
+        "Pt",
+        "Zn",
+        "Co",
+        "Pd",
+        "Ag",
+        "Cr",
+        "Fe",
+        "Mg",
+        "V",
+        "Mn",
+        "Hg",
+        "Cd",
+        "Yb",
+        "Ca",
+        "Sn",
+        "Pb",
+        "Eu",
+        "Sr",
+        "Sm",
+        "Ba",
+        "Ra",
+        "Al",
+        "Fe",
+        "Cr",
+        "In",
+        "Tl",
+        "Y",
+        "La",
+        "Ce",
+        "Pr",
+        "Nd",
+        "Sm",
+        "Eu",
+        "Gd",
+        "Tb",
+        "Dy",
+        "Er",
+        "Tm",
+        "Lu",
+        "Hf",
+        "Zr",
+        "Ce",
+        "U",
+        "Pu",
+        "Th",
+    ]
+
     def __init__(self, system):
         """
         Constructor.
@@ -1740,224 +1958,6 @@ class System(_SireWrapper):
         # Initialise the list of indices.
         indices = []
 
-        # A set of protein residues. Taken from MDAnalysis.
-        prot_res = {
-            # CHARMM top_all27_prot_lipid.rtf
-            "ALA",
-            "ARG",
-            "ASN",
-            "ASP",
-            "CYS",
-            "GLN",
-            "GLU",
-            "GLY",
-            "HSD",
-            "HSE",
-            "HSP",
-            "ILE",
-            "LEU",
-            "LYS",
-            "MET",
-            "PHE",
-            "PRO",
-            "SER",
-            "THR",
-            "TRP",
-            "TYR",
-            "VAL",
-            "ALAD",
-            ## 'CHO','EAM', # -- special formyl and ethanolamine termini of gramicidin
-            # PDB
-            "HIS",
-            "MSE",
-            # from Gromacs 4.5.3 oplsaa.ff/aminoacids.rtp
-            "ARGN",
-            "ASPH",
-            "CYS2",
-            "CYSH",
-            "QLN",
-            "PGLU",
-            "GLUH",
-            "HIS1",
-            "HISD",
-            "HISE",
-            "HISH",
-            "LYSH",
-            # from Gromacs 4.5.3 gromos53a6.ff/aminoacids.rtp
-            "ASN1",
-            "CYS1",
-            "HISA",
-            "HISB",
-            "HIS2",
-            # from Gromacs 4.5.3 amber03.ff/aminoacids.rtp
-            "HID",
-            "HIE",
-            "HIP",
-            "ORN",
-            "DAB",
-            "LYN",
-            "HYP",
-            "CYM",
-            "CYX",
-            "ASH",
-            "GLH",
-            "ACE",
-            "NME",
-            # from Gromacs 2016.3 amber99sb-star-ildn.ff/aminoacids.rtp
-            "NALA",
-            "NGLY",
-            "NSER",
-            "NTHR",
-            "NLEU",
-            "NILE",
-            "NVAL",
-            "NASN",
-            "NGLN",
-            "NARG",
-            "NHID",
-            "NHIE",
-            "NHIP",
-            "NTRP",
-            "NPHE",
-            "NTYR",
-            "NGLU",
-            "NASP",
-            "NLYS",
-            "NPRO",
-            "NCYS",
-            "NCYX",
-            "NMET",
-            "CALA",
-            "CGLY",
-            "CSER",
-            "CTHR",
-            "CLEU",
-            "CILE",
-            "CVAL",
-            "CASF",
-            "CASN",
-            "CGLN",
-            "CARG",
-            "CHID",
-            "CHIE",
-            "CHIP",
-            "CTRP",
-            "CPHE",
-            "CTYR",
-            "CGLU",
-            "CASP",
-            "CLYS",
-            "CPRO",
-            "CCYS",
-            "CCYX",
-            "CMET",
-            "CME",
-            "ASF",
-        }
-
-        # A set of nucleic acid residues. Taken from MDAnalysis.
-        nucl_res = {
-            "ADE",
-            "URA",
-            "CYT",
-            "GUA",
-            "THY",
-            "DA",
-            "DC",
-            "DG",
-            "DT",
-            "RA",
-            "RU",
-            "RG",
-            "RC",
-            "A",
-            "T",
-            "U",
-            "C",
-            "G",
-            "DA5",
-            "DC5",
-            "DG5",
-            "DT5",
-            "DA3",
-            "DC3",
-            "DG3",
-            "DT3",
-            "RA5",
-            "RU5",
-            "RG5",
-            "RC5",
-            "RA3",
-            "RU3",
-            "RG3",
-            "RC3",
-        }
-
-        # A list of ion elements.
-        ions = [
-            "F",
-            "Cl",
-            "Br",
-            "I",
-            "Li",
-            "Na",
-            "K",
-            "Rb",
-            "Cs",
-            "Mg",
-            "Tl",
-            "Cu",
-            "Ag",
-            "Be",
-            "Cu",
-            "Ni",
-            "Pt",
-            "Zn",
-            "Co",
-            "Pd",
-            "Ag",
-            "Cr",
-            "Fe",
-            "Mg",
-            "V",
-            "Mn",
-            "Hg",
-            "Cd",
-            "Yb",
-            "Ca",
-            "Sn",
-            "Pb",
-            "Eu",
-            "Sr",
-            "Sm",
-            "Ba",
-            "Ra",
-            "Al",
-            "Fe",
-            "Cr",
-            "In",
-            "Tl",
-            "Y",
-            "La",
-            "Ce",
-            "Pr",
-            "Nd",
-            "Sm",
-            "Eu",
-            "Gd",
-            "Tb",
-            "Dy",
-            "Er",
-            "Tm",
-            "Lu",
-            "Hf",
-            "Zr",
-            "Ce",
-            "U",
-            "Pu",
-            "Th",
-        ]
-
         # Whether we've searched a perturbable system. If so, then we need to process
         # the search results differently. (There will be one for each molecule.)
         is_perturbable_system = False
@@ -1971,8 +1971,8 @@ class System(_SireWrapper):
                     # Find all backbone atoms in protein residues or nucleotides.
                     string = (
                         "(not water) and (resname "
-                        + ",".join(prot_res)
-                        + ",".join(nucl_res)
+                        + ",".join(self.prot_res)
+                        + ",".join(self.nucl_res)
                         + ") and (atomname N,CA,C,O,P,/C5'/,/C3'/,/O3'/,/O5'/)"
                     )
                     try:
@@ -1982,7 +1982,7 @@ class System(_SireWrapper):
 
                 elif restraint == "heavy":
                     # Convert to a formatted string for the search.
-                    ion_string = ",".join(ions + ["H,Xx"])
+                    ion_string = ",".join(self.ions + ["H,Xx"])
                     # Find all non-water, non-hydrogen, non-ion elements.
                     string = f"(not water) and (not element {ion_string})"
                     try:
@@ -1992,7 +1992,7 @@ class System(_SireWrapper):
 
                 elif restraint == "all":
                     # Convert to a formatted string for the search.
-                    ion_string = ",".join(ions)
+                    ion_string = ",".join(self.ions)
                     # Find all non-water, non-ion elements.
                     string = f"(not water) and (not element {ion_string})"
                     try:
@@ -2026,8 +2026,8 @@ class System(_SireWrapper):
                             # Find all backbone atoms in protein residues or nucleotides.
                             string = (
                                 "(not water) and (resname "
-                                + ",".join(prot_res)
-                                + ",".join(nucl_res)
+                                + ",".join(self.prot_res)
+                                + ",".join(self.nucl_res)
                                 + ") and (atomname N,CA,C,O,P,/C5'/,/C3'/,/O3'/,/O5'/)"
                             )
                             try:
@@ -2038,7 +2038,7 @@ class System(_SireWrapper):
                     elif restraint == "heavy":
                         if not mol.isWater():
                             # Convert to a formatted string for the search.
-                            ion_string = ",".join(ions + ["H,Xx"])
+                            ion_string = ",".join(self.ions + ["H,Xx"])
                             # Find all non-water, non-hydrogen, non-ion elements.
                             string = f"not element {ion_string}"
                             try:
@@ -2049,7 +2049,7 @@ class System(_SireWrapper):
                     elif restraint == "all":
                         if not mol.isWater():
                             # Convert to a formatted string for the search.
-                            ion_string = ",".join(ions)
+                            ion_string = ",".join(self.ions)
                             # Find all non-water, non-ion elements.
                             string = f"not element {ion_string}"
                             try:
@@ -2083,8 +2083,8 @@ class System(_SireWrapper):
                     # Find all backbone atoms in protein residues or nucleotides.
                     string = (
                         "(resname "
-                        + ",".join(prot_res)
-                        + ",".join(nucl_res)
+                        + ",".join(self.prot_res)
+                        + ",".join(self.nucl_res)
                         + ") and (atomname N,CA,C,O,P,/C5'/,/C3'/,/O3'/,/O5'/)"
                     )
                     try:
@@ -2095,7 +2095,7 @@ class System(_SireWrapper):
             elif restraint == "heavy":
                 if not mol.isWater():
                     # Convert to a formatted string for the search.
-                    ion_string = ",".join(ions + ["H,Xx"])
+                    ion_string = ",".join(self.ions + ["H,Xx"])
                     # Find all non-water, non-hydrogen, non-ion elements.
                     string = f"not element {ion_string}"
                     try:
@@ -2106,7 +2106,7 @@ class System(_SireWrapper):
             elif restraint == "all":
                 if not mol.isWater():
                     # Convert to a formatted string for the search.
-                    ion_string = ",".join(ions)
+                    ion_string = ",".join(self.ions)
                     # Find all non-water, non-ion elements.
                     string = f"not element {ion_string}"
                     try:
@@ -2155,6 +2155,56 @@ class System(_SireWrapper):
 
         return indices
 
+    def containsAminoAcids(self, property_map={}):
+        """
+        Check whether the system contains nucleic acids.
+
+        Parameters
+        ----------
+        property_map : dict
+           A dictionary that maps system "properties" to their user defined
+           values. This allows the user to refer to properties with their
+           own naming scheme, e.g. { "charge" : "my-charge" }
+
+        Returns
+        -------
+
+        contains_aa : bool
+            True if the system contains amino acids, False otherwise.
+        """
+        string = "(resname " + ",".join(self.prot_res) + ")"
+        try:
+            search = self.search(string, property_map)
+        except:
+            search = []
+
+        return bool(search)
+
+    def containsNucleicAcids(self, property_map={}):
+        """
+        Check whether the system contains nucleic acids.
+
+        Parameters
+        ----------
+        property_map : dict
+           A dictionary that maps system "properties" to their user defined
+           values. This allows the user to refer to properties with their
+           own naming scheme, e.g. { "charge" : "my-charge" }
+
+        Returns
+        -------
+
+        contains_na : bool
+            True if the system contains amino acids, False otherwise.
+        """
+        string = "(resname " + ",".join(self.nucl_res) + ")"
+        try:
+            search = self.search(string, property_map)
+        except:
+            search = []
+
+        return bool(search)
+
     def _isParameterised(self, property_map={}):
         """
         Whether the system is parameterised, i.e. can we run a simulation
@@ -2168,6 +2218,7 @@ class System(_SireWrapper):
         property_map : dict
             A dictionary that maps system "properties" to their user defined
             values. This allows the user to refer to properties with their
+            own naming scheme, e.g. { "charge" : "my-charge" }
 
         Returns
         -------
