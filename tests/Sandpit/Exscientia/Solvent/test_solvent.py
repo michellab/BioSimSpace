@@ -7,7 +7,7 @@ from sire.legacy.IO import GroTop
 
 import BioSimSpace.Sandpit.Exscientia as BSS
 
-from tests.conftest import has_gromacs
+from tests.Sandpit.Exscientia.conftest import has_gromacs
 
 
 @pytest.fixture(scope="module")
