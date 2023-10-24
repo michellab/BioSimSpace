@@ -212,9 +212,9 @@ class Amber(_Config):
                             if restraint == "backbone":
                                 # Determine wether the contains protein, nucleic acid, or both.
                                 restraint_atom_names = []
-                                if self._system.containsAminoAcids():
+                                if self._system.nAminoAcids() > 0:
                                     restraint_atom_names += ["N", "CA", "C", "O"]
-                                if self._system.containsNucleicAcids():
+                                if self._system.nNucleotides() > 0:
                                     restraint_atom_names += [
                                         "P",
                                         "C5'",
