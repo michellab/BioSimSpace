@@ -210,7 +210,7 @@ class Amber(_Config):
                         # "heavy" restraints using a non-interoperable name mask.
                         if type(restraint) is str:
                             if restraint == "backbone":
-                                # Determine wether the contains protein, nucleic acid, or both.
+                                # Determine wether the system contains protein, nucleic acid, or both.
                                 restraint_atom_names = []
                                 if self._system.nAminoAcids() > 0:
                                     restraint_atom_names += ["N", "CA", "C", "O"]
