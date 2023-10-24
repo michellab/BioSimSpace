@@ -458,10 +458,14 @@ def test_rotate_box_vectors(system):
 
 
 def test_residue_searches_protein(system):
-    assert len(system.getAminoAcids()) == system.nAminoAcids() == 3
+    amino_acids = system.getAminoAcids()
+    assert isinstance(amino_acids[0], BSS._SireWrappers._residue.Residue)
+    assert len(amino_acids) == system.nAminoAcids() == 3
     assert len(system.getNucleotides()) == system.nNucleotides() == 0
 
 
 def test_residue_searches_rna(rna_system):
+    nucleotides = rna_system.getNucleotides()
+    assert isinstance(nucleotides[0], BSS._SireWrappers._residue.Residue)
     assert len(rna_system.getAminoAcids()) == rna_system.nAminoAcids() == 0
-    assert len(rna_system.getNucleotides()) == rna_system.nNucleotides() == 29
+    assert len(nucleotides) == rna_system.nNucleotides() == 29
