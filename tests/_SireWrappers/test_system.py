@@ -14,6 +14,14 @@ def system():
     return BSS.IO.readMolecules(["tests/input/ala.top", "tests/input/ala.crd"])
 
 
+@pytest.fixture(scope="session")
+def rna_system():
+    """An RNA system for re-use."""
+    return BSS.IO.readMolecules(
+        BSS.IO.expand(BSS.tutorialUrl(), ["rna_6e1s.rst7", "rna_6e1s.prm7"])
+    )
+
+
 # Parameterise the function with a set of molecule indices.
 @pytest.mark.parametrize("index", [0, -1])
 def test_molecule_equivalence(system, index):
@@ -447,3 +455,13 @@ def test_rotate_box_vectors(system):
         assert math.isclose(c1.x().value(), c0.z().value())
         assert math.isclose(c1.y().value(), c0.x().value())
         assert math.isclose(c1.z().value(), c0.y().value())
+
+
+def test_residue_searches_protein(system):
+    assert len(system.getAminoAcids()) == system.nAminoAcids() == 3
+    assert len(system.getNucleotides()) == system.nNucleotides() == 0
+
+
+def test_residue_searches_rna(rna_system):
+    assert len(rna_system.getAminoAcids()) == rna_system.nAminoAcids() == 0
+    assert len(rna_system.getNucleotides()) == rna_system.nNucleotides() == 29
