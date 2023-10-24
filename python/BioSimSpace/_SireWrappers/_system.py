@@ -1958,7 +1958,7 @@ class System(_SireWrapper):
         """
         search_string = "(resname " + ",".join(_prot_res) + ")"
         try:
-            residues = list(self.search(search_string, property_map))
+            residues = list(self.search(search_string, property_map).residues())
         except:
             residues = []
         return residues
@@ -1995,7 +1995,7 @@ class System(_SireWrapper):
         """
         search_string = "(resname " + ",".join(_nucl_res) + ")"
         try:
-            residues = list(self.search(search_string, property_map))
+            residues = list(self.search(search_string, property_map).residues())
         except:
             residues = []
         return residues
