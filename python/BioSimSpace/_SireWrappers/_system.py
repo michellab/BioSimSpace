@@ -664,6 +664,18 @@ class System(_SireWrapper):
                     _warnings.warn(
                         "Failed to remove 'velocity' property from all molecules!"
                     )
+                if num_pert_vels > 0:
+                    try:
+                        self._sire_object = _SireIO.removeProperty(
+                            self._sire_object, "velocity0"
+                        )
+                        self._sire_object = _SireIO.removeProperty(
+                            self._sire_object, "velocity1"
+                        )
+                    except:
+                        _warnings.warn(
+                            "Failed to remove 'velocity0' and 'velocity1' property from molecules!"
+                        )
 
     def removeMolecules(self, molecules):
         """
