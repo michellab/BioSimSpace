@@ -649,7 +649,7 @@ class System(_SireWrapper):
                     num_vels -= 1
 
             # Not all molecules have velocities.
-            if num_vels > 0 and num_vels < self.nMolecules():
+            if num_vels > 0 and num_vels != self.nMolecules():
                 _warnings.warn(
                     "Not all molecules have velocities. The 'velocity' property will be removed."
                 )
