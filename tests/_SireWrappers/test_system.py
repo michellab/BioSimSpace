@@ -469,3 +469,24 @@ def test_residue_searches_rna(rna_system):
     assert isinstance(nucleotides[0], BSS._SireWrappers._residue.Residue)
     assert len(rna_system.getAminoAcids()) == rna_system.nAminoAcids() == 0
     assert len(nucleotides) == rna_system.nNucleotides() == 29
+
+
+def test_set_water_property_preserve(system):
+    # Make sure that unique molecular properties are preserved when swapping
+    # water topology.
+
+    # Make a copy of the system.
+    system = system.copy()
+
+    # Flag one water molecule with a unique property.
+    mol = system[-1]
+    mol._sire_object = (
+        mol._sire_object.edit().setProperty("test", True).molecule().commit()
+    )
+    system.updateMolecules(mol)
+
+    # Swap the water topology to GROMACS format.
+    system._set_water_topology("GROMACS")
+
+    # Make sure the property is preserved.
+    assert system[-1]._sire_object.hasProperty("test")
