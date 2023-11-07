@@ -640,9 +640,11 @@ class System(_SireWrapper):
 
             # Search for perturbable molecules with a velocity property.
             # Only consider the lambda = 0 end state.
+            has_perturbable = False
             for mol in self.getPerturbableMolecules():
                 # Add perturbable velocities.
                 if mol._sire_object.hasProperty("velocity0"):
+                    has_perturbable = True
                     num_vels += 1
                 # Remove non-perturbable velocities to avoid double counting.
                 elif mol._sire_object.hasProperty("velocity"):
@@ -661,7 +663,7 @@ class System(_SireWrapper):
                     _warnings.warn(
                         "Failed to remove 'velocity' property from all molecules!"
                     )
-                if num_pert_vels > 0:
+                if has_perturbable:
                     try:
                         self._sire_object = _SireIO.removeProperty(
                             self._sire_object, "velocity0"
