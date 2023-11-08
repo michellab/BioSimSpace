@@ -1,6 +1,7 @@
 import pytest
 
 from BioSimSpace.Sandpit.Exscientia.Gateway import File
+from tests.conftest import root_fp
 
 
 def test_no_arguments():
@@ -10,7 +11,9 @@ def test_no_arguments():
         f = File()
 
 
-@pytest.mark.parametrize("value", ["tests/input/ala.crd", "tests/input/ala.top"])
+@pytest.mark.parametrize(
+    "value", [f"{root_fp}/input/ala.crd", f"{root_fp}/input/ala.top"]
+)
 def test_value(value):
     """Test whether object is initialised correctly and value is set."""
 

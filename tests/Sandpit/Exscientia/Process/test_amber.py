@@ -10,12 +10,31 @@ import shutil
 import BioSimSpace.Sandpit.Exscientia as BSS
 
 from tests.Sandpit.Exscientia.conftest import url, has_amber, has_pyarrow
+from tests.conftest import root_fp
 
 
 @pytest.fixture(scope="session")
 def system():
     """Re-use the same molecuar system for each test."""
-    return BSS.IO.readMolecules(["tests/input/ala.top", "tests/input/ala.crd"])
+    return BSS.IO.readMolecules(
+        [f"{root_fp}/input/ala.top", f"{root_fp}/input/ala.crd"]
+    )
+
+
+@pytest.fixture(scope="session")
+def rna_system():
+    """An RNA system for re-use."""
+    return BSS.IO.readMolecules(
+        BSS.IO.expand(BSS.tutorialUrl(), ["rna_6e1s.rst7", "rna_6e1s.prm7"])
+    )
+
+
+@pytest.fixture(scope="session")
+def large_protein_system():
+    """A large protein system for re-use."""
+    return BSS.IO.readMolecules(
+        BSS.IO.expand(BSS.tutorialUrl(), ["complex_vac0.prm7", "complex_vac0.rst7"])
+    )
 
 
 @pytest.mark.skipif(
@@ -210,6 +229,42 @@ def test_args(system):
     assert arg_string == "-x X -a A -b B -y -e -f 6 -g -h H -k K -z Z"
 
 
+@pytest.mark.skipif(has_amber is False, reason="Requires AMBER to be installed.")
+def test_backbone_restraint_mask_protein(large_protein_system):
+    """
+    Test that the amber backbone restraint mask is correct for a protein system.
+    We need a large protein system otherwise the logic we want to test will be
+    skipped, and individual atoms will be specified in the config.
+    """
+
+    # Create an equilibration protocol with backbone restraints.
+    protocol = BSS.Protocol.Equilibration(restraint="backbone")
+
+    # Create the process object.
+    process = BSS.Process.Amber(large_protein_system, protocol, name="test")
+
+    # Check that the correct restraint mask is in the config.
+    config = process.getConfig()
+    assert '   restraintmask="@N,CA,C,O",' in config
+
+
+@pytest.mark.skipif(has_amber is False, reason="Requires AMBER to be installed.")
+def test_backbone_restraint_mask_rna(rna_system):
+    """
+    Test that the amber backbone restraint mask is correct for an RNA system.
+    """
+
+    # Create an equilibration protocol with backbone restraints.
+    protocol = BSS.Protocol.Equilibration(restraint="backbone")
+
+    # Create the process object.
+    process = BSS.Process.Amber(rna_system, protocol, name="test")
+
+    # Check that the correct restraint mask is in the config.
+    config = process.getConfig()
+    assert "   restraintmask=\"@P,C5',C3',O3',O5'\"," in config
+
+
 def run_process(system, protocol, check_data=False):
     """Helper function to run various simulation protocols."""
 
@@ -280,9 +335,9 @@ def test_parse_fep_output(system, protocol):
 
     # Assign the path to the output file.
     if isinstance(protocol, BSS.Protocol.FreeEnergy):
-        out_file = "tests/Sandpit/Exscientia/output/amber_fep.out"
+        out_file = f"{root_fp}/Sandpit/Exscientia/output/amber_fep.out"
     else:
-        out_file = "tests/Sandpit/Exscientia/output/amber_fep_min.out"
+        out_file = f"{root_fp}/Sandpit/Exscientia/output/amber_fep_min.out"
 
     # Copy the existing output file into the working directory.
     shutil.copyfile(out_file, process.workDir() + "/amber.out")
@@ -320,14 +375,10 @@ def test_parse_fep_output(system, protocol):
         assert len(records_sc1) != 0
 
 
-@pytest.mark.skipif(
-    has_amber is False or has_pyarrow is False,
-    reason="Requires AMBER and pyarrow to be installed.",
-)
 class TestsaveMetric:
     @staticmethod
     @pytest.fixture()
-    def setup(system):
+    def alchemical_system(system):
         # Copy the system.
         system_copy = system.copy()
 
@@ -335,18 +386,33 @@ class TestsaveMetric:
         mol = system_copy[0]
         mol = BSS.Align.decouple(mol)
         system_copy.updateMolecule(0, mol)
+        return system_copy
 
+    @staticmethod
+    @pytest.fixture()
+    def setup(alchemical_system):
         # Create a process using any system and the protocol.
         process = BSS.Process.Amber(
-            system_copy,
+            alchemical_system,
             BSS.Protocol.FreeEnergy(temperature=298 * BSS.Units.Temperature.kelvin),
         )
         shutil.copyfile(
-            "tests/Sandpit/Exscientia/output/amber_fep.out",
+            f"{root_fp}/Sandpit/Exscientia/output/amber_fep.out",
             process.workDir() + "/amber.out",
         )
         process.saveMetric()
         return process
+
+    def test_error_alchemlyb_extract(self, alchemical_system):
+        # Create a process using any system and the protocol.
+        process = BSS.Process.Amber(
+            alchemical_system,
+            BSS.Protocol.FreeEnergy(temperature=298 * BSS.Units.Temperature.kelvin),
+        )
+        process.wait()
+        with open(process.workDir() + "/amber.err", "r") as f:
+            text = f.read()
+            assert "Exception Information" in text
 
     def test_metric_parquet_exist(self, setup):
         assert Path(f"{setup.workDir()}/metric.parquet").exists()

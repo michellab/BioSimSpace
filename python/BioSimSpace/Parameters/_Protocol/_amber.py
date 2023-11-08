@@ -122,8 +122,10 @@ class AmberProtein(_protocol.Protocol):
         tolerance=1.2,
         max_distance=_Length(6, "A"),
         water_model=None,
+        custom_parameters=None,
         leap_commands=None,
         bonds=None,
+        ensure_compatible=True,
         property_map={},
     ):
         """
@@ -153,16 +155,28 @@ class AmberProtein(_protocol.Protocol):
             Run 'BioSimSpace.Solvent.waterModels()' to see the supported
             water models.
 
+        custom_parameters: [str]
+            A list of paths to custom parameter files. When this option is set,
+            we can no longer fall back on GROMACS's pdb2gmx.
+
         leap_commands : [str]
             An optional list of extra commands for the LEaP program. These
-            will be added after any default commands and can be used to, e.g.,
-            load additional parameter files. When this option is set, we can no
-            longer fall back on GROMACS's pdb2gmx.
+            will be added after any default commands. When this option is set,
+            we can no longer fall back on GROMACS's pdb2gmx.
 
         bonds : ((class:`Atom <BioSimSpace._SireWrappers.Atom>`, class:`Atom <BioSimSpace._SireWrappers.Atom>`))
             An optional tuple of atom pairs to specify additional atoms that
             should be bonded. This is useful when the PDB CONECT record is
             incomplete.
+
+        ensure_compatible : bool
+            Whether to ensure that the topology of the parameterised molecule is
+            compatible with that of the original molecule. An exception will be
+            raised if this isn't the case, e.g. if atoms have been added. Set
+            this to False is parameterising lone oxygen atoms corresponding to
+            structural (crystal) water molecules. When True, the parameterised
+            molecule will preserve the topology of the original molecule, e.g.
+            the original atom and residue names will be kept.
 
         property_map : dict
             A dictionary that maps system "properties" to their user defined
@@ -171,7 +185,11 @@ class AmberProtein(_protocol.Protocol):
         """
 
         # Call the base class constructor.
-        super().__init__(forcefield=forcefield, property_map=property_map)
+        super().__init__(
+            forcefield=forcefield,
+            ensure_compatible=ensure_compatible,
+            property_map=property_map,
+        )
 
         # Validate the pdb2gmx compatibility flag.
         if not isinstance(pdb2gmx, bool):
@@ -199,6 +217,26 @@ class AmberProtein(_protocol.Protocol):
             raise TypeError("'water_model' must be of type 'str'")
         else:
             self._water_model = water_model
+
+        # Validate the custom parameter file list.
+        if custom_parameters is not None:
+            if not isinstance(custom_parameters, (list, tuple)):
+                raise TypeError("'custom_parameters' must be a 'list' of 'str' types.")
+            else:
+                if not all(isinstance(x, str) for x in custom_parameters):
+                    raise TypeError(
+                        "'custom_parameters' must be a 'list' of 'str' types."
+                    )
+                for x in custom_parameters:
+                    if not os.path.isfile(x):
+                        raise ValueError(f"Custom parameter file does not exist: '{x}'")
+
+            # Convert to absolute paths.
+            self._custom_parameters = []
+            for x in enumerate(custom_parameters):
+                self._custom_parameters.append(_os.path.abspath(x))
+        else:
+            self._custom_parameters = None
 
         # Validate the additional leap commands.
         if leap_commands is not None:
@@ -235,7 +273,7 @@ class AmberProtein(_protocol.Protocol):
 
         # Set the compatibility flags.
         self._tleap = True
-        if self._leap_commands is not None:
+        if self._custom_parameters is not None or self._leap_commands is not None:
             self._pdb2gmx = False
 
     def run(self, molecule, work_dir=None, queue=None):
@@ -356,9 +394,23 @@ class AmberProtein(_protocol.Protocol):
             new_mol._sire_object = edit_mol.commit()
 
         else:
-            new_mol.makeCompatibleWith(
-                par_mol, property_map=self._property_map, overwrite=True, verbose=False
-            )
+            if self._ensure_compatible:
+                new_mol.makeCompatibleWith(
+                    par_mol,
+                    property_map=self._property_map,
+                    overwrite=True,
+                    verbose=False,
+                )
+            else:
+                try:
+                    new_mol.makeCompatibleWith(
+                        par_mol,
+                        property_map=self._property_map,
+                        overwrite=True,
+                        verbose=False,
+                    )
+                except:
+                    new_mol = par_mol
 
         # Record the forcefield used to parameterise the molecule.
         new_mol._forcefield = self._forcefield
@@ -410,7 +462,7 @@ class AmberProtein(_protocol.Protocol):
                 prefix + "leap",
                 renumbered_molecule,
                 "pdb",
-                self._property_map,
+                property_map=self._property_map,
             )
         except Exception as e:
             raise
@@ -460,10 +512,10 @@ class AmberProtein(_protocol.Protocol):
                     file.write("source leaprc.water.tip4pew\n")
                 else:
                     file.write("source leaprc.water.%s\n" % self._water_model)
-            # Write extra user commands.
-            if self._leap_commands is not None:
-                for command in self._leap_commands:
-                    file.write("%s\n" % command)
+            # Write custom parameters.
+            if self._custom_parameters is not None:
+                for param in self._custom_parameters:
+                    file.write("%s\n" % param)
             file.write("mol = loadPdb leap.pdb\n")
             # Add any disulphide bond records.
             for bond in disulphide_bonds:
@@ -471,6 +523,10 @@ class AmberProtein(_protocol.Protocol):
             # Add any additional bond records.
             for bond in pruned_bond_records:
                 file.write("%s\n" % bond)
+            # Write user leap commands.
+            if self._leap_commands is not None:
+                for command in self._leap_commands:
+                    file.write("%s\n" % command)
             file.write("saveAmberParm mol leap.top leap.crd\n")
             file.write("quit")
 
@@ -503,13 +559,14 @@ class AmberProtein(_protocol.Protocol):
             prefix + "leap.crd"
         ):
             # Check the output of tLEaP for missing atoms.
-            if _has_missing_atoms(prefix + "leap.out"):
-                raise _ParameterisationError(
-                    "tLEaP added missing atoms. The topology is now "
-                    "inconsistent with the original molecule. Please "
-                    "make sure that your initial molecule has a "
-                    "complete topology."
-                )
+            if self._ensure_compatible:
+                if _has_missing_atoms(prefix + "leap.out"):
+                    raise _ParameterisationError(
+                        "tLEaP added missing atoms. The topology is now "
+                        "inconsistent with the original molecule. Please "
+                        "make sure that your initial molecule has a "
+                        "complete topology."
+                    )
             return ["leap.top", "leap.crd"]
         else:
             raise _ParameterisationError("tLEaP failed!")
@@ -557,7 +614,9 @@ class AmberProtein(_protocol.Protocol):
 
         # Write the system to a PDB file.
         try:
-            _IO.saveMolecules(prefix + "leap", _molecule, "pdb", self._property_map)
+            _IO.saveMolecules(
+                prefix + "leap", _molecule, "pdb", property_map=self._property_map
+            )
         except Exception as e:
             msg = "Failed to write system to 'PDB' format."
             if _isVerbose():
@@ -823,7 +882,14 @@ class GAFF(_protocol.Protocol):
     # A list of supported charge methods.
     _charge_methods = ["RESP", "CM2", "MUL", "BCC", "ESP", "GAS"]
 
-    def __init__(self, version, charge_method="BCC", net_charge=None, property_map={}):
+    def __init__(
+        self,
+        version,
+        charge_method="BCC",
+        net_charge=None,
+        ensure_compatible=True,
+        property_map={},
+    ):
         """
         Constructor.
 
@@ -839,6 +905,17 @@ class GAFF(_protocol.Protocol):
 
         net_charge : int
             The net charge on the molecule.
+
+        ensure_compatible : bool
+            Whether to ensure that the topology of the parameterised molecule is
+            compatible with that of the original molecule. An exception will be
+            raised if this isn't the case, e.g. if atoms have been added. When
+            True, the parameterised molecule will preserve the topology of the
+            original molecule, e.g. the original atom and residue names will be
+            kept.
+
+            property_map : dict
+            A dictionary that maps system "properties" to their user defined
 
         property_map : dict
             A dictionary that maps system "properties" to their user defined
@@ -893,7 +970,11 @@ class GAFF(_protocol.Protocol):
         self._charge_method = charge_method
 
         # Call the base class constructor.
-        super().__init__(forcefield="gaff", property_map=property_map)
+        super().__init__(
+            forcefield="gaff",
+            ensure_compatible=ensure_compatible,
+            property_map=property_map,
+        )
 
     def run(self, molecule, work_dir=None, queue=None):
         """
@@ -1016,7 +1097,7 @@ class GAFF(_protocol.Protocol):
         # Write the system to a PDB file.
         try:
             _IO.saveMolecules(
-                prefix + "antechamber", new_mol, "pdb", self._property_map
+                prefix + "antechamber", new_mol, "pdb", property_map=self._property_map
             )
         except Exception as e:
             msg = "Failed to write system to 'PDB' format."
@@ -1129,13 +1210,14 @@ class GAFF(_protocol.Protocol):
                     prefix + "leap.crd"
                 ):
                     # Check the output of tLEaP for missing atoms.
-                    if _has_missing_atoms(prefix + "leap.out"):
-                        raise _ParameterisationError(
-                            "tLEaP added missing atoms. The topology is now "
-                            "inconsistent with the original molecule. Please "
-                            "make sure that your initial molecule has a "
-                            "complete topology."
-                        )
+                    if self._ensure_compatible:
+                        if _has_missing_atoms(prefix + "leap.out"):
+                            raise _ParameterisationError(
+                                "tLEaP added missing atoms. The topology is now "
+                                "inconsistent with the original molecule. Please "
+                                "make sure that your initial molecule has a "
+                                "complete topology."
+                            )
 
                     # Load the parameterised molecule. (This could be a system of molecules.)
                     try:
@@ -1178,12 +1260,23 @@ class GAFF(_protocol.Protocol):
                         new_mol._sire_object = edit_mol.commit()
 
                     else:
-                        new_mol.makeCompatibleWith(
-                            par_mol,
-                            property_map=self._property_map,
-                            overwrite=True,
-                            verbose=False,
-                        )
+                        if self._ensure_compatible:
+                            new_mol.makeCompatibleWith(
+                                par_mol,
+                                property_map=self._property_map,
+                                overwrite=True,
+                                verbose=False,
+                            )
+                        else:
+                            try:
+                                new_mol.makeCompatibleWith(
+                                    par_mol,
+                                    property_map=self._property_map,
+                                    overwrite=True,
+                                    verbose=False,
+                                )
+                            except:
+                                new_mol = par_mol
 
                     # Record the forcefield used to parameterise the molecule.
                     new_mol._forcefield = ff

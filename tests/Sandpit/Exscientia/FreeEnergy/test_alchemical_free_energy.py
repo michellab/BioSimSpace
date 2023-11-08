@@ -14,6 +14,7 @@ from tests.Sandpit.Exscientia.conftest import (
     has_gromacs,
     url,
 )
+from tests.conftest import root_fp
 
 import BioSimSpace.Sandpit.Exscientia as BSS
 from BioSimSpace.Sandpit.Exscientia.Protocol import FreeEnergyEquilibration
@@ -133,7 +134,9 @@ class TestAnalysePARQUET:
     @pytest.fixture(scope="class")
     def data(tmp_path_factory):
         outdir = tmp_path_factory.mktemp("out")
-        shutil.copytree("tests/Sandpit/Exscientia/input/parquet", outdir / "parquet")
+        shutil.copytree(
+            f"{root_fp}/Sandpit/Exscientia/input/parquet", outdir / "parquet"
+        )
         return str(outdir / "parquet")
 
     def test_analyse(self, data):
@@ -153,7 +156,9 @@ class Test_gmx_ABFE:
     @staticmethod
     @pytest.fixture(scope="class")
     def freenrg():
-        m = BSS.IO.readMolecules(["tests/input/ala.top", "tests/input/ala.crd"])[0]
+        m = BSS.IO.readMolecules(
+            [f"{root_fp}/input/ala.top", f"{root_fp}/input/ala.crd"]
+        )[0]
         decouple_m = decouple(m)
         solvated = BSS.Solvent.tip3p(
             molecule=decouple_m, box=3 * [3 * BSS.Units.Length.nanometer]

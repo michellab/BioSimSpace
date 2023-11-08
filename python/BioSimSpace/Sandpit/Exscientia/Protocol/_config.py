@@ -276,7 +276,19 @@ class ConfigFactory:
                         # "heavy" restraints using a non-interoperable name mask.
                         if type(restraint) is str:
                             if restraint == "backbone":
-                                restraint_mask = "@CA,C,O,N"
+                                # Determine wether the system contains protein, nucleic acid, or both.
+                                restraint_atom_names = []
+                                if self.system.nAminoAcids() > 0:
+                                    restraint_atom_names += ["N", "CA", "C", "O"]
+                                if self.system.nNucleotides() > 0:
+                                    restraint_atom_names += [
+                                        "P",
+                                        "C5'",
+                                        "C3'",
+                                        "O3'",
+                                        "O5'",
+                                    ]
+                                restraint_mask = "@" + ",".join(restraint_atom_names)
                             elif restraint == "heavy":
                                 restraint_mask = "!:WAT & !@H"
                             elif restraint == "all":

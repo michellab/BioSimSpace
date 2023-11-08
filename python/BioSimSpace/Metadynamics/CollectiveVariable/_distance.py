@@ -189,6 +189,22 @@ class Distance(_CollectiveVariable):
         """Return a string showing how to instantiate the object."""
         return self.__str__()
 
+    def __eq__(self, other):
+        """Equality operator."""
+        return (
+            self._atom0 == other._atom0
+            and self._atom1 == other._atom1
+            and self._weights0 == other._weights0
+            and self._weights1 == other._weights1
+            and self._is_com0 == other._is_com0
+            and self._is_com1 == other._is_com1
+            and self._lower_bound == other._lower_bound
+            and self._upper_bound == other._upper_bound
+            and self._grid == other._grid
+            and self._component == other._component
+            and self._pbc == other._pbc
+        )
+
     def setAtom0(self, atom0):
         """
         Set the atom, atoms, or coordinate from which the distance will be

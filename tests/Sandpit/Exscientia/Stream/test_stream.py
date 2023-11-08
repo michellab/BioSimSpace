@@ -2,11 +2,14 @@ import os
 import pytest
 
 import BioSimSpace.Sandpit.Exscientia as BSS
+from tests.conftest import root_fp
 
 
 @pytest.fixture
 def system(scope="session"):
-    return BSS.IO.readMolecules(["tests/input/ala.top", "tests/input/ala.crd"])
+    return BSS.IO.readMolecules(
+        [f"{root_fp}/input/ala.top", f"{root_fp}/input/ala.crd"]
+    )
 
 
 @pytest.fixture(autouse=True)

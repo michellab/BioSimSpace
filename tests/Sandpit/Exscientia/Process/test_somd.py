@@ -12,6 +12,7 @@ import pytest
 import warnings
 
 import BioSimSpace.Sandpit.Exscientia as BSS
+from tests.conftest import root_fp
 
 # Store the tutorial URL.
 url = BSS.tutorialUrl()
@@ -20,7 +21,9 @@ url = BSS.tutorialUrl()
 @pytest.fixture(scope="session")
 def system():
     """Re-use the same molecuar system for each test."""
-    return BSS.IO.readMolecules(["tests/input/ala.top", "tests/input/ala.crd"])
+    return BSS.IO.readMolecules(
+        [f"{root_fp}/input/ala.top", f"{root_fp}/input/ala.crd"]
+    )
 
 
 @pytest.fixture(scope="session")
@@ -91,7 +94,7 @@ def test_pert_file():
     BSS.Process._somd._to_pert_file(mol)
 
     # Check that the files are the same.
-    assert filecmp.cmp("MORPH.pert", "tests/input/morph.pert")
+    assert filecmp.cmp("MORPH.pert", f"{root_fp}/input/morph.pert")
 
     # Remove the temporary perturbation file.
     os.remove("MORPH.pert")
@@ -293,5 +296,12 @@ def run_process(system, protocol, **kwargs):
     # Make sure the process didn't error.
     assert not res
 
-    # Make sure that we get a molecular system back.
-    assert process.getSystem() is not None
+    # Get the updated system.
+    new_system = process.getSystem()
+
+    # Make sure that we got a molecular system back.
+    assert new_system is not None
+
+    # Make sure the space is valid.
+    if system.getBox()[0] is not None:
+        assert new_system._sire_object.property("space").isPeriodic()

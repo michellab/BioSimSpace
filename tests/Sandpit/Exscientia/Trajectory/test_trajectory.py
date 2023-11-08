@@ -11,20 +11,23 @@ except Exception:
 
 
 from tests.Sandpit.Exscientia.conftest import has_mdanalysis, has_mdtraj
+from tests.conftest import root_fp
 
 
 @pytest.fixture(scope="session")
 def system():
     """A system object with the same topology as the trajectories."""
-    return BSS.IO.readMolecules(["tests/input/ala.top", "tests/input/ala.crd"])
+    return BSS.IO.readMolecules(
+        [f"{root_fp}/input/ala.top", f"{root_fp}/input/ala.crd"]
+    )
 
 
 @pytest.fixture(scope="session")
 def traj_sire(system):
     """A trajectory object using the Sire backend."""
     return BSS.Trajectory.Trajectory(
-        trajectory="tests/input/ala.trr",
-        topology="tests/input/ala.gro",
+        trajectory=f"{root_fp}/input/ala.trr",
+        topology=f"{root_fp}/input/ala.gro",
         system=system,
         backend="SIRE",
     )
@@ -34,8 +37,8 @@ def traj_sire(system):
 def traj_mdtraj(system):
     """A trajectory object using the MDTraj backend."""
     return BSS.Trajectory.Trajectory(
-        trajectory="tests/input/ala.trr",
-        topology="tests/input/ala.gro",
+        trajectory=f"{root_fp}/input/ala.trr",
+        topology=f"{root_fp}/input/ala.gro",
         system=system,
         backend="MDTRAJ",
     )
@@ -45,8 +48,8 @@ def traj_mdtraj(system):
 def traj_mdanalysis(system):
     """A trajectory object using the MDAnalysis backend."""
     return BSS.Trajectory.Trajectory(
-        trajectory="tests/input/ala.trr",
-        topology="tests/input/ala.tpr",
+        trajectory=f"{root_fp}/input/ala.trr",
+        topology=f"{root_fp}/input/ala.tpr",
         system=system,
         backend="MDANALYSIS",
     )
@@ -58,8 +61,8 @@ def traj_mdanalysis_pdb(system):
     new_system = system.copy()
     new_system._sire_object.setProperty("fileformat", wrap("PDB"))
     return BSS.Trajectory.Trajectory(
-        trajectory="tests/input/ala.trr",
-        topology="tests/input/ala.tpr",
+        trajectory=f"{root_fp}/input/ala.trr",
+        topology=f"{root_fp}/input/ala.tpr",
         system=new_system,
         backend="MDANALYSIS",
     )
@@ -151,14 +154,19 @@ def test_velocities(traj_mdanalysis):
     has_mdanalysis is False or has_mdtraj is False,
     reason="Requires MDAnalysis and mdtraj to be installed.",
 )
-def test_rmsd(traj_mdtraj, traj_mdanalysis):
-    """Make sure that the RMSD computed by both backends is comparable."""
+def test_rmsd(traj_sire, traj_mdtraj, traj_mdanalysis):
+    """Make sure that the RMSD computed by all backends are comparable."""
+
+    # List of reference atoms spanning multiple molecules.
+    atoms = [0, 10, 20, 30, 40]
 
     # Compute the RMSD for a subset of atoms using the third frame
     # as a reference.
-    rmsd0 = traj_mdtraj.rmsd(frame=3, atoms=[0, 10, 20, 30, 40])
-    rmsd1 = traj_mdanalysis.rmsd(frame=3, atoms=[0, 10, 20, 30, 40])
+    rmsd0 = traj_sire.rmsd(frame=0, atoms=atoms)
+    rmsd1 = traj_mdtraj.rmsd(frame=0, atoms=atoms)
+    rmsd2 = traj_mdanalysis.rmsd(frame=0, atoms=atoms)
 
     # Make sure the values are approximately the same.
-    for v0, v1 in zip(rmsd0, rmsd1):
+    for v0, v1, v2 in zip(rmsd0, rmsd1, rmsd2):
         assert v0.value() == pytest.approx(v1.value(), abs=1e-2)
+        assert v0.value() == pytest.approx(v2.value(), abs=1e-2)

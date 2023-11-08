@@ -927,16 +927,19 @@ def merge(
                 "or 'allow_ring_size_change' options."
             )
 
-    # Create the connectivity object
-    conn = _SireMol.Connectivity(edit_mol.info()).edit()
+    # Create the connectivity objects.
+    conn0 = _SireMol.Connectivity(edit_mol.info()).edit()
+    conn1 = _SireMol.Connectivity(edit_mol.info()).edit()
 
-    # Connect the bonded atoms. Connectivity is the same at lambda = 0
-    # and lambda = 1.
+    # Connect the bonded atoms in both end states.
     for bond in edit_mol.property("bond0").potentials():
-        conn.connect(bond.atom0(), bond.atom1())
-    conn = conn.commit()
+        conn0.connect(bond.atom0(), bond.atom1())
+    conn0 = conn0.commit()
+    for bond in edit_mol.property("bond1").potentials():
+        conn1.connect(bond.atom0(), bond.atom1())
+    conn1 = conn1.commit()
 
-    # Get the connectivity of the two molecules.
+    # Get the original connectivity of the two molecules.
     c0 = molecule0.property("connectivity")
     c1 = molecule1.property("connectivity")
 
@@ -952,7 +955,7 @@ def merge(
             idy = _SireMol.AtomIdx(y)
 
             # Was a ring opened/closed?
-            is_ring_broken = _is_ring_broken(c0, conn, idx, idy, idx, idy)
+            is_ring_broken = _is_ring_broken(c0, conn1, idx, idy, idx, idy)
 
             # A ring was broken and it is not allowed.
             if is_ring_broken and not allow_ring_breaking:
@@ -963,7 +966,7 @@ def merge(
                 )
 
             # Did a ring change size?
-            is_ring_size_change = _is_ring_size_changed(c0, conn, idx, idy, idx, idy)
+            is_ring_size_change = _is_ring_size_changed(c0, conn1, idx, idy, idx, idy)
 
             # A ring changed size and it is not allowed.
             if (
@@ -980,7 +983,7 @@ def merge(
                 )
 
             # The connectivity has changed.
-            if c0.connectionType(idx, idy) != conn.connectionType(idx, idy):
+            if c0.connectionType(idx, idy) != conn1.connectionType(idx, idy):
                 # The connectivity changed for an unknown reason.
                 if not (is_ring_broken or is_ring_size_change) and not force:
                     raise _IncompatibleError(
@@ -1006,7 +1009,7 @@ def merge(
             idy_map = inv_mapping[idy]
 
             # Was a ring opened/closed?
-            is_ring_broken = _is_ring_broken(c1, conn, idx, idy, idx_map, idy_map)
+            is_ring_broken = _is_ring_broken(c1, conn0, idx, idy, idx_map, idy_map)
 
             # A ring was broken and it is not allowed.
             if is_ring_broken and not allow_ring_breaking:
@@ -1018,7 +1021,7 @@ def merge(
 
             # Did a ring change size?
             is_ring_size_change = _is_ring_size_changed(
-                c1, conn, idx, idy, idx_map, idy_map
+                c1, conn0, idx, idy, idx_map, idy_map
             )
 
             # A ring changed size and it is not allowed.
@@ -1036,7 +1039,7 @@ def merge(
                 )
 
             # The connectivity has changed.
-            if c1.connectionType(idx, idy) != conn.connectionType(idx_map, idy_map):
+            if c1.connectionType(idx, idy) != conn0.connectionType(idx_map, idy_map):
                 # The connectivity changed for an unknown reason.
                 if not (is_ring_broken or is_ring_size_change) and not force:
                     raise _IncompatibleError(
@@ -1047,13 +1050,20 @@ def merge(
                         "perturbation will likely be unstable."
                     )
 
-    # Set the "connectivity" property.
-    edit_mol.setProperty("connectivity", conn)
+    # Set the "connectivity" property. If the end state connectivity is the same,
+    # then we can just set the "connectivity" property.
+    if conn0 == conn1:
+        edit_mol.setProperty("connectivity", conn0)
+    else:
+        edit_mol.setProperty("connectivity0", conn0)
+        edit_mol.setProperty("connectivity1", conn1)
 
     # Create the CLJNBPairs matrices.
     ff = molecule0.property(ff0)
 
+    # Initialise the intrascale matrices for both end states.
     clj_nb_pairs0 = _SireMM.CLJNBPairs(edit_mol.info(), _SireMM.CLJScaleFactor(0, 0))
+    clj_nb_pairs1 = _SireMM.CLJNBPairs(edit_mol.info(), _SireMM.CLJScaleFactor(0, 0))
 
     # Loop over all atoms unique to molecule0.
     for idx0 in atoms0_idx:
@@ -1062,23 +1072,37 @@ def merge(
             # Map the index to its position in the merged molecule.
             idx1 = inv_mapping[idx1]
 
-            # Work out the connection type between the atoms.
-            conn_type = conn.connectionType(idx0, idx1)
+            # Work out the connection type between the atoms in both end states.
+            conn_type0 = conn0.connectionType(idx0, idx1)
+            conn_type1 = conn1.connectionType(idx0, idx1)
+
+            # Lambda = 0
 
             # The atoms aren't bonded.
-            if conn_type == 0:
+            if conn_type0 == 0:
                 clj_scale_factor = _SireMM.CLJScaleFactor(1, 1)
                 clj_nb_pairs0.set(idx0, idx1, clj_scale_factor)
 
             # The atoms are part of a dihedral.
-            elif conn_type == 4:
+            elif conn_type0 == 4:
                 clj_scale_factor = _SireMM.CLJScaleFactor(
                     ff.electrostatic14ScaleFactor(), ff.vdw14ScaleFactor()
                 )
                 clj_nb_pairs0.set(idx0, idx1, clj_scale_factor)
 
-    # Copy the intrascale matrix.
-    clj_nb_pairs1 = clj_nb_pairs0.__deepcopy__()
+            # Lambda = 1
+
+            # The atoms aren't bonded.
+            if conn_type1 == 0:
+                clj_scale_factor = _SireMM.CLJScaleFactor(1, 1)
+                clj_nb_pairs1.set(idx0, idx1, clj_scale_factor)
+
+            # The atoms are part of a dihedral.
+            elif conn_type1 == 4:
+                clj_scale_factor = _SireMM.CLJScaleFactor(
+                    ff.electrostatic14ScaleFactor(), ff.vdw14ScaleFactor()
+                )
+                clj_nb_pairs1.set(idx0, idx1, clj_scale_factor)
 
     # Get the user defined "intrascale" property names.
     prop0 = inv_property_map0.get("intrascale", "intrascale")

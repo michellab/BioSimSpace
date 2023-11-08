@@ -123,6 +123,17 @@ class Torsion(_CollectiveVariable):
         """Return a string showing how to instantiate the object."""
         return self.__str__()
 
+    def __eq__(self, other):
+        """Equality operator."""
+        return (
+            self._atoms == other._atoms
+            and self._hill_width == other._hill_width
+            and self._lower_bound == other._lower_bound
+            and self._upper_bound == other._upper_bound
+            and self._grid == other._grid
+            and self._pbc == other._pbc
+        )
+
     def setAtoms(self, atoms):
         """
         Set the atoms for which the torsion will be calculated.
@@ -164,6 +175,9 @@ class Torsion(_CollectiveVariable):
         """
         Set the width of the Gaussian hills used to bias this collective
         variable.
+
+        Parameters
+        ----------
 
         hill_width : :class:`Angle <BioSimSpace.Types.Angle>`
             The width of the Gaussian hill.
