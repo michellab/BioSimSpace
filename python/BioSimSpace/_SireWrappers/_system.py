@@ -640,16 +640,15 @@ class System(_SireWrapper):
 
             # Search for perturbable molecules with a velocity property.
             # Only consider the lambda = 0 end state.
-            try:
-                pert_mols_with_velocities = self.search(
-                    f"mols with property velocity0"
-                ).molecules()
-                num_pert_vels = len(pert_mols_with_velocities)
-            except:
-                num_pert_vels = 0
-
-            # Compute the total number of molecules with velocities.
-            num_vels = num_vels + num_pert_vels
+            has_perturbable = False
+            for mol in self.getPerturbableMolecules():
+                # Add perturbable velocities.
+                if mol._sire_object.hasProperty("velocity0"):
+                    has_perturbable = True
+                    num_vels += 1
+                # Remove non-perturbable velocities to avoid double counting.
+                elif mol._sire_object.hasProperty("velocity"):
+                    num_vels -= 1
 
             # Not all molecules have velocities.
             if num_vels > 0 and num_vels != self.nMolecules():
@@ -664,7 +663,7 @@ class System(_SireWrapper):
                     _warnings.warn(
                         "Failed to remove 'velocity' property from all molecules!"
                     )
-                if num_pert_vels > 0:
+                if has_perturbable:
                     try:
                         self._sire_object = _SireIO.removeProperty(
                             self._sire_object, "velocity0"
@@ -2304,7 +2303,8 @@ class System(_SireWrapper):
             The format to convert to: either "AMBER" or "GROMACS".
 
         is_crystal : bool
-            Whether to label as rystal waters.
+            Whether to label as crystal waters. This is only used when solvating
+            so that crystal waters aren't removed when adding ions.
 
         property_map : dict
            A dictionary that maps system "properties" to their user defined
