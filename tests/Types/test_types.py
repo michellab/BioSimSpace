@@ -137,8 +137,8 @@ def test_container_mul(Type):
 
 
 @pytest.mark.parametrize("Type", types)
-def test_equality(Type):
-    """Test equality operators."""
+def test_operators(Type):
+    """Test equality/inequality operators."""
 
     t0 = Type(1.0, Type._default_unit)
     t1 = Type(2.0, Type._default_unit)
