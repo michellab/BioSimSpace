@@ -134,3 +134,21 @@ def test_container_mul(Type):
 
     # Assert we have a container of the original type.
     assert all(isinstance(x, Type) for x in container)
+
+
+@pytest.mark.parametrize("Type", types)
+def test_equality(Type):
+    """Test equality operators."""
+
+    t0 = Type(1.0, Type._default_unit)
+    t1 = Type(2.0, Type._default_unit)
+    t2 = Type(3.0, Type._default_unit)
+
+    assert t0 == t0
+    assert t0 <= t0
+    assert t0 >= t0
+    assert t0 != t1
+    assert t0 < t1
+    assert t1 > t0
+    assert t1 < t2
+    assert t2 > t1
