@@ -1123,7 +1123,7 @@ def _split_molecules(frame, pdb, reference, work_dir, property_map={}):
         # Get the box dimensions and angles.
         degree = _SireUnits.degree
         dimensions = [x.value() for x in frame.box_dimensions()]
-        angles = [x.to(degree) for x in frame.box_angles()]
+        angles = [x.to(degree) * degree for x in frame.box_angles()]
         box = _SireVol.TriclinicBox(*dimensions, *angles)
     else:
         box = _SireVol.TriclinicBox(frame.box_v1(), frame.box_v2(), frame.box_v3())
