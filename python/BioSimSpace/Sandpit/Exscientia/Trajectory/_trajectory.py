@@ -1120,11 +1120,10 @@ def _split_molecules(frame, pdb, reference, work_dir, property_map={}):
 
     # Create a triclinic space from the information in the frame file.
     if isinstance(frame, _SireIO.AmberRst7):
-        # Get the box dimensions and angles. Take the values, since the
-        # units are wrong.
+        # Get the box dimensions and angles.
         degree = _SireUnits.degree
         dimensions = [x.value() for x in frame.box_dimensions()]
-        angles = [x.value() * degree for x in frame.box_angles()]
+        angles = [x.to(degree) for x in frame.box_angles()]
         box = _SireVol.TriclinicBox(*dimensions, *angles)
     else:
         box = _SireVol.TriclinicBox(frame.box_v1(), frame.box_v2(), frame.box_v3())
