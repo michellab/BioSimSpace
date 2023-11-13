@@ -451,3 +451,24 @@ def test_rotate_box_vectors(system):
         assert math.isclose(c1.x().value(), c0.z().value())
         assert math.isclose(c1.y().value(), c0.x().value())
         assert math.isclose(c1.z().value(), c0.y().value())
+
+
+def test_set_water_property_preserve(system):
+    # Make sure that unique molecular properties are preserved when swapping
+    # water topology.
+
+    # Make a copy of the system.
+    system = system.copy()
+
+    # Flag one water molecule with a unique property.
+    mol = system[-1]
+    mol._sire_object = (
+        mol._sire_object.edit().setProperty("test", True).molecule().commit()
+    )
+    system.updateMolecules(mol)
+
+    # Swap the water topology to GROMACS format.
+    system._set_water_topology("GROMACS")
+
+    # Make sure the property is preserved.
+    assert system[-1]._sire_object.hasProperty("test")

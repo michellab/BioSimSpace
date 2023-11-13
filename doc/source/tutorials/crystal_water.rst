@@ -52,7 +52,7 @@ protein:
 
 And then the water:
 
->>> xtal_water = BSS.Parameters.tip3p(
+>>> xtal_water = BSS.Parameters.ff14SB(
 ...     xtal_water,
 ...     water_model="tip3p",
 ...     ensure_compatible=False
