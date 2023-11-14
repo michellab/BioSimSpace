@@ -19,6 +19,7 @@ Devel
 * Remove redundant ``BioSimSpace.Types.Type.__ne__`` operator (`#201 <https://github.com/OpenBioSim/biosimspace/pull/201>`__).
 * Minor internal updates due to Sire API fixes (`#203 <https://github.com/OpenBioSim/biosimspace/pull/203>`__).
 * Fix bug in the BSS Boresch restraint search code (`@fjclark <https://github.com/fjclark>`_) (`#204 <https://github.com/OpenBioSim/biosimspace/pull/204>`__).
+* Added SOMD and GROMACS support for multiple distance restraints for ABFE calculations (`#178 <https://github.com/OpenBioSim/biosimspace/pull/178>`__).
 
 `2023.4.0 <https://github.com/openbiosim/biosimspace/compare/2023.3.1...2023.4.0>`_ - Oct 13 2023
 -------------------------------------------------------------------------------------------------
