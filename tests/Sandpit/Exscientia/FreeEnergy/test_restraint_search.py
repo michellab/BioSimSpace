@@ -279,9 +279,27 @@ class TestBSS_analysis:
         restraint, _ = multiple_distance_restraint
         assert np.isclose(-0.0790, restraint.correction.value(), atol=0.001)
 
-    def test_index_mdr(self, multiple_distance_restraint):
-        """Check that the same atoms are selected for the distance restraint."""
+    def test_dict_mdr(self, multiple_distance_restraint):
+        """Check that the MDR restraint dictionary is correct"""
         restraint, _ = multiple_distance_restraint
+        restr_dict = restraint._restraint_dict
+        # Check the permanent distance restraint - this should always be the same.
+        assert restr_dict["permanent_distance_restraint"]["r1"].index() == 1539
+        assert restr_dict["permanent_distance_restraint"]["l1"].index() == 10
+        assert restr_dict["permanent_distance_restraint"]["r0"].unit() == "ANGSTROM"
+        # Check close
+        assert restr_dict["permanent_distance_restraint"][
+            "r0"
+        ].value() == pytest.approx(8.9019, abs=1e-4)
+        assert restr_dict["permanent_distance_restraint"]["kr"].unit() == "M Q-1 T-2"
+        assert restr_dict["permanent_distance_restraint"]["kr"].value() == 40.0
+        assert restr_dict["permanent_distance_restraint"]["r_fb"].unit() == "ANGSTROM"
+        assert restr_dict["permanent_distance_restraint"][
+            "r_fb"
+        ].value() == pytest.approx(0.5756, abs=1e-4)
+        # Check the distance restraints - the parameters will vary slightly due to random initialisation
+        # of the clustering algorithm during restraint searching.
+        assert len(restr_dict["distance_restraints"]) == 9
         idxs_receptor = [
             pair["r1"].index()
             for pair in restraint._restraint_dict["distance_restraints"]
@@ -296,16 +314,6 @@ class TestBSS_analysis:
         expected_idxs_ligand = [13, 9, 16, 12, 11, 14, 15, 8, 17].sort()
         assert len(idxs_receptor) == len(idxs_ligand)
         assert idxs_ligand.sort() == expected_idxs_ligand
-
-        # Check the permanent distance restraint - this is always the same
-        assert (
-            restraint._restraint_dict["permanent_distance_restraint"]["r1"].index()
-            == 1539
-        )
-        assert (
-            restraint._restraint_dict["permanent_distance_restraint"]["l1"].index()
-            == 10
-        )
 
     def test_parameters_mdr(self, multiple_distance_restraint):
         """

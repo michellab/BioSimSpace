@@ -209,6 +209,61 @@ class TestGromacsRBFE:
     has_antechamber is False or has_openff is False,
     reason="Requires ambertools/antechamber and openff to be installed",
 )
+@pytest.fixture(scope="module")
+def system_and_mdr_restraint():
+    # Benzene.
+    m = BSS.Parameters.openff_unconstrained_2_0_0("c1ccccc1").getMolecule()
+    m._sire_object = m._sire_object.edit().rename("LIG").molecule().commit()
+
+    # Assign atoms for restraint
+    atom_1 = m.getAtoms()[0]
+    atom_2 = m.getAtoms()[1]
+    atom_3 = m.getAtoms()[2]
+    atom_4 = m.getAtoms()[3]
+    atom_5 = m.getAtoms()[4]
+    atom_6 = m.getAtoms()[5]
+
+    mol = decouple(m)
+    system = mol.toSystem()
+
+    # Create random restraint dictionary
+    restraint_dict = {
+        "distance_restraints": [
+            {
+                "l1": atom_1,
+                "r1": atom_2,
+                "r0": 3 * angstrom,
+                "kr": 10 * kcal_per_mol / angstrom**2,
+                "r_fb": 1 * angstrom,
+            },
+            {
+                "l1": atom_3,
+                "r1": atom_4,
+                "r0": 3 * angstrom,
+                "kr": 10 * kcal_per_mol / angstrom**2,
+                "r_fb": 1 * angstrom,
+            },
+        ],
+        "permanent_distance_restraint": {
+            "l1": atom_5,
+            "r1": atom_6,
+            "r0": 3 * angstrom,
+            "kr": 10 * kcal_per_mol / angstrom**2,
+            "r_fb": 1 * angstrom,
+        },
+    }
+
+    restraint = Restraint(
+        system, restraint_dict, 298 * kelvin, restraint_type="multiple_distance"
+    )
+
+    return system, restraint
+
+
+@pytest.mark.skipif(
+    has_antechamber is False or has_openff is False,
+    reason="Requires ambertools/antechamber and openff to be installed",
+)
 class TestGromacsABFE:
     @staticmethod
     @pytest.fixture(scope="class")
@@ -264,6 +319,30 @@ class TestGromacsABFE:
             assert "couple-lambda0 = vdw" in mdp_text
             assert "couple-lambda1 = q" in mdp_text
             assert "couple-intramol = no" in mdp_text
+
+    @pytest.mark.skipif(
+        has_gromacs is False, reason="Requires GROMACS to be installed."
+    )
+    def test_mdr_force_constant(self, system, system_and_mdr_restraint):
+        """
+        Check that when the restraint type == 'release_restraint', the
+        force constant of the permanent distance restraint (not affected by
+        restraint-lambda) is written to the MDP file.
+        """
+        system, restraint = system_and_mdr_restraint
+        protocol = FreeEnergy(
+            perturbation_type="release_restraint",
+        )
+
+        freenrg = BSS.FreeEnergy.AlchemicalFreeEnergy(
+            system,
+            protocol,
+            engine="GROMACS",
+            restraint=restraint,
+        )
+        with open(f"{freenrg._work_dir}/lambda_6/gromacs.mdp", "r") as f:
+            mdp_text = f.read()
+            assert "disre-fc = 4184.0" in mdp_text
 
     @pytest.mark.skipif(
         has_gromacs is False, reason="Requires GROMACS to be installed."
@@ -339,56 +418,6 @@ class TestSomdABFE:
 
         restraint = Restraint(
             system, restraint_dict, 298 * kelvin, restraint_type="Boresch"
-        )
-
-        return system, restraint
-
-    @staticmethod
-    @pytest.fixture(scope="class")
-    def system_and_mdr_restraint():
-        # Benzene.
-        m = BSS.Parameters.openff_unconstrained_2_0_0("c1ccccc1").getMolecule()
-
-        # Assign atoms for restraint
-        atom_1 = m.getAtoms()[0]
-        atom_2 = m.getAtoms()[1]
-        atom_3 = m.getAtoms()[2]
-        atom_4 = m.getAtoms()[3]
-        atom_5 = m.getAtoms()[4]
-        atom_6 = m.getAtoms()[5]
-
-        mol = decouple(m)
-        system = mol.toSystem()
-
-        # Create random restraint dictionary
-        restraint_dict = {
-            "distance_restraints": [
-                {
-                    "l1": atom_1,
-                    "r1": atom_2,
-                    "r0": 3 * angstrom,
-                    "kr": 10 * kcal_per_mol / angstrom**2,
-                    "r_fb": 1 * angstrom,
-                },
-                {
-                    "l1": atom_3,
-                    "r1": atom_4,
-                    "r0": 3 * angstrom,
-                    "kr": 10 * kcal_per_mol / angstrom**2,
-                    "r_fb": 1 * angstrom,
-                },
-            ],
-            "permanent_distance_restraint": {
-                "l1": atom_5,
-                "r1": atom_6,
-                "r0": 3 * angstrom,
-                "kr": 10 * kcal_per_mol / angstrom**2,
-                "r_fb": 1 * angstrom,
-            },
-        }
-
-        restraint = Restraint(
-            system, restraint_dict, 298 * kelvin, restraint_type="multiple_distance"
         )
 
         return system, restraint
