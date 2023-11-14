@@ -1374,7 +1374,6 @@ class RestraintSearch:
                 pair_list[:no_pairs],
                 desc="Scoring candidate Boresch anchor points. Anchor set no: ",
             ):
-                boresch_dof_data[pair] = {}
                 l1_idx, r1_idx = pair
                 try:
                     _, l2_idx, l3_idx = _getAnchorAts(l1_idx, ligand_selection_str, u)
@@ -1383,6 +1382,8 @@ class RestraintSearch:
                     _AnalysisError
                 ):  # Failed to find full set of anchor points for this pair
                     continue
+
+                boresch_dof_data[pair] = {}
                 boresch_dof_data[pair]["anchor_ats"] = [
                     l1_idx,
                     l2_idx,
