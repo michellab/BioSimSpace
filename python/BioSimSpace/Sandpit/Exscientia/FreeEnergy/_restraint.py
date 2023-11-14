@@ -92,7 +92,7 @@ class Restraint:
     The multiple distance restraints are flat-bottom restraints, which are represented as a dictionaries
     of the form:
 
-    distance_restraint_dict = {rl: BioSimSpace._SireWrappers.Atom,
+    distance_restraint_dict = {r1: BioSimSpace._SireWrappers.Atom,
                                l1: BioSimSpace._SireWrappers.Atom,
                                r0: BioSimSpace.Types.Length,
                                kr: BioSimSpace.Types.Energy / BioSimSpace.Types.Area,
@@ -113,7 +113,7 @@ class Restraint:
     # Create a dict of supported restraints and compatible engines.
     supported_restraints = {
         "boresch": ["gromacs", "somd"],
-        "multiple_distance": ["somd"],
+        "multiple_distance": ["gromacs", "somd"],
     }
 
     def __init__(self, system, restraint_dict, temperature, restraint_type="Boresch"):
@@ -486,6 +486,129 @@ class Restraint:
 
         return "\n".join(output)
 
+    def _gromacs_multiple_distance(self, perturbation_type=None):
+        """
+        Format the Gromacs string for multiple distance restraints.
+
+        Parameters
+        ----------
+        perturbation_type : str, optional, default=None
+            The type of perturbation to applied during the current stage of the free energy
+            calculation. If the perturbation type is "release_restraint", the permanent distance
+            restraint will be written as a distance restraint (topology file directive [ distance
+            restraints ], not affected by any lambda values), while all other restraints will be
+            written as restraint potentials (topology file directive [ bonds ], affected by bonded-lambda.
+            This allows the bond restraints to be released while retaining the permanent distance restraint.
+            For all other perturbation types, all restraints will be written as restraint potential bonds.
+
+        Returns
+        -------
+        str
+            The Gromacs string for the multiple distance restraints.
+        """
+
+        def _get_distance_restraint_restraint_str(r1, l1, r0, r_fb, kr):
+            """
+            Get the text line specifying a distance restraint restraint
+            (unaffected by any lambdas).
+            """
+            # Calculate parameters.
+            ai = self._system.getIndex(r1) + 1
+            aj = self._system.getIndex(l1) + 1
+            low = r0 - r_fb
+            up1 = r0 + r_fb
+            up2 = 100  # Set this unresonably high so that we never get a linear potential.
+
+            # Format strings, remembering to convert units.
+            restr_type_str = "2"  # No averaging
+            restr_index_str = "0"  # Only one restraint
+            low_str = "{:.3f}".format(low / _nanometer)
+            up1_str = "{:.3f}".format(up1 / _nanometer)
+            up2_str = "{:.3f}".format(up2)
+            fac_str = (
+                "1.0"  # Scale the force constant (specified in the mdp file) by 1.0.
+            )
+
+            # Format entire string.
+            # ai, aj, type, index, type', low, up1, up2, fac
+            distance_restraint_restraint_parameter_string = f"  {ai:<10} {aj:<10} {restr_type_str:<10} {restr_index_str:<10} {restr_type_str:<10} {low_str:<10} {up1_str:<10} {up2_str:<10} {fac_str:<10}"
+
+            return distance_restraint_restraint_parameter_string
+
+        def _get_restraint_potential_bond_str(r1, l1, r0, r_fb, kr):
+            """
+            Get the text line specifying a restraint potential bond
+            (affected by bonded-lambda).
+            """
+            # Calculate parameters.
+            ai = self._system.getIndex(r1) + 1
+            aj = self._system.getIndex(l1) + 1
+            low = r0 - r_fb
+            up1 = r0 + r_fb
+            up2 = 100  # Set this unresonably high so that we never get a linear potential.
+
+            # Format strings, remembering to convert units.
+            restr_type_str = "10"  # Restraint potential bond
+            low_str = "{:.3f}".format(low / _nanometer)
+            up1_str = "{:.3f}".format(up1 / _nanometer)
+            up2_str = "{:.3f}".format(up2)
+            kdr_0_str = "{:.2f}".format(
+                0
+            )  # Force constant is 0 when bonded-lambda = 0.
+            kdr_str = "{:.2f}".format(kr / (_kj_per_mol / _nanometer**2))
+
+            # Format entire string.
+            # ai, aj, type, lowA, up1A, up2A, kdrA, lowB, up1B, up2B, kdrB
+            restraint_potential_bond_parameter_string = f"  {ai:<10} {aj:<10} {restr_type_str:<10} {low_str:<10} {up1_str:<10} {up2_str:<10} {kdr_0_str:<10} {low_str:<10} {up1_str:<10} {up2_str:<10} {kdr_str:<10}"
+
+            return restraint_potential_bond_parameter_string
+
+        # Write the output string.
+        output = [
+            "[ intermolecular_interactions ]",
+        ]
+
+        output.append("[ bonds ]")
+        output.append(
+            "; ai         aj         type       lowA       up1A       up2A       kdrA       lowB       up1B       up2B       kdrB"
+        )
+        for restraint in self._restraint_dict["distance_restraints"]:
+            output.append(
+                _get_restraint_potential_bond_str(
+                    restraint["r1"],
+                    restraint["l1"],
+                    restraint["r0"],
+                    restraint["r_fb"],
+                    restraint["kr"],
+                )
+            )
+        if perturbation_type != "release_restraint":
+            output.append(
+                _get_restraint_potential_bond_str(
+                    self._restraint_dict["permanent_distance_restraint"]["r1"],
+                    self._restraint_dict["permanent_distance_restraint"]["l1"],
+                    self._restraint_dict["permanent_distance_restraint"]["r0"],
+                    self._restraint_dict["permanent_distance_restraint"]["r_fb"],
+                    self._restraint_dict["permanent_distance_restraint"]["kr"],
+                )
+            )
+        else:  # Perturbation type is release_restraint - write the permanent restraint as a distance restraint
+            output.append("[ distance_restraints ]")
+            output.append(
+                "; ai         aj         type       index      type'      low        up1        up2        fac"
+            )
+            output.append(
+                _get_distance_restraint_restraint_str(
+                    self._restraint_dict["permanent_distance_restraint"]["r1"],
+                    self._restraint_dict["permanent_distance_restraint"]["l1"],
+                    self._restraint_dict["permanent_distance_restraint"]["r0"],
+                    self._restraint_dict["permanent_distance_restraint"]["r_fb"],
+                    self._restraint_dict["permanent_distance_restraint"]["kr"],
+                )
+            )
+
+        return "\n".join(output)
+
     def _somd_boresch(self, perturbation_type=None):
         """Format the SOMD string for the Boresch restraints."""
 
@@ -601,7 +724,10 @@ class Restraint:
         """
         to_str_functions = {
             "boresch": {"gromacs": self._gromacs_boresch, "somd": self._somd_boresch},
-            "multiple_distance": {"somd": self._somd_multiple_distance},
+            "multiple_distance": {
+                "gromacs": self._gromacs_multiple_distance,
+                "somd": self._somd_multiple_distance,
+            },
         }
 
         engine = engine.strip().lower()

@@ -384,10 +384,101 @@ def test_analytical_correction_mdr(mdr_restraint):
         dG = mdr_restraint.getCorrection(method="analytical") / kcal_per_mol
 
 
-def test_gromacs_output_mdr(mdr_restraint):
-    """Test the Gromacs output."""
-    with pytest.raises(NotImplementedError):
-        gromacs_string = mdr_restraint.toString(engine="Gromacs")
+class TestGromacsOutputMDR:
+    @staticmethod
+    @pytest.fixture(scope="class")
+    def getRestraintGromacsFull(mdr_restraint):
+        """The form of the restraints when the perturbation type is `full`."""
+        mdr_str = mdr_restraint.toString(
+            engine="GROMACS", perturbation_type="full"
+        ).split("\n")
+        return mdr_str
+
+    @staticmethod
+    @pytest.fixture(scope="class")
+    def getRestraintGromacsRelease(mdr_restraint):
+        """The form of the restraints when the perturbation type is `release_restraint`."""
+        mdr_str = mdr_restraint.toString(
+            engine="GROMACS", perturbation_type="release_restraint"
+        ).split("\n")
+        return mdr_str
+
+    def test_n_lines(self, getRestraintGromacsFull, getRestraintGromacsRelease):
+        """Test that the correct number of lines have been written."""
+        assert len(getRestraintGromacsFull) == 6
+        assert len(getRestraintGromacsRelease) == 8
+
+    def test_section_names(self, getRestraintGromacsFull, getRestraintGromacsRelease):
+        """Check that the section headings are correct."""
+        assert (
+            getRestraintGromacsFull[0].strip()
+            == getRestraintGromacsRelease[0].strip()
+            == "[ intermolecular_interactions ]"
+        )
+        assert (
+            getRestraintGromacsFull[1].strip()
+            == getRestraintGromacsRelease[1].strip()
+            == "[ bonds ]"
+        )
+        assert getRestraintGromacsRelease[5].strip() == "[ distance_restraints ]"
+
+    def test_comments(self, getRestraintGromacsFull, getRestraintGromacsRelease):
+        """Check that the value label comments are as expected."""
+        bond_restr_str = "; ai         aj         type       lowA       up1A       up2A       kdrA       lowB       up1B       up2B       kdrB"
+        distance_restr_str = "; ai         aj         type       index      type'      low        up1        up2        fac"
+        assert (
+            getRestraintGromacsFull[2].strip()
+            == getRestraintGromacsRelease[2].strip()
+            == bond_restr_str
+        )
+        assert getRestraintGromacsRelease[6].strip() == distance_restr_str
+
+    def test_at_nums(self, getRestraintGromacsFull, getRestraintGromacsRelease):
+        """Check that the anchor point atom numbers are correct."""
+        full_restr_lines = getRestraintGromacsFull[3:]
+        release_restr_lines = getRestraintGromacsRelease[3:5] + [
+            getRestraintGromacsRelease[7]
+        ]
+        for lines in [full_restr_lines, release_restr_lines]:
+            ais = [x.split()[0] for x in lines]
+            ajs = [x.split()[1] for x in lines]
+            assert ais == ["1", "2", "3"]
+            assert ajs == ["1496", "1497", "1498"]
+
+    def test_restraint_vals_bond_restraint(
+        self, getRestraintGromacsFull, getRestraintGromacsRelease
+    ):
+        """Check that the bond restraint values are correct."""
+        full_restr_lines = getRestraintGromacsFull[3:]
+        release_restr_lines = getRestraintGromacsRelease[3:5]
+
+        # Strip off the atom numbers.
+        full_restr_lines = [x.split()[2:] for x in full_restr_lines]
+        release_restr_lines = [x.split()[2:] for x in release_restr_lines]
+
+        # Check that all lines are the same.
+        assert all([x == full_restr_lines[0] for x in full_restr_lines])
+        assert all([x == release_restr_lines[0] for x in release_restr_lines])
+        assert full_restr_lines[0] == release_restr_lines[0]
+
+        # Pick one line (equivalence of all lines checked above) and check the values.
+        line = [x.strip() for x in full_restr_lines[0]]
+        assert line == [
+            "10",
+            "0.200",
+            "0.400",
+            "100.000",
+            "0.00",
+            "0.200",
+            "0.400",
+            "100.000",
+            "4184.00",
+        ]
+
+    def test_restraint_vals_distance_restraint(self, getRestraintGromacsRelease):
+        """Check that the distance restraint values are correct."""
+        restr_vals = [x.strip() for x in getRestraintGromacsRelease[7].split()[2:]]
+        assert restr_vals == ["2", "0", "2", "0.200", "0.400", "100.000", "1.0"]
 
 
 class TestSomdOutputMDR:

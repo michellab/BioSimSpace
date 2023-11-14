@@ -258,12 +258,23 @@ class AlchemicalFreeEnergy:
                         "Use the 'BioSimSpace.Align' package to map and merge molecules."
                     )
 
-                if self._protocol.getPerturbationType() != "full":
+                pert_type = self._protocol.getPerturbationType()
+                if pert_type not in ["full", "release_restraint"]:
                     raise NotImplementedError(
                         "GROMACS currently only supports the 'full' perturbation "
                         "type. Please use engine='SOMD' when running multistep "
                         "perturbation types."
                     )
+                if pert_type == "release_restraint":
+                    restraint_err = ValueError(
+                        "The 'release_restraint' perturbation type requires a multiple "
+                        "distance restraint restraint type."
+                    )
+                    if not restraint:
+                        raise restraint_err
+                    if restraint._restraint_type != "multiple_distance":
+                        raise restraint_err
+
                 self._exe = _gmx_exe
             elif engine == "AMBER":
                 # Find a molecular dynamics engine and executable.
