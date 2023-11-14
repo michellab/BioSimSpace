@@ -198,6 +198,12 @@ class Gromacs(_process.Process):
             raise ValueError("'show_errors' must be of type 'bool'.")
         self._show_errors = show_errors
 
+        if restraint and not isinstance(protocol, _Protocol._FreeEnergyMixin):
+            raise ValueError(
+                "'BioSimSpace.Process.Gromacs' requires a "
+                "FreeEnergy protocol for running with a restraint!"
+            )
+
         # Initialise the energy dictionary and title header.
         self._energy_dict = (
             dict()
@@ -400,7 +406,7 @@ class Gromacs(_process.Process):
                     f.write(
                         self._restraint.toString(
                             engine="GROMACS",
-                            perturbation_type=self._protocol._perturbation_type,
+                            perturbation_type=self._protocol.getPerturbationType(),
                         )
                     )
 
