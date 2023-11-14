@@ -1375,6 +1375,9 @@ def _to_pert_file(
                     # Get the perturbed atom.
                     atom = mol.atom(idx)
 
+                    # Start atom record.
+                    file.write("    atom\n")
+
                     # Only require the final Lennard-Jones and charge properties.
                     LJ1 = atom.property("LJ1")
                     charge1_value = atom.property("charge1").value()
