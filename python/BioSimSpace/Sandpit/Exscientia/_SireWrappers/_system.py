@@ -1218,7 +1218,10 @@ class System(_SireWrapper):
         try:
             prop_name = property_map.get("coordinates", "coordinates")
             cursor = cursor.rotate(
-                center=center, matrix=rotation_matrix, map={"coordinates": prop_name}
+                center=center,
+                matrix=rotation_matrix,
+                rotate_velocities=False,
+                map={"coordinates": prop_name},
             )
         except:
             pass
@@ -1227,7 +1230,10 @@ class System(_SireWrapper):
         try:
             prop_name = property_map.get("velocity", "velocity")
             cursor = cursor.rotate(
-                center=center, matrix=rotation_matrix, map={"coordinates": prop_name}
+                center=center,
+                matrix=rotation_matrix,
+                rotate_velocities=False,
+                map={"coordinates": prop_name},
             )
         except:
             pass
@@ -1240,12 +1246,14 @@ class System(_SireWrapper):
                 cursor = cursor.rotate(
                     center=center,
                     matrix=rotation_matrix,
+                    rotate_velocities=False,
                     map={"coordinates": prop_name},
                 )
                 prop_name = property_map.get("coordinates", "coordinates") + "1"
                 cursor = cursor.rotate(
                     center=center,
                     matrix=rotation_matrix,
+                    rotate_velocities=False,
                     map={"coordinates": prop_name},
                 )
             except:
@@ -1257,12 +1265,14 @@ class System(_SireWrapper):
                 cursor = cursor.rotate(
                     center=center,
                     matrix=rotation_matrix,
+                    rotate_velocities=False,
                     map={"coordinates": prop_name},
                 )
                 prop_name = property_map.get("velocity", "velocity") + "1"
                 cursor = cursor.rotate(
                     center=center,
                     matrix=rotation_matrix,
+                    rotate_velocities=False,
                     map={"coordinates": prop_name},
                 )
             except:
