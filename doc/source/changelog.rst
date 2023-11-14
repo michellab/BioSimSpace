@@ -24,6 +24,7 @@ within the biomolecular simulation community. Our software is hosted via the `Op
 * Add functionality to allow manual rotation and reduction of triclinic boxes, rather than performing automatically on read (`#175 <https://github.com/OpenBioSim/biosimspace/pull/175>`__).
 * Allow unit-based protocol options to be passed as strings (`#179 <https://github.com/OpenBioSim/biosimspace/pull/179>`__).
 * Fix assignment of ``gpu`` configuration option for SOMD (`#181 <https://github.com/OpenBioSim/biosimspace/pull/181>`__).
+* Fix bug in the BSS Boresch restraint search code (`#204 <https://github.com/OpenBioSim/biosimspace/pull/204>`__).
 
 `2023.3.1 <https://github.com/openbiosim/biosimspace/compare/2023.3.0...2023.3.1>`_ - Aug 14 2023
 -------------------------------------------------------------------------------------------------
