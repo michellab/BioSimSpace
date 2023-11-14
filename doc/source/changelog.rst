@@ -17,7 +17,7 @@ within the biomolecular simulation community. Our software is hosted via the `Op
 * Add unified free-energy perturbation analysis using ``alchemlyb`` (`@annamherz <https://github.com/annamherz>`_) (`#155 <https://github.com/OpenBioSim/biosimspace/pull/155>`__).
 * Fix handling of connectivity changes during molecular perturbations (`#157 <https://github.com/OpenBioSim/biosimspace/pull/157>`__).
 * Fix issues related to new shared properties in Sire (`#160 <https://github.com/OpenBioSim/biosimspace/pull/160>`__).
-* Fix issues in SOMD perturbation files for absolute binding free-energy simulations (`@fkclark <https://github.com/fjclark>`_) (`#164 <https://github.com/OpenBioSim/biosimspace/pull/164>`__).
+* Fix issues in SOMD perturbation files for absolute binding free-energy simulations (`@fjclark <https://github.com/fjclark>`_) (`#164 <https://github.com/OpenBioSim/biosimspace/pull/164>`__).
 * Don't generate velocities when performing a continuation with GROMACS (`#169 <https://github.com/OpenBioSim/biosimspace/pull/169>`__).
 * Decouple custom parameters and additional commands in ``LEaP`` input (`#170 <https://github.com/OpenBioSim/biosimspace/pull/170>`__).
 * Check for periodic space when updating box information from restart file or trajectory (`#173 <https://github.com/OpenBioSim/biosimspace/pull/173>`__).
@@ -49,9 +49,9 @@ within the biomolecular simulation community. Our software is hosted via the `Op
 * Fix order of imports in ``prepareFEP`` node (`#90 <https://github.com/OpenBioSim/biosimspace/pull/90>`__).
 * Recenter molecules following vacuum simulation with GROMACS to avoid precision overflow with molecular coordinates on write (`#95 <https://github.com/OpenBioSim/biosimspace/pull/95>`__).
 * Fix expected angles used in unit test following updates to triclinic box code in Sire (`#99 <https://github.com/OpenBioSim/biosimspace/pull/99>`__).
-* Add absolute binding free-energy support for SOMD (`@fkclark <https://github.com/fjclark>`_) (`#104 <https://github.com/OpenBioSim/biosimspace/pull/104>`__).
+* Add absolute binding free-energy support for SOMD (`@fjclark <https://github.com/fjclark>`_) (`#104 <https://github.com/OpenBioSim/biosimspace/pull/104>`__).
 * Avoid streaming issues when reading binary AMBER restart files for a single frame (`#105 <https://github.com/OpenBioSim/biosimspace/pull/105>`__).
-* Improve overlap matrix plotting functionality (`@fkclark <https://github.com/fjclark>`_) (`#107 <https://github.com/OpenBioSim/biosimspace/pull/107>`__).
+* Improve overlap matrix plotting functionality (`@fjclark <https://github.com/fjclark>`_) (`#107 <https://github.com/OpenBioSim/biosimspace/pull/107>`__).
 * Handle updates to Sire parser format naming (`#108 <https://github.com/OpenBioSim/biosimspace/pull/108>`__).
 * Wrap new Sire units grammar to improve parsing of units from strings (`#109 <https://github.com/OpenBioSim/biosimspace/pull/109>`__).
 * Expose ``make_whole`` option in Sire to allow un-wrapping of molecular coordinates on read (`#110 <https://github.com/OpenBioSim/biosimspace/pull/110>`__).
@@ -60,7 +60,7 @@ within the biomolecular simulation community. Our software is hosted via the `Op
 * Fix bug in ``plumed`` version requirement check (`#113 <https://github.com/OpenBioSim/biosimspace/pull/113>`__).
 * Reinstate temperature control for all GROMACS simulation protocols (`#115 <https://github.com/OpenBioSim/biosimspace/pull/115>`__).
 * Fix pre-processing selector in test section of ``conda`` recipe (`#117 <https://github.com/OpenBioSim/biosimspace/pull/117>`__).
-* Fixed bug in SOMD free-energy perturbation analysis (`@fkclark <https://github.com/fjclark>`_) (`#119 <https://github.com/OpenBioSim/biosimspace/pull/119>`__).
+* Fixed bug in SOMD free-energy perturbation analysis (`@fjclark <https://github.com/fjclark>`_) (`#119 <https://github.com/OpenBioSim/biosimspace/pull/119>`__).
 * Catch exception when vacuum system has a cartesian space (`#120 <https://github.com/OpenBioSim/biosimspace/pull/120>`__).
 * Add support for Sire as a trajectory backend (`#121 <https://github.com/OpenBioSim/biosimspace/pull/121>`__).
 
