@@ -365,6 +365,15 @@ class AlchemicalFreeEnergy:
                 # Ensure that the system is compatible with the restraint
                 restraint.system = self._system
 
+            # Warn the user about instabilities with multiple distance restraints in SOMD.
+            if restraint._restraint_type == "multiple_distance" and engine == "SOMD":
+                _warnings.warn(
+                    "SOMD simulations with some non-interacting ligands can be unstable. This "
+                    "affects some systems with multiple distance restraints during the release "
+                    "restraint state. If you experience problems, consider using multiple distance "
+                    "restraints with GROMACS instead."
+                )
+
         self._restraint = restraint
 
         # Create fake instance methods for 'analyse' and 'difference'. These
