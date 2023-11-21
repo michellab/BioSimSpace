@@ -16,6 +16,9 @@ Steps to reproduce the behavior:
 2. Run the code '...'
 3. This is the exception that was raised / this is what went wrong.
 
+(If possible, please quote code snippets using the markdown formatting
+described [here](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax#quoting-code). This makes it easy to copy and paste the example, avoiding any translation errors.)
+
 **Expected behavior**
 A clear and concise description of what you expected to happen
 (or, it should not raise an exception if an exception was raised)

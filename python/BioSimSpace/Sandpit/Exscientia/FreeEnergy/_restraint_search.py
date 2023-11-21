@@ -30,11 +30,9 @@ __email__ = "finlay.clark@ed.ac.uk"
 __all__ = ["RestraintSearch"]
 
 import matplotlib.pyplot as _plt
-import MDAnalysis as _mda
 import numpy as _np
 import os as _os
 from scipy.stats import circmean as _circmean
-import sys as _sys
 import warnings as _warnings
 
 from sire.legacy.Base import getBinDir as _getBinDir
@@ -99,24 +97,6 @@ if _have_imported(_MDRestraintsGenerator):
     )
 
 is_MDRestraintsGenerator = _have_imported(_MDRestraintsGenerator)
-
-# Check that the analyse_freenrg script exists.
-if _sys.platform != "win32":
-    _analyse_freenrg = _os.path.join(_getBinDir(), "analyse_freenrg")
-else:
-    _analyse_freenrg = _os.path.join(
-        _os.path.normpath(_getShareDir()), "scripts", "analyse_freenrg.py"
-    )
-if not _os.path.isfile(_analyse_freenrg):
-    raise _MissingSoftwareError(
-        "Cannot find free energy analysis script in expected location: '%s'"
-        % _analyse_freenrg
-    )
-if _sys.platform == "win32":
-    _analyse_freenrg = "%s %s" % (
-        _os.path.join(_os.path.normpath(_getBinDir()), "sire_python.exe"),
-        _analyse_freenrg,
-    )
 
 
 class RestraintSearch:
@@ -1394,7 +1374,6 @@ class RestraintSearch:
                 pair_list[:no_pairs],
                 desc="Scoring candidate Boresch anchor points. Anchor set no: ",
             ):
-                boresch_dof_data[pair] = {}
                 l1_idx, r1_idx = pair
                 try:
                     _, l2_idx, l3_idx = _getAnchorAts(l1_idx, ligand_selection_str, u)
@@ -1403,6 +1382,8 @@ class RestraintSearch:
                     _AnalysisError
                 ):  # Failed to find full set of anchor points for this pair
                     continue
+
+                boresch_dof_data[pair] = {}
                 boresch_dof_data[pair]["anchor_ats"] = [
                     l1_idx,
                     l2_idx,

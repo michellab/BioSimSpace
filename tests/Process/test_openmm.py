@@ -102,6 +102,21 @@ def test_rhombic_dodecahedron():
     run_process(solvated, protocol)
 
 
+def test_parmed_triclinic():
+    """Test the workaround for fixing ParmEd triclinic lattice reduction."""
+
+    # Load the test system.
+    system = BSS.IO.readMolecules(
+        BSS.IO.expand(url, ["parmed_issue.rst7", "parmed_issue.prm7"])
+    )
+
+    # Create a short minimisation protocol.
+    protocol = BSS.Protocol.Minimisation(steps=100)
+
+    # Run the process, check that it finished without error, and returns a system.
+    run_process(system, protocol)
+
+
 def run_process(system, protocol):
     """Helper function to run various simulation protocols."""
 

@@ -62,6 +62,10 @@ class Custom(_Protocol):
         """Return a string showing how to instantiate the object."""
         return "<BioSimSpace.Protocol.Custom>"
 
+    def __eq__(self, other):
+        """Equality operator."""
+        return self._config == other._config
+
     def getConfig(self):
         """
         Return the custom configuration.

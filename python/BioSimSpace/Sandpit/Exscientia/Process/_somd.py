@@ -353,7 +353,7 @@ class Somd(_process.Process):
             system = self._checkPerturbable(system)
 
         # Convert the water model topology so that it matches the AMBER naming convention.
-        system._set_water_topology("AMBER", self._property_map)
+        system._set_water_topology("AMBER", property_map=self._property_map)
 
         # RST file (coordinates).
         try:
@@ -369,7 +369,13 @@ class Somd(_process.Process):
         # PRM file (topology).
         try:
             file = _os.path.splitext(self._top_file)[0]
-            _IO.saveMolecules(file, system, "prm7", property_map=self._property_map)
+            _IO.saveMolecules(
+                file,
+                system,
+                "prm7",
+                match_waters=False,
+                property_map=self._property_map,
+            )
         except Exception as e:
             msg = "Failed to write system to 'PRM7' format."
             if _isVerbose():
@@ -407,15 +413,27 @@ class Somd(_process.Process):
             config_options["random seed"] = seed
 
         if self._platform == "CUDA" or self._platform == "OPENCL":
-            # Work out the GPU device ID. (Default to 0.)
-            gpu_id = 0
-            if self._platform == "CUDA" and "CUDA_VISIBLE_DEVICES" in _os.environ:
-                try:
-                    # Get the ID of the first available device.
-                    gpu_id = int(_os.environ.get("CUDA_VISIBLE_DEVICES").split(",")[0])
-                except:
-                    pass
-            config_options["gpu"] = gpu_id  # GPU device ID.
+            # Here the "gpu" option  is the index into the CUDA_VISIBLE_DEVICES or
+            # OPENCL_VISIBLE_DEVICES environment variable array, not the index of
+            # the device itself. Unless the user overrides this, we'll use the first
+            # available device. Multi-gpu support isn't considered.
+            config_options["gpu"] = 0
+
+            # Warn the user if they have requested at GPU platform but haven't set the
+            # appropriate environment variable. OpenMM won't run if this is case.
+            if self._platform == "CUDA" and "CUDA_VISIBLE_DEVICES" not in _os.environ:
+                _warnings.warn(
+                    "'CUDA' platform selected but 'CUDA_VISIBLE_DEVICES' "
+                    "environment variable is unset."
+                )
+            elif (
+                self._platform == "OPENCL"
+                and "OPENCL_VISIBLE_DEVICES" not in _os.environ
+            ):
+                _warnings.warn(
+                    "'OpenCL' platform selected but 'OPENCL_VISIBLE_DEVICES' "
+                    "environment variable is unset."
+                )
 
         if not isinstance(
             self._protocol,
@@ -553,6 +571,13 @@ class Somd(_process.Process):
 
             new_system = _IO.readMolecules(self._restart_file)
 
+            # Try loading the trajectory file to get the box information.
+            try:
+                frame = self.getTrajectory().getFrames(-1)
+                box = frame._sire_object.property("space")
+            except:
+                box = None
+
             # Since SOMD requires specific residue and water naming we copy the
             # coordinates back into the original system.
             old_system = self._system.copy()
@@ -577,8 +602,7 @@ class Somd(_process.Process):
             self._mapping = mapping
 
             # Update the box information in the original system.
-            if "space" in new_system._sire_object.propertyKeys():
-                box = new_system._sire_object.property("space")
+            if box and box.isPeriodic():
                 old_system._sire_object.setProperty(
                     self._property_map.get("space", "space"), box
                 )
@@ -1268,6 +1292,9 @@ def _to_pert_file(
                 ):
                     # Get the perturbed atom.
                     atom = mol.atom(idx)
+
+                    # Start atom record.
+                    file.write("    atom\n")
 
                     # Only require the initial Lennard-Jones properties.
                     LJ0 = atom.property("LJ0")
@@ -3002,8 +3029,8 @@ def _to_pert_file(
                             # End improper record.
                             file.write("    endimproper\n")
 
-            # End molecule record.
-            file.write("endmolecule\n")
+        # End molecule record.
+        file.write("endmolecule\n")
 
     # Finally, convert the molecule to the lambda = 0 state.
 

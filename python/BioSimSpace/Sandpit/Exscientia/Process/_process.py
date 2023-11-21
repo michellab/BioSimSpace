@@ -915,7 +915,7 @@ class Process:
                 self.saveMetric()
             except Exception:
                 exception_info = traceback.format_exc()
-                with open(f"{self.workDir()}/{self._name}.err", 'a+') as f:
+                with open(f"{self.workDir()}/{self._name}.err", "a+") as f:
                     f.write("Exception Information during saveMetric():\n")
                     f.write("======================\n")
                     f.write(exception_info)

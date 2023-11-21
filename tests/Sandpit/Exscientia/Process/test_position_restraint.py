@@ -122,8 +122,8 @@ def test_gromacs(protocol, system, ref_system, tmp_path):
 
 
 @pytest.mark.skipif(
-    has_openff is False,
-    reason="Requires openff to be installed",
+    has_amber is False or has_openff is False,
+    reason="Requires AMBER and openff to be installed",
 )
 def test_amber(protocol, system, ref_system, tmp_path):
     proc = BSS.Process.Amber(
