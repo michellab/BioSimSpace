@@ -639,11 +639,11 @@ class System(_SireWrapper):
 
             # Search for perturbable molecules with a velocity property.
             # Only consider the lambda = 0 end state.
-            has_pertrubable = False
+            has_perturbable = False
             for mol in self.getPerturbableMolecules():
                 # Add perturbable velocities.
                 if mol._sire_object.hasProperty("velocity0"):
-                    has_pertrubable = True
+                    has_perturbable = True
                     num_vels += 1
                 # Remove non-perturbable velocities to avoid double counting.
                 elif mol._sire_object.hasProperty("velocity"):
