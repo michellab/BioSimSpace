@@ -38,4 +38,4 @@ def engines():
     engines : [str]
         The list of supported engines.
     """
-    return ["Somd", "Gromacs"]
+    return ["SOMD", "GROMACS"]

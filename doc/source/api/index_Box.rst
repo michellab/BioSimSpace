@@ -11,11 +11,7 @@ To support triclinic boxes that work across the range of molecular simulation
 engines that support, we represent the triclinic space in reduced form, using
 the approach documented in Appendix A of Chapter 3 from
 `"Molecular dynamics of sense and sensibility in processing and analysis of data" <https://research.rug.nl/files/2839528/01_c1.pdf>`__
-by Tsjerk A. Wassenaar. Due to the fixed-width format used to represent box
-dimensions and angles in the various molecular input files, repeated reading
-and writing can lead to oscillation of the box angles on reduction due to
-rounding precision errors. To account for this, we add a small bias so that
-we always round in a consistent direction.
+by Tsjerk A. Wassenaar.
 
 .. automodule:: BioSimSpace.Box
 

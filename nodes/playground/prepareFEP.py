@@ -49,7 +49,7 @@ def writeLog(ligA, ligB, mapping):
 
 
 def loadMapping(mapping_file):
-    """Parse a text file that specifies mappings between atomic indices in input1 --> atoms in input2."""
+    """Parse a text file that specifies mappings between atomic indices in input1 --> atoms in input2"""
     stream = open(mapping_file, "r")
     buffer = stream.readlines()
     stream.close()
@@ -131,6 +131,13 @@ node.addInput(
     "output",
     BSS.Gateway.String(
         help="The root name for the files describing the perturbation input1->input2."
+    ),
+)
+node.addInput(
+    "somd2",
+    BSS.Gateway.Boolean(
+        help="Whether to generate input for SOMD2.",
+        default=False,
     ),
 )
 
@@ -258,52 +265,67 @@ system1.addMolecules(merged)
 
 # Log the mapping used
 writeLog(lig1, lig2, mapping)
+# Are we saving output for SOMD2?
+is_somd2 = node.getInput("somd2")
+# File root for all output.
+root = node.getInput("output")
 BSS.IO.saveMolecules(
     "merged_at_lam0.pdb",
     merged,
     "PDB",
     {"coordinates": "coordinates0", "bond": "bond0", "element": "element0"},
 )
-# Generate package specific input
-protocol = BSS.Protocol.FreeEnergy(runtime=2 * BSS.Units.Time.femtosecond, num_lam=3)
-process = BSS.Process.Somd(system1, protocol)
-process.getOutput()
-with zipfile.ZipFile("somd_output.zip", "r") as zip_hnd:
-    zip_hnd.extractall(".")
+if is_somd2:
+    BSS.Stream.save(system1, root)
+    stream_file = "%s.bss" % root
+else:
+    # Generate package specific input
+    protocol = BSS.Protocol.FreeEnergy(
+        runtime=2 * BSS.Units.Time.femtosecond, num_lam=3
+    )
+    process = BSS.Process.Somd(system1, protocol)
+    process.getOutput()
+    with zipfile.ZipFile("somd_output.zip", "r") as zip_hnd:
+        zip_hnd.extractall(".")
 
 
 # In[ ]:
 
 
-root = node.getInput("output")
-mergedpdb = "%s.mergeat0.pdb" % root
-pert = "%s.pert" % root
-prm7 = "%s.prm7" % root
-rst7 = "%s.rst7" % root
-mapping_str = "%s.mapping" % root
+if not is_somd2:
+    mergedpdb = "%s.mergeat0.pdb" % root
+    pert = "%s.pert" % root
+    prm7 = "%s.prm7" % root
+    rst7 = "%s.rst7" % root
+    mapping_str = "%s.mapping" % root
 
 
 # In[ ]:
 
 
-os.replace("merged_at_lam0.pdb", mergedpdb)
-os.replace("somd.pert", pert)
-os.replace("somd.prm7", prm7)
-os.replace("somd.rst7", rst7)
-os.replace("somd.mapping", mapping_str)
-try:
-    os.remove("somd_output.zip")
-    os.remove("somd.cfg")
-    os.remove("somd.err")
-    os.remove("somd.out")
-except Exception:
-    pass
+if not is_somd2:
+    os.replace("merged_at_lam0.pdb", mergedpdb)
+    os.replace("somd.pert", pert)
+    os.replace("somd.prm7", prm7)
+    os.replace("somd.rst7", rst7)
+    os.replace("somd.mapping", mapping_str)
+    try:
+        os.remove("somd_output.zip")
+        os.remove("somd.cfg")
+        os.remove("somd.err")
+        os.remove("somd.out")
+    except Exception:
+        pass
 
 
 # In[ ]:
 
 
-node.setOutput("nodeoutput", [mergedpdb, pert, prm7, rst7, mapping_str])
+if is_somd2:
+    output = [stream_file]
+else:
+    output = [mergedpdb, pert, prm7, rst7, mapping_str]
+node.setOutput("nodeoutput", output)
 
 
 # In[ ]:

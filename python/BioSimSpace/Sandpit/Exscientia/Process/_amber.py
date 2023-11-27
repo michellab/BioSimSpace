@@ -287,7 +287,7 @@ class Amber(_process.Process):
         system = system.copy()
 
         # Convert the water model topology so that it matches the AMBER naming convention.
-        system._set_water_topology("AMBER", self._property_map)
+        system._set_water_topology("AMBER", property_map=self._property_map)
 
         # Check for perturbable molecules and convert to the chosen end state.
         if isinstance(self._protocol, _Protocol._FreeEnergyMixin):
@@ -332,7 +332,13 @@ class Amber(_process.Process):
         if topol_file is not None:
             try:
                 file = _os.path.splitext(topol_file)[0]
-                _IO.saveMolecules(file, system, "prm7", property_map=self._property_map)
+                _IO.saveMolecules(
+                    file,
+                    system,
+                    "prm7",
+                    match_waters=False,
+                    property_map=self._property_map,
+                )
             except Exception as e:
                 msg = "Failed to write system to 'PRM7' format."
                 if _isVerbose():
@@ -692,9 +698,10 @@ class Amber(_process.Process):
             # Update the box information in the original system.
             if "space" in new_system._sire_object.propertyKeys():
                 box = new_system._sire_object.property("space")
-                old_system._sire_object.setProperty(
-                    self._property_map.get("space", "space"), box
-                )
+                if box.isPeriodic():
+                    old_system._sire_object.setProperty(
+                        self._property_map.get("space", "space"), box
+                    )
 
             return old_system
 

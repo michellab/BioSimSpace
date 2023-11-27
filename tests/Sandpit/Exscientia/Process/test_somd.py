@@ -223,5 +223,12 @@ def run_process(system, protocol, **kwargs):
     # Make sure the process didn't error.
     assert not res
 
-    # Make sure that we get a molecular system back.
-    assert process.getSystem() is not None
+    # Get the updated system.
+    new_system = process.getSystem()
+
+    # Make sure that we got a molecular system back.
+    assert new_system is not None
+
+    # Make sure the space is valid.
+    if system.getBox()[0] is not None:
+        assert new_system._sire_object.property("space").isPeriodic()

@@ -167,3 +167,16 @@ class FreeEnergyEquilibration(_Equilibration, _FreeEnergyMixin):
             return "<BioSimSpace.Protocol.Custom>"
         else:
             return f"BioSimSpace.Protocol.FreeEnergyEquilibration({self._get_parm()})"
+
+    def __eq__(self, other):
+        """Equality operator."""
+
+        if not isinstance(other, FreeEnergyEquilibration):
+            return False
+
+        if self._is_customised or other._is_customised:
+            return False
+
+        return _Equilibration.__eq__(self, other) and _FreeEnergyMixin.__eq__(
+            self, other
+        )

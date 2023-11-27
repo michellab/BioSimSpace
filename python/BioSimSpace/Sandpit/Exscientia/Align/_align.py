@@ -36,8 +36,6 @@ __all__ = [
 import csv as _csv
 import os as _os
 import subprocess as _subprocess
-import shutil as _shutil
-import shlex as _shlex
 import sys as _sys
 
 from .._Utils import _try_import, _have_imported, _assert_imported
@@ -946,7 +944,7 @@ def matchAtoms(
         mcs_smarts = _Chem.MolFromSmarts(mcs.smartsString)
 
     except:
-        raise RuntimeError("RDKIT MCS mapping failed!")
+        raise RuntimeError("RDKit MCS mapping failed!")
 
     # Score the mappings and return them in sorted order (best to worst).
     mappings, scores = _score_rdkit_mappings(
@@ -968,6 +966,14 @@ def matchAtoms(
         # Warn that we've fallen back on using Sire.
         if prematch != {}:
             _warnings.warn("RDKit mapping didn't include prematch. Using Sire MCS.")
+
+        # Sire MCS isn't currently supported on Windows.
+        if _sys.platform == "win32":
+            _warnings.warn("Sire MCS is currently unsupported on Windows.")
+            if return_scores:
+                return {}, []
+            else:
+                return {}
 
         # Warn about unsupported options.
         if not complete_rings_only:

@@ -230,7 +230,7 @@ class OpenMM(_process.Process):
         system = self._system.copy()
 
         # Convert the water model topology so that it matches the AMBER naming convention.
-        system._set_water_topology("AMBER", self._property_map)
+        system._set_water_topology("AMBER", property_map=self._property_map)
 
         # Check for perturbable molecules and convert to the chosen end state.
         system = self._checkPerturbable(system)
@@ -251,7 +251,13 @@ class OpenMM(_process.Process):
         # PRM file (topology).
         try:
             file = _os.path.splitext(self._top_file)[0]
-            _IO.saveMolecules(file, system, "prm7", property_map=self._property_map)
+            _IO.saveMolecules(
+                file,
+                system,
+                "prm7",
+                match_waters=False,
+                property_map=self._property_map,
+            )
         except Exception as e:
             msg = "Failed to write system to 'PRM7' format."
             if _isVerbose():
@@ -346,7 +352,10 @@ class OpenMM(_process.Process):
                 self.addToConfig("simulation.context.setPositions(prm.positions)")
             self.addToConfig("if prm.box_vectors is not None:")
             self.addToConfig(
-                "    simulation.context.setPeriodicBoxVectors(*prm.box_vectors)"
+                "    box_vectors = reducePeriodicBoxVectors(prm.box_vectors)"
+            )
+            self.addToConfig(
+                "    simulation.context.setPeriodicBoxVectors(*box_vectors)"
             )
             self.addToConfig(
                 f"simulation.minimizeEnergy(maxIterations={self._protocol.getSteps()})"
@@ -448,7 +457,10 @@ class OpenMM(_process.Process):
                 self.addToConfig("simulation.context.setPositions(prm.positions)")
             self.addToConfig("if prm.box_vectors is not None:")
             self.addToConfig(
-                "    simulation.context.setPeriodicBoxVectors(*prm.box_vectors)"
+                "    box_vectors = reducePeriodicBoxVectors(prm.box_vectors)"
+            )
+            self.addToConfig(
+                "    simulation.context.setPeriodicBoxVectors(*box_vectors)"
             )
 
             # Set initial velocities from temperature distribution.
@@ -624,7 +636,10 @@ class OpenMM(_process.Process):
                 self.addToConfig("simulation.context.setPositions(prm.positions)")
             self.addToConfig("if prm.box_vectors is not None:")
             self.addToConfig(
-                "    simulation.context.setPeriodicBoxVectors(*prm.box_vectors)"
+                "    box_vectors = reducePeriodicBoxVectors(prm.box_vectors)"
+            )
+            self.addToConfig(
+                "    simulation.context.setPeriodicBoxVectors(*box_vectors)"
             )
 
             # Set initial velocities from temperature distribution.
@@ -1006,7 +1021,10 @@ class OpenMM(_process.Process):
                 self.addToConfig("simulation.context.setPositions(prm.positions)")
             self.addToConfig("if prm.box_vectors is not None:")
             self.addToConfig(
-                "    simulation.context.setPeriodicBoxVectors(*prm.box_vectors)"
+                "    box_vectors = reducePeriodicBoxVectors(prm.box_vectors)"
+            )
+            self.addToConfig(
+                "    simulation.context.setPeriodicBoxVectors(*box_vectors)"
             )
 
             # Set initial velocities from temperature distribution.
@@ -1304,9 +1322,10 @@ class OpenMM(_process.Process):
                 # Update the box information in the original system.
                 if "space" in new_system._sire_object.propertyKeys():
                     box = new_system._sire_object.property("space")
-                    old_system._sire_object.setProperty(
-                        self._property_map.get("space", "space"), box
-                    )
+                    if box.isPeriodic():
+                        old_system._sire_object.setProperty(
+                            self._property_map.get("space", "space"), box
+                        )
 
                 return old_system
 
@@ -1922,6 +1941,9 @@ class OpenMM(_process.Process):
         self.addToConfig("from openmm import *")
         self.addToConfig("from openmm.app import *")
         self.addToConfig("from openmm.unit import *")
+        self.addToConfig(
+            "from openmm.app.internal.unitcell import reducePeriodicBoxVectors"
+        )
         self.addToConfig("import parmed")
 
     def _add_config_platform(self):
@@ -1956,7 +1978,7 @@ class OpenMM(_process.Process):
             )
 
     def _add_config_restraints(self):
-        # Add backbone restraints. This uses the approach from:
+        # Add position restraints. This uses the approach from:
         # https://github.com/openmm/openmm/issues/2262#issuecomment-464157489
         # Here zero-mass dummy atoms are bonded to the restrained atoms to avoid
         # issues with position rescaling during barostat updates.
@@ -2108,6 +2130,14 @@ class OpenMM(_process.Process):
             is_time = True
             is_temperature = True
 
+        # Work out the total number of steps.
+        if isinstance(self._protocol, _Protocol.Minimisation):
+            total_steps = 1
+        else:
+            total_steps = _math.ceil(
+                self._protocol.getRunTime() / self._protocol.getTimeStep()
+            )
+
         # Write state information to file every 100 steps.
         self.addToConfig(f"log_file = open('{self._name}.log', 'a')")
         self.addToConfig(f"simulation.reporters.append(StateDataReporter(log_file,")
@@ -2134,7 +2164,7 @@ class OpenMM(_process.Process):
         )
         self.addToConfig("                                              volume=True,")
         self.addToConfig(
-            "                                              totalSteps=True,"
+            f"                                              totalSteps={total_steps},"
         )
         self.addToConfig("                                              speed=True,")
         self.addToConfig(

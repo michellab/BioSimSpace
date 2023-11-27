@@ -184,3 +184,14 @@ class FreeEnergy(_Production, _FreeEnergyMixin):
             return "BioSimSpace.Protocol.Custom"
         else:
             return f"BioSimSpace.Protocol.FreeEnergy({self._get_parm()})"
+
+    def __eq__(self, other):
+        """Equality operator."""
+
+        if not isinstance(other, FreeEnergy):
+            return False
+
+        if self._is_customised or other._is_customised:
+            return False
+
+        return _Production.__eq__(self, other) and _FreeEnergyMixin.__eq__(self, other)
