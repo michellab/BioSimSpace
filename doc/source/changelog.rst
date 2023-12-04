@@ -20,6 +20,8 @@ Devel
 * Minor internal updates due to Sire API fixes (`#203 <https://github.com/OpenBioSim/biosimspace/pull/203>`__).
 * Fix bug in the BSS Boresch restraint search code (`@fjclark <https://github.com/fjclark>`_) (`#204 <https://github.com/OpenBioSim/biosimspace/pull/204>`__).
 * Added SOMD and GROMACS support for multiple distance restraints for ABFE calculations (`#178 <https://github.com/OpenBioSim/biosimspace/pull/178>`__).
+* Fix ``renumber`` option in :meth:`extract <BioSimSpace._SireWrappers.Molecule.extract>` method (`#210 <https://github.com/OpenBioSim/biosimspace/pull/210>`__).
+* Add workaround for fixing reconstruction of intrascale matrix in :func:`readPerturbableSystem <BioSimSpace.IO.readPerturbableSystem>` function (`#210 <https://github.com/OpenBioSim/biosimspace/pull/210>`__).
 
 `2023.4.0 <https://github.com/openbiosim/biosimspace/compare/2023.3.1...2023.4.0>`_ - Oct 13 2023
 -------------------------------------------------------------------------------------------------
