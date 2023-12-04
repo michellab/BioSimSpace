@@ -102,3 +102,27 @@ def test_hydrogen_mass_repartitioning(system, ignore_waters):
 
     # Assert the the masses are approximately the same.
     assert final_mass == pytest.approx(initial_mass)
+
+
+def test_extract(system):
+    """Test the extract method."""
+
+    # A list of atom indices to extract.
+    idxs = [0, 1, 2, 3]
+
+    # Extract the first molecule from the system.
+    mol = system[0]
+
+    # Extract the atoms.
+    partial_mol = mol.extract(idxs)
+
+    assert partial_mol.nAtoms() == 4
+
+    # Make sure the numbers match.
+    assert partial_mol.number() == mol.number()
+
+    # Extract and renumber.
+    partial_mol = mol.extract(idxs, renumber=True)
+
+    # Make sure the numbers are different.
+    assert partial_mol.number() != mol.number()
