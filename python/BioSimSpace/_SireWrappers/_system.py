@@ -53,6 +53,7 @@ from ..Types import Length as _Length
 from .. import Units as _Units
 
 from ._sire_wrapper import SireWrapper as _SireWrapper
+from ._utils import _prot_res, _nucl_res, _ions
 
 from sire.mol import Select as _Select
 
@@ -636,7 +637,7 @@ class System(_SireWrapper):
 
         # Remove velocities if any molecules are missing them.
         if self.nMolecules() > 1:
-            # Search for water molecules in the system.
+            # Search for molecules with a velocity property.
             try:
                 mols_with_velocities = self.search(
                     f"mols with property velocity"
@@ -644,6 +645,18 @@ class System(_SireWrapper):
                 num_vels = len(mols_with_velocities)
             except:
                 num_vels = 0
+
+            # Search for perturbable molecules with a velocity property.
+            # Only consider the lambda = 0 end state.
+            has_perturbable = False
+            for mol in self.getPerturbableMolecules():
+                # Add perturbable velocities.
+                if mol._sire_object.hasProperty("velocity0"):
+                    has_perturbable = True
+                    num_vels += 1
+                # Remove non-perturbable velocities to avoid double counting.
+                elif mol._sire_object.hasProperty("velocity"):
+                    num_vels -= 1
 
             # Not all molecules have velocities.
             if num_vels > 0 and num_vels != self.nMolecules():
@@ -658,6 +671,18 @@ class System(_SireWrapper):
                     _warnings.warn(
                         "Failed to remove 'velocity' property from all molecules!"
                     )
+                if has_perturbable:
+                    try:
+                        self._sire_object = _SireIO.removeProperty(
+                            self._sire_object, "velocity0"
+                        )
+                        self._sire_object = _SireIO.removeProperty(
+                            self._sire_object, "velocity1"
+                        )
+                    except:
+                        _warnings.warn(
+                            "Failed to remove 'velocity0' and 'velocity1' property from molecules!"
+                        )
 
     def removeMolecules(self, molecules):
         """
@@ -1152,7 +1177,10 @@ class System(_SireWrapper):
         try:
             prop_name = property_map.get("coordinates", "coordinates")
             cursor = cursor.rotate(
-                center=center, matrix=rotation_matrix, map={"coordinates": prop_name}
+                center=center,
+                matrix=rotation_matrix,
+                rotate_velocities=False,
+                map={"coordinates": prop_name},
             )
         except:
             pass
@@ -1161,7 +1189,10 @@ class System(_SireWrapper):
         try:
             prop_name = property_map.get("velocity", "velocity")
             cursor = cursor.rotate(
-                center=center, matrix=rotation_matrix, map={"coordinates": prop_name}
+                center=center,
+                matrix=rotation_matrix,
+                rotate_velocities=False,
+                map={"coordinates": prop_name},
             )
         except:
             pass
@@ -1174,12 +1205,14 @@ class System(_SireWrapper):
                 cursor = cursor.rotate(
                     center=center,
                     matrix=rotation_matrix,
+                    rotate_velocities=False,
                     map={"coordinates": prop_name},
                 )
                 prop_name = property_map.get("coordinates", "coordinates") + "1"
                 cursor = cursor.rotate(
                     center=center,
                     matrix=rotation_matrix,
+                    rotate_velocities=False,
                     map={"coordinates": prop_name},
                 )
             except:
@@ -1191,12 +1224,14 @@ class System(_SireWrapper):
                 cursor = cursor.rotate(
                     center=center,
                     matrix=rotation_matrix,
+                    rotate_velocities=False,
                     map={"coordinates": prop_name},
                 )
                 prop_name = property_map.get("velocity", "velocity") + "1"
                 cursor = cursor.rotate(
                     center=center,
                     matrix=rotation_matrix,
+                    rotate_velocities=False,
                     map={"coordinates": prop_name},
                 )
             except:
@@ -1755,186 +1790,6 @@ class System(_SireWrapper):
         # Initialise the list of indices.
         indices = []
 
-        # A set of protein residues. Taken from MDAnalysis.
-        prot_res = {
-            # CHARMM top_all27_prot_lipid.rtf
-            "ALA",
-            "ARG",
-            "ASN",
-            "ASP",
-            "CYS",
-            "GLN",
-            "GLU",
-            "GLY",
-            "HSD",
-            "HSE",
-            "HSP",
-            "ILE",
-            "LEU",
-            "LYS",
-            "MET",
-            "PHE",
-            "PRO",
-            "SER",
-            "THR",
-            "TRP",
-            "TYR",
-            "VAL",
-            "ALAD",
-            ## 'CHO','EAM', # -- special formyl and ethanolamine termini of gramicidin
-            # PDB
-            "HIS",
-            "MSE",
-            # from Gromacs 4.5.3 oplsaa.ff/aminoacids.rtp
-            "ARGN",
-            "ASPH",
-            "CYS2",
-            "CYSH",
-            "QLN",
-            "PGLU",
-            "GLUH",
-            "HIS1",
-            "HISD",
-            "HISE",
-            "HISH",
-            "LYSH",
-            # from Gromacs 4.5.3 gromos53a6.ff/aminoacids.rtp
-            "ASN1",
-            "CYS1",
-            "HISA",
-            "HISB",
-            "HIS2",
-            # from Gromacs 4.5.3 amber03.ff/aminoacids.rtp
-            "HID",
-            "HIE",
-            "HIP",
-            "ORN",
-            "DAB",
-            "LYN",
-            "HYP",
-            "CYM",
-            "CYX",
-            "ASH",
-            "GLH",
-            "ACE",
-            "NME",
-            # from Gromacs 2016.3 amber99sb-star-ildn.ff/aminoacids.rtp
-            "NALA",
-            "NGLY",
-            "NSER",
-            "NTHR",
-            "NLEU",
-            "NILE",
-            "NVAL",
-            "NASN",
-            "NGLN",
-            "NARG",
-            "NHID",
-            "NHIE",
-            "NHIP",
-            "NTRP",
-            "NPHE",
-            "NTYR",
-            "NGLU",
-            "NASP",
-            "NLYS",
-            "NPRO",
-            "NCYS",
-            "NCYX",
-            "NMET",
-            "CALA",
-            "CGLY",
-            "CSER",
-            "CTHR",
-            "CLEU",
-            "CILE",
-            "CVAL",
-            "CASF",
-            "CASN",
-            "CGLN",
-            "CARG",
-            "CHID",
-            "CHIE",
-            "CHIP",
-            "CTRP",
-            "CPHE",
-            "CTYR",
-            "CGLU",
-            "CASP",
-            "CLYS",
-            "CPRO",
-            "CCYS",
-            "CCYX",
-            "CMET",
-            "CME",
-            "ASF",
-        }
-
-        # A list of ion elements.
-        ions = [
-            "F",
-            "Cl",
-            "Br",
-            "I",
-            "Li",
-            "Na",
-            "K",
-            "Rb",
-            "Cs",
-            "Mg",
-            "Tl",
-            "Cu",
-            "Ag",
-            "Be",
-            "Cu",
-            "Ni",
-            "Pt",
-            "Zn",
-            "Co",
-            "Pd",
-            "Ag",
-            "Cr",
-            "Fe",
-            "Mg",
-            "V",
-            "Mn",
-            "Hg",
-            "Cd",
-            "Yb",
-            "Ca",
-            "Sn",
-            "Pb",
-            "Eu",
-            "Sr",
-            "Sm",
-            "Ba",
-            "Ra",
-            "Al",
-            "Fe",
-            "Cr",
-            "In",
-            "Tl",
-            "Y",
-            "La",
-            "Ce",
-            "Pr",
-            "Nd",
-            "Sm",
-            "Eu",
-            "Gd",
-            "Tb",
-            "Dy",
-            "Er",
-            "Tm",
-            "Lu",
-            "Hf",
-            "Zr",
-            "Ce",
-            "U",
-            "Pu",
-            "Th",
-        ]
-
         # Whether we've searched a perturbable system. If so, then we need to process
         # the search results differently. (There will be one for each molecule.)
         is_perturbable_system = False
@@ -1945,11 +1800,12 @@ class System(_SireWrapper):
             if self.nPerturbableMolecules() == 0:
                 # Backbone restraints.
                 if restraint == "backbone":
-                    # Find all N, CA, C, and O atoms in protein residues.
+                    # Find all backbone atoms in protein residues or nucleotides.
                     string = (
                         "(not water) and (resname "
-                        + ",".join(prot_res)
-                        + ") and (atomname N,CA,C,O)"
+                        + ",".join(_prot_res)
+                        + ",".join(_nucl_res)
+                        + ") and (atomname N,CA,C,O,P,/C5'/,/C3'/,/O3'/,/O5'/)"
                     )
                     try:
                         search = self.search(string, property_map)
@@ -1959,7 +1815,7 @@ class System(_SireWrapper):
 
                 elif restraint == "heavy":
                     # Convert to a formatted string for the search.
-                    ion_string = ",".join(ions + ["H,Xx"])
+                    ion_string = ",".join(_ions + ["H,Xx"])
                     # Find all non-water, non-hydrogen, non-ion elements.
                     string = f"(not water) and (not element {ion_string})"
                     try:
@@ -1970,7 +1826,7 @@ class System(_SireWrapper):
 
                 elif restraint == "all":
                     # Convert to a formatted string for the search.
-                    ion_string = ",".join(ions)
+                    ion_string = ",".join(_ions)
                     # Find all non-water, non-ion elements.
                     string = f"(not water) and (not element {ion_string})"
                     try:
@@ -2002,11 +1858,12 @@ class System(_SireWrapper):
 
                     if restraint == "backbone":
                         if not mol.isWater():
-                            # Find all N, CA, C, and O atoms in protein residues.
+                            # Find all backbone atoms in protein residues or nucleotides.
                             string = (
-                                "(resname "
-                                + ",".join(prot_res)
-                                + ") and (atomname N,CA,C,O)"
+                                "(not water) and (resname "
+                                + ",".join(_prot_res)
+                                + ",".join(_nucl_res)
+                                + ") and (atomname N,CA,C,O,P,/C5'/,/C3'/,/O3'/,/O5'/)"
                             )
                             try:
                                 search = mol.search(string, _property_map)
@@ -2017,7 +1874,7 @@ class System(_SireWrapper):
                     elif restraint == "heavy":
                         if not mol.isWater():
                             # Convert to a formatted string for the search.
-                            ion_string = ",".join(ions + ["H,Xx"])
+                            ion_string = ",".join(_ions + ["H,Xx"])
                             # Find all non-water, non-hydrogen, non-ion elements.
                             string = f"not element {ion_string}"
                             try:
@@ -2029,7 +1886,7 @@ class System(_SireWrapper):
                     elif restraint == "all":
                         if not mol.isWater():
                             # Convert to a formatted string for the search.
-                            ion_string = ",".join(ions)
+                            ion_string = ",".join(_ions)
                             # Find all non-water, non-ion elements.
                             string = f"not element {ion_string}"
                             try:
@@ -2061,9 +1918,12 @@ class System(_SireWrapper):
 
             if restraint == "backbone":
                 if not mol.isWater():
-                    # Find all N, CA, C, and O atoms in protein residues.
+                    # Find all backbone atoms in protein residues or nucleotides.
                     string = (
-                        "(resname " + ",".join(prot_res) + ") and (atomname N,CA,C,O)"
+                        "(resname "
+                        + ",".join(_prot_res)
+                        + ",".join(_nucl_res)
+                        + ") and (atomname N,CA,C,O,P,/C5'/,/C3'/,/O3'/,/O5'/)"
                     )
                     try:
                         search = mol.search(string, _property_map)
@@ -2074,7 +1934,7 @@ class System(_SireWrapper):
             elif restraint == "heavy":
                 if not mol.isWater():
                     # Convert to a formatted string for the search.
-                    ion_string = ",".join(ions + ["H,Xx"])
+                    ion_string = ",".join(_ions + ["H,Xx"])
                     # Find all non-water, non-hydrogen, non-ion elements.
                     string = f"not element {ion_string}"
                     try:
@@ -2086,7 +1946,7 @@ class System(_SireWrapper):
             elif restraint == "all":
                 if not mol.isWater():
                     # Convert to a formatted string for the search.
-                    ion_string = ",".join(ions)
+                    ion_string = ",".join(_ions)
                     # Find all non-water, non-ion elements.
                     string = f"not element {ion_string}"
                     try:
@@ -2104,7 +1964,7 @@ class System(_SireWrapper):
                 if num_results == 0:
                     msg = "No atoms matched the restraint!"
                     if restraint == "backbone":
-                        msg += " Backbone restraints only apply to atoms in protein residues."
+                        msg += " Backbone restraints only apply to atoms in protein residues or nucleotides."
                     raise _IncompatibleError(msg)
 
             # Loop over the searches for each molecule.
@@ -2121,9 +1981,7 @@ class System(_SireWrapper):
             if len(search) == 0 and not allow_zero_matches:
                 msg = "No atoms matched the restraint!"
                 if restraint == "backbone":
-                    msg += (
-                        " Backbone restraints only apply to atoms in protein residues."
-                    )
+                    msg += " Backbone restraints only apply to atoms in protein residues or nucleotides."
                 raise _IncompatibleError(msg)
 
             # Now loop over all matching atoms and get their indices.
@@ -2138,6 +1996,80 @@ class System(_SireWrapper):
 
         return indices
 
+    def getAminoAcids(self, property_map={}):
+        """
+        Return a list containing all of the amino acid residues in the system.
+
+        Parameters
+        ----------
+
+        property_map : dict
+            A dictionary that maps system "properties" to their user defined
+            values. This allows the user to refer to properties with their
+            own naming scheme, e.g. { "charge" : "my-charge" }
+
+        Returns
+        -------
+
+        residues : [:class:`Residue <BioSimSpace._SireWrappers.Residue>`]
+            The list of all amino acid residues in the system.
+        """
+        search_string = "(resname " + ",".join(_prot_res) + ")"
+        try:
+            residues = list(self.search(search_string, property_map).residues())
+        except:
+            residues = []
+        return residues
+
+    def nAminoAcids(self):
+        """
+        Return the number of amino acid residues in the system.
+
+        Returns
+        -------
+
+        num_aa : int
+            The number of amino acid residues in the system.
+        """
+        return len(self.getAminoAcids())
+
+    def getNucleotides(self, property_map={}):
+        """
+        Return a list containing all of the nucleotide residues in the system.
+
+        Parameters
+        ----------
+
+        property_map : dict
+            A dictionary that maps system "properties" to their user defined
+            values. This allows the user to refer to properties with their
+            own naming scheme, e.g. { "charge" : "my-charge" }
+
+        Returns
+        -------
+
+        residues : [:class:`Residue <BioSimSpace._SireWrappers.Residue>`]
+            The list of all nucleotide residues in the system.
+        """
+        search_string = "(resname " + ",".join(_nucl_res) + ")"
+        try:
+            residues = list(self.search(search_string, property_map).residues())
+        except:
+            residues = []
+        return residues
+
+    def nNucleotides(self):
+        """
+        Return the number of nucleotide residues in the system.
+
+        Returns
+        -------
+
+        num_nuc : int
+            The number of nucleotide residues in the system.
+        """
+        return len(self.getNucleotides())
+
     def _isParameterised(self, property_map={}):
         """
         Whether the system is parameterised, i.e. can we run a simulation
@@ -2151,6 +2083,7 @@ class System(_SireWrapper):
         property_map : dict
             A dictionary that maps system "properties" to their user defined
             values. This allows the user to refer to properties with their
+            own naming scheme, e.g. { "charge" : "my-charge" }
 
         Returns
         -------
@@ -2406,7 +2339,8 @@ class System(_SireWrapper):
             The format to convert to: either "AMBER" or "GROMACS".
 
         is_crystal : bool
-            Whether to label as rystal waters.
+            Whether to label as crystal waters. This is only used when solvating
+            so that crystal waters aren't removed when adding ions.
 
         property_map : dict
            A dictionary that maps system "properties" to their user defined

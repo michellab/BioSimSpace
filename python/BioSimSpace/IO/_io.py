@@ -1135,9 +1135,13 @@ def readPerturbableSystem(top0, coords0, top1, coords1, property_map={}):
     # Flag that the molecule is perturbable.
     mol.setProperty("is_perturbable", _SireBase.wrap(True))
 
+    # Get the two molecules.
+    mol0 = system0[idx]._sire_object
+    mol1 = system1[idx]._sire_object
+
     # Add the molecule0 and molecule1 properties.
-    mol.setProperty("molecule0", system0[idx]._sire_object)
-    mol.setProperty("molecule1", system1[idx]._sire_object)
+    mol.setProperty("molecule0", mol0)
+    mol.setProperty("molecule1", mol1)
 
     # Get the connectivity property name.
     conn_prop = property_map.get("connectivity", "connectivity")
@@ -1155,6 +1159,23 @@ def readPerturbableSystem(top0, coords0, top1, coords1, property_map={}):
         # Delete the end state properties.
         mol = mol.removeProperty(conn_prop + "0").molecule()
         mol = mol.removeProperty(conn_prop + "1").molecule()
+
+    # Reconstruct the intrascale matrices using the GroTop parser.
+    intra0 = (
+        _SireIO.GroTop(_Molecule(mol0).toSystem()._sire_object)
+        .toSystem()[0]
+        .property("intrascale")
+    )
+    intra1 = (
+        _SireIO.GroTop(_Molecule(mol1).toSystem()._sire_object)
+        .toSystem()[0]
+        .property("intrascale")
+    )
+
+    # Set the "intrascale" properties.
+    intrascale_prop = property_map.get("intrascale", "intrascale")
+    mol.setProperty(intrascale_prop + "0", intra0)
+    mol.setProperty(intrascale_prop + "1", intra0)
 
     # Commit the changes.
     mol = _Molecule(mol.commit())

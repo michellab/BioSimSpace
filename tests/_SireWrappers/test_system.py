@@ -14,6 +14,14 @@ def system():
     return BSS.IO.readMolecules(["tests/input/ala.top", "tests/input/ala.crd"])
 
 
+@pytest.fixture(scope="session")
+def rna_system():
+    """An RNA system for re-use."""
+    return BSS.IO.readMolecules(
+        BSS.IO.expand(BSS.tutorialUrl(), ["rna_6e1s.rst7", "rna_6e1s.prm7"])
+    )
+
+
 # Parameterise the function with a set of molecule indices.
 @pytest.mark.parametrize("index", [0, -1])
 def test_molecule_equivalence(system, index):
@@ -447,3 +455,38 @@ def test_rotate_box_vectors(system):
         assert math.isclose(c1.x().value(), c0.z().value())
         assert math.isclose(c1.y().value(), c0.x().value())
         assert math.isclose(c1.z().value(), c0.y().value())
+
+
+def test_residue_searches_protein(system):
+    amino_acids = system.getAminoAcids()
+    assert isinstance(amino_acids[0], BSS._SireWrappers._residue.Residue)
+    assert len(amino_acids) == system.nAminoAcids() == 3
+    assert len(system.getNucleotides()) == system.nNucleotides() == 0
+
+
+def test_residue_searches_rna(rna_system):
+    nucleotides = rna_system.getNucleotides()
+    assert isinstance(nucleotides[0], BSS._SireWrappers._residue.Residue)
+    assert len(rna_system.getAminoAcids()) == rna_system.nAminoAcids() == 0
+    assert len(nucleotides) == rna_system.nNucleotides() == 29
+
+
+def test_set_water_property_preserve(system):
+    # Make sure that unique molecular properties are preserved when swapping
+    # water topology.
+
+    # Make a copy of the system.
+    system = system.copy()
+
+    # Flag one water molecule with a unique property.
+    mol = system[-1]
+    mol._sire_object = (
+        mol._sire_object.edit().setProperty("test", True).molecule().commit()
+    )
+    system.updateMolecules(mol)
+
+    # Swap the water topology to GROMACS format.
+    system._set_water_topology("GROMACS")
+
+    # Make sure the property is preserved.
+    assert system[-1]._sire_object.hasProperty("test")
