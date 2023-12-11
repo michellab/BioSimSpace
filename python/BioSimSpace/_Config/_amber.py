@@ -178,7 +178,7 @@ class Amber(_Config):
             protocol_dict["cut"] = "999."
             if is_pmemd:
                 # Use vacuum generalised Born model.
-                self.addToConfig("  igb=6,")
+                protocol_dict["igb"] = "6"
         else:
             # Non-bonded cut-off.
             protocol_dict["cut"] = "8.0"
