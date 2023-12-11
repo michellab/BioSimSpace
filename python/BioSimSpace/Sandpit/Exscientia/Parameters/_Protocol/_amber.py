@@ -227,14 +227,30 @@ class AmberProtein(_protocol.Protocol):
                     raise TypeError(
                         "'custom_parameters' must be a 'list' of 'str' types."
                     )
+                validated_parameters = []
                 for x in custom_parameters:
-                    if not os.path.isfile(x):
-                        raise ValueError(f"Custom parameter file does not exist: '{x}'")
+                    x.replace(" ", "")
+                    # Try to find built in force field files.
+                    if "leaprc" in x:
+                        ff = x.replace("leaprc.", "")
+                        try:
+                            ff = _find_force_field(ff)
+                            validated_parameters.append(f"source {ff}")
+                        except:
+                            raise ValueError(
+                                f"Custom parameter file does not exist: '{x}'"
+                            )
+                    else:
+                        if not _os.path.isfile(x):
+                            raise ValueError(
+                                f"Custom parameter file does not exist: '{x}'"
+                            )
+                        else:
+                            validated_parameters.append(
+                                f"loadAmberParams {_os.path.abspath(x)}"
+                            )
 
-            # Convert to absolute paths.
-            self._custom_parameters = []
-            for x in enumerate(custom_parameters):
-                self._custom_parameters.append(_os.path.abspath(x))
+            self._custom_parameters = validated_parameters
         else:
             self._custom_parameters = None
 

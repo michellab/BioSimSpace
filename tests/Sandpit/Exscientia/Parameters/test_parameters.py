@@ -1,4 +1,6 @@
+import os
 import pytest
+import tempfile
 
 import BioSimSpace.Sandpit.Exscientia as BSS
 
@@ -82,3 +84,60 @@ def test_molecule_rename():
 
     # Make sure the name is correct.
     assert mol._sire_object.name().value() == "smiles:[C@@H](C(F)(F)F)(OC(F)F)Cl"
+
+
+@pytest.mark.skipif(
+    has_antechamber is False or has_tleap is False,
+    reason="Requires AmberTools/antechamber and tLEaP to be installed.",
+)
+def test_custom_parameters():
+    """
+    Test that custom parameters are correctly inserted into the LEaP input
+    script.
+    """
+
+    # First parameterise a molecule with the GAFF force field.
+    mol = BSS.Parameters.gaff("C").getMolecule()
+
+    # Now try to parameterise with a protein force field, also including the
+    # GAFF parameters and a custom parameter file. Note that we only validate
+    # that the file exists and LEaP won't error if it doesn't contain relevant
+    # parameters.
+
+    # The path to this file.
+    file_path = os.path.realpath(__file__)
+
+    with tempfile.TemporaryDirectory() as tmp:
+        # This will fail, but we only care about the LEaP input script.
+        try:
+            mol = BSS.Parameters.ff14SB(
+                mol,
+                work_dir=tmp,
+                custom_parameters=["leaprc.gaff", file_path],
+            ).getMolecule()
+        except:
+            pass
+
+        # Load the script and check that the custom parameters are present and
+        # in the correct order.
+        with open(f"{tmp}/leap.txt", "r") as f:
+            script = f.readlines()
+            line_gaff = 0
+            line_file = 0
+            line_mol = 0
+            for x, line in enumerate(script):
+                line = line.strip()
+                if line == "source leaprc.gaff":
+                    line_gaff = x
+                elif line == f"loadAmberParams {file_path}":
+                    line_file = x
+                elif line == "mol = loadPdb leap.pdb":
+                    line_mol = x
+
+            # Make sure the lines are found.
+            assert line_gaff != 0
+            assert line_file != 0
+            assert line_mol != 0
+
+            # Make sure the lines are in the correct order.
+            assert line_gaff < line_file < line_mol

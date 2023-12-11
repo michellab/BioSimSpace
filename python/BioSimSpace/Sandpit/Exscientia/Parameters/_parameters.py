@@ -906,13 +906,16 @@ def _validate(
             )
 
     if custom_parameters is not None:
+        import os as _os
+
         if not isinstance(custom_parameters, (list, tuple)):
             raise TypeError("'custom_parameters' must be a 'list' of 'str' types.")
         else:
             if not all(isinstance(x, str) for x in custom_parameters):
                 raise TypeError("'custom_parameters' must be a 'list' of 'str' types.")
             for x in custom_parameters:
-                if not os.path.isfile(x):
+                # Built-in parameter files are named 'leaprc.*' and are handled separately.
+                if not "leaprc" in x and not _os.path.isfile(x):
                     raise ValueError(f"Custom parameter file does not exist: '{x}'")
 
     if leap_commands is not None:
@@ -981,6 +984,7 @@ def _make_amber_protein_function(name):
         tolerance=1.2,
         max_distance=_Length(6, "A"),
         water_model=None,
+        custom_parameters=None,
         leap_commands=None,
         bonds=None,
         ensure_compatible=True,
@@ -1013,11 +1017,14 @@ def _make_amber_protein_function(name):
             or lone oxygen atoms corresponding to structural (crystal) water
             molecules.
 
+        custom_parameters: [str]
+            A list of paths to custom parameter files. When this option is set,
+            we can no longer fall back on GROMACS's pdb2gmx.
+
         leap_commands : [str]
             An optional list of extra commands for the LEaP program. These
-            will be added after any default commands and can be used to, e.g.,
-            load additional parameter files. When this option is set, we can no
-            longer fall back on GROMACS's pdb2gmx.
+            will be added after any default commands. When this option is set,
+            we can no longer fall back on GROMACS's pdb2gmx.
 
         bonds : ((class:`Atom <BioSimSpace._SireWrappers.Atom>`, class:`Atom <BioSimSpace._SireWrappers.Atom>`))
             An optional tuple of atom pairs to specify additional atoms that
@@ -1052,6 +1059,7 @@ def _make_amber_protein_function(name):
             tolerance=tolerance,
             max_distance=max_distance,
             water_model=water_model,
+            custom_parameters=custom_parameters,
             leap_commands=leap_commands,
             bonds=bonds,
             ensure_compatible=ensure_compatible,
