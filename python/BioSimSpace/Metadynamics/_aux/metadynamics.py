@@ -28,10 +28,8 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
-from ..._Utils import _try_import
-
-mm = _try_import("openmm")
-unit = _try_import("openmm.unit", "conda install -c conda-forge openmm")
+import openmm as mm
+from openmm import unit
 
 from collections import namedtuple
 from functools import reduce
