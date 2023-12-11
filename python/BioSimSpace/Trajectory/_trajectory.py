@@ -921,9 +921,9 @@ class Trajectory:
             The number of trajectory frames.
         """
 
-        # First get the current MDTraj object.
+        # First get the current trajectory object using the existing backend.
         if self._process is not None and self._process.isRunning():
-            self._trajectory = self.getTrajectory()
+            self._trajectory = self.getTrajectory(format=self._backend)
 
         # There is no trajectory.
         if self._trajectory is None:
