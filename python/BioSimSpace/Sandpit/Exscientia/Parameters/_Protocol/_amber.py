@@ -156,8 +156,11 @@ class AmberProtein(_protocol.Protocol):
             water models.
 
         custom_parameters: [str]
-            A list of paths to custom parameter files. When this option is set,
-            we can no longer fall back on GROMACS's pdb2gmx.
+            A list of paths to custom parameter files. These can be user-defined
+            parameter files files that are loaded with loadAmberParams, or the names
+            of additional internal leaprc scripts, which will be sourced, e.g.
+            'leaprc.gaff'. When this option is set, we can no longer fall back on
+            GROMACS's pdb2gmx.
 
         leap_commands : [str]
             An optional list of extra commands for the LEaP program. These
