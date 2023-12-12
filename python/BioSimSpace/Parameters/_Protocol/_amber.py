@@ -719,7 +719,7 @@ class AmberProtein(_protocol.Protocol):
 
         # Try searching for disulphide bonds.
         try:
-            disulphides = query(mol, property_map)
+            disulphides = query(mol, property_map).bonds()
         except:
             disulphides = []
 

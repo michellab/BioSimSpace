@@ -293,7 +293,7 @@ class ConfigFactory:
                                     ]
                                 restraint_mask = "@" + ",".join(restraint_atom_names)
                             elif restraint == "heavy":
-                                restraint_mask = "!:WAT & !@H"
+                                restraint_mask = "!:WAT & !@H="
                             elif restraint == "all":
                                 restraint_mask = "!:WAT"
 
