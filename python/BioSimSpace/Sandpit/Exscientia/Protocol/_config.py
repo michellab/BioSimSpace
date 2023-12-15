@@ -278,7 +278,7 @@ class ConfigFactory:
                             if restraint == "backbone":
                                 restraint_mask = "@CA,C,O,N"
                             elif restraint == "heavy":
-                                restraint_mask = "!:WAT & !@H"
+                                restraint_mask = "!:WAT & !@H="
                             elif restraint == "all":
                                 restraint_mask = "!:WAT"
 

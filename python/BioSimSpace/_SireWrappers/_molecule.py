@@ -340,15 +340,10 @@ class Molecule(_SireWrapper):
             # Append to the updated atom index.
             indices_.append(_SireMol.AtomIdx(x))
 
-        if renumber:
-            mol = self.copy()
-        else:
-            mol = self
-
         # Extract a partial molecule.
         try:
             # Create an empty atom selection for this molecule.
-            selection = mol._sire_object.selection()
+            selection = self._sire_object.selection()
             selection.selectNone()
 
             # Add the atom indices to the selection.
@@ -356,7 +351,7 @@ class Molecule(_SireWrapper):
                 selection.select(idx)
 
             partial_mol = (
-                _SireMol.PartialMolecule(mol._sire_object, selection)
+                _SireMol.PartialMolecule(self._sire_object, selection)
                 .extract()
                 .molecule()
             )
@@ -371,7 +366,7 @@ class Molecule(_SireWrapper):
         intrascale = property_map.get("intrascale", "intrascale")
 
         # Flag whether the molecule has an intrascale property.
-        has_intrascale = mol._sire_object.hasProperty(intrascale)
+        has_intrascale = self._sire_object.hasProperty(intrascale)
 
         # Remove the "intrascale" property, since this doesn't correspond to the
         # extracted molecule.
@@ -408,6 +403,15 @@ class Molecule(_SireWrapper):
 
         else:
             mol = Molecule(partial_mol)
+
+        # Keep the same MolNum.
+        if not renumber:
+            mol._sire_object = (
+                mol._sire_object.edit()
+                .renumber(self._sire_object.number())
+                .commit()
+                .molecule()
+            )
 
         return mol
 
