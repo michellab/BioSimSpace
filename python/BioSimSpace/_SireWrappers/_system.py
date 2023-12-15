@@ -662,7 +662,7 @@ class System(_SireWrapper):
                     _warnings.warn(
                         "Failed to remove 'velocity' property from all molecules!"
                     )
-                if has_perturnable:
+                if has_perturbable:
                     try:
                         self._sire_object = _SireIO.removeProperty(
                             self._sire_object, "velocity0"
