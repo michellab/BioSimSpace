@@ -9,8 +9,8 @@ company supporting open-source development of fostering academic/industrial coll
 within the biomolecular simulation community. Our software is hosted via the `OpenBioSim`
 `GitHub <https://github.com/OpenBioSim/biosimspace>`__ organisation.
 
-Devel
------
+`2023.5.0 <https://github.com/openbiosim/biosimspace/compare/2023.4.1...2023.5.0>`_ - Dec 16 2023
+-------------------------------------------------------------------------------------------------
 
 * Add support for detecting nucleic acid backbones (`@fjclark <https://github.com/fjclark>`_) (`#189 <https://github.com/OpenBioSim/biosimspace/pull/189>`__).
 * Added SOMD and GROMACS support for multiple distance restraints for ABFE calculations (`#178 <https://github.com/OpenBioSim/biosimspace/pull/178>`__).
