@@ -2146,6 +2146,7 @@ class Relative:
                     mdp,
                     gro,
                     top,
+                    gro,
                     tpr,
                     first_process._exe,
                     ignore_warnings=self._ignore_warnings,

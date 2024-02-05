@@ -426,6 +426,7 @@ class Gromacs(_process.Process):
         mdp_file,
         gro_file,
         top_file,
+        ref_file,
         tpr_file,
         exe,
         checkpoint_file=None,
@@ -446,6 +447,10 @@ class Gromacs(_process.Process):
 
         top_file : str
             The path to the input topology file.
+
+        ref_file : str
+            The path to the input reference coordinate file to be used for
+            position restraints.
 
         tpr_file : str
             The path to the output binary run file.
@@ -483,6 +488,11 @@ class Gromacs(_process.Process):
         if not _os.path.isfile(top_file):
             raise IOError(f"'top_file' doesn't exist: '{top_file}'")
 
+        if not isinstance(ref_file, str):
+            raise ValueError("'ref_file' must be of type 'str'.")
+        if not _os.path.isfile(ref_file):
+            raise IOError(f"'ref_file' doesn't exist: '{ref_file}'")
+
         if not isinstance(tpr_file, str):
             raise ValueError("'tpr_file' must be of type 'str'.")
 
@@ -517,7 +527,7 @@ class Gromacs(_process.Process):
                 mdp_out,
                 gro_file,
                 top_file,
-                gro_file,
+                ref_file,
                 checkpoint_file,
                 tpr_file,
             )
@@ -528,7 +538,7 @@ class Gromacs(_process.Process):
                 mdp_out,
                 gro_file,
                 top_file,
-                gro_file,
+                ref_file,
                 tpr_file,
             )
 
@@ -614,6 +624,7 @@ class Gromacs(_process.Process):
             self._config_file,
             self._gro_file,
             self._top_file,
+            self._gro_file,
             self._tpr_file,
             self._exe,
             self._checkpoint_file,
@@ -630,6 +641,7 @@ class Gromacs(_process.Process):
             self._config_file,
             self._gro_file,
             self._top_file,
+            self._gro_file,
             self._tpr_file,
             self._exe,
             self._checkpoint_file,
@@ -657,6 +669,7 @@ class Gromacs(_process.Process):
             self._config_file,
             self._gro_file,
             self._top_file,
+            self._gro_file,
             self._tpr_file,
             self._exe,
             self._checkpoint_file,
