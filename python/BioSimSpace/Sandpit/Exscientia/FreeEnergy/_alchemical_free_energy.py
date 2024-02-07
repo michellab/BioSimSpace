@@ -1467,7 +1467,7 @@ class AlchemicalFreeEnergy:
                 tpr = new_dir + "/gromacs.tpr"
 
                 # Use grompp to generate the portable binary run input file.
-                first_process._generate_binary_run_file(
+                _Process.Gromacs._generate_binary_run_file(
                     mdp,
                     gro,
                     top,
