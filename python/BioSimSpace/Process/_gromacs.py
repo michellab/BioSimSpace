@@ -52,6 +52,7 @@ from .. import _gmx_exe, _gmx_version
 from .. import _isVerbose
 from .._Config import Gromacs as _GromacsConfig
 from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
+from ..Protocol._free_energy_mixin import _FreeEnergyMixin
 from ..Protocol._position_restraint_mixin import _PositionRestraintMixin
 from .._SireWrappers import System as _System
 from ..Types._type import Type as _Type
@@ -232,7 +233,7 @@ class Gromacs(_process.Process):
         # Create a copy of the system.
         system = self._system.copy()
 
-        if isinstance(self._protocol, _Protocol.FreeEnergy):
+        if isinstance(self._protocol, _FreeEnergyMixin):
             # Check that the system contains a perturbable molecule.
             if self._system.nPerturbableMolecules() == 0:
                 raise ValueError(
