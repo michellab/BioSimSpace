@@ -43,6 +43,7 @@ from sire.legacy import CAS as _SireCAS
 from sire.legacy import IO as _SireIO
 from sire.legacy import MM as _SireMM
 from sire.legacy import Mol as _SireMol
+from sire.legacy import Units as _SireUnits
 
 from .. import _isVerbose
 from .._Exceptions import IncompatibleError as _IncompatibleError
@@ -1001,6 +1002,9 @@ def _to_pert_file(
     if not isinstance(perturbation_type, str):
         raise TypeError("'perturbation_type' must be of type 'str'")
 
+    if not isinstance(property_map, dict):
+        raise TypeError("'property_map' must be of type 'dict'")
+
     # Convert to lower case and strip whitespace.
     perturbation_type = perturbation_type.lower().replace(" ", "")
 
@@ -1026,6 +1030,61 @@ def _to_pert_file(
 
     # Extract and copy the Sire molecule.
     mol = molecule._sire_object.__deepcopy__()
+
+    # If the molecule is decoupled (for an ABFE calculation), then we need to
+    # set the end-state properties of the molecule.
+    if molecule.isDecoupled():
+
+        # Invert the user property mappings.
+        inv_property_map = {v: k for k, v in property_map.items()}
+
+        # Get required properties.
+        lj = inv_property_map.get("LJ", "LJ")
+        charge = inv_property_map.get("charge", "charge")
+        element = inv_property_map.get("element", "element")
+        ambertype = inv_property_map.get("ambertype", "ambertype")
+
+        # Check for missing information.
+        if not mol.hasProperty(lj):
+            raise _IncompatibleError("Cannot determine LJ terms for molecule")
+        if not mol.hasProperty(charge):
+            raise _IncompatibleError("Cannot determine charges for molecule")
+        if not mol.hasProperty(element):
+            raise _IncompatibleError("Cannot determine elements in molecule")
+
+        # Check for ambertype property.
+        has_ambertype = True
+        if not mol.hasProperty(ambertype):
+            has_ambertype = False
+
+        mol_edit = mol.edit()
+
+        # Set final charges and LJ terms to 0, elements to "X" and (if required) ambertypes to du
+        for atom in mol.atoms():
+            mol_edit = (
+                mol_edit.atom(atom.index())
+                .setProperty("charge1", 0 * _SireUnits.e_charge)
+                .molecule()
+            )
+            mol_edit = (
+                mol_edit.atom(atom.index())
+                .setProperty("LJ1", _SireMM.LJParameter())
+                .molecule()
+            )
+            mol_edit = (
+                mol_edit.atom(atom.index())
+                .setProperty("element1", _SireMol.Element(0))
+                .molecule()
+            )
+            if has_ambertype:
+                mol_edit = (
+                    mol_edit.atom(atom.index())
+                    .setProperty("ambertype1", "du")
+                    .molecule()
+                )
+
+        # Update the Sire molecule object of the new molecule.
+        mol = mol_edit.commit()
 
     # First work out the indices of atoms that are perturbed.
     pert_idxs = []
