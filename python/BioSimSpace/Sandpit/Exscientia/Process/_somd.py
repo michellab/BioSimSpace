@@ -26,9 +26,9 @@ __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Somd"]
 
-from .._Utils import _try_import
-
 import os as _os
+
+from .._Utils import _try_import
 
 _pygtail = _try_import("pygtail")
 import glob as _glob
@@ -38,24 +38,21 @@ import sys as _sys
 import timeit as _timeit
 import warnings as _warnings
 
-from sire.legacy import Base as _SireBase
 from sire.legacy import CAS as _SireCAS
 from sire.legacy import IO as _SireIO
 from sire.legacy import MM as _SireMM
+from sire.legacy import Base as _SireBase
 from sire.legacy import Mol as _SireMol
 from sire.legacy import Units as _SireUnits
-
-from .. import _isVerbose
-from .._Exceptions import IncompatibleError as _IncompatibleError
-from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
-from .._SireWrappers import Molecule as _Molecule
-from .._SireWrappers import System as _System
 
 from .. import IO as _IO
 from .. import Protocol as _Protocol
 from .. import Trajectory as _Trajectory
-from .. import _Utils
-
+from .. import _isVerbose, _Utils
+from .._Exceptions import IncompatibleError as _IncompatibleError
+from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
+from .._SireWrappers import Molecule as _Molecule
+from .._SireWrappers import System as _System
 from . import _process
 
 
@@ -1034,7 +1031,6 @@ def _to_pert_file(
     # If the molecule is decoupled (for an ABFE calculation), then we need to
     # set the end-state properties of the molecule.
     if molecule.isDecoupled():
-
         # Invert the user property mappings.
         inv_property_map = {v: k for k, v in property_map.items()}
 
