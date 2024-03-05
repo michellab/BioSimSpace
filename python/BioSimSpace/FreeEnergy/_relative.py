@@ -21,6 +21,23 @@
 
 """Functionality for relative free-energy simulations."""
 
+from BioSimSpace.MD._md import _find_md_engines
+from .. import _Utils
+from .. import Units as _Units
+from .. import Types as _Types
+from .. import Protocol as _Protocol
+from .. import Process as _Process
+from .._Utils import cd as _cd
+from .._SireWrappers import System as _System
+from .._Exceptions import IncompatibleError as _IncompatibleError
+from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
+from .._Exceptions import AnalysisError as _AnalysisError
+from .. import _isVerbose
+from .. import _is_notebook
+from .. import _gmx_exe, _gmx_version
+from sire.legacy.Base import getShareDir as _getShareDir
+from sire.legacy.Base import getBinDir as _getBinDir
+from .._Utils import _assert_imported, _have_imported, _try_import
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
 
@@ -53,7 +70,6 @@ from scipy.constants import proton_mass
 from scipy.constants import physical_constants
 hydrogen_amu = proton_mass/(physical_constants["atomic mass constant"][0])
 
-from .._Utils import _assert_imported, _have_imported, _try_import
 
 # alchemlyb isn't available for all variants of Python that we support, so we
 # need to try_import it.
@@ -89,30 +105,11 @@ if _have_imported(_alchemlyb):
     from alchemlyb.postprocessors.units import kJ2kcal as _kJ2kcal
     from alchemlyb.postprocessors.units import R_kJmol as _R_kJmol
 
-from .._Utils import _assert_imported, _have_imported, _try_import
 
 # alchemlyb isn't available for all variants of Python that we support, so we
 # need to try_import it.
 _alchemlyb = _try_import("alchemlyb")
 
-from sire.legacy.Base import getBinDir as _getBinDir
-from sire.legacy.Base import getShareDir as _getShareDir
-
-from .. import _gmx_exe, _gmx_version
-from .. import _is_notebook
-from .. import _isVerbose
-from .._Exceptions import AnalysisError as _AnalysisError
-from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
-from .._Exceptions import IncompatibleError as _IncompatibleError
-from .._SireWrappers import System as _System
-from .._Utils import cd as _cd
-from .. import Process as _Process
-from .. import Protocol as _Protocol
-from .. import Types as _Types
-from .. import Units as _Units
-from .. import _Utils
-
-from BioSimSpace.MD._md import _find_md_engines
 
 if _is_notebook:
     from IPython.display import FileLink as _FileLink
@@ -295,7 +292,7 @@ class Relative:
                         "GROMACS currently only supports the 'full' perturbation "
                         "type. Please use engine='SOMD' when running multistep "
                         "perturbation types."
-                        )
+                    )
                 self._exe = _gmx_exe
             elif engine == "AMBER":
                 # Find a molecular dynamics engine and executable.
@@ -378,7 +375,8 @@ class Relative:
         else:
             keys = extra_options.keys()
             if not all(isinstance(k, str) for k in keys):
-                raise TypeError("Keys of 'extra_options' must be of type 'str'.")
+                raise TypeError(
+                    "Keys of 'extra_options' must be of type 'str'.")
         self._extra_options = extra_options
 
         # Check the extra lines.
@@ -386,7 +384,8 @@ class Relative:
             raise TypeError("'extra_lines' must be of type 'list'.")
         else:
             if not all(isinstance(line, str) for line in extra_lines):
-                raise TypeError("Lines in 'extra_lines' must be of type 'str'.")
+                raise TypeError(
+                    "Lines in 'extra_lines' must be of type 'str'.")
         self._extra_lines = extra_lines
 
         # HMR check
@@ -873,7 +872,8 @@ class Relative:
 
         if pmf_ref is not None:
             # Work out the difference in free energy.
-            free_energy = (pmf[-1][1] - pmf[0][1]) - (pmf_ref[-1][1] - pmf_ref[0][1])
+            free_energy = (pmf[-1][1] - pmf[0][1]) - \
+                (pmf_ref[-1][1] - pmf_ref[0][1])
 
             # Propagate the errors. (These add in quadrature.)
 
@@ -942,7 +942,8 @@ class Relative:
             raise TypeError("'files' must be a list of 'pathlib.Path' types.")
 
         if not isinstance(temperatures, (tuple, list)):
-            raise TypeError("'temperatures' must be of type 'list' or 'tuple'.")
+            raise TypeError(
+                "'temperatures' must be of type 'list' or 'tuple'.")
         if not all(isinstance(x, float) for x in temperatures):
             raise TypeError("'temperatures' must be a list of 'float' types.")
 
@@ -977,9 +978,10 @@ class Relative:
         # Extract the data.
         func = function_dict[engine]
         try:
-            data = [func(file, T=temp) for file, temp in zip(files, temperatures)]
+            data = [func(file, T=temp)
+                    for file, temp in zip(files, temperatures)]
         except Exception as e:
-            msg = f"Could not extract the data from the provided files!, {file}"
+            msg = f"Could not extract the data from the provided files! These are: {files}"
             if _isVerbose():
                 raise _AnalysisError(msg) from e
             else:
@@ -1197,7 +1199,8 @@ class Relative:
         # at that lambda.
         if is_mbar:
             results = (
-                file_df.iloc[:, 5:].subtract(file_df[lambda_win], axis=0).to_numpy()
+                file_df.iloc[:, 5:].subtract(
+                    file_df[lambda_win], axis=0).to_numpy()
             )
         else:
             # This is actually in units of kT, but is reported incorrectly in
@@ -1279,7 +1282,8 @@ class Relative:
         try:
             table = _pq.read_table(parquet_file)
         except:
-            raise IOError(f"Could not read the SOMD2 parquet file: {parquet_file}")
+            raise IOError(
+                f"Could not read the SOMD2 parquet file: {parquet_file}")
 
         # Try to extract the metadata.
         try:
@@ -1293,7 +1297,8 @@ class Relative:
         try:
             temperature = float(metadata["temperature"])
         except:
-            raise ValueError("Parquet metadata does not contain 'temperature'.")
+            raise ValueError(
+                "Parquet metadata does not contain 'temperature'.")
         try:
             attrs = dict(metadata["attrs"])
         except:
@@ -1305,12 +1310,14 @@ class Relative:
         try:
             lambda_array = metadata["lambda_array"]
         except:
-            raise ValueError("Parquet metadata does not contain 'lambda array'")
+            raise ValueError(
+                "Parquet metadata does not contain 'lambda array'")
         if not is_mbar:
             try:
                 lambda_grad = metadata["lambda_grad"]
             except:
-                raise ValueError("Parquet metadata does not contain 'lambda grad'")
+                raise ValueError(
+                    "Parquet metadata does not contain 'lambda grad'")
 
         # Make sure that the temperature is correct.
         if not T == temperature:
@@ -1386,7 +1393,8 @@ class Relative:
         """
 
         if not isinstance(data, (list, _pd.DataFrame)):
-            raise TypeError("'data' must be of type 'list' or 'pandas.DataFrame'.")
+            raise TypeError(
+                "'data' must be of type 'list' or 'pandas.DataFrame'.")
 
         if not isinstance(estimator, str):
             raise TypeError("'estimator' must be of type 'str'.")
@@ -1396,8 +1404,8 @@ class Relative:
         # Assign defaults in case not passed via kwargs.
         auto_eq = False
         stat_ineff = False
-        truncate = False
-        truncate_keep = "start"
+        truncate_upper = 100
+        truncate_lower = 0
 
         # Parse kwargs.
         for key, value in kwargs.items():
@@ -1406,35 +1414,30 @@ class Relative:
                 auto_eq = value
             if key == "STATISTICALINEFFICIENCY":
                 stat_ineff = value
-            if key == "TRUNCATEPERCENTAGE":
-                truncate = value
-            if key == "TRUNCATEKEEP":
-                truncate_keep = value
+            if key == "TRUNCATEUPPER":
+                truncate_upper = value
+            if key == "TRUNCATELOWER":
+                truncate_lower = value
 
         # First truncate data.
         raw_data = data
-        if truncate:
-            # Get the upper and lower bounds for truncate.
-            data_len = len(data[0])
-            data_step = round((data[0].index[-1][0] - data[0].index[-2][0]), 1)
-            data_kept = data_len * (truncate / 100)
-            data_time = data_kept * data_step
-            if truncate_keep == "start":
-                truncate_lower = 0
-                truncate_upper = data_time - data_step
-            if truncate_keep == "end":
-                truncate_lower = (data_len * data_step) - data_time
-                truncate_upper = (data_len * data_step) - data_step
+        # Get the upper and lower bounds for truncate.
+        data_len = len(data[0])  # length of data
+        # how large one step in the data is
+        data_step = round((data[0].index[-1][0] - data[0].index[-2][0]), 1)
+        data_discard_start = data_len * (truncate_lower / 100)
+        data_discard_end = data_len * (truncate_upper / 100)
+        truncate_lower = data_discard_start * data_step
+        truncate_upper = (data_len * data_step) - \
+            (data_discard_end * data_step)
 
-            try:
-                data = [
-                    _slicing(i, lower=truncate_lower, upper=truncate_upper)
-                    for i in raw_data
-                ]
-            except:
-                _warnings.warn("Could not truncate data.")
-                data = raw_data
-        else:
+        try:
+            data = [
+                _slicing(i, lower=truncate_lower, upper=truncate_upper)
+                for i in raw_data
+            ]
+        except:
+            _warnings.warn("Could not truncate data.")
             data = raw_data
 
         # The decorrelate function calls either autoequilibration or statistical_inefficiency
@@ -1517,7 +1520,8 @@ class Relative:
             raise TypeError("'files' must be a list of 'pathlib.Path' types.")
 
         if not isinstance(temperatures, (tuple, list)):
-            raise TypeError("'temperatures' must be of type 'list' or 'tuple'.")
+            raise TypeError(
+                "'temperatures' must be of type 'list' or 'tuple'.")
         if not all(isinstance(x, float) for x in temperatures):
             raise TypeError("'temperatures' must be a list of 'float' types.")
 
@@ -1556,7 +1560,8 @@ class Relative:
 
         # Preprocess the data.
         try:
-            processed_data = Relative._preprocess_data(data, estimator, **kwargs)
+            processed_data = Relative._preprocess_data(
+                data, estimator, **kwargs)
         except:
             _warnings.warn("Could not preprocess the data!")
             processed_data = _alchemlyb.concat(data)
@@ -1743,7 +1748,8 @@ class Relative:
             raise TypeError("'method' must be of type 'str'.")
         method = method.replace(" ", "").upper()
         if method not in ["ALCHEMLYB", "NATIVE"]:
-            raise ValueError("'method' must be either 'alchemlyb' or 'native'.")
+            raise ValueError(
+                "'method' must be either 'alchemlyb' or 'native'.")
 
         if method == "ALCHEMLYB":
             # Find the output files and work out the lambda windows from the directory names.
@@ -1765,7 +1771,8 @@ class Relative:
                         start = "T ="
                         end = "(K)"
                         if start and end in line:
-                            t = int(((line.split(start)[1]).split(end)[0]).strip())
+                            t = int(
+                                ((line.split(start)[1]).split(end)[0]).strip())
                             temperatures.append(float(t))
                             if t is not None:
                                 found_temperature = True
@@ -1777,7 +1784,8 @@ class Relative:
                     )
 
             if temperatures[0] != temperatures[-1]:
-                raise ValueError("The temperatures at the endstates don't match!")
+                raise ValueError(
+                    "The temperatures at the endstates don't match!")
 
             return Relative._analyse_internal(
                 files, temperatures, lambdas, "GROMACS", estimator, **kwargs
@@ -1813,7 +1821,8 @@ class Relative:
                 stderr=_subprocess.PIPE,
             )
             if proc.returncode != 0:
-                raise _AnalysisError("native GROMACS free-energy analysis failed!")
+                raise _AnalysisError(
+                    "native GROMACS free-energy analysis failed!")
 
             # Initialise list to hold the data.
             data = []
@@ -1854,7 +1863,8 @@ class Relative:
                     error = float(records[2])
 
                     # Update the accumulated error.
-                    total_error = _math.sqrt(total_error * total_error + error * error)
+                    total_error = _math.sqrt(
+                        total_error * total_error + error * error)
 
                     # Append the data.
                     data.append(
@@ -1912,7 +1922,8 @@ class Relative:
             raise TypeError("'method' must be of type 'str'.")
         method = method.replace(" ", "").upper()
         if not method in ["ALCHEMLYB", "NATIVE"]:
-            raise ValueError("'method' must be either 'alchemlyb' or 'native'.")
+            raise ValueError(
+                "'method' must be either 'alchemlyb' or 'native'.")
 
         if method == "ALCHEMLYB":
             # Glob the data files and work out the lambda values.
@@ -1932,7 +1943,8 @@ class Relative:
                         temp = None
                         start = "#Generating temperature is"
                         if start in line:
-                            split_line = (line.split(start)[1]).strip().split(" ")
+                            split_line = (line.split(start)[
+                                          1]).strip().split(" ")
                             temp = split_line[0]
                             unit = split_line[-1]
                             if unit.upper() == "C":
@@ -1950,7 +1962,8 @@ class Relative:
                     )
 
             if temperatures[0] != temperatures[-1]:
-                raise ValueError("The temperatures at the endstates don't match!")
+                raise ValueError(
+                    "The temperatures at the endstates don't match!")
 
             return Relative._analyse_internal(
                 files, temperatures, lambdas, "SOMD", estimator, **kwargs
@@ -1971,7 +1984,8 @@ class Relative:
                 stderr=_subprocess.PIPE,
             )
             if proc.returncode != 0:
-                raise _AnalysisError("Native SOMD free-energy analysis failed!")
+                raise _AnalysisError(
+                    "Native SOMD free-energy analysis failed!")
 
             # Re-run without subsampling if the subsampling has resulted in less than 50 samples.
             with open("%s/mbar.txt" % work_dir) as file:
@@ -1995,7 +2009,8 @@ class Relative:
                             stderr=_subprocess.PIPE,
                         )
                         if proc.returncode != 0:
-                            raise _AnalysisError("SOMD free-energy analysis failed!")
+                            raise _AnalysisError(
+                                "SOMD free-energy analysis failed!")
                         break
 
             # Initialise list to hold the data.
@@ -2038,8 +2053,10 @@ class Relative:
                             data.append(
                                 (
                                     float(records[0]),
-                                    float(records[1]) * _Units.Energy.kcal_per_mol,
-                                    float(records[2]) * _Units.Energy.kcal_per_mol,
+                                    float(records[1]) *
+                                    _Units.Energy.kcal_per_mol,
+                                    float(records[2]) *
+                                    _Units.Energy.kcal_per_mol,
                                 )
                             )
 
@@ -2115,7 +2132,8 @@ class Relative:
                 lambdas.append(float(metadata["lambda"]))
                 temperatures.append(float(metadata["temperature"]))
             except:
-                raise IOError(f"Unable to parse metadata from SOMD2 file: {file}")
+                raise IOError(
+                    f"Unable to parse metadata from SOMD2 file: {file}")
 
         # Sort the lists based on the lambda values.
         temperatures = [x for _, x in sorted(zip(lambdas, temperatures))]
@@ -2159,7 +2177,8 @@ class Relative:
         if overlap:
             return Relative.checkOverlap(overlap, threshold=threshold)
         else:
-            raise ValueError("Overlap matrix isn't supported for this estimator.")
+            raise ValueError(
+                "Overlap matrix isn't supported for this estimator.")
 
     def _difference(self, pmf_ref=None):
         """
@@ -2216,7 +2235,7 @@ class Relative:
         # estimator must be MBAR for overlap matrix or TI for dhdl plot.
         if estimator not in ['MBAR']:
             raise ValueError("'estimator' must be 'MBAR'.")
-        
+
         if not isinstance(threshold, float):
             raise TypeError("'threshold' must be of type 'float'.")
 
@@ -2234,7 +2253,8 @@ class Relative:
                 if o < threshold:
                     too_small += 1
             if too_small > 0:
-                _warnings.warn(f"Overlap matrix is bad - {too_small} off-diagonals are less than {threshold}.")
+                _warnings.warn(
+                    f"Overlap matrix is bad - {too_small} off-diagonals are less than {threshold}.")
             else:
                 overlap_okay = True
 
@@ -2256,9 +2276,11 @@ class Relative:
 
         # Convert to an appropriate water topology.
         if self._engine == "SOMD" or self._engine == "AMBER":
-            system._set_water_topology("AMBER", property_map=self._property_map)
+            system._set_water_topology(
+                "AMBER", property_map=self._property_map)
         elif self._engine == "GROMACS":
-            system._set_water_topology("GROMACS", property_map=self._property_map)
+            system._set_water_topology(
+                "GROMACS", property_map=self._property_map)
 
         # Setup all of the simulation processes for each leg.
 
@@ -2297,14 +2319,14 @@ class Relative:
         # GROMACS.
         elif self._engine == "GROMACS":
             first_process = _Process.Gromacs(system,
-                                          self._protocol,
-                                          work_dir=first_dir,
-                                          ignore_warnings=self._ignore_warnings,
-                                          show_errors=self._show_errors,
-                                          extra_options=self._extra_options,
-                                          extra_lines=self._extra_lines,
-                                          property_map=self._property_map,
-                                          )
+                                             self._protocol,
+                                             work_dir=first_dir,
+                                             ignore_warnings=self._ignore_warnings,
+                                             show_errors=self._show_errors,
+                                             extra_options=self._extra_options,
+                                             extra_lines=self._extra_lines,
+                                             property_map=self._property_map,
+                                             )
 
         # AMBER.
         elif self._engine == "AMBER":
@@ -2319,7 +2341,7 @@ class Relative:
                                            )
 
         if self._setup_only:
-            del(first_process)
+            del (first_process)
         else:
             processes.append(first_process)
 
@@ -2389,7 +2411,8 @@ class Relative:
                 with open(new_dir + "/gromacs.mdp", "r") as f:
                     for line in f:
                         if "init-lambda-state" in line:
-                            new_config.append("init-lambda-state = %d\n" % (x + 1))
+                            new_config.append(
+                                "init-lambda-state = %d\n" % (x + 1))
                         else:
                             new_config.append(line)
                 with open(new_dir + "/gromacs.mdp", "w") as f:
