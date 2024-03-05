@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2023
+# Copyright: 2017-2024
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -391,18 +391,15 @@ def generateNetwork(
             for line in lf:
                 records = line.split()
                 if len(records) > 2:
-                    lf_data = " ".join(records[2:])
-                new_lines.append((links_names[records[0]],links_names[records[1]],lf_data))
-       
-        # Write the updated lomap links file.
-        with open(f"{work_dir}/inputs/lomap_links_file.txt", "w") as lf:
-            writer = _csv.writer(lf, delimiter=" ")
-            for line in new_lines:
-                writer.writerow(line)        
+                    new_line += " " + " ".join(records[2:])
 
-        # specify the file path
+        # Store the path to the new file.
         lf = f"{work_dir}/inputs/lomap_links_file.txt"
-        
+
+        # Write the updated lomap links file.
+        with open(lf, "w") as f:
+            for line in new_lines:
+                f.write(line)
     else:
         lf = None
 

@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2023
+# Copyright: 2017-2024
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -21,6 +21,32 @@
 
 """Functionality for running simulations using AMBER."""
 
+from ._plumed import Plumed as _Plumed
+from . import _process
+from .. import _Utils
+from .. import Units as _Units
+from .. import Trajectory as _Trajectory
+from .. import Protocol as _Protocol
+from .. import IO as _IO
+from ..Types._type import Type as _Type
+from .._SireWrappers import System as _System
+from ..Protocol._position_restraint_mixin import _PositionRestraintMixin
+from ..Protocol._free_energy_mixin import _FreeEnergyMixin
+from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
+from .._Exceptions import IncompatibleError as _IncompatibleError
+from .._Config import Amber as _AmberConfig
+from ..Align._squash import _squash, _unsquash
+from .. import _amber_home, _isVerbose
+from sire.legacy import Mol as _SireMol
+from sire.legacy import IO as _SireIO
+from sire.legacy import Base as _SireBase
+import warnings as _warnings
+import timeit as _timeit
+import tempfile as _tempfile
+import time as _time
+import shutil as _shutil
+import re as _re
+import os as _os
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
 
@@ -29,38 +55,6 @@ __all__ = ["Amber"]
 from .._Utils import _try_import
 
 _pygtail = _try_import("pygtail")
-
-import os as _os
-import re as _re
-import shutil as _shutil
-import time as _time
-import shutil as _shutil
-import tempfile as _tempfile
-import timeit as _timeit
-import warnings as _warnings
-
-from sire.legacy import Base as _SireBase
-from sire.legacy import IO as _SireIO
-from sire.legacy import Mol as _SireMol
-
-from .. import _amber_home, _isVerbose
-from ..Align._squash import _squash, _unsquash
-from .._Config import Amber as _AmberConfig
-from .._Exceptions import IncompatibleError as _IncompatibleError
-from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
-from ..Protocol._position_restraint_mixin import _PositionRestraintMixin
-from .._SireWrappers import System as _System
-from ..Types._type import Type as _Type
-
-from .. import IO as _IO
-from .. import Protocol as _Protocol
-from .. import Trajectory as _Trajectory
-from .. import Units as _Units
-from .. import _Utils
-
-from . import _process
-
-from ._plumed import Plumed as _Plumed
 
 
 class Amber(_process.Process):
@@ -102,10 +96,10 @@ class Amber(_process.Process):
 
         seed : int
             A random number seed.
-            
+
         explicit_dummies : bool
             Whether to keep the dummy atoms explicit at the endstates or remove them.
-            
+
         extra_options : dict
             A dictionary containing extra options. Overrides the defaults generated
             by the protocol.
@@ -130,6 +124,12 @@ class Amber(_process.Process):
             extra_lines=extra_lines,
             property_map=property_map,
         )
+
+        # Catch unsupported protocols.
+        if isinstance(protocol, _FreeEnergyMixin):
+            raise _IncompatibleError(
+                "Unsupported protocol: '%s'" % self._protocol.__class__.__name__
+            )
 
         # Set the package name.
         self._package_name = "AMBER"
@@ -209,7 +209,6 @@ class Amber(_process.Process):
         # Return the list of input files.
         return self._input_files
 
-
     def _write_system(self, system, coord_file=None, topol_file=None, ref_file=None):
         """Validates an input system and makes some internal modifications to it,
         if needed, before writing it out to a coordinate and/or a topology file.
@@ -247,7 +246,8 @@ class Amber(_process.Process):
         # Check for perturbable molecules and convert to the chosen end state.
         if isinstance(self._protocol, _Protocol._FreeEnergyMixin):
             # Represent the perturbed system in an AMBER-friendly format.
-            system, mapping = _squash(system, explicit_dummies=self._explicit_dummies)
+            system, mapping = _squash(
+                system, explicit_dummies=self._explicit_dummies)
         else:
             system = self._checkPerturbable(system)
             mapping = {
@@ -259,7 +259,8 @@ class Amber(_process.Process):
         if coord_file is not None:
             try:
                 file = _os.path.splitext(coord_file)[0]
-                _IO.saveMolecules(file, system, "rst7", property_map=self._property_map)
+                _IO.saveMolecules(file, system, "rst7",
+                                  property_map=self._property_map)
             except Exception as e:
                 msg = "Failed to write system to 'RST7' format."
                 if _isVerbose():
@@ -271,7 +272,8 @@ class Amber(_process.Process):
         if ref_file is not None:
             try:
                 file = _os.path.splitext(ref_file)[0]
-                _IO.saveMolecules(file, system, "rst7", property_map=self._property_map)
+                _IO.saveMolecules(file, system, "rst7",
+                                  property_map=self._property_map)
             except Exception as e:
                 msg = "Failed to write system to 'RST7' format."
                 if _isVerbose():
@@ -283,7 +285,8 @@ class Amber(_process.Process):
         if topol_file is not None:
             try:
                 file = _os.path.splitext(topol_file)[0]
-                _IO.saveMolecules(file, system, "prm7", property_map=self._property_map)
+                _IO.saveMolecules(file, system, "prm7",
+                                  property_map=self._property_map)
             except Exception as e:
                 msg = "Failed to write system to 'PRM7' format."
                 if _isVerbose():
@@ -292,7 +295,6 @@ class Amber(_process.Process):
                     raise IOError(msg) from None
 
         return system, mapping
-
 
     def _generate_config(self):
         """Generate AMBER configuration file strings."""
@@ -339,7 +341,8 @@ class Amber(_process.Process):
             setattr(self, "getTime", self._getTime)
 
         # Instantiate the AMBER configuration generator.
-        amber_config = _AmberConfig(self._system, self._protocol, explicit_dummies=self._explicit_dummies)
+        amber_config = _AmberConfig(
+            self._system, self._protocol, explicit_dummies=self._explicit_dummies)
 
         # Create the configuration.
         self.setConfig(
@@ -627,7 +630,8 @@ class Amber(_process.Process):
                 is_lambda1 = False
 
             # Get the latest trajectory frame.
-            new_system = _Trajectory.getFrame(self._traj_file, self._top_file, index)
+            new_system = _Trajectory.getFrame(
+                self._traj_file, self._top_file, index)
 
             # Create a copy of the existing system object.
             old_system = self._system.copy()
@@ -800,7 +804,8 @@ class Amber(_process.Process):
             return None
 
         # Get the list of time steps.
-        time_steps = self.getRecord("TIME(PS)", time_series=time_series, block=block)
+        time_steps = self.getRecord(
+            "TIME(PS)", time_series=time_series, block=block)
 
         # Convert from picoseconds to nanoseconds.
         if time_steps is not None:
@@ -1793,7 +1798,8 @@ class Amber(_process.Process):
             return None
 
         if not isinstance(time_series, bool):
-            _warnings.warn("Non-boolean time-series flag. Defaulting to False!")
+            _warnings.warn(
+                "Non-boolean time-series flag. Defaulting to False!")
             time_series = False
 
         # Validate the unit.

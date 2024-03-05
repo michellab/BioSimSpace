@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2023
+# Copyright: 2017-2024
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -878,13 +878,13 @@ class OpenMM(_process.Process):
 
             self.addToConfig("\n# Upper wall.")
             self.addToConfig(
-                "upper_wall_rest = CustomCentroidBondForce(3, '(k/2)*max(distance(g1,g2)*cos(angle(g1,g2,g3)) - upper_wall, 0)^2')"
+                "upper_wall_rest = CustomCentroidBondForce(3, '(k1/2)*max(distance(g1,g2)*cos(angle(g1,g2,g3)) - upper_wall, 0)^2')"
             )
             self.addToConfig("upper_wall_rest.addGroup(lig)")
             self.addToConfig("upper_wall_rest.addGroup(p1)")
             self.addToConfig("upper_wall_rest.addGroup(p2)")
             self.addToConfig("upper_wall_rest.addBond([0,1,2])")
-            self.addToConfig("upper_wall_rest.addGlobalParameter('k', k1)")
+            self.addToConfig("upper_wall_rest.addGlobalParameter('k1', k1)")
             self.addToConfig(
                 "upper_wall_rest.addGlobalParameter('upper_wall', upper_wall)"
             )
@@ -904,13 +904,13 @@ class OpenMM(_process.Process):
             )
 
             self.addToConfig(
-                "dist_restraint = CustomCentroidBondForce(3, '(k/2)*max(distance(g1,g2)*sin(angle(g1,g2,g3)) - (a/(1+exp(b*(distance(g1,g2)*cos(angle(g1,g2,g3))-c)))+d), 0)^2')"
+                "dist_restraint = CustomCentroidBondForce(3, '(k2/2)*max(distance(g1,g2)*sin(angle(g1,g2,g3)) - (a/(1+exp(b*(distance(g1,g2)*cos(angle(g1,g2,g3))-c)))+d), 0)^2')"
             )
             self.addToConfig("dist_restraint.addGroup(lig)")
             self.addToConfig("dist_restraint.addGroup(p1)")
             self.addToConfig("dist_restraint.addGroup(p2)")
             self.addToConfig("dist_restraint.addBond([0,1,2])")
-            self.addToConfig("dist_restraint.addGlobalParameter('k', k2)")
+            self.addToConfig("dist_restraint.addGlobalParameter('k2', k2)")
             self.addToConfig("dist_restraint.addGlobalParameter('a', wall_width)")
             self.addToConfig("dist_restraint.addGlobalParameter('b', beta_cent)")
             self.addToConfig("dist_restraint.addGlobalParameter('c', s_cent)")
@@ -920,13 +920,13 @@ class OpenMM(_process.Process):
 
             self.addToConfig("\n# Lower wall.")
             self.addToConfig(
-                "lower_wall_rest = CustomCentroidBondForce(3, '(k/2)*min(distance(g1,g2)*cos(angle(g1,g2,g3)) - lower_wall, 0)^2')"
+                "lower_wall_rest = CustomCentroidBondForce(3, '(k1/2)*min(distance(g1,g2)*cos(angle(g1,g2,g3)) - lower_wall, 0)^2')"
             )
             self.addToConfig("lower_wall_rest.addGroup(lig)")
             self.addToConfig("lower_wall_rest.addGroup(p1)")
             self.addToConfig("lower_wall_rest.addGroup(p2)")
             self.addToConfig("lower_wall_rest.addBond([0,1,2])")
-            self.addToConfig("lower_wall_rest.addGlobalParameter('k', k1)")
+            self.addToConfig("lower_wall_rest.addGlobalParameter('k1', k1)")
             self.addToConfig(
                 "lower_wall_rest.addGlobalParameter('lower_wall', lower_wall)"
             )

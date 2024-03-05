@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2023
+# Copyright: 2017-2024
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -21,6 +21,32 @@
 
 """Functionality for running simulations with GROMACS."""
 
+from ._plumed import Plumed as _Plumed
+from . import _process
+from .. import _Utils
+from .. import Units as _Units
+from .. import Types as _Types
+from .. import Trajectory as _Trajectory
+from .. import Protocol as _Protocol
+from .. import IO as _IO
+from ..Types._type import Type as _Type
+from .._SireWrappers import System as _System
+from ..Protocol._position_restraint_mixin import _PositionRestraintMixin
+from ..Protocol._free_energy_mixin import _FreeEnergyMixin
+from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
+from .._Config import Gromacs as _GromacsConfig
+from .. import _isVerbose
+from .. import _gmx_exe, _gmx_version
+from sire.legacy import Vol as _SireVol
+from sire.legacy import Units as _SireUnits
+from sire.legacy import Maths as _SireMaths
+from sire.legacy import IO as _SireIO
+from sire.legacy import Base as _SireBase
+import warnings as _warnings
+import timeit as _timeit
+import subprocess as _subprocess
+import shlex as _shlex
+import shutil as _shutil
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
 
@@ -36,36 +62,6 @@ import numpy as _np
 import os as _os
 
 _pygtail = _try_import("pygtail")
-import shutil as _shutil
-import shlex as _shlex
-import subprocess as _subprocess
-import timeit as _timeit
-import warnings as _warnings
-
-from sire.legacy import Base as _SireBase
-from sire.legacy import IO as _SireIO
-from sire.legacy import Maths as _SireMaths
-from sire.legacy import Units as _SireUnits
-from sire.legacy import Vol as _SireVol
-
-from .. import _gmx_exe, _gmx_version
-from .. import _isVerbose
-from .._Config import Gromacs as _GromacsConfig
-from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
-from ..Protocol._position_restraint_mixin import _PositionRestraintMixin
-from .._SireWrappers import System as _System
-from ..Types._type import Type as _Type
-
-from .. import IO as _IO
-from .. import Protocol as _Protocol
-from .. import Trajectory as _Trajectory
-from .. import Types as _Types
-from .. import Units as _Units
-from .. import _Utils
-
-from . import _process
-
-from ._plumed import Plumed as _Plumed
 
 
 class Gromacs(_process.Process):
@@ -87,7 +83,7 @@ class Gromacs(_process.Process):
         checkpoint_file=None,
     ):
         """
-        
+
         Parameters
         ----------
 
@@ -231,7 +227,7 @@ class Gromacs(_process.Process):
         # Create a copy of the system.
         system = self._system.copy()
 
-        if isinstance(self._protocol, _Protocol._FreeEnergyMixin):
+        if isinstance(self._protocol, _FreeEnergyMixin):
             # Check that the system contains a perturbable molecule.
             if self._system.nPerturbableMolecules() == 0:
                 raise ValueError(
@@ -299,7 +295,8 @@ class Gromacs(_process.Process):
             except:
                 has_box = False
         else:
-            _warnings.warn("No simulation box found. Assuming gas phase simulation.")
+            _warnings.warn(
+                "No simulation box found. Assuming gas phase simulation.")
             has_box = False
 
         # Deal with periodic boundary conditions.
@@ -364,7 +361,8 @@ class Gromacs(_process.Process):
             # Expose metadynamics specific functions.
             if isinstance(self._protocol, _Protocol.Metadynamics):
                 setattr(self, "getFreeEnergy", self._getFreeEnergy)
-                setattr(self, "sampleConfigurations", self._sampleConfigurations)
+                setattr(self, "sampleConfigurations",
+                        self._sampleConfigurations)
 
         # Add configuration variables for a steered molecular dynamics protocol.
         elif isinstance(self._protocol, _Protocol.Steering):
@@ -420,40 +418,130 @@ class Gromacs(_process.Process):
         if isinstance(self._protocol, (_Protocol.Metadynamics, _Protocol.Steering)):
             self.setArg("-plumed", "plumed.dat")
 
-    def _generate_binary_run_file(self):
-        """Use grommp to generate the binary run input file."""
+    @staticmethod
+    def _generate_binary_run_file(
+        mdp_file,
+        gro_file,
+        top_file,
+        ref_file,
+        tpr_file,
+        exe,
+        checkpoint_file=None,
+        ignore_warnings=False,
+        show_errors=True,
+    ):
+        """
+        Use grommp to generate the binary run input file.
+
+        Parameters
+        ----------
+
+        mdp_file : str
+            The path to the input mdp file.
+
+        gro_file : str
+            The path to the input coordinate file.
+
+        top_file : str
+            The path to the input topology file.
+
+        ref_file : str
+            The path to the input reference coordinate file to be used for
+            position restraints.
+
+        tpr_file : str
+            The path to the output binary run file.
+
+        exe : str
+            The path to the GROMACS executable.
+
+        checkpoint_file : str
+            The path to a checkpoint file from a previous run. This can be used
+            to continue an existing simulation. Currently we only support the
+            use of checkpoint files for Equilibration protocols.
+
+        ignore_warnings : bool
+            Whether to ignore warnings when generating the binary run file
+            with 'gmx grompp'. By default, these warnings are elevated to
+            errors and will halt the program.
+
+        show_errors : bool
+            Whether to show warning/error messages when generating the binary
+            run file.
+        """
+
+        if not isinstance(mdp_file, str):
+            raise ValueError("'mdp_file' must be of type 'str'.")
+        if not _os.path.isfile(mdp_file):
+            raise IOError(f"'mdp_file' doesn't exist: '{mdp_file}'")
+
+        if not isinstance(gro_file, str):
+            raise ValueError("'gro_file' must be of type 'str'.")
+        if not _os.path.isfile(gro_file):
+            raise IOError(f"'gro_file' doesn't exist: '{gro_file}'")
+
+        if not isinstance(top_file, str):
+            raise ValueError("'top_file' must be of type 'str'.")
+        if not _os.path.isfile(top_file):
+            raise IOError(f"'top_file' doesn't exist: '{top_file}'")
+
+        if not isinstance(ref_file, str):
+            raise ValueError("'ref_file' must be of type 'str'.")
+        if not _os.path.isfile(ref_file):
+            raise IOError(f"'ref_file' doesn't exist: '{ref_file}'")
+
+        if not isinstance(tpr_file, str):
+            raise ValueError("'tpr_file' must be of type 'str'.")
+
+        if not isinstance(exe, str):
+            raise ValueError("'exe' must be of type 'str'.")
+        if not _os.path.isfile(exe):
+            raise IOError(f"'exe' doesn't exist: '{exe}'")
+
+        if checkpoint_file is not None:
+            if not isinstance(checkpoint_file, str):
+                raise ValueError("'checkpoint_file' must be of type 'str'.")
+            if not _os.path.isfile(checkpoint_file):
+                raise IOError(
+                    f"'checkpoint_file' doesn't exist: '{checkpoint_file}'")
+
+        if not isinstance(ignore_warnings, bool):
+            raise ValueError("'ignore_warnings' must be of type 'bool'")
+
+        if not isinstance(show_errors, bool):
+            raise ValueError("'show_errors' must be of type 'bool'")
 
         # Create the name of the output mdp file.
         mdp_out = (
-            _os.path.dirname(self._config_file)
-            + "/%s.out.mdp" % _os.path.basename(self._config_file).split(".")[0]
+            _os.path.dirname(mdp_file)
+            + "/%s.out.mdp" % _os.path.basename(mdp_file).split(".")[0]
         )
 
         # Use grompp to generate the portable binary run input file.
-        if self._checkpoint_file is not None:
+        if checkpoint_file is not None:
             command = "%s grompp -f %s -po %s -c %s -p %s -r %s -t %s -o %s" % (
-                self._exe,
-                self._config_file,
+                exe,
+                mdp_file,
                 mdp_out,
-                self._gro_file,
-                self._top_file,
-                self._gro_file,
-                self._checkpoint_file,
-                self._tpr_file,
+                gro_file,
+                top_file,
+                ref_file,
+                checkpoint_file,
+                tpr_file,
             )
         else:
             command = "%s grompp -f %s -po %s -c %s -p %s -r %s -o %s" % (
-                self._exe,
-                self._config_file,
+                exe,
+                mdp_file,
                 mdp_out,
-                self._gro_file,
-                self._top_file,
-                self._gro_file,
-                self._tpr_file,
+                gro_file,
+                top_file,
+                ref_file,
+                tpr_file,
             )
 
         # Warnings don't trigger an error.
-        if self._ignore_warnings:
+        if ignore_warnings:
             command += " --maxwarn 9999"
 
         # Run the command.
@@ -468,7 +556,7 @@ class Gromacs(_process.Process):
         # Check that grompp ran successfully.
         if proc.returncode != 0:
             # Handle errors and warnings.
-            if self._show_errors:
+            if show_errors:
                 # Capture errors and warnings from the grompp output.
                 errors = []
                 warnings = []
@@ -530,14 +618,34 @@ class Gromacs(_process.Process):
         super().addToConfig(config)
 
         # Use grompp to generate the portable binary run input file.
-        self._generate_binary_run_file()
+        self._generate_binary_run_file(
+            self._config_file,
+            self._gro_file,
+            self._top_file,
+            self._gro_file,
+            self._tpr_file,
+            self._exe,
+            self._checkpoint_file,
+            self._ignore_warnings,
+            self._show_errors,
+        )
 
     def resetConfig(self):
         """Reset the configuration parameters."""
         self._generate_config()
 
         # Use grompp to generate the portable binary run input file.
-        self._generate_binary_run_file()
+        self._generate_binary_run_file(
+            self._config_file,
+            self._gro_file,
+            self._top_file,
+            self._gro_file,
+            self._tpr_file,
+            self._exe,
+            self._checkpoint_file,
+            self._ignore_warnings,
+            self._show_errors,
+        )
 
     def setConfig(self, config):
         """
@@ -555,7 +663,17 @@ class Gromacs(_process.Process):
         super().setConfig(config)
 
         # Use grompp to generate the portable binary run input file.
-        self._generate_binary_run_file()
+        self._generate_binary_run_file(
+            self._config_file,
+            self._gro_file,
+            self._top_file,
+            self._gro_file,
+            self._tpr_file,
+            self._exe,
+            self._checkpoint_file,
+            self._ignore_warnings,
+            self._show_errors,
+        )
 
     def start(self):
         """
@@ -942,7 +1060,8 @@ class Gromacs(_process.Process):
         step : int
             The current number of integration steps.
         """
-        records = self.getRecord("TIME", time_series, _Units.Time.picosecond, block)
+        records = self.getRecord(
+            "TIME", time_series, _Units.Time.picosecond, block)
         time_step = self._protocol.getTimeStep()
         if time_series:
             return [record / time_step for record in records]
@@ -1947,12 +2066,14 @@ class Gromacs(_process.Process):
                     if len(restrained_atoms) > 0:
                         # Create the file names.
                         include_file = "posre_%04d.itp" % num_restraint
-                        restraint_file = "%s/%s" % (self._work_dir, include_file)
+                        restraint_file = "%s/%s" % (self._work_dir,
+                                                    include_file)
 
                         with open(restraint_file, "w") as file:
                             # Write the header.
                             file.write("[ position_restraints ]\n")
-                            file.write(";  i funct       fcx        fcy        fcz\n")
+                            file.write(
+                                ";  i funct       fcx        fcy        fcz\n")
 
                             # Write restraints for each atom.
                             for atom_idx in restrained_atoms:
@@ -1977,7 +2098,7 @@ class Gromacs(_process.Process):
 
                         # Now extend with the remainder of the file.
                         new_top_lines.extend(
-                            top_lines[moltypes_top_idx[mol_type_idx + 1] + offset :]
+                            top_lines[moltypes_top_idx[mol_type_idx + 1] + offset:]
                         )
 
                         # Overwrite the topology file lines.
@@ -2005,7 +2126,8 @@ class Gromacs(_process.Process):
                 for idx in restraint:
                     try:
                         # Get the molecule index and relative atom index.
-                        mol_idx, atom_idx = self._system._getRelativeIndices(idx)
+                        mol_idx, atom_idx = self._system._getRelativeIndices(
+                            idx)
 
                         # Get the type associated with this molecule index.
                         mol_type = sys_idx_moltypes[mol_idx]
@@ -2031,12 +2153,14 @@ class Gromacs(_process.Process):
                     if len(atom_idxs) > 0:
                         # Create the file names.
                         include_file = "posre_%04d.itp" % num_restraint
-                        restraint_file = "%s/%s" % (self._work_dir, include_file)
+                        restraint_file = "%s/%s" % (self._work_dir,
+                                                    include_file)
 
                         with open(restraint_file, "w") as file:
                             # Write the header.
                             file.write("[ position_restraints ]\n")
-                            file.write(";  i funct       fcx        fcy        fcz\n")
+                            file.write(
+                                ";  i funct       fcx        fcy        fcz\n")
 
                             # Write restraints for each atom.
                             for atom_idx in atom_idxs:
@@ -2061,7 +2185,7 @@ class Gromacs(_process.Process):
 
                         # Now extend with the remainder of the file.
                         new_top_lines.extend(
-                            top_lines[moltypes_top_idx[mol_type_idx + 1] + offset :]
+                            top_lines[moltypes_top_idx[mol_type_idx + 1] + offset:]
                         )
 
                         # Overwrite the topology file lines.
@@ -2150,9 +2274,11 @@ class Gromacs(_process.Process):
         energy_names = terms[1::2]
         length_nomatch = len(indexes) != len(energy_names)
         # -1 as the index is 1-based.
-        index_nomatch = (_np.arange(len(indexes)) != _np.array(indexes) - 1).any()
+        index_nomatch = (_np.arange(len(indexes)) !=
+                         _np.array(indexes) - 1).any()
         if length_nomatch or index_nomatch:
-            raise ValueError(f"Cannot parse the energy terms in the {edr_file} file.")
+            raise ValueError(
+                f"Cannot parse the energy terms in the {edr_file} file.")
         else:
             return energy_names
 
@@ -2209,7 +2335,8 @@ class Gromacs(_process.Process):
                 elif unit == "bar nm":
                     units.append(_Units.Pressure.bar * _Units.Length.nanometer)
                 elif unit == "nm/ps":
-                    units.append(_Units.Length.nanometer / _Units.Time.picosecond)
+                    units.append(_Units.Length.nanometer /
+                                 _Units.Time.picosecond)
                 elif unit == "kg/m^3":
                     units.append(_Types._GeneralUnit("kg/m3"))
                 else:
@@ -2328,7 +2455,8 @@ class Gromacs(_process.Process):
             return None
 
         if not isinstance(time_series, bool):
-            _warnings.warn("Non-boolean time-series flag. Defaulting to False!")
+            _warnings.warn(
+                "Non-boolean time-series flag. Defaulting to False!")
             time_series = False
 
         # Validate the unit.
@@ -2424,10 +2552,15 @@ class Gromacs(_process.Process):
                 space_prop in old_system._sire_object.propertyKeys()
                 and space_prop in new_system._sire_object.propertyKeys()
             ):
-                box = new_system._sire_object.property("space")
-                old_system._sire_object.setProperty(
-                    self._property_map.get("space", "space"), box
-                )
+                # Get the original space.
+                box = old_system._sire_object.property("space")
+
+                # Only update the box if the space is periodic.
+                if box.isPeriodic():
+                    box = new_system._sire_object.property("space")
+                    old_system._sire_object.setProperty(
+                        self._property_map.get("space", "space"), box
+                    )
 
             # If this is a vacuum simulation, then translate the centre of mass
             # of the system back to the origin.
@@ -2535,11 +2668,16 @@ class Gromacs(_process.Process):
                     space_prop in old_system._sire_object.propertyKeys()
                     and space_prop in new_system._sire_object.propertyKeys()
                 ):
-                    box = new_system._sire_object.property("space")
+                    # Get the original space.
+                    box = old_system._sire_object.property("space")
+
+                    # Only update the box if the space is periodic.
                     if box.isPeriodic():
-                        old_system._sire_object.setProperty(
-                            self._property_map.get("space", "space"), box
-                        )
+                        box = new_system._sire_object.property("space")
+                        if box.isPeriodic():
+                            old_system._sire_object.setProperty(
+                                self._property_map.get("space", "space"), box
+                            )
 
                 # If this is a vacuum simulation, then translate the centre of mass
                 # of the system back to the origin.

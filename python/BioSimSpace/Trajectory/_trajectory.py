@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2023
+# Copyright: 2017-2024
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -32,7 +32,6 @@ _mdanalysis = _try_import("MDAnalysis")
 _mdtraj = _try_import("mdtraj")
 
 import copy as _copy
-import logging as _logging
 import os as _os
 import shutil as _shutil
 import uuid as _uuid
@@ -921,9 +920,9 @@ class Trajectory:
             The number of trajectory frames.
         """
 
-        # First get the current MDTraj object.
+        # First get the current trajectory object using the existing backend.
         if self._process is not None and self._process.isRunning():
-            self._trajectory = self.getTrajectory()
+            self._trajectory = self.getTrajectory(format=self._backend)
 
         # There is no trajectory.
         if self._trajectory is None:

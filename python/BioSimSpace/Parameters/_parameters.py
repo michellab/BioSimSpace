@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2023
+# Copyright: 2017-2024
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -135,8 +135,8 @@ def _parameterise_amber_protein(
     tolerance=1.2,
     max_distance=_Length(6, "A"),
     water_model=None,
-    custom_parameters=None,
-    leap_commands=None,
+    pre_mol_commands=None,
+    post_mol_commands=None,
     bonds=None,
     ensure_compatible=True,
     work_dir=None,
@@ -172,14 +172,17 @@ def _parameterise_amber_protein(
         or lone oxygen atoms corresponding to structural (crystal) water
         molecules.
 
-    custom_parameters: [str]
-        A list of paths to custom parameter files. When this option is set,
-        we can no longer fall back on GROMACS's pdb2gmx.
+    pre_mol_commands : [str]
+        A list of custom LEaP commands to be executed before loading the molecule.
+        This can be used for loading custom parameter files, or sourcing additional
+        scripts. Make sure to use absolute paths when specifying any external files.
+        When this option is set, we can no longer fall back on GROMACS's pdb2gmx.
 
-    leap_commands : [str]
-        An optional list of extra commands for the LEaP program. These
-        will be added after any default commands. When this option is set,
-        we can no longer fall back on GROMACS's pdb2gmx.
+    post_mol_commands : [str]
+        A list of custom LEaP commands to be executed after loading the molecule.
+        This allows the use of additional commands that operate on the molecule,
+        which is named "mol". When this option is set, we can no longer fall
+        back on GROMACS's pdb2gmx.
 
     bonds : ((class:`Atom <BioSimSpace._SireWrappers.Atom>`, class:`Atom <BioSimSpace._SireWrappers.Atom>`))
         An optional tuple of atom pairs to specify additional atoms that
@@ -241,8 +244,8 @@ def _parameterise_amber_protein(
         max_distance=max_distance,
         water_model=water_model,
         check_ions=True,
-        custom_parameters=custom_parameters,
-        leap_commands=leap_commands,
+        pre_mol_commands=pre_mol_commands,
+        post_mol_commands=post_mol_commands,
         bonds=bonds,
         ensure_compatible=ensure_compatible,
         property_map=property_map,
@@ -255,8 +258,8 @@ def _parameterise_amber_protein(
         tolerance=tolerance,
         water_model=water_model,
         max_distance=max_distance,
-        custom_parameters=custom_parameters,
-        leap_commands=leap_commands,
+        pre_mol_commands=pre_mol_commands,
+        post_mol_commands=post_mol_commands,
         bonds=bonds,
         ensure_compatible=ensure_compatible,
         property_map=property_map,
@@ -802,8 +805,8 @@ def _validate(
     max_distance=None,
     water_model=None,
     check_ions=False,
-    custom_parameters=None,
-    leap_commands=None,
+    pre_mol_commands=None,
+    post_mol_commands=None,
     bonds=None,
     ensure_compatible=True,
     work_dir=None,
@@ -839,14 +842,17 @@ def _validate(
         Whether to check for the presence of structural ions. This is only
         required when parameterising with protein force fields.
 
-    custom_parameters: [str]
-        A list of paths to custom parameter files. When this option is set,
-        we can no longer fall back on GROMACS's pdb2gmx.
+    pre_mol_commands : [str]
+        A list of custom LEaP commands to be executed before loading the molecule.
+        This can be used for loading custom parameter files, or sourcing additional
+        scripts. Make sure to use absolute paths when specifying any external files.
+        When this option is set, we can no longer fall back on GROMACS's pdb2gmx.
 
-    leap_commands : [str]
-        An optional list of extra commands for the LEaP program. These
-        will be added after any default commands. When this option is set,
-        we can no longer fall back on GROMACS's pdb2gmx.
+    post_mol_commands : [str]
+        A list of custom LEaP commands to be executed after loading the molecule.
+        This allows the use of additional commands that operate on the molecule,
+        which is named "mol". When this option is set, we can no longer fall
+        back on GROMACS's pdb2gmx.
 
     bonds : ((class:`Atom <BioSimSpace._SireWrappers.Atom>`, class:`Atom <BioSimSpace._SireWrappers.Atom>`))
         An optional tuple of atom pairs to specify additional atoms that
@@ -905,22 +911,19 @@ def _validate(
                 "Please choose a 'water_model' for the ion parameters."
             )
 
-    if custom_parameters is not None:
-        if not isinstance(custom_parameters, (list, tuple)):
-            raise TypeError("'custom_parameters' must be a 'list' of 'str' types.")
+    if pre_mol_commands is not None:
+        if not isinstance(pre_mol_commands, (list, tuple)):
+            raise TypeError("'pre_mol_commands' must be a 'list' of 'str' types.")
         else:
-            if not all(isinstance(x, str) for x in custom_parameters):
-                raise TypeError("'custom_parameters' must be a 'list' of 'str' types.")
-            for x in custom_parameters:
-                if not os.path.isfile(x):
-                    raise ValueError(f"Custom parameter file does not exist: '{x}'")
+            if not all(isinstance(x, str) for x in pre_mol_commands):
+                raise TypeError("'pre_mol_commands' must be a 'list' of 'str' types.")
 
-    if leap_commands is not None:
-        if not isinstance(leap_commands, (list, tuple)):
-            raise TypeError("'leap_commands' must be a 'list' of 'str' types.")
+    if post_mol_commands is not None:
+        if not isinstance(post_mol_commands, (list, tuple)):
+            raise TypeError("'post_mol_commands' must be a 'list' of 'str' types.")
         else:
-            if not all(isinstance(x, str) for x in leap_commands):
-                raise TypeError("'leap_commands' must be a 'list' of 'str' types.")
+            if not all(isinstance(x, str) for x in post_mol_commands):
+                raise TypeError("'post_mol_commands' must be a 'list' of 'str' types.")
 
     if bonds is not None:
         if molecule is None:
@@ -981,7 +984,8 @@ def _make_amber_protein_function(name):
         tolerance=1.2,
         max_distance=_Length(6, "A"),
         water_model=None,
-        leap_commands=None,
+        pre_mol_commands=None,
+        post_mol_commands=None,
         bonds=None,
         ensure_compatible=True,
         work_dir=None,
@@ -1013,11 +1017,17 @@ def _make_amber_protein_function(name):
             or lone oxygen atoms corresponding to structural (crystal) water
             molecules.
 
-        leap_commands : [str]
-            An optional list of extra commands for the LEaP program. These
-            will be added after any default commands and can be used to, e.g.,
-            load additional parameter files. When this option is set, we can no
-            longer fall back on GROMACS's pdb2gmx.
+        pre_mol_commands : [str]
+            A list of custom LEaP commands to be executed before loading the molecule.
+            This can be used for loading custom parameter files, or sourcing additional
+            scripts. Make sure to use absolute paths when specifying any external files.
+            When this option is set, we can no longer fall back on GROMACS's pdb2gmx.
+
+        post_mol_commands : [str]
+            A list of custom LEaP commands to be executed after loading the molecule.
+            This allows the use of additional commands that operate on the molecule,
+            which is named "mol". When this option is set, we can no longer fall
+            back on GROMACS's pdb2gmx.
 
         bonds : ((class:`Atom <BioSimSpace._SireWrappers.Atom>`, class:`Atom <BioSimSpace._SireWrappers.Atom>`))
             An optional tuple of atom pairs to specify additional atoms that
@@ -1052,7 +1062,8 @@ def _make_amber_protein_function(name):
             tolerance=tolerance,
             max_distance=max_distance,
             water_model=water_model,
-            leap_commands=leap_commands,
+            pre_mol_commands=pre_mol_commands,
+            post_mol_commands=post_mol_commands,
             bonds=bonds,
             ensure_compatible=ensure_compatible,
             work_dir=work_dir,

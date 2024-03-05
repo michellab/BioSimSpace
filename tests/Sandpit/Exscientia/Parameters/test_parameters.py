@@ -1,4 +1,5 @@
 import pytest
+import tempfile
 
 import BioSimSpace.Sandpit.Exscientia as BSS
 
@@ -82,3 +83,62 @@ def test_molecule_rename():
 
     # Make sure the name is correct.
     assert mol._sire_object.name().value() == "smiles:[C@@H](C(F)(F)F)(OC(F)F)Cl"
+
+
+@pytest.mark.skipif(
+    has_antechamber is False or has_tleap is False,
+    reason="Requires AmberTools/antechamber and tLEaP to be installed.",
+)
+def test_leap_commands(molecule0):
+    """
+    Test that custom commands are correctly inserted into the LEaP input
+    script.
+    """
+
+    # Create lists of pre- and post-commands.
+    pre_mol_commands = ["command1", "command2"]
+    post_mol_commands = ["command3", "command4"]
+
+    with tempfile.TemporaryDirectory() as tmp:
+        # This will fail, but we only want to check the LEaP script.
+        try:
+            mol = BSS.Parameters.ff14SB(
+                molecule0,
+                work_dir=tmp,
+                pre_mol_commands=pre_mol_commands,
+                post_mol_commands=post_mol_commands,
+            ).getMolecule()
+        except:
+            pass
+
+        # Load the script and check that the custom parameters are present and
+        # in the correct order.
+        with open(f"{tmp}/leap.txt", "r") as f:
+            script = f.readlines()
+
+            # Create lists to store the indices of the custom commands.
+            line_pre = [-1 for _ in range(len(pre_mol_commands))]
+            line_post = [-1 for _ in range(len(post_mol_commands))]
+
+            # Loop over the lines in the script and store the line numbers
+            # where the custom commands are found.
+            for x, line in enumerate(script):
+                for y, command in enumerate(pre_mol_commands):
+                    if command in line:
+                        line_pre[y] = x
+                for y, command in enumerate(post_mol_commands):
+                    if command in line:
+                        line_post[y] = x
+
+            # Make sure the lines are found.
+            for line in line_pre:
+                assert line != -1
+            for line in line_post:
+                assert line != -1
+
+            # Make sure the lines are in the correct order.
+            for x in range(len(line_pre) - 1):
+                assert line_pre[x] < line_pre[x + 1]
+            assert line_pre[-1] < line_post[0]
+            for x in range(len(line_post) - 1):
+                assert line_post[x] < line_post[x + 1]

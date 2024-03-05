@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2023
+# Copyright: 2017-2024
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -44,6 +44,7 @@ from ..._Utils import _try_import, _have_imported
 # Temporarily redirect stderr to suppress import warnings.
 import sys as _sys
 
+_orig_stderr = _sys.stderr
 _sys.stderr = open(_os.devnull, "w")
 
 _openff = _try_import("openff")
@@ -54,8 +55,8 @@ else:
     _OpenFFMolecule = _openff
 
 # Reset stderr.
-_sys.stderr = _sys.__stderr__
-del _sys
+_sys.stderr = _orig_stderr
+del _sys, _orig_stderr
 
 from sire.legacy import IO as _SireIO
 from sire.legacy import Mol as _SireMol
@@ -122,8 +123,8 @@ class AmberProtein(_protocol.Protocol):
         tolerance=1.2,
         max_distance=_Length(6, "A"),
         water_model=None,
-        custom_parameters=None,
-        leap_commands=None,
+        pre_mol_commands=None,
+        post_mol_commands=None,
         bonds=None,
         ensure_compatible=True,
         property_map={},
@@ -155,14 +156,17 @@ class AmberProtein(_protocol.Protocol):
             Run 'BioSimSpace.Solvent.waterModels()' to see the supported
             water models.
 
-        custom_parameters: [str]
-            A list of paths to custom parameter files. When this option is set,
-            we can no longer fall back on GROMACS's pdb2gmx.
+        pre_mol_commands : [str]
+            A list of custom LEaP commands to be executed before loading the molecule.
+            This can be used for loading custom parameter files, or sourcing additional
+            scripts. Make sure to use absolute paths when specifying any external files.
+            When this option is set, we can no longer fall back on GROMACS's pdb2gmx.
 
-        leap_commands : [str]
-            An optional list of extra commands for the LEaP program. These
-            will be added after any default commands. When this option is set,
-            we can no longer fall back on GROMACS's pdb2gmx.
+        post_mol_commands : [str]
+            A list of custom LEaP commands to be executed after loading the molecule.
+            This allows the use of additional commands that operate on the molecule,
+            which is named "mol". When this option is set, we can no longer fall
+            back on GROMACS's pdb2gmx.
 
         bonds : ((class:`Atom <BioSimSpace._SireWrappers.Atom>`, class:`Atom <BioSimSpace._SireWrappers.Atom>`))
             An optional tuple of atom pairs to specify additional atoms that
@@ -218,34 +222,25 @@ class AmberProtein(_protocol.Protocol):
         else:
             self._water_model = water_model
 
-        # Validate the custom parameter file list.
-        if custom_parameters is not None:
-            if not isinstance(custom_parameters, (list, tuple)):
-                raise TypeError("'custom_parameters' must be a 'list' of 'str' types.")
-            else:
-                if not all(isinstance(x, str) for x in custom_parameters):
-                    raise TypeError(
-                        "'custom_parameters' must be a 'list' of 'str' types."
-                    )
-                for x in custom_parameters:
-                    if not os.path.isfile(x):
-                        raise ValueError(f"Custom parameter file does not exist: '{x}'")
-
-            # Convert to absolute paths.
-            self._custom_parameters = []
-            for x in enumerate(custom_parameters):
-                self._custom_parameters.append(_os.path.abspath(x))
-        else:
-            self._custom_parameters = None
-
         # Validate the additional leap commands.
-        if leap_commands is not None:
-            if not isinstance(leap_commands, (list, tuple)):
-                raise TypeError("'leap_commands' must be a 'list' of 'str' types.")
+        if pre_mol_commands is not None:
+            if not isinstance(pre_mol_commands, (list, tuple)):
+                raise TypeError("'pre_mol_commands must be a 'list' of 'str' types.")
             else:
-                if not all(isinstance(x, str) for x in leap_commands):
-                    raise TypeError("'leap_commands' must be a 'list' of 'str' types.")
-        self._leap_commands = leap_commands
+                if not all(isinstance(x, str) for x in pre_mol_commands):
+                    raise TypeError(
+                        "'pre_mol_commands' must be a 'list' of 'str' types."
+                    )
+        self._pre_mol_commands = pre_mol_commands
+        if post_mol_commands is not None:
+            if not isinstance(post_mol_commands, (list, tuple)):
+                raise TypeError("'post_mol_commands must be a 'list' of 'str' types.")
+            else:
+                if not all(isinstance(x, str) for x in post_mol_commands):
+                    raise TypeError(
+                        "'post_mol_commands' must be a 'list' of 'str' types."
+                    )
+        self._post_mol_commands = post_mol_commands
 
         # Validate the bond records.
         if bonds is not None:
@@ -273,7 +268,7 @@ class AmberProtein(_protocol.Protocol):
 
         # Set the compatibility flags.
         self._tleap = True
-        if self._custom_parameters is not None or self._leap_commands is not None:
+        if self._pre_mol_commands is not None or self._post_mol_commands is not None:
             self._pdb2gmx = False
 
     def run(self, molecule, work_dir=None, queue=None):
@@ -512,10 +507,10 @@ class AmberProtein(_protocol.Protocol):
                     file.write("source leaprc.water.tip4pew\n")
                 else:
                     file.write("source leaprc.water.%s\n" % self._water_model)
-            # Write custom parameters.
-            if self._custom_parameters is not None:
-                for param in self._custom_parameters:
-                    file.write("%s\n" % param)
+            # Write pre-mol user leap commands.
+            if self._pre_mol_commands is not None:
+                for command in self._pre_mol_commands:
+                    file.write("%s\n" % command)
             file.write("mol = loadPdb leap.pdb\n")
             # Add any disulphide bond records.
             for bond in disulphide_bonds:
@@ -523,9 +518,9 @@ class AmberProtein(_protocol.Protocol):
             # Add any additional bond records.
             for bond in pruned_bond_records:
                 file.write("%s\n" % bond)
-            # Write user leap commands.
-            if self._leap_commands is not None:
-                for command in self._leap_commands:
+            # Write post-mol user leap commands.
+            if self._post_mol_commands is not None:
+                for command in self._post_mol_commands:
                     file.write("%s\n" % command)
             file.write("saveAmberParm mol leap.top leap.crd\n")
             file.write("quit")
@@ -725,7 +720,7 @@ class AmberProtein(_protocol.Protocol):
 
         # Try searching for disulphide bonds.
         try:
-            disulphides = query(mol, property_map)
+            disulphides = query(mol, property_map).bonds()
         except:
             disulphides = []
 

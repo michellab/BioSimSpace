@@ -1,7 +1,7 @@
 ######################################################################
 # BioSimSpace: Making biomolecular simulation a breeze!
 #
-# Copyright: 2017-2023
+# Copyright: 2017-2024
 #
 # Authors: Lester Hedges <lester.hedges@gmail.com>
 #
@@ -192,7 +192,7 @@ class Amber(_Config):
             protocol_dict["cut"] = "999."
             if is_pmemd:
                 # Use vacuum generalised Born model.
-                self.addToConfig("  igb=6,")
+                protocol_dict["igb"] = "6"
         else:
             # Non-bonded cut-off.
             protocol_dict["cut"] = "10.0"
@@ -238,7 +238,7 @@ class Amber(_Config):
                                     ]
                                 restraint_mask = "@" + ",".join(restraint_atom_names)
                             elif restraint == "heavy":
-                                restraint_mask = "!:WAT & !@H"
+                                restraint_mask = "!:WAT & !@H="
                             elif restraint == "all":
                                 restraint_mask = "!:WAT"
 

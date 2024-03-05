@@ -9,19 +9,30 @@ company supporting open-source development of fostering academic/industrial coll
 within the biomolecular simulation community. Our software is hosted via the `OpenBioSim`
 `GitHub <https://github.com/OpenBioSim/biosimspace>`__ organisation.
 
-Devel
------
+`2023.5.0 <https://github.com/openbiosim/biosimspace/compare/2023.4.1...2023.5.0>`_ - Dec 16 2023
+-------------------------------------------------------------------------------------------------
 
 * Add support for detecting nucleic acid backbones (`@fjclark <https://github.com/fjclark>`_) (`#189 <https://github.com/OpenBioSim/biosimspace/pull/189>`__).
+* Added SOMD and GROMACS support for multiple distance restraints for ABFE calculations (`#178 <https://github.com/OpenBioSim/biosimspace/pull/178>`__).
+
+`2023.4.1 <https://github.com/openbiosim/biosimspace/compare/2023.4.0...2023.4.1>`_ - Dec 14 2023
+-------------------------------------------------------------------------------------------------
+
 * Make sure ``match_water`` keyword argument is passed to specialised solvation functions (`#190 <https://github.com/OpenBioSim/biosimspace/pull/190>`__).
 * Check perturbable molecules for velocities when combining molecules (`#192 <https://github.com/OpenBioSim/biosimspace/pull/192>`__).
 * Make sure velocities are double counted when searching for velocity properties when combining molecules (`#197 <https://github.com/OpenBioSim/biosimspace/pull/197>`__).
 * Remove redundant ``BioSimSpace.Types.Type.__ne__`` operator (`#201 <https://github.com/OpenBioSim/biosimspace/pull/201>`__).
 * Minor internal updates due to Sire API fixes (`#203 <https://github.com/OpenBioSim/biosimspace/pull/203>`__).
-* Fix bug in the BSS Boresch restraint search code (`@fjclark <https://github.com/fjclark>`_) (`#204 <https://github.com/OpenBioSim/biosimspace/pull/204>`__).
-* Added SOMD and GROMACS support for multiple distance restraints for ABFE calculations (`#178 <https://github.com/OpenBioSim/biosimspace/pull/178>`__).
-* Fix ``renumber`` option in :meth:`extract <BioSimSpace._SireWrappers.Molecule.extract>` method (`#210 <https://github.com/OpenBioSim/biosimspace/pull/210>`__).
+* Fixed bug in the Boresch restraint search code (`@fjclark <https://github.com/fjclark>`_) (`#204 <https://github.com/OpenBioSim/biosimspace/pull/204>`__).
+* Fixed ``renumber`` option in :meth:`extract <BioSimSpace._SireWrappers.Molecule.extract>` method (`#210 <https://github.com/OpenBioSim/biosimspace/pull/210>`__).
 * Add workaround for fixing reconstruction of intrascale matrix in :func:`readPerturbableSystem <BioSimSpace.IO.readPerturbableSystem>` function (`#210 <https://github.com/OpenBioSim/biosimspace/pull/210>`__).
+* Remove incorrect ``try_import`` statement in metadynamics driver script and make sure that global parameters in OpenMM script are unique (`#217 <https://github.com/OpenBioSim/biosimspace/pull/217>`__).
+* Ensure the existing trajectory backend is used when getting the number of trajectory frames from a running process (`#219 <https://github.com/OpenBioSim/biosimspace/pull/219>`__).
+* Fixed setting of ``igb`` config parameter	for PMEMD simulations (`@annamherz <https://github.com/annamherz>`_) (`#220 <https://github.com/OpenBioSim/biosimspace/pull/220>`__).
+* Make sure AMBER restraint mask matches all hydrogen atoms (`#222 <https://github.com/OpenBioSim/biosimspace/pull/222>`__).
+* Ensure all searches for disulphide bonds are convert to a ``SelectorBond`` object (`#224 <https://github.com/OpenBioSim/biosimspace/pull/224>`__).
+* Fix injection of custom commands into ``LEaP`` script (`#226 <https://github.com/OpenBioSim/biosimspace/pull/226>`__).
+
 
 `2023.4.0 <https://github.com/openbiosim/biosimspace/compare/2023.3.1...2023.4.0>`_ - Oct 13 2023
 -------------------------------------------------------------------------------------------------
@@ -53,7 +64,6 @@ Devel
 `2023.3.0 <https://github.com/openbiosim/biosimspace/compare/2023.2.2...2023.3.0>`_ - Jun 30 2023
 -------------------------------------------------------------------------------------------------
 
-* Added support for restraining "backbone" atoms in nucleic acids (PR HERE).
 * Reinstate :data:`BioSimSpace.Stream <BioSimSpace.Stream>` sub-package (`#36 <https://github.com/OpenBioSim/biosimspace/pull/36>`__).
 * Fixed ``setup.py`` file to work correctly on Windows (`#72 <https://github.com/OpenBioSim/biosimspace/pull/72>`__).
 * Fixed bug with missing working directory when using ``rmsd_flex_align`` scoring function (`#75 <https://github.com/OpenBioSim/biosimspace/pull/75>`__).
