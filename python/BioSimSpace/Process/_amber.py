@@ -21,40 +21,46 @@
 
 """Functionality for running simulations using AMBER."""
 
-from ._plumed import Plumed as _Plumed
-from . import _process
-from .. import _Utils
-from .. import Units as _Units
-from .. import Trajectory as _Trajectory
-from .. import Protocol as _Protocol
-from .. import IO as _IO
-from ..Types._type import Type as _Type
-from .._SireWrappers import System as _System
-from ..Protocol._position_restraint_mixin import _PositionRestraintMixin
-from ..Protocol._free_energy_mixin import _FreeEnergyMixin
-from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
-from .._Exceptions import IncompatibleError as _IncompatibleError
-from .._Config import Amber as _AmberConfig
-from ..Align._squash import _squash, _unsquash
-from .. import _amber_home, _isVerbose
-from sire.legacy import Mol as _SireMol
-from sire.legacy import IO as _SireIO
-from sire.legacy import Base as _SireBase
-import warnings as _warnings
-import timeit as _timeit
-import tempfile as _tempfile
-import time as _time
-import shutil as _shutil
-import re as _re
-import os as _os
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
 
 __all__ = ["Amber"]
 
+
 from .._Utils import _try_import
 
 _pygtail = _try_import("pygtail")
+
+import os as _os
+import re as _re
+import time as _time
+import shutil as _shutil
+import tempfile as _tempfile
+import timeit as _timeit
+import warnings as _warnings
+
+from sire.legacy import Base as _SireBase
+from sire.legacy import IO as _SireIO
+from sire.legacy import Mol as _SireMol
+
+from .. import _amber_home, _isVerbose
+from .._Config import Amber as _AmberConfig
+from .._Exceptions import IncompatibleError as _IncompatibleError
+from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
+from ..Protocol._free_energy_mixin import _FreeEnergyMixin
+from ..Protocol._position_restraint_mixin import _PositionRestraintMixin
+from .._SireWrappers import System as _System
+from ..Types._type import Type as _Type
+
+from .. import IO as _IO
+from .. import Protocol as _Protocol
+from .. import Trajectory as _Trajectory
+from .. import Units as _Units
+from .. import _Utils
+
+from . import _process
+
+from ._plumed import Plumed as _Plumed
 
 
 class Amber(_process.Process):

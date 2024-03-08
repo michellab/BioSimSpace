@@ -21,23 +21,6 @@
 
 """Functionality for relative free-energy simulations."""
 
-from BioSimSpace.MD._md import _find_md_engines
-from .. import _Utils
-from .. import Units as _Units
-from .. import Types as _Types
-from .. import Protocol as _Protocol
-from .. import Process as _Process
-from .._Utils import cd as _cd
-from .._SireWrappers import System as _System
-from .._Exceptions import IncompatibleError as _IncompatibleError
-from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
-from .._Exceptions import AnalysisError as _AnalysisError
-from .. import _isVerbose
-from .. import _is_notebook
-from .. import _gmx_exe, _gmx_version
-from sire.legacy.Base import getShareDir as _getShareDir
-from sire.legacy.Base import getBinDir as _getBinDir
-from .._Utils import _assert_imported, _have_imported, _try_import
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
 
@@ -70,6 +53,7 @@ from scipy.constants import proton_mass
 from scipy.constants import physical_constants
 hydrogen_amu = proton_mass/(physical_constants["atomic mass constant"][0])
 
+from .._Utils import _assert_imported, _have_imported, _try_import
 
 # alchemlyb isn't available for all variants of Python that we support, so we
 # need to try_import it.
@@ -93,22 +77,32 @@ if _have_imported(_alchemlyb):
     from alchemlyb.parsing.amber import extract_u_nk as _amber_extract_u_nk
     from alchemlyb.parsing.gmx import extract_dHdl as _gmx_extract_dHdl
     from alchemlyb.parsing.gmx import extract_u_nk as _gmx_extract_u_nk
-    from alchemlyb.preprocessing.subsampling import (
-        equilibrium_detection as _equilibrium_detection,
-    )
-    from alchemlyb.preprocessing.subsampling import (
-        statistical_inefficiency as _statistical_inefficiency,
-    )
     from alchemlyb.preprocessing.subsampling import slicing as _slicing
     from alchemlyb.preprocessing.subsampling import decorrelate_u_nk, decorrelate_dhdl
     from alchemlyb.postprocessors.units import to_kcalmol as _to_kcalmol
     from alchemlyb.postprocessors.units import kJ2kcal as _kJ2kcal
     from alchemlyb.postprocessors.units import R_kJmol as _R_kJmol
 
+from sire.legacy.Base import getShareDir as _getShareDir
+from sire.legacy.Base import getBinDir as _getBinDir
 
-# alchemlyb isn't available for all variants of Python that we support, so we
-# need to try_import it.
-_alchemlyb = _try_import("alchemlyb")
+from .. import _gmx_exe
+from .. import _is_notebook
+from .. import _isVerbose
+from .._Exceptions import AnalysisError as _AnalysisError
+from .._Exceptions import IncompatibleError as _IncompatibleError
+from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
+from .._SireWrappers import Molecules as _Molecules
+from .._SireWrappers import System as _System
+from .._Utils import cd as _cd
+from .. import Process as _Process
+from .. import Protocol as _Protocol
+from .. import Types as _Types
+from .. import Units as _Units
+from .. import _Utils
+
+from ..MD._md import _find_md_engines
+
 
 
 if _is_notebook:

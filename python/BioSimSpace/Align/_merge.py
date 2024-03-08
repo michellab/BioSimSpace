@@ -34,7 +34,6 @@ from sire.legacy import Units as _SireUnits
 
 from .._Exceptions import IncompatibleError as _IncompatibleError
 from .._SireWrappers import Molecule as _Molecule
-from .._SireWrappers import System as _System
 
 
 def merge(

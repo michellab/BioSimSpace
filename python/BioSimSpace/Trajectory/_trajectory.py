@@ -52,7 +52,6 @@ from ..Process._process import Process as _Process
 from .._SireWrappers import System as _System
 from ..Types import Time as _Time
 
-from .. import IO as _IO
 from .. import Units as _Units
 from .. import _Utils
 

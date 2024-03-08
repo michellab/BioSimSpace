@@ -21,32 +21,6 @@
 
 """Functionality for running simulations with GROMACS."""
 
-from ._plumed import Plumed as _Plumed
-from . import _process
-from .. import _Utils
-from .. import Units as _Units
-from .. import Types as _Types
-from .. import Trajectory as _Trajectory
-from .. import Protocol as _Protocol
-from .. import IO as _IO
-from ..Types._type import Type as _Type
-from .._SireWrappers import System as _System
-from ..Protocol._position_restraint_mixin import _PositionRestraintMixin
-from ..Protocol._free_energy_mixin import _FreeEnergyMixin
-from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
-from .._Config import Gromacs as _GromacsConfig
-from .. import _isVerbose
-from .. import _gmx_exe, _gmx_version
-from sire.legacy import Vol as _SireVol
-from sire.legacy import Units as _SireUnits
-from sire.legacy import Maths as _SireMaths
-from sire.legacy import IO as _SireIO
-from sire.legacy import Base as _SireBase
-import warnings as _warnings
-import timeit as _timeit
-import subprocess as _subprocess
-import shlex as _shlex
-import shutil as _shutil
 __author__ = "Lester Hedges"
 __email__ = "lester.hedges@gmail.com"
 
@@ -62,6 +36,38 @@ import numpy as _np
 import os as _os
 
 _pygtail = _try_import("pygtail")
+import shutil as _shutil
+import shlex as _shlex
+import subprocess as _subprocess
+import timeit as _timeit
+import warnings as _warnings
+
+from sire.legacy import Base as _SireBase
+from sire.legacy import IO as _SireIO
+from sire.legacy import Maths as _SireMaths
+from sire.legacy import Units as _SireUnits
+from sire.legacy import Vol as _SireVol
+
+from .. import _gmx_exe, _gmx_version
+from .. import _isVerbose
+from .._Config import Gromacs as _GromacsConfig
+from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
+from ..Protocol._free_energy_mixin import _FreeEnergyMixin
+from ..Protocol._position_restraint_mixin import _PositionRestraintMixin
+from .._SireWrappers import System as _System
+from ..Types._type import Type as _Type
+
+from .. import IO as _IO
+from .. import Protocol as _Protocol
+from .. import Trajectory as _Trajectory
+from .. import Types as _Types
+from .. import Units as _Units
+from .. import _Utils
+
+from . import _process
+
+from ._plumed import Plumed as _Plumed
+
 
 
 class Gromacs(_process.Process):
