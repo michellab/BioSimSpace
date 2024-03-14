@@ -44,6 +44,7 @@ from sire.legacy import IO as _SireIO
 from sire.legacy import Mol as _SireMol
 
 from .. import _amber_home, _isVerbose
+from ..Align._squash import _squash, _unsquash
 from .._Config import Amber as _AmberConfig
 from .._Exceptions import IncompatibleError as _IncompatibleError
 from .._Exceptions import MissingSoftwareError as _MissingSoftwareError
@@ -130,12 +131,6 @@ class Amber(_process.Process):
             extra_lines=extra_lines,
             property_map=property_map,
         )
-
-        # Catch unsupported protocols.
-        if isinstance(protocol, _FreeEnergyMixin):
-            raise _IncompatibleError(
-                "Unsupported protocol: '%s'" % self._protocol.__class__.__name__
-            )
 
         # Set the package name.
         self._package_name = "AMBER"

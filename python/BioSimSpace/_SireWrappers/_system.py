@@ -436,10 +436,12 @@ class System(_SireWrapper):
             )
 
         if not isinstance(excluded_properties, (list, tuple)):
-            raise TypeError("'excluded_properties' must be a list of 'str' types.")
+            raise TypeError(
+                "'excluded_properties' must be a list of 'str' types.")
 
         if not all(isinstance(x, str) for x in excluded_properties):
-            raise TypeError("'excluded_properties' must be a list of 'str' types.")
+            raise TypeError(
+                "'excluded_properties' must be a list of 'str' types.")
 
         if not isinstance(property_map0, dict):
             raise TypeError("'property_map0' must be of type 'dict'.")
@@ -474,7 +476,8 @@ class System(_SireWrapper):
         # Add some additional properties to the excluded list. These are
         # used for internal metadata to aid object recovery.
         _excluded_properties = excluded_properties.copy()
-        _excluded_properties.extend(["fileformat", "is_perturbable", "was_perturbable"])
+        _excluded_properties.extend(
+            ["fileformat", "is_perturbable", "was_perturbable"])
 
         def _object_compare(object0, object1):
             """Helper function to check whether two Sire objects are the same."""
@@ -1084,7 +1087,8 @@ class System(_SireWrapper):
             be empty if no perturbable molecules are present.
         """
         return _Molecules(
-            self._sire_object.search("molecules with property is_perturbable").toGroup()
+            self._sire_object.search(
+                "molecules with property is_perturbable").toGroup()
         )
 
     def nPerturbableMolecules(self):
@@ -1149,7 +1153,8 @@ class System(_SireWrapper):
         # Validate input.
 
         if not isinstance(origin, _Coordinate):
-            raise TypeError("'origin' must be of type 'BioSimSpace.Types.Coordinate'")
+            raise TypeError(
+                "'origin' must be of type 'BioSimSpace.Types.Coordinate'")
 
         if not isinstance(precision, float):
             raise TypeError("'precision' must be of type 'float'")
@@ -1201,14 +1206,16 @@ class System(_SireWrapper):
         if self.nPerturbableMolecules() > 0:
             # Coordinates.
             try:
-                prop_name = property_map.get("coordinates", "coordinates") + "0"
+                prop_name = property_map.get(
+                    "coordinates", "coordinates") + "0"
                 cursor = cursor.rotate(
                     center=center,
                     matrix=rotation_matrix,
                     rotate_velocities=False,
                     map={"coordinates": prop_name},
                 )
-                prop_name = property_map.get("coordinates", "coordinates") + "1"
+                prop_name = property_map.get(
+                    "coordinates", "coordinates") + "1"
                 cursor = cursor.rotate(
                     center=center,
                     matrix=rotation_matrix,
@@ -1648,7 +1655,8 @@ class System(_SireWrapper):
                 ]
 
             else:
-                raise TypeError(f"Unsupported box type: {space} - {type(space)}")
+                raise TypeError(
+                    f"Unsupported box type: {space} - {type(space)}")
         except:
             box = None
             angles = None
@@ -1811,7 +1819,8 @@ class System(_SireWrapper):
                         search = self.search(string, property_map)
                     except:
                         search = []
-                        _warnings.warn("could not find atoms matching 'restraint' == 'backbone'")
+                        _warnings.warn(
+                            "could not find atoms matching 'restraint' == 'backbone'")
 
                 elif restraint == "heavy":
                     # Convert to a formatted string for the search.
@@ -1822,7 +1831,8 @@ class System(_SireWrapper):
                         search = self.search(string, property_map)
                     except:
                         search = []
-                        _warnings.warn("could not find atoms matching 'restraint' == 'heavy'")
+                        _warnings.warn(
+                            "could not find atoms matching 'restraint' == 'heavy'")
 
                 elif restraint == "all":
                     # Convert to a formatted string for the search.
@@ -1833,7 +1843,8 @@ class System(_SireWrapper):
                         search = self.search(string, property_map)
                     except:
                         search = []
-                        _warnings.warn("could not find atoms matching 'restraint' == 'all'")
+                        _warnings.warn(
+                            "could not find atoms matching 'restraint' == 'all'")
 
             # Search each molecule individually, using the property map to specify the
             # correct name for the "element" property in any perturble molecules.
@@ -1869,7 +1880,8 @@ class System(_SireWrapper):
                                 search = mol.search(string, _property_map)
                             except:
                                 search = []
-                                _warnings.warn("could not find atoms matching 'restraint' == 'backbone'")
+                                _warnings.warn(
+                                    "could not find atoms matching 'restraint' == 'backbone'")
 
                     elif restraint == "heavy":
                         if not mol.isWater():
@@ -1881,7 +1893,8 @@ class System(_SireWrapper):
                                 search = mol.search(string, _property_map)
                             except:
                                 search = []
-                                _warnings.warn("could not find atoms matching 'restraint' == 'heavy'")
+                                _warnings.warn(
+                                    "could not find atoms matching 'restraint' == 'heavy'")
 
                     elif restraint == "all":
                         if not mol.isWater():
@@ -1893,7 +1906,8 @@ class System(_SireWrapper):
                                 search = mol.search(string, _property_map)
                             except:
                                 search = []
-                                _warnings.warn("could not find atoms matching 'restraint' == 'all'")
+                                _warnings.warn(
+                                    "could not find atoms matching 'restraint' == 'all'")
 
                     # Append the search result for this molecule.
                     if len(search) > 0:
@@ -1929,7 +1943,8 @@ class System(_SireWrapper):
                         search = mol.search(string, _property_map)
                     except:
                         search = []
-                        _warnings.warn("could not find atoms matching 'restraint' == 'backbone'")
+                        _warnings.warn(
+                            "could not find atoms matching 'restraint' == 'backbone'")
 
             elif restraint == "heavy":
                 if not mol.isWater():
@@ -1941,7 +1956,8 @@ class System(_SireWrapper):
                         search = mol.search(string, _property_map)
                     except:
                         search = []
-                        _warnings.warn("could not find atoms matching 'restraint' == 'heavy'")
+                        _warnings.warn(
+                            "could not find atoms matching 'restraint' == 'heavy'")
 
             elif restraint == "all":
                 if not mol.isWater():
@@ -1953,7 +1969,8 @@ class System(_SireWrapper):
                         search = mol.search(string, _property_map)
                     except:
                         search = []
-                        _warnings.warn("could not find atoms matching 'restraint' == 'all'")
+                        _warnings.warn(
+                            "could not find atoms matching 'restraint' == 'all'")
 
         if is_perturbable_system:
             # Raise an exception if no atoms match the restraint.
@@ -2016,7 +2033,8 @@ class System(_SireWrapper):
         """
         search_string = "(resname " + ",".join(_prot_res) + ")"
         try:
-            residues = list(self.search(search_string, property_map).residues())
+            residues = list(self.search(
+                search_string, property_map).residues())
         except:
             residues = []
         return residues
@@ -2053,7 +2071,8 @@ class System(_SireWrapper):
         """
         search_string = "(resname " + ",".join(_nucl_res) + ")"
         try:
-            residues = list(self.search(search_string, property_map).residues())
+            residues = list(self.search(
+                search_string, property_map).residues())
         except:
             residues = []
         return residues
