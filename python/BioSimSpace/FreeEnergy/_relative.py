@@ -39,8 +39,6 @@ import subprocess as _subprocess
 import sys as _sys
 import warnings as _warnings
 import zipfile as _zipfile
-import alchemlyb as _alchemlyb
-import tempfile as _tempfile
 
 # temporarily not, as only needed for new somd
 try:
@@ -239,17 +237,8 @@ class Relative:
         else:
             self._setup_only = setup_only
 
-        # Create a temporary working directory and store the directory name.
-        if work_dir is None:
-            if setup_only:
-                raise ValueError(
-                    "A 'work_dir' must be specified when 'setup_only' is True!"
-                )
-            self._tmp_dir = _tempfile.TemporaryDirectory()
-            self._work_dir = self._tmp_dir.name
-        else:
-            # Create the working directory.
-            self._work_dir = _Utils.WorkDir(work_dir)
+        # Create the working directory.
+        self._work_dir = _Utils.WorkDir(work_dir)
 
         # Validate the user specified molecular dynamics engine.
         self._exe = None
@@ -1419,11 +1408,9 @@ class Relative:
         data_len = len(data[0])  # length of data
         # how large one step in the data is
         data_step = round((data[0].index[-1][0] - data[0].index[-2][0]), 1)
-        data_discard_start = data_len * (truncate_lower / 100)
-        data_discard_end = data_len * (truncate_upper / 100)
-        truncate_lower = data_discard_start * data_step
-        truncate_upper = (data_len * data_step) - \
-            (data_discard_end * data_step)
+        truncate_lower = (data_len * (truncate_lower / 100)) * data_step
+        truncate_upper = (data_len * (truncate_upper / 100)) *data_step
+
 
         try:
             data = [
@@ -1559,6 +1546,8 @@ class Relative:
         except:
             _warnings.warn("Could not preprocess the data!")
             processed_data = _alchemlyb.concat(data)
+
+        print(processed_data)
 
         mbar_method = None
         if is_mbar:
