@@ -118,11 +118,11 @@ class _HmrMixin:
             raise TypeError("'timestep' must be of type 'BioSimSpace.Types.Time'")
           
         # check if the values are "auto" or bool for the rest
-        if hmr.lower() != "auto":
-            if not isinstance(hmr, bool):
+        if not isinstance(hmr, bool):
+            if hmr.lower() == "auto":
+                hmr = "auto"
+            else:
                 raise TypeError("'hmr' must be 'auto' or of type 'bool'.")
-        elif hmr.lower() == "auto":
-            hmr = "auto"
 
         if not isinstance(hmr_factor, str):
             if isinstance(hmr_factor, int):

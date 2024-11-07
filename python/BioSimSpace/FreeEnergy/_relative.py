@@ -612,13 +612,13 @@ class Relative:
             glob_path = _pathlib.Path(work_dir)
 
             # First try SOMD data.
-            files = glob_path.glob("**/gradients.dat")
+            files = glob_path.glob("lambda_*/gradients.dat")
 
             if len(files) == 0:
-                files = glob_path.glob("**/[!bar]*.xvg")
+                files = glob_path.glob("lambda_*/[!bar]*.xvg")
 
                 if len(files) == 0:
-                    files = glob_path.glob("**/*.out")
+                    files = glob_path.glob("lambda_*/*.out")
 
                     if len(files) == 0:
                         raise ValueError(
@@ -696,10 +696,10 @@ class Relative:
             _assert_imported("alchemlyb")
 
         function_glob_dict = {
-            "SOMD": (Relative._analyse_somd, "**/simfile.dat"),
-            "SOMD2": (Relative._analyse_somd2, "**/*.parquet"),
-            "GROMACS": (Relative._analyse_gromacs, "**/[!bar]*.xvg"),
-            "AMBER": (Relative._analyse_amber, "**/*.out"),
+            "SOMD": (Relative._analyse_somd, "lambda_*/simfile.dat"),
+            "SOMD2": (Relative._analyse_somd2, "lambda_*/*.parquet"),
+            "GROMACS": (Relative._analyse_gromacs, "lambda_*/[!bar]*.xvg"),
+            "AMBER": (Relative._analyse_amber, "lambda_*/*.out"),
         }
 
         for engine, (func, mask) in function_glob_dict.items():
@@ -1452,10 +1452,7 @@ class Relative:
                 )
             sampled_data = data
 
-        # Concatanate in alchemlyb format.
-        processed_data = _alchemlyb.concat(sampled_data)
-
-        return processed_data
+        return sampled_data
 
     @staticmethod
     def _analyse_internal(files, temperatures, lambdas, engine, estimator, **kwargs):
@@ -1543,11 +1540,11 @@ class Relative:
         try:
             processed_data = Relative._preprocess_data(
                 data, estimator, **kwargs)
+            processed_data = _alchemlyb.concat(processed_data)
         except:
             _warnings.warn("Could not preprocess the data!")
+            # Concatanate in alchemlyb format, regardless if subsampled or not
             processed_data = _alchemlyb.concat(data)
-
-        print(processed_data)
 
         mbar_method = None
         if is_mbar:
@@ -1655,7 +1652,7 @@ class Relative:
 
         # Find the output files and work out the lambda windows from the directory names.
         glob_path = _pathlib.Path(work_dir)
-        files = sorted(glob_path.glob("**/*.out"))
+        files = sorted(glob_path.glob("lambda_*/*.out"))
         lambdas = []
         for file in files:
             for part in file.parts:
@@ -1737,7 +1734,7 @@ class Relative:
         if method == "ALCHEMLYB":
             # Find the output files and work out the lambda windows from the directory names.
             glob_path = _pathlib.Path(work_dir)
-            files = sorted(glob_path.glob("**/[!bar]*.xvg"))
+            files = sorted(glob_path.glob("lambda_*/[!bar]*.xvg"))
             lambdas = []
             for file in files:
                 for part in file.parts:
@@ -1788,7 +1785,7 @@ class Relative:
 
             # Create the command.
             glob_path = _pathlib.Path(work_dir)
-            xvg_files = sorted(glob_path.glob("**/[!bar]*.xvg"))
+            xvg_files = sorted(glob_path.glob("lambda_*/[!bar]*.xvg"))
             xvg_files = [str(file.absolute()) for file in xvg_files]
             command = "%s bar -f %s -o %s/bar.xvg" % (
                 _gmx_exe,
@@ -1911,7 +1908,7 @@ class Relative:
         if method == "ALCHEMLYB":
             # Glob the data files and work out the lambda values.
             glob_path = _pathlib.Path(work_dir)
-            files = sorted(glob_path.glob("**/simfile.dat"))
+            files = sorted(glob_path.glob("lambda_*/simfile.dat"))
             lambdas = []
             for file in files:
                 for part in file.parts:
@@ -2099,7 +2096,7 @@ class Relative:
 
         # Glob the data files.
         glob_path = _pathlib.Path(work_dir)
-        files = sorted(glob_path.glob("**/*.parquet"))
+        files = sorted(glob_path.glob("lambda_*/*.parquet"))
 
         # Loop over each file and try to extract the metadata to work out
         # the lambda value and temperature for each window.
