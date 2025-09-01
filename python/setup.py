@@ -78,7 +78,7 @@ def clear_installed_list():
 try:
     setup(
         name="BioSimSpace",
-        version=versioneer.get_version(),
+        # version= versioneer.get_version(),
         cmdclass=versioneer.get_cmdclass(),
         description="BioSimSpace: Making biomolecular simulation a breeze.",
         author=authors,
@@ -124,7 +124,7 @@ finally:
                       "lomap2",
                       "mdtraj",             # known not available on aarch64
                       "mdanalysis",         # known not available on aarch64
-                      "openff-toolkit"      # known not available on aarch64
+                      "openff-toolkit",     # known not available on aarch64
                       "kcombu_bss",
                       "openff-interchange-base",
                       "openff-toolkit-base",

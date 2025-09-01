@@ -114,7 +114,7 @@ class Somd(_Config):
             restart_interval = self._protocol.getRestartInterval()
 
             # For free energy simulations, the report interval must be a multiple
-            # of the energy frequency which is 250 steps.
+            # of the energy frequency which is 200 steps.
             if isinstance(self._protocol, _Protocol._FreeEnergyMixin):
                 if report_interval % 200 != 0:
                     report_interval = 200 * _math.ceil(report_interval / 200)
@@ -122,7 +122,6 @@ class Somd(_Config):
                     restart_interval = int(
                         200 * _math.ceil(restart_interval / 200))
 
-        
             # The number of moves per cycle - want about 1 cycle per 1 ns.
             # if the run is less than 1 ns, want 1 cycle for this.
             runtime = self._protocol.getRunTime().nanoseconds().value()

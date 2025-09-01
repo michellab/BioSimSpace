@@ -390,8 +390,10 @@ def generateNetwork(
         with open(links_file, "r") as lf:
             for line in lf:
                 records = line.split()
+                new_line = f"{links_names[records[0]]} {links_names[records[1]]}"
                 if len(records) > 2:
                     new_line += " " + " ".join(records[2:])
+                new_lines.append(new_line)
 
         # Store the path to the new file.
         lf = f"{work_dir}/inputs/lomap_links_file.txt"
@@ -399,7 +401,7 @@ def generateNetwork(
         # Write the updated lomap links file.
         with open(lf, "w") as f:
             for line in new_lines:
-                f.write(line)
+                f.write(f"{line}\n")
     else:
         lf = None
 

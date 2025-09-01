@@ -2186,60 +2186,6 @@ class Relative:
         # Now call the staticmethod passing in both PMFs.
         return Relative.difference(pmf, pmf_ref=pmf_ref)
 
-    @staticmethod
-    def checkOverlap(overlap, estimator="MBAR", threshold=0.03):
-        """Check the overlap of an FEP leg. 
-
-           Parameters
-           ----------
-
-           overlap : [ [ float, float, ... ] ], numpy.ndarray
-               The overlap matrix. This gives the overlap between lambda windows.
-
-           estimator : str
-               Must be "MBAR" for checking the overlap matrix.
-
-           threshold : float
-               The threshold value used to check the off-diagonals. Default is 0.03 .
-
-           Returns
-           -------
-
-           overlap_okay : boolean
-                True if the overlap is okay, False if any off-diagonals are less than the threshold value.
-
-        """
-        if not isinstance(overlap, _np.ndarray):
-            raise TypeError("'overlap' must be of type 'numpy.matrix'.")
-
-        # estimator must be MBAR for overlap matrix or TI for dhdl plot.
-        if estimator not in ['MBAR']:
-            raise ValueError("'estimator' must be 'MBAR'.")
-
-        if not isinstance(threshold, float):
-            raise TypeError("'threshold' must be of type 'float'.")
-
-        if estimator == "MBAR":
-            # check the overlap
-            # get all off diagonals
-            off_diagonal = (_np.diagonal(overlap, 1)).tolist()
-            for a in (_np.diagonal(overlap, -1)).tolist():
-                off_diagonal.append(a)
-
-            # check if the off diagonals are less than the threshold value or larger.
-            too_small = 0
-            overlap_okay = False
-            for o in off_diagonal:
-                if o < threshold:
-                    too_small += 1
-            if too_small > 0:
-                _warnings.warn(
-                    f"Overlap matrix is bad - {too_small} off-diagonals are less than {threshold}.")
-            else:
-                overlap_okay = True
-
-        return overlap_okay, too_small
-
     def _initialise_runner(self, system):
         """
         Internal helper function to initialise the process runner.
